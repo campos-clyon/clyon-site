@@ -1,0 +1,769 @@
+"use client";
+
+import { useEffect, useState, type ReactNode } from "react";
+import {
+  ArrowLeft,
+  ArrowRight,
+  Calculator,
+  type LucideIcon,
+  Loader2,
+  MapPin,
+  Package,
+  Phone,
+  Route,
+  Sparkles,
+  Truck,
+  Wrench,
+} from "lucide-react";
+
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { BASE_ADDRESS } from "@/lib/maps-config";
+
+type CategoriaId =
+  | "entulho"
+  | "moveis"
+  | "monos"
+  | "limpeza"
+  | "mudancas"
+  | "camiao";
+type ModoCalculo = "entulho" | "moveis" | "mudancas";
+type ModoTrajeto = "base" | "custom";
+
+type Categoria = {
+  id: CategoriaId;
+  nome: string;
+  descricao: string;
+  icon: LucideIcon;
+  calculo: ModoCalculo;
+  trajeto: ModoTrajeto;
+};
+
+type ChoiceOption = { value: string; label: string };
+type MapsPrediction = {
+  placeId: string;
+  description: string;
+  mainText: string;
+  secondaryText: string;
+};
+
+const categorias: Categoria[] = [
+  { id: "entulho", nome: "Recolha de entulho", descricao: "Obras, resíduos e limpezas pesadas.", icon: Wrench, calculo: "entulho", trajeto: "base" },
+  { id: "moveis", nome: "Recolha de móveis", descricao: "Móveis antigos e recheios.", icon: Package, calculo: "moveis", trajeto: "base" },
+  { id: "monos", nome: "Recolha de monos", descricao: "Volumes grandes, sucata e despejos.", icon: Package, calculo: "moveis", trajeto: "base" },
+  { id: "limpeza", nome: "Limpeza pós-obra", descricao: "Acabamento final e recolha associada.", icon: Sparkles, calculo: "entulho", trajeto: "base" },
+  { id: "mudancas", nome: "Mudanças", descricao: "Origem e destino reais com cálculo automático.", icon: Truck, calculo: "mudancas", trajeto: "custom" },
+  { id: "camiao", nome: "Camião com motorista", descricao: "Apoio logístico com base CLYON.", icon: Truck, calculo: "mudancas", trajeto: "base" },
+];
+
+const pessoasOptions: ChoiceOption[] = [1, 2, 3, 4, 5, 6].map((num) => ({
+  value: String(num),
+  label: `${num} ${num === 1 ? "pessoa" : "pessoas"}`,
+}));
+
+export default function SimuladorClient() {
+  const [categoriaId, setCategoriaId] = useState<CategoriaId | null>(null);
+  const [origem, setOrigem] = useState("");
+  const [destino, setDestino] = useState("");
+  const [km, setKm] = useState<number | null>(null);
+  const [kmLoading, setKmLoading] = useState(false);
+  const [kmErro, setKmErro] = useState("");
+
+  const [tipoAcesso, setTipoAcesso] = useState("");
+  const [quantidadePessoas, setQuantidadePessoas] = useState("");
+  const [tempoEstimado, setTempoEstimado] = useState("");
+  const [numeroAndares, setNumeroAndares] = useState("");
+  const [temElevador, setTemElevador] = useState("");
+  const [acessoDificil, setAcessoDificil] = useState(false);
+  const [entulhoModo, setEntulhoModo] = useState("");
+  const [quantidadeSacos, setQuantidadeSacos] = useState("");
+  const [moveisModo, setMoveisModo] = useState("");
+  const [cargas, setCargas] = useState("1");
+  const [peq, setPeq] = useState("");
+  const [med, setMed] = useState("");
+  const [gra, setGra] = useState("");
+  const [orcamento, setOrcamento] = useState<number | null>(null);
+
+  const categoria = categorias.find((item) => item.id === categoriaId) ?? null;
+
+  const resetFlow = () => {
+    setOrigem("");
+    setDestino("");
+    setKm(null);
+    setKmLoading(false);
+    setKmErro("");
+    setTipoAcesso("");
+    setQuantidadePessoas("");
+    setTempoEstimado("");
+    setNumeroAndares("");
+    setTemElevador("");
+    setAcessoDificil(false);
+    setEntulhoModo("");
+    setQuantidadeSacos("");
+    setMoveisModo("");
+    setCargas("1");
+    setPeq("");
+    setMed("");
+    setGra("");
+    setOrcamento(null);
+  };
+
+  useEffect(() => {
+    setOrcamento(null);
+  }, [
+    tipoAcesso,
+    quantidadePessoas,
+    tempoEstimado,
+    numeroAndares,
+    temElevador,
+    acessoDificil,
+    entulhoModo,
+    quantidadeSacos,
+    moveisModo,
+    cargas,
+    peq,
+    med,
+    gra,
+  ]);
+
+  const escolherCategoria = (id: CategoriaId) => {
+    resetFlow();
+    setCategoriaId(id);
+  };
+
+  const atualizarOrigem = (value: string) => {
+    setOrigem(value);
+    setKm(null);
+    setOrcamento(null);
+    setKmErro("");
+  };
+
+  const atualizarDestino = (value: string) => {
+    setDestino(value);
+    setKm(null);
+    setOrcamento(null);
+    setKmErro("");
+  };
+
+  const calcularDistancia = async () => {
+    const origin = categoria?.trajeto === "custom" ? origem.trim() : BASE_ADDRESS;
+    const destination = destino.trim();
+    if (!origin || !destination) {
+      setKmErro("Preencha a morada antes de calcular a distância.");
+      return;
+    }
+
+    setKmLoading(true);
+    setKmErro("");
+    setOrcamento(null);
+
+    try {
+      const response = await fetch("/api/maps/distance", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ origin, destination }),
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        setKmErro(
+          data?.error === "maps_unconfigured"
+            ? "A chave Google Maps ainda não está configurada no servidor."
+            : "Não foi possível calcular a distância agora.",
+        );
+        return;
+      }
+
+      setKm(Number(data.distanceKm ?? 0));
+      if (categoria?.trajeto === "custom") {
+        setOrigem(String(data.originAddress ?? origin));
+      }
+      setDestino(String(data.destinationAddress ?? destination));
+    } catch {
+      setKmErro("A distância não pôde ser calculada. Tente novamente.");
+    } finally {
+      setKmLoading(false);
+    }
+  };
+
+  const calcularOrcamento = () => {
+    if (!categoria || km === null) return;
+
+    const pessoas = Number(quantidadePessoas || 0);
+    const horas = Number(tempoEstimado || 0);
+    const andares = Number(numeroAndares || 0);
+    const sacos = Number(quantidadeSacos || 0);
+    const cargasNum = Number(cargas || 1);
+    const pequeno = Number(peq || 0);
+    const medio = Number(med || 0);
+    const grande = Number(gra || 0);
+
+    let adicionalAcesso = 0;
+    if (tipoAcesso === "apartamento") {
+      adicionalAcesso = temElevador === "sim" ? andares * 3 : andares * 6;
+    }
+    const adicionalDificil = acessoDificil ? 30 : 0;
+    let total = 0;
+
+    if (categoria.calculo === "moveis") {
+      if (moveisModo === "item") {
+        total =
+          pequeno * 5 + medio * 7 + grande * 13 + km * 2.5 + adicionalAcesso + adicionalDificil;
+        total *= 1.3;
+      } else {
+        const base = (horas + 2) * (pessoas + 1) * 9;
+        total = (base + km * 2.5 + adicionalAcesso + adicionalDificil + base * 0.35) * cargasNum;
+      }
+    }
+
+    if (categoria.calculo === "entulho") {
+      const material = entulhoModo === "chao" ? sacos * 1.5 : sacos;
+      total = (horas * pessoas * 9 + material + km * 2.2 + adicionalAcesso + adicionalDificil) * 1.3;
+    }
+
+    if (categoria.calculo === "mudancas") {
+      total = (horas * pessoas * 9 + km * 2.5 + adicionalAcesso + adicionalDificil) * 1.4;
+    }
+
+    setOrcamento(Math.round(total * 100) / 100);
+  };
+
+  const podeCalcularDistancia =
+    destino.trim().length > 0 && (categoria?.trajeto === "base" || origem.trim().length > 0);
+
+  const podeCalcularOrcamento = (() => {
+    if (!categoria || km === null || !tipoAcesso || !quantidadePessoas || !tempoEstimado) {
+      return false;
+    }
+    if (tipoAcesso === "apartamento" && (!numeroAndares || !temElevador)) return false;
+    if (categoria.calculo === "entulho") return Boolean(entulhoModo && quantidadeSacos);
+    if (categoria.calculo === "moveis") {
+      if (!moveisModo) return false;
+      if (moveisModo === "carga") return Boolean(cargas);
+      return Boolean(peq || med || gra);
+    }
+    return true;
+  })();
+
+  const confirmarPedido = () => {
+    if (!categoria || km === null) return;
+    const detalhes =
+      categoria.trajeto === "custom"
+        ? `Partida: ${origem} | Chegada: ${destino} | Distância: ${km} km`
+        : `Origem base CLYON | Destino: ${destino} | Distância: ${km} km`;
+    const resumo = encodeURIComponent(
+      [
+        `categoria=${categoria.nome}`,
+        `detalhes=${detalhes}`,
+        `tipoAcesso=${tipoAcesso}`,
+        `pessoas=${quantidadePessoas}`,
+        `tempo=${tempoEstimado}`,
+        `valor=${orcamento ?? ""}`,
+      ].join("&"),
+    );
+    window.location.href = `/contactos?origem=simulador&resumo=${resumo}`;
+  };
+
+  if (!categoria) {
+    return (
+      <div className="min-h-screen bg-white">
+        <section className="relative overflow-hidden bg-white">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(34,211,238,0.18),transparent_24%),linear-gradient(90deg,rgba(236,254,255,0.96)_0%,rgba(255,255,255,1)_55%)]" />
+          <div className="relative mx-auto max-w-7xl px-4 pb-16 pt-20 sm:px-6 lg:px-8">
+            <div className="grid gap-8 lg:grid-cols-[1fr_0.9fr] lg:items-end">
+              <div>
+                <div className="inline-flex items-center rounded-full border border-cyan-200 bg-cyan-50 px-4 py-2 text-sm font-semibold uppercase tracking-[0.22em] text-cyan-700 shadow-sm">
+                  Simulador
+                </div>
+                <h1 className="mt-4 max-w-[18ch] text-[2.25rem] font-bold leading-[1.05] tracking-tight text-slate-950 sm:text-[3.35rem]">
+                  Calcule a distância antes do preço final.
+                </h1>
+                <p className="mt-4 max-w-2xl text-[0.98rem] leading-7 text-slate-600">
+                  O cliente escreve a morada, recebe sugestões automáticas do Google
+                  e só depois avança para o cálculo do valor final.
+                </p>
+              </div>
+              <Card className="rounded-[30px] border border-cyan-100 bg-white p-6 shadow-[0_24px_60px_-34px_rgba(14,116,144,0.2)]">
+                <p className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-700">
+                  Fluxo novo
+                </p>
+                <ol className="mt-4 space-y-2 text-sm leading-7 text-slate-600">
+                  <li>1. Escolher o serviço</li>
+                  <li>2. Introduzir a morada com sugestões</li>
+                  <li>3. Calcular distância</li>
+                  <li>4. Gerar o valor final</li>
+                </ol>
+              </Card>
+            </div>
+          </div>
+        </section>
+
+        <section className="bg-slate-50 py-16">
+          <div className="mx-auto grid max-w-7xl gap-4 px-4 sm:px-6 lg:grid-cols-2 lg:px-8">
+            {categorias.map((item) => (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => escolherCategoria(item.id)}
+                className="group rounded-[28px] border border-cyan-100 bg-white p-5 text-left shadow-[0_20px_44px_-34px_rgba(14,116,144,0.22)] transition hover:-translate-y-0.5 hover:border-cyan-300"
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <h3 className="text-lg font-semibold text-slate-950">{item.nome}</h3>
+                    <p className="mt-2 text-sm leading-6 text-slate-600">{item.descricao}</p>
+                  </div>
+                  <div className="flex h-12 w-12 items-center justify-center rounded-[18px] bg-cyan-50 text-cyan-600">
+                    <item.icon className="h-5 w-5" />
+                  </div>
+                </div>
+                <div className="mt-4 inline-flex items-center rounded-full bg-cyan-500 px-4 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-white">
+                  Simular agora
+                  <ArrowRight className="ml-2 h-3.5 w-3.5" />
+                </div>
+              </button>
+            ))}
+          </div>
+        </section>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-white">
+      <section className="relative overflow-hidden bg-white">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(34,211,238,0.18),transparent_24%),linear-gradient(90deg,rgba(236,254,255,0.96)_0%,rgba(255,255,255,1)_55%)]" />
+        <div className="relative mx-auto max-w-7xl px-4 pb-12 pt-20 sm:px-6 lg:px-8">
+          <button
+            onClick={() => {
+              resetFlow();
+              setCategoriaId(null);
+            }}
+            className="inline-flex items-center gap-2 text-sm font-semibold text-cyan-700 transition hover:text-cyan-600"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Voltar aos serviços
+          </button>
+
+          <div className="mt-5 grid gap-8 lg:grid-cols-[1fr_0.9fr] lg:items-end">
+            <div>
+              <div className="inline-flex items-center rounded-full border border-cyan-200 bg-cyan-50 px-4 py-2 text-sm font-semibold uppercase tracking-[0.22em] text-cyan-700 shadow-sm">
+                {categoria.nome}
+              </div>
+              <h1 className="mt-4 max-w-[16ch] text-[2.2rem] font-bold leading-[1.04] tracking-tight text-slate-950 sm:text-[3.15rem]">
+                Introduza a morada e calcule a distância.
+              </h1>
+            </div>
+            <Card className="rounded-[30px] border border-cyan-100 bg-white p-6 shadow-[0_24px_60px_-34px_rgba(14,116,144,0.2)]">
+              <p className="text-sm leading-7 text-slate-600">
+                {categoria.trajeto === "custom"
+                  ? "Este serviço usa origem e destino reais."
+                  : "Este serviço usa a base CLYON como origem e calcula a distância até à morada do cliente."}
+              </p>
+            </Card>
+          </div>
+        </div>
+      </section>
+
+      <section className="bg-slate-50 py-16">
+        <div className="mx-auto grid max-w-7xl gap-8 px-4 sm:px-6 xl:grid-cols-[1.1fr_0.9fr] lg:px-8">
+          <div className="space-y-6">
+            <Card className="rounded-[30px] border border-cyan-100 bg-white p-6 shadow-[0_24px_60px_-34px_rgba(14,116,144,0.18)]">
+              <StepTitle number="1" title="Morada e distância" />
+              <div className="mt-5 space-y-5">
+                {categoria.trajeto === "custom" ? (
+                  <AddressField
+                    id="origem"
+                    label="Morada de origem *"
+                    value={origem}
+                    onChange={atualizarOrigem}
+                    placeholder="Ex: Rua da Paz, 123, Lisboa"
+                  />
+                ) : (
+                  <div className="rounded-[22px] border border-cyan-100 bg-cyan-50/80 p-4 text-sm leading-7 text-slate-700">
+                    A origem operacional é a base CLYON e é aplicada automaticamente.
+                  </div>
+                )}
+
+                <AddressField
+                  id="destino"
+                  label={categoria.trajeto === "custom" ? "Morada de destino *" : "Morada do serviço *"}
+                  value={destino}
+                  onChange={atualizarDestino}
+                  placeholder="Ex: Rua da Paz, 123, Lisboa"
+                />
+
+                <Button
+                  type="button"
+                  onClick={calcularDistancia}
+                  disabled={!podeCalcularDistancia || kmLoading}
+                  className="w-full rounded-2xl bg-cyan-500 py-6 text-base font-bold text-white hover:bg-cyan-400"
+                >
+                  {kmLoading ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Route className="mr-2 h-5 w-5" />}
+                  Calcular distância
+                </Button>
+
+                {kmErro ? (
+                  <div className="rounded-[22px] border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-7 text-amber-900">
+                    {kmErro}
+                  </div>
+                ) : null}
+
+                {km !== null ? (
+                  <div className="rounded-[24px] border border-cyan-100 bg-cyan-50/70 p-5">
+                    <p className="text-sm font-semibold uppercase tracking-[0.16em] text-cyan-700">Distância calculada</p>
+                    <p className="mt-2 text-4xl font-bold leading-none text-slate-950">{km.toFixed(1)} km</p>
+                    <p className="mt-2 text-sm leading-7 text-slate-600">
+                      Estes quilómetros serão usados no cálculo final.
+                    </p>
+                  </div>
+                ) : null}
+              </div>
+            </Card>
+
+            {km !== null ? (
+              <Card className="rounded-[30px] border border-cyan-100 bg-white p-6 shadow-[0_24px_60px_-34px_rgba(14,116,144,0.18)]">
+                <StepTitle number="2" title="Detalhes do serviço" />
+                <div className="mt-5 space-y-5">
+                  {categoria.calculo === "entulho" ? (
+                    <>
+                      <Field>
+                        <Label>O entulho está em sacos ou no chão? *</Label>
+                        <ChoiceGrid
+                          value={entulhoModo}
+                          onChange={setEntulhoModo}
+                          options={[
+                            { value: "sacos", label: "Em sacos" },
+                            { value: "chao", label: "No chão" },
+                          ]}
+                        />
+                      </Field>
+                      <Field>
+                        <Label htmlFor="sacos">Quantidade de sacos *</Label>
+                        <Input id="sacos" type="number" min="1" value={quantidadeSacos} onChange={(event) => setQuantidadeSacos(event.target.value)} />
+                      </Field>
+                    </>
+                  ) : null}
+
+                  {categoria.calculo === "moveis" ? (
+                    <>
+                      <Field>
+                        <Label>Como deseja calcular? *</Label>
+                        <ChoiceGrid
+                          value={moveisModo}
+                          onChange={setMoveisModo}
+                          options={[
+                            { value: "carga", label: "Por carga" },
+                            { value: "item", label: "Por item" },
+                          ]}
+                        />
+                      </Field>
+                      {moveisModo === "carga" ? (
+                        <Field>
+                          <Label htmlFor="cargas">Quantas cargas? *</Label>
+                          <Input id="cargas" type="number" min="1" value={cargas} onChange={(event) => setCargas(event.target.value)} />
+                        </Field>
+                      ) : null}
+                      {moveisModo === "item" ? (
+                        <div className="grid gap-4 md:grid-cols-3">
+                          <Field>
+                            <Label htmlFor="peq">Móvel pequeno</Label>
+                            <Input id="peq" type="number" min="0" value={peq} onChange={(event) => setPeq(event.target.value)} />
+                          </Field>
+                          <Field>
+                            <Label htmlFor="med">Móvel médio</Label>
+                            <Input id="med" type="number" min="0" value={med} onChange={(event) => setMed(event.target.value)} />
+                          </Field>
+                          <Field>
+                            <Label htmlFor="gra">Móvel grande</Label>
+                            <Input id="gra" type="number" min="0" value={gra} onChange={(event) => setGra(event.target.value)} />
+                          </Field>
+                        </div>
+                      ) : null}
+                    </>
+                  ) : null}
+
+                  <Field>
+                    <Label>Tipo de acesso *</Label>
+                    <ChoiceGrid
+                      value={tipoAcesso}
+                      onChange={setTipoAcesso}
+                      options={[
+                        { value: "apartamento", label: "Apartamento" },
+                        { value: "casa", label: "Casa" },
+                      ]}
+                    />
+                  </Field>
+
+                  {tipoAcesso === "apartamento" ? (
+                    <div className="grid gap-4 rounded-[24px] border border-cyan-100 bg-cyan-50/70 p-4 md:grid-cols-2">
+                      <Field>
+                        <Label htmlFor="andares">Número de andares *</Label>
+                        <Input id="andares" type="number" min="0" value={numeroAndares} onChange={(event) => setNumeroAndares(event.target.value)} />
+                      </Field>
+                      <Field>
+                        <Label>Tem elevador? *</Label>
+                        <ChoiceGrid value={temElevador} onChange={setTemElevador} options={[{ value: "sim", label: "Sim" }, { value: "nao", label: "Não" }]} />
+                      </Field>
+                    </div>
+                  ) : null}
+
+                  <div className="grid gap-4 md:grid-cols-[1.1fr_0.9fr]">
+                    <Field>
+                      <Label>Quantidade de pessoas necessárias *</Label>
+                      <ChoiceGrid value={quantidadePessoas} onChange={setQuantidadePessoas} options={pessoasOptions} columns={3} />
+                    </Field>
+                    <Field>
+                      <Label htmlFor="tempo">Tempo estimado (horas) *</Label>
+                      <Input id="tempo" type="number" min="0.5" step="0.5" value={tempoEstimado} onChange={(event) => setTempoEstimado(event.target.value)} placeholder="Ex: 2.5" />
+                    </Field>
+                  </div>
+
+                  <div className="flex items-center gap-3 rounded-[22px] border border-cyan-100 bg-cyan-50/70 p-4">
+                    <Checkbox id="dificil" checked={acessoDificil} onCheckedChange={(checked) => setAcessoDificil(Boolean(checked))} />
+                    <Label htmlFor="dificil" className="cursor-pointer font-medium leading-6">
+                      O acesso é considerado difícil
+                    </Label>
+                  </div>
+
+                  <Button
+                    type="button"
+                    onClick={calcularOrcamento}
+                    disabled={!podeCalcularOrcamento}
+                    className="w-full rounded-2xl bg-cyan-500 py-6 text-lg font-bold text-white hover:bg-cyan-400"
+                  >
+                    <Calculator className="mr-2 h-5 w-5" />
+                    Calcular orçamento
+                  </Button>
+                </div>
+              </Card>
+            ) : null}
+          </div>
+
+          <Card className="h-fit rounded-[30px] border border-slate-900 bg-[linear-gradient(160deg,#082f49_0%,#041c2d_100%)] p-6 text-white shadow-[0_28px_70px_-34px_rgba(2,132,199,0.4)] xl:sticky xl:top-28">
+            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-200">Resumo</p>
+            <h2 className="mt-3 text-[1.75rem] font-bold leading-tight">{categoria.nome}</h2>
+            <p className="mt-3 text-sm leading-7 text-slate-300">{categoria.descricao}</p>
+            <div className="mt-6 space-y-3 rounded-[24px] border border-white/10 bg-white/5 p-4">
+              <SummaryRow icon={<MapPin className="h-4.5 w-4.5" />} label="Destino" value={destino || "Ainda não definido"} />
+              <SummaryRow icon={<Route className="h-4.5 w-4.5" />} label="Distância" value={km !== null ? `${km.toFixed(1)} km` : "Calcule a distância"} />
+              <SummaryRow icon={<Calculator className="h-4.5 w-4.5" />} label="Valor" value={orcamento !== null ? `EUR ${orcamento.toFixed(2)}` : "Ainda não calculado"} />
+            </div>
+
+            {orcamento !== null ? (
+              <Button
+                type="button"
+                onClick={confirmarPedido}
+                className="mt-6 w-full rounded-2xl bg-cyan-500 py-6 text-base font-bold text-white hover:bg-cyan-400"
+              >
+                <Phone className="mr-2 h-5 w-5" />
+                Confirmar pedido
+              </Button>
+            ) : (
+              <div className="mt-6 rounded-[24px] border border-dashed border-white/15 bg-white/5 p-4 text-sm leading-7 text-slate-300">
+                Calcule a distância e complete os detalhes para ver o valor final.
+              </div>
+            )}
+          </Card>
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function Field({ children }: { children: ReactNode }) {
+  return <div className="space-y-2.5">{children}</div>;
+}
+
+function StepTitle({ number, title }: { number: string; title: string }) {
+  return (
+    <div>
+      <div className="inline-flex items-center gap-2 rounded-full border border-cyan-100 bg-cyan-50 px-3 py-1.5 text-sm font-semibold text-cyan-700">
+        <span className="flex h-6 w-6 items-center justify-center rounded-full bg-cyan-500 text-white">
+          {number}
+        </span>
+        Etapa {number}
+      </div>
+      <h2 className="mt-4 text-[1.55rem] font-bold leading-tight text-slate-950">{title}</h2>
+    </div>
+  );
+}
+
+function SummaryRow({
+  icon,
+  label,
+  value,
+}: {
+  icon: ReactNode;
+  label: string;
+  value: string;
+}) {
+  return (
+    <div className="flex items-start gap-3 text-sm">
+      <div className="mt-0.5 text-cyan-200">{icon}</div>
+      <div className="min-w-0">
+        <p className="font-semibold text-cyan-100">{label}</p>
+        <p className="mt-1 break-words leading-6 text-slate-300">{value}</p>
+      </div>
+    </div>
+  );
+}
+
+function AddressField({
+  id,
+  label,
+  value,
+  onChange,
+  placeholder,
+}: {
+  id: string;
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  placeholder: string;
+}) {
+  const [focused, setFocused] = useState(false);
+  const [predictions, setPredictions] = useState<MapsPrediction[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    const query = value.trim();
+    if (!focused || query.length < 3) {
+      setPredictions([]);
+      setLoading(false);
+      setError("");
+      return;
+    }
+
+    const controller = new AbortController();
+    const timeout = window.setTimeout(async () => {
+      try {
+        setLoading(true);
+        setError("");
+        const response = await fetch("/api/maps/autocomplete", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ input: query }),
+          signal: controller.signal,
+        });
+        const data = await response.json();
+        if (!response.ok) {
+          setError(
+            data?.error === "maps_unconfigured"
+              ? "A chave Google Maps ainda não está configurada."
+              : "Não foi possível carregar sugestões.",
+          );
+          setPredictions([]);
+          return;
+        }
+        setPredictions(Array.isArray(data.predictions) ? data.predictions : []);
+      } catch (fetchError) {
+        if (fetchError instanceof DOMException && fetchError.name === "AbortError") return;
+        setError("Não foi possível carregar sugestões.");
+        setPredictions([]);
+      } finally {
+        setLoading(false);
+      }
+    }, 260);
+
+    return () => {
+      controller.abort();
+      window.clearTimeout(timeout);
+    };
+  }, [focused, value]);
+
+  return (
+    <Field>
+      <Label htmlFor={id}>{label}</Label>
+      <div className="relative">
+        <Input
+          id={id}
+          value={value}
+          onChange={(event) => onChange(event.target.value)}
+          onFocus={() => setFocused(true)}
+          onBlur={() => window.setTimeout(() => setFocused(false), 140)}
+          placeholder={placeholder}
+          autoComplete="street-address"
+        />
+        {loading ? (
+          <div className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-cyan-600">
+            <Loader2 className="h-4 w-4 animate-spin" />
+          </div>
+        ) : null}
+        {focused && predictions.length > 0 ? (
+          <div className="absolute left-0 right-0 top-[calc(100%+0.5rem)] z-20 overflow-hidden rounded-[22px] border border-cyan-100 bg-white shadow-[0_24px_60px_-34px_rgba(14,116,144,0.3)]">
+            {predictions.map((prediction) => (
+              <button
+                key={prediction.placeId}
+                type="button"
+                onMouseDown={(event) => {
+                  event.preventDefault();
+                  onChange(prediction.description);
+                  setPredictions([]);
+                  setFocused(false);
+                }}
+                className="flex w-full items-start gap-3 border-b border-cyan-50 px-4 py-3 text-left transition last:border-b-0 hover:bg-cyan-50"
+              >
+                <MapPin className="mt-1 h-4 w-4 flex-shrink-0 text-cyan-600" />
+                <div>
+                  <p className="text-sm font-semibold text-slate-950">{prediction.mainText}</p>
+                  <p className="text-sm leading-6 text-slate-500">
+                    {prediction.secondaryText || prediction.description}
+                  </p>
+                </div>
+              </button>
+            ))}
+          </div>
+        ) : null}
+      </div>
+      {value.trim().length > 0 && value.trim().length < 3 ? (
+        <p className="text-xs leading-6 text-slate-500">
+          Escreva pelo menos 3 caracteres para ver sugestões do Google.
+        </p>
+      ) : null}
+      {error ? <p className="text-xs leading-6 text-amber-700">{error}</p> : null}
+    </Field>
+  );
+}
+
+function ChoiceGrid({
+  value,
+  onChange,
+  options,
+  columns = 2,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  options: ChoiceOption[];
+  columns?: 2 | 3;
+}) {
+  const gridClass =
+    columns === 3
+      ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
+      : "grid-cols-1 sm:grid-cols-2";
+
+  return (
+    <div className={`grid gap-3 ${gridClass}`}>
+      {options.map((option) => {
+        const active = value === option.value;
+        return (
+          <button
+            key={option.value}
+            type="button"
+            onClick={() => onChange(option.value)}
+            className={`min-h-14 rounded-[22px] border px-4 py-3 text-left text-sm font-semibold transition ${
+              active
+                ? "border-cyan-400 bg-cyan-500 text-white shadow-[0_16px_30px_-18px_rgba(6,182,212,0.7)]"
+                : "border-cyan-100 bg-white text-slate-700 hover:border-cyan-300 hover:bg-cyan-50"
+            }`}
+          >
+            {option.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}

@@ -1,0 +1,9 @@
+{
+  "query": "INSERT INTO colaboradores (nome, senha, funcao, valorHora, isAdmin) VALUES ('WANDERSON', '$2b$10$2bTL7ksNd/dH/S.mSv.5ou91ZG8O9P9QuLlkm8x5jxzNZjW5QLhNu', 'motorista', 0.00, 1)",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 46koRjW9As9s3Mc.379722e8d1e9 --database 9kEaxw5PeTniExyaRSHpgx --execute INSERT INTO colaboradores (nome, senha, funcao, valorHora, isAdmin) VALUES ('WANDERSON', '$2b$10$2bTL7ksNd/dH/S.mSv.5ou91ZG8O9P9QuLlkm8x5jxzNZjW5QLhNu', 'motorista', 0.00, 1)",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 375
+}

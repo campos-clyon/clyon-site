@@ -1,0 +1,16 @@
+{
+  "query": "SELECT id, colaboradorId, data, DATE_FORMAT(data, '%Y-%m-%d %H:%i:%s') as data_formatada FROM registrosHoras WHERE DATE(data) = '2026-02-09' LIMIT 1;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 46koRjW9As9s3Mc.379722e8d1e9 --database 9kEaxw5PeTniExyaRSHpgx --execute SELECT id, colaboradorId, data, DATE_FORMAT(data, '%Y-%m-%d %H:%i:%s') as data_formatada FROM registrosHoras WHERE DATE(data) = '2026-02-09' LIMIT 1;",
+  "rows": [
+    {
+      "id": "1140001",
+      "colaboradorId": "3",
+      "data": "2026-02-09 00:00:00",
+      "data_formatada": "2026-02-09 00:00:00"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tcolaboradorId\tdata\tdata_formatada\n1140001\t3\t2026-02-09 00:00:00\t2026-02-09 00:00:00\n",
+  "stderr": "",
+  "execution_time_ms": 1548
+}

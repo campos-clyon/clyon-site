@@ -1,0 +1,63 @@
+                ) : (
+                  <>
+                    <div className="space-y-2">
+                      <Label htmlFor="endereco-destino" className="text-base font-semibold flex items-center gap-2">
+                        <span className="bg-[#0097b2] text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">1</span>
+                        Endereço de Destino *
+                      </Label>
+                      <div className="relative">
+                        <Input
+                          id="endereco-destino"
+                          type="text"
+                          placeholder="Ex: Rua da Paz, 123, Lisboa"
+                          value={enderecoCheagada}
+                          onChange={(e) => {
+                            setEnderecoCheagada(e.target.value);
+                            buscarSugestoesCheagada(e.target.value);
+                          }}
+                          className="text-base"
+                        />
+                        {carregandoCheagada && <Loader className="absolute right-3 top-3 h-5 w-5 animate-spin text-[#0097b2]" />}
+                        {sugestoesCheagada.length > 0 && (
+                          <div className="absolute top-full left-0 right-0 bg-white border border-gray-300 rounded-md shadow-lg z-10 max-h-48 overflow-y-auto">
+                            {sugestoesCheagada.map((sugestao, idx) => (
+                              <button
+                                key={idx}
+                                onClick={() => {
+                                  setEnderecoCheagada(sugestao.description);
+                                  setSugestoesCheagada([]);
+                                }}
+                                className="w-full text-left px-4 py-2 hover:bg-gray-100 text-sm"
+                              >
+                                {sugestao.description}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    {aguardandoCalculo && !distancia && !carregandoDistancia && !erroDistancia && (
+                      <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg flex items-center gap-2">
+                        <div className="h-5 w-5 rounded-full border-2 border-amber-300 border-t-amber-500 animate-spin" />
+                        <p className="text-sm text-amber-700">Aguardando para calcular distância...</p>
+                      </div>
+                    )}
+                    {distancia !== null && (
+                      <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                        <p className="text-sm text-gray-600">Distância calculada:</p>
+                        <p className="text-2xl font-bold text-[#0097b2]">{distancia} km</p>
+                      </div>
+                    )}
+                    {carregandoDistancia && (
+                      <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg flex items-center gap-2">
+                        <Loader className="h-5 w-5 animate-spin text-[#0097b2]" />
+                        <p className="text-sm text-gray-600">Calculando distância...</p>
+                      </div>
+                    )}
+                    {erroDistancia && (
+                      <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+                        <p className="text-sm text-red-600">⚠️ {erroDistancia}</p>
+                      </div>
+                    )}
+                  </>
+                )

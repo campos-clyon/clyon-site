@@ -1,0 +1,22 @@
+{
+  "name": "CLYON - Recolha de Entulho e Móveis",
+  "short_name": "CLYON",
+  "description": "Recolha de entulho, móveis e monos em Lisboa e Setúbal. Orçamento grátis em 11 minutos.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#06b6d4",
+  "lang": "pt-PT",
+  "icons": [
+    {
+      "src": "/favicon-16x16.png",
+      "sizes": "16x16",
+      "type": "image/png"
+    },
+    {
+      "src": "/favicon-32x32.png",
+      "sizes": "32x32",
+      "type": "image/png"
+    }
+  ]
+}

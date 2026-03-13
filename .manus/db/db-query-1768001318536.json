@@ -1,0 +1,52 @@
+{
+  "query": "SELECT id, nome, funcao, valorHora, isAdmin FROM colaboradores;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 46koRjW9As9s3Mc.379722e8d1e9 --database 9kEaxw5PeTniExyaRSHpgx --execute SELECT id, nome, funcao, valorHora, isAdmin FROM colaboradores;",
+  "rows": [
+    {
+      "id": "1",
+      "nome": "YANNICK",
+      "funcao": "motorista",
+      "valorHora": "8.00",
+      "isAdmin": "0"
+    },
+    {
+      "id": "2",
+      "nome": "VINICIUS",
+      "funcao": "motorista",
+      "valorHora": "8.00",
+      "isAdmin": "0"
+    },
+    {
+      "id": "3",
+      "nome": "MATHEUS",
+      "funcao": "ajudante",
+      "valorHora": "7.00",
+      "isAdmin": "0"
+    },
+    {
+      "id": "4",
+      "nome": "RODRIGO",
+      "funcao": "ajudante",
+      "valorHora": "7.00",
+      "isAdmin": "0"
+    },
+    {
+      "id": "5",
+      "nome": "EDUARDO",
+      "funcao": "motorista",
+      "valorHora": "8.00",
+      "isAdmin": "0"
+    },
+    {
+      "id": "6",
+      "nome": "ADMIN",
+      "funcao": "motorista",
+      "valorHora": "0.00",
+      "isAdmin": "1"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tnome\tfuncao\tvalorHora\tisAdmin\n1\tYANNICK\tmotorista\t8.00\t0\n2\tVINICIUS\tmotorista\t8.00\t0\n3\tMATHEUS\tajudante\t7.00\t0\n4\tRODRIGO\tajudante\t7.00\t0\n5\tEDUARDO\tmotorista\t8.00\t0\n6\tADMIN\tmotorista\t0.00\t1\n",
+  "stderr": "",
+  "execution_time_ms": 1537
+}

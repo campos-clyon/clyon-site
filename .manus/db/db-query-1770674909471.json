@@ -1,0 +1,18 @@
+{
+  "query": "SELECT r.id, r.colaboradorId, r.data, r.horaEntrada, r.horaSaida, c.nome FROM registrosHoras r LEFT JOIN colaboradores c ON r.colaboradorId = c.id WHERE r.data >= '2026-02-09 00:00:00' AND r.data <= '2026-02-09 23:59:59';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 46koRjW9As9s3Mc.379722e8d1e9 --database 9kEaxw5PeTniExyaRSHpgx --execute SELECT r.id, r.colaboradorId, r.data, r.horaEntrada, r.horaSaida, c.nome FROM registrosHoras r LEFT JOIN colaboradores c ON r.colaboradorId = c.id WHERE r.data >= '2026-02-09 00:00:00' AND r.data <= '2026-02-09 23:59:59';",
+  "rows": [
+    {
+      "id": "1140001",
+      "colaboradorId": "3",
+      "data": "2026-02-09 00:00:00",
+      "horaEntrada": "09:30",
+      "horaSaida": "18:00",
+      "nome": "MATHEUS AMORIN"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tcolaboradorId\tdata\thoraEntrada\thoraSaida\tnome\n1140001\t3\t2026-02-09 00:00:00\t09:30\t18:00\tMATHEUS AMORIN\n",
+  "stderr": "",
+  "execution_time_ms": 1526
+}

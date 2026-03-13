@@ -1,0 +1,68 @@
+# robots.txt — CLYON (clyon.pt)
+# Atualizado: 2026-03-10
+# IMPORTANTE: Apenas https://clyon.pt é a versão canônica
+
+# Regras gerais — permitir indexação de todas as páginas públicas
+User-agent: *
+Allow: /
+
+# Bloquear páginas privadas de colaboradores
+Disallow: /colaboradores
+Disallow: /colaboradores/
+Disallow: /colaboradores/admin
+Disallow: /colaboradores/dashboard
+Disallow: /colaboradores/alterar-senha
+
+# Bloquear endpoints de API
+Disallow: /api/
+Disallow: /api/trpc/
+
+# Bloquear ficheiros de sistema
+Disallow: /*.json$
+Disallow: /node_modules/
+
+# Sitemap — versão canônica
+Sitemap: https://clyon.pt/sitemap.xml
+
+# Google Bot — crawling rápido, sem delay
+User-agent: Googlebot
+Allow: /
+Disallow: /colaboradores/
+Disallow: /api/
+Crawl-delay: 0
+
+# Bing Bot
+User-agent: Bingbot
+Allow: /
+Disallow: /colaboradores/
+Disallow: /api/
+Crawl-delay: 1
+
+# Bots de redes sociais — permitir tudo para Open Graph
+User-agent: facebookexternalhit
+Allow: /
+
+User-agent: Twitterbot
+Allow: /
+
+User-agent: LinkedInBot
+Allow: /
+
+User-agent: WhatsApp
+Allow: /
+
+# Bloquear bots maliciosos e scrapers
+User-agent: AhrefsBot
+Disallow: /
+
+User-agent: SemrushBot
+Disallow: /
+
+User-agent: DotBot
+Disallow: /
+
+User-agent: MJ12bot
+Disallow: /
+
+User-agent: YandexBot
+Disallow: /

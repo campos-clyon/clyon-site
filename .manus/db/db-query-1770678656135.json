@@ -1,0 +1,18 @@
+{
+  "query": "SELECT nome, id FROM colaboradores WHERE nome LIKE '%MATHEUS%';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 46koRjW9As9s3Mc.379722e8d1e9 --database 9kEaxw5PeTniExyaRSHpgx --execute SELECT nome, id FROM colaboradores WHERE nome LIKE '%MATHEUS%';",
+  "rows": [
+    {
+      "nome": "Matheus",
+      "id": "210002"
+    },
+    {
+      "nome": "MATHEUS AMORIN",
+      "id": "3"
+    }
+  ],
+  "messages": [],
+  "stdout": "nome\tid\nMatheus\t210002\nMATHEUS AMORIN\t3\n",
+  "stderr": "",
+  "execution_time_ms": 1882
+}

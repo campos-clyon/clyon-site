@@ -1,0 +1,9 @@
+{
+  "query": "UPDATE colaboradores SET valorHora = '7.00' WHERE nome IN ('VINICIUS', 'YANNICK');\nUPDATE colaboradores SET valorHora = '8.00' WHERE nome IN ('EDUARDO', 'MATHEUS', 'RODRIGO');",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 46koRjW9As9s3Mc.379722e8d1e9 --database 9kEaxw5PeTniExyaRSHpgx --execute UPDATE colaboradores SET valorHora = '7.00' WHERE nome IN ('VINICIUS', 'YANNICK');\nUPDATE colaboradores SET valorHora = '8.00' WHERE nome IN ('EDUARDO', 'MATHEUS', 'RODRIGO');",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 1839
+}
