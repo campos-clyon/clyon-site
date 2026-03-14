@@ -1,6 +1,7 @@
 import { promises as fs } from "fs";
 import path from "path";
 import { randomUUID } from "crypto";
+import { getDb, getGalleryMediaItems, replaceGalleryMediaItems } from "@/lib/db";
 
 export const gallerySections = ["hero", "showcase"] as const;
 export const galleryPhases = ["before", "during", "after"] as const;
@@ -164,6 +165,43 @@ function normalizeItems(items: GalleryItem[]) {
 }
 
 export async function readGalleryData() {
+  const db = await getDb();
+
+  if (db) {
+    try {
+      const items = await getGalleryMediaItems();
+
+      if (items.length === 0) {
+        await replaceGalleryMediaItems(defaultGalleryData.items);
+        return {
+          items: normalizeItems(defaultGalleryData.items),
+        };
+      }
+
+      return {
+        items: normalizeItems(
+          items.map((item) => ({
+            id: item.id,
+            section: item.section as GallerySection,
+            title: item.title,
+            subtitle: item.subtitle || "",
+            description: item.description || "",
+            alt: item.alt,
+            imageUrl: item.imageUrl,
+            order: Number(item.order || 1),
+            isActive: Boolean(item.isActive),
+            projectKey: item.projectKey || "",
+            phase: (item.phase as GalleryPhase | null) || undefined,
+          })),
+        ),
+      };
+    } catch {
+      return {
+        items: normalizeItems(defaultGalleryData.items),
+      };
+    }
+  }
+
   try {
     const content = await fs.readFile(GALLERY_DATA_PATH, "utf8");
     const parsed = JSON.parse(content) as GalleryData;
@@ -179,7 +217,7 @@ export async function readGalleryData() {
 }
 
 export async function writeGalleryData(data: GalleryData) {
-  await ensureGalleryStorage();
+  const db = await getDb();
   const normalized = {
     items: sortItems(data.items).map((item) => ({
       ...item,
@@ -189,6 +227,12 @@ export async function writeGalleryData(data: GalleryData) {
     })),
   };
 
+  if (db) {
+    await replaceGalleryMediaItems(normalized.items);
+    return normalized;
+  }
+
+  await ensureGalleryStorage();
   await fs.writeFile(GALLERY_DATA_PATH, JSON.stringify(normalized, null, 2), "utf8");
   return normalized;
 }

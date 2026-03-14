@@ -1,7 +1,7 @@
 import { drizzle } from "drizzle-orm/mysql2";
 import mysql from "mysql2/promise";
-import { eq, desc } from "drizzle-orm";
-import { users, colaboradores, registrosHoras, simulatorSettings } from "../../drizzle/schema";
+import { eq, desc, inArray } from "drizzle-orm";
+import { users, colaboradores, registrosHoras, simulatorSettings, galleryMedia } from "../../drizzle/schema";
 import type { InsertUser } from "../../drizzle/schema";
 import { defaultSimulatorSettings } from "@/lib/simulator-settings";
 
@@ -29,6 +29,7 @@ export async function getDb() {
 }
 
 let simulatorTableEnsured = false;
+let galleryMediaTableEnsured = false;
 
 export async function ensureSimulatorSettingsTable() {
   if (simulatorTableEnsured) return;
@@ -106,6 +107,105 @@ export async function upsertSimulatorSetting(data: {
         description: data.description ?? null,
       },
     });
+}
+
+export async function ensureGalleryMediaTable() {
+  if (galleryMediaTableEnsured) return;
+
+  const pool = await getPool();
+  if (!pool) throw new Error("Database not available");
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS galleryMedia (
+      id varchar(120) NOT NULL PRIMARY KEY,
+      section varchar(32) NOT NULL,
+      title varchar(180) NOT NULL,
+      subtitle text NULL,
+      description text NULL,
+      alt varchar(220) NOT NULL,
+      imageUrl text NOT NULL,
+      \`order\` int NOT NULL DEFAULT 1,
+      isActive int NOT NULL DEFAULT 1,
+      projectKey varchar(160) NULL,
+      phase varchar(24) NULL,
+      createdAt timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updatedAt timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    )
+  `);
+
+  galleryMediaTableEnsured = true;
+}
+
+export async function getGalleryMediaItems() {
+  await ensureGalleryMediaTable();
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(galleryMedia);
+}
+
+export async function replaceGalleryMediaItems(
+  items: Array<{
+    id: string;
+    section: string;
+    title: string;
+    subtitle?: string | null;
+    description?: string | null;
+    alt: string;
+    imageUrl: string;
+    order: number;
+    isActive: boolean;
+    projectKey?: string | null;
+    phase?: string | null;
+  }>,
+) {
+  await ensureGalleryMediaTable();
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  for (const item of items) {
+    await db
+      .insert(galleryMedia)
+      .values({
+        id: item.id,
+        section: item.section,
+        title: item.title,
+        subtitle: item.subtitle ?? null,
+        description: item.description ?? null,
+        alt: item.alt,
+        imageUrl: item.imageUrl,
+        order: item.order,
+        isActive: item.isActive ? 1 : 0,
+        projectKey: item.projectKey ?? null,
+        phase: item.phase ?? null,
+      })
+      .onDuplicateKeyUpdate({
+        set: {
+          section: item.section,
+          title: item.title,
+          subtitle: item.subtitle ?? null,
+          description: item.description ?? null,
+          alt: item.alt,
+          imageUrl: item.imageUrl,
+          order: item.order,
+          isActive: item.isActive ? 1 : 0,
+          projectKey: item.projectKey ?? null,
+          phase: item.phase ?? null,
+        },
+      });
+  }
+
+  if (items.length === 0) {
+    await db.delete(galleryMedia);
+    return;
+  }
+
+  const idsToDelete = (await db.select({ id: galleryMedia.id }).from(galleryMedia))
+    .map((row) => row.id)
+    .filter((id) => !items.some((item) => item.id === id));
+
+  if (idsToDelete.length > 0) {
+    await db.delete(galleryMedia).where(inArray(galleryMedia.id, idsToDelete));
+  }
 }
 
 // ─── User helpers ───────────────────────────────────────────────────────────

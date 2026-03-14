@@ -64,9 +64,27 @@ export const simulatorSettings = mysqlTable("simulatorSettings", {
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
 
+export const galleryMedia = mysqlTable("galleryMedia", {
+  id: varchar("id", { length: 120 }).primaryKey(),
+  section: varchar("section", { length: 32 }).notNull(),
+  title: varchar("title", { length: 180 }).notNull(),
+  subtitle: text("subtitle"),
+  description: text("description"),
+  alt: varchar("alt", { length: 220 }).notNull(),
+  imageUrl: text("imageUrl").notNull(),
+  order: int("order").notNull().default(1),
+  isActive: int("isActive").notNull().default(1),
+  projectKey: varchar("projectKey", { length: 160 }),
+  phase: varchar("phase", { length: 24 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
 export type Colaborador = typeof colaboradores.$inferSelect;
 export type InsertColaborador = typeof colaboradores.$inferInsert;
 export type RegistroHoras = typeof registrosHoras.$inferSelect;
 export type InsertRegistroHoras = typeof registrosHoras.$inferInsert;
 export type SimulatorSetting = typeof simulatorSettings.$inferSelect;
 export type InsertSimulatorSetting = typeof simulatorSettings.$inferInsert;
+export type GalleryMedia = typeof galleryMedia.$inferSelect;
+export type InsertGalleryMedia = typeof galleryMedia.$inferInsert;

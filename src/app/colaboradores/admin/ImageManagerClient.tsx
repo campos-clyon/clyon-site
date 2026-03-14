@@ -40,6 +40,7 @@ type GalleryFormState = {
   subtitle: string;
   description: string;
   alt: string;
+  imageUrl: string;
   order: string;
   projectKey: string;
   phase: GalleryPhase;
@@ -52,6 +53,7 @@ const defaultForm: GalleryFormState = {
   subtitle: "",
   description: "",
   alt: "",
+  imageUrl: "",
   order: "1",
   projectKey: "",
   phase: "",
@@ -139,8 +141,8 @@ export default function ColaboradorAdminClient() {
       return;
     }
 
-    if (!newFile) {
-      setError("Escolha uma imagem para carregar.");
+    if (!newFile && !newItem.imageUrl.trim()) {
+      setError("Escolha uma imagem ou indique um URL publico.");
       return;
     }
 
@@ -149,23 +151,47 @@ export default function ColaboradorAdminClient() {
     setMessage("");
 
     try {
-      const formData = new FormData();
-      formData.append("file", newFile);
-      formData.append("section", newItem.section);
-      formData.append("title", newItem.title);
-      formData.append("subtitle", newItem.subtitle);
-      formData.append("description", newItem.description);
-      formData.append("alt", newItem.alt);
-      formData.append("order", newItem.order || "1");
-      formData.append("projectKey", newItem.projectKey);
-      formData.append("phase", newItem.phase);
-      formData.append("isActive", String(newItem.isActive));
+      let response: Response;
 
-      const response = await fetch("/api/media/gallery", {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
-        body: formData,
-      });
+      if (newFile) {
+        const formData = new FormData();
+        formData.append("file", newFile);
+        formData.append("section", newItem.section);
+        formData.append("title", newItem.title);
+        formData.append("subtitle", newItem.subtitle);
+        formData.append("description", newItem.description);
+        formData.append("alt", newItem.alt);
+        formData.append("order", newItem.order || "1");
+        formData.append("projectKey", newItem.projectKey);
+        formData.append("phase", newItem.phase);
+        formData.append("isActive", String(newItem.isActive));
+
+        response = await fetch("/api/media/gallery", {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}` },
+          body: formData,
+        });
+      } else {
+        response = await fetch("/api/media/gallery", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            section: newItem.section,
+            title: newItem.title,
+            subtitle: newItem.subtitle,
+            description: newItem.description,
+            alt: newItem.alt,
+            imageUrl: newItem.imageUrl,
+            order: Number(newItem.order || "1"),
+            projectKey: newItem.projectKey,
+            phase: newItem.phase,
+            isActive: newItem.isActive,
+          }),
+        });
+      }
 
       const data = await response.json();
 
@@ -357,6 +383,11 @@ export default function ColaboradorAdminClient() {
           </div>
         )}
 
+        <div className="rounded-2xl border border-amber-300/30 bg-amber-400/10 px-4 py-3 text-sm text-amber-50">
+          Em producao no Vercel, ficheiros guardados no disco local podem voltar ao estado anterior. Para uma troca
+          estavel no site publicado, preencha tambem a URL publica da imagem.
+        </div>
+
         <Card className="border-cyan-100/20 bg-white/95">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-slate-950">
@@ -369,7 +400,7 @@ export default function ColaboradorAdminClient() {
           </CardHeader>
           <CardContent>
             <form className="space-y-5" onSubmit={handleCreate}>
-              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
                 <div className="space-y-2">
                   <Label htmlFor="section">Secção</Label>
                   <select
@@ -400,6 +431,16 @@ export default function ColaboradorAdminClient() {
                     value={newItem.alt}
                     onChange={(event) => updateNewItem("alt", event.target.value)}
                     required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="imageUrl">URL da imagem</Label>
+                  <Input
+                    id="imageUrl"
+                    value={newItem.imageUrl}
+                    onChange={(event) => updateNewItem("imageUrl", event.target.value)}
+                    placeholder="https://..."
                   />
                 </div>
 
@@ -471,7 +512,7 @@ export default function ColaboradorAdminClient() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="file">Imagem</Label>
+                <Label htmlFor="file">Imagem do computador</Label>
                 <Input
                   id="file"
                   type="file"
@@ -588,7 +629,7 @@ function GallerySectionCard({
               </div>
 
               <div className="grid gap-4">
-                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
                   <div className="space-y-2">
                     <Label>Título</Label>
                     <Input
@@ -608,6 +649,13 @@ function GallerySectionCard({
                     <Input
                       value={item.alt}
                       onChange={(event) => onChange(item.id, "alt", event.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>URL da imagem</Label>
+                    <Input
+                      value={item.imageUrl}
+                      onChange={(event) => onChange(item.id, "imageUrl", event.target.value)}
                     />
                   </div>
                   <div className="space-y-2">
