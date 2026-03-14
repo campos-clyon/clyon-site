@@ -74,9 +74,15 @@ export default function ColaboradorDashboard() {
     const token = localStorage.getItem("colaborador_token");
     const nome = localStorage.getItem("colaborador_nome");
     const id = localStorage.getItem("colaborador_id");
+    const isAdmin = localStorage.getItem("colaborador_isAdmin");
     
     if (!token) {
       router.push("/colaboradores");
+      return;
+    }
+
+    if (isAdmin === "1") {
+      router.push("/colaboradores/admin");
       return;
     }
     
