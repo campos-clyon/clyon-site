@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { unstable_noStore as noStore } from "next/cache";
 import Link from "next/link";
 import {
   ArrowRight,
@@ -13,6 +14,7 @@ import {
 } from "lucide-react";
 
 import ImageCarousel from "@/components/ImageCarousel";
+import { getHeroCarouselImages } from "@/lib/work-gallery";
 
 export const metadata: Metadata = {
   title: "Recolha de Entulho, Móveis e Monos em Lisboa e Margem Sul | CLYON",
@@ -103,33 +105,6 @@ const stats = [
   { value: "Mesmo dia", label: "disponibilidade em muitos pedidos" },
 ];
 
-const workImages = [
-  {
-    url: "/images/service-1.webp",
-    alt: "Recolha de entulho",
-    title: "Recolha de Entulho",
-    subtitle: "Fotos reais dos nossos trabalhos",
-  },
-  {
-    url: "/images/service-2.webp",
-    alt: "Recolha de móveis",
-    title: "Recolha de Móveis",
-    subtitle: "Remoção segura e profissional",
-  },
-  {
-    url: "/images/service-3.webp",
-    alt: "Mudanças completas",
-    title: "Mudanças Completas",
-    subtitle: "Transporte profissional",
-  },
-  {
-    url: "/images/service-4.webp",
-    alt: "Limpeza de quintais",
-    title: "Limpeza de Quintais",
-    subtitle: "Espaços limpos e organizados",
-  },
-];
-
 const featuredTestimonials = [
   {
     service: "Recolha de Entulho",
@@ -193,9 +168,10 @@ const differentiators = [
   "Fluxo simples do pedido até à recolha",
 ];
 
-export const revalidate = 86400;
+export default async function HomePage() {
+  noStore();
+  const workImages = await getHeroCarouselImages();
 
-export default function HomePage() {
   return (
     <div className="min-h-screen bg-white text-slate-900">
       <section className="relative overflow-hidden bg-gradient-to-br from-cyan-100 via-cyan-50 to-white">

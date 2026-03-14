@@ -1,28 +1,7 @@
+import { unstable_noStore as noStore } from "next/cache";
 import Link from "next/link";
 import { ArrowRight, ArrowUpRight, MessageSquareQuote, Sparkles } from "lucide-react";
-
-const workItems = [
-  {
-    title: "Recolha de Entulho",
-    desc: "Remoção organizada para obras e remodelações com destino responsável.",
-    image: "/images/service-1.webp",
-  },
-  {
-    title: "Recolha de Móveis",
-    desc: "Retiramos móveis antigos e grandes volumes sem complicações.",
-    image: "/images/service-2.webp",
-  },
-  {
-    title: "Mudanças Completas",
-    desc: "Apoio profissional no transporte e reorganização do espaço.",
-    image: "/images/service-3.webp",
-  },
-  {
-    title: "Limpeza Pós-Obra",
-    desc: "Acabamento final para entregar o imóvel pronto a usar.",
-    image: "/images/service-4.webp",
-  },
-];
+import { getShowcaseProjects, phaseLabel } from "@/lib/work-gallery";
 
 const testimonials = [
   {
@@ -61,9 +40,10 @@ const stats = [
   { value: "Mesmo dia", label: "em muitos pedidos" },
 ];
 
-export const revalidate = 86400;
+export default async function TrabalhosPage() {
+  noStore();
+  const showcaseProjects = await getShowcaseProjects();
 
-export default function TrabalhosPage() {
   return (
     <div className="min-h-screen bg-white">
       <section className="relative overflow-hidden bg-slate-950 text-white">
@@ -110,6 +90,77 @@ export default function TrabalhosPage() {
                 </div>
               ))}
             </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="bg-white py-16 lg:py-20">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+            <div>
+              <p className="text-sm font-semibold uppercase tracking-[0.22em] text-cyan-700">
+                Antes e depois
+              </p>
+              <h2 className="mt-3 text-4xl font-bold text-slate-950">
+                Casos reais geridos no painel.
+              </h2>
+            </div>
+            <p className="max-w-2xl text-base leading-8 text-slate-600">
+              Esta galeria passa a ser alimentada pelo painel interno. Pode agrupar
+              imagens por trabalho e marcar cada uma como antes, durante ou depois.
+            </p>
+          </div>
+
+          <div className="mt-10 grid gap-6 xl:grid-cols-2">
+            {showcaseProjects.map((project) => (
+              <article
+                key={project.id}
+                className="overflow-hidden rounded-[30px] border border-cyan-100 bg-white shadow-[0_24px_60px_-34px_rgba(14,116,144,0.18)]"
+              >
+                <div className="border-b border-cyan-100 bg-cyan-50/70 px-6 py-5">
+                  <h3 className="text-2xl font-bold text-slate-950">{project.title}</h3>
+                  {project.subtitle && (
+                    <p className="mt-2 text-sm font-semibold uppercase tracking-[0.16em] text-cyan-700">
+                      {project.subtitle}
+                    </p>
+                  )}
+                  {project.description && (
+                    <p className="mt-3 text-sm leading-7 text-slate-600">
+                      {project.description}
+                    </p>
+                  )}
+                </div>
+
+                <div className={`grid gap-4 p-5 ${project.items.length > 1 ? "sm:grid-cols-2" : ""}`}>
+                  {project.items.map((item) => (
+                    <figure
+                      key={item.id}
+                      className="overflow-hidden rounded-[24px] border border-slate-200 bg-slate-50"
+                    >
+                      <div className="relative aspect-[4/3] overflow-hidden">
+                        <img
+                          src={item.imageUrl}
+                          alt={item.alt}
+                          className="h-full w-full object-cover"
+                          loading="lazy"
+                        />
+                        {item.phase && (
+                          <span className="absolute left-4 top-4 rounded-full bg-slate-950/85 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-white">
+                            {phaseLabel(item.phase)}
+                          </span>
+                        )}
+                      </div>
+                      <figcaption className="space-y-2 px-5 py-4">
+                        <p className="text-base font-semibold text-slate-950">{item.title}</p>
+                        {item.description && (
+                          <p className="text-sm leading-7 text-slate-600">{item.description}</p>
+                        )}
+                      </figcaption>
+                    </figure>
+                  ))}
+                </div>
+              </article>
+            ))}
           </div>
         </div>
       </section>

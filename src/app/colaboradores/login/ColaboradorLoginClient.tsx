@@ -33,7 +33,7 @@ export default function ColaboradorLoginClient() {
       localStorage.setItem("colaborador_token", data.token);
       localStorage.setItem("colaborador_nome", data.colaborador.nome);
       localStorage.setItem("colaborador_id", String(data.colaborador.id));
-      localStorage.setItem("colaborador_isAdmin", String(data.colaborador.isAdmin ?? 0));
+      localStorage.setItem("colaborador_isAdmin", String(data.colaborador.isAdmin));
 
       if (data.colaborador.isAdmin) {
         router.push("/colaboradores/admin");
