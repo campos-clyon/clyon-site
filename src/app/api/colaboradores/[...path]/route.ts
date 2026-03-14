@@ -180,7 +180,63 @@ async function handleRequest(req: NextRequest, path: string[]) {
   if (route === "admin/todos" && req.method === "GET") {
     if (!colaborador.isAdmin) return NextResponse.json({ error: "Acesso negado" }, { status: 403 });
     const todos = await db.select().from(colaboradores);
-    return NextResponse.json({ colaboradores: todos });
+    const todosRegistros = await db
+      .select()
+      .from(registrosHoras)
+      .orderBy(desc(registrosHoras.data));
+
+    const agora = new Date();
+    const inicioSemana = new Date(agora);
+    inicioSemana.setDate(agora.getDate() - agora.getDay() + 1);
+    inicioSemana.setHours(0, 0, 0, 0);
+
+    const inicioMes = new Date(agora.getFullYear(), agora.getMonth(), 1);
+    const inicio15Dias = new Date(agora);
+    inicio15Dias.setDate(agora.getDate() - 15);
+
+    const calcEstat = (regs: typeof todosRegistros) => {
+      const horas = regs.reduce((s, r) => s + parseFloat(r.horasTrabalhadas || "0"), 0);
+      const valor = regs.reduce((s, r) => s + parseFloat(r.valorTotal || "0"), 0);
+      return {
+        horas: horas.toFixed(2),
+        valor: valor.toFixed(2),
+        trabalhos: regs.reduce((s, r) => s + (r.numeroTrabalhos || 0), 0),
+      };
+    };
+
+    const colaboradoresComDados = todos.map((item) => {
+      const registrosDoColaborador = todosRegistros.filter((registro) => registro.colaboradorId === item.id);
+      const semanaRegs = registrosDoColaborador.filter((r) => r.data && r.data >= inicioSemana);
+      const mesRegs = registrosDoColaborador.filter((r) => r.data && r.data >= inicioMes);
+      const ultimos15Regs = registrosDoColaborador.filter((r) => r.data && r.data >= inicio15Dias);
+
+      return {
+        id: item.id,
+        nome: item.nome,
+        funcao: item.funcao,
+        valorHora: item.valorHora,
+        isAdmin: item.isAdmin,
+        createdAt: item.createdAt,
+        updatedAt: item.updatedAt,
+        registros: registrosDoColaborador.map((registro) => ({
+          id: registro.id,
+          data: registro.data?.toISOString() || "",
+          horaEntrada: registro.horaEntrada,
+          horaPausa: registro.horaPausa,
+          horaSaida: registro.horaSaida,
+          numeroTrabalhos: registro.numeroTrabalhos || 0,
+          horasTrabalhadas: registro.horasTrabalhadas || "0",
+          valorTotal: registro.valorTotal || "0",
+        })),
+        estatisticas: {
+          semana: calcEstat(semanaRegs),
+          ultimos15Dias: calcEstat(ultimos15Regs),
+          mes: calcEstat(mesRegs),
+        },
+      };
+    });
+
+    return NextResponse.json({ colaboradores: colaboradoresComDados });
   }
 
   // Admin: POST /criar
