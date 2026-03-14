@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import type { ComponentType, ReactNode } from "react";
 import { useEffect, useMemo, useState } from "react";
@@ -65,28 +65,37 @@ type RegistroComColaborador = Registro & {
   colaboradorNome: string;
 };
 
+type SimulatorSetting = {
+  key: string;
+  label: string;
+  category: string;
+  unit: string;
+  value: string | number;
+  description?: string | null;
+};
+
 type AdminSection = "overview" | "team" | "hours" | "site";
 
 const sectionLabels: Record<AdminSection, string> = {
-  overview: "Visão geral",
+  overview: "VisÃ£o geral",
   team: "Equipa",
-  hours: "Horários e registos",
-  site: "Gestão do site",
+  hours: "HorÃ¡rios e registos",
+  site: "GestÃ£o do site",
 };
 
 const siteModules = [
   {
     title: "Galeria de trabalhos",
     description:
-      "Área preparada para gerir fotografias, capas, destaques e ordem visual dos trabalhos reais.",
-    status: "Planeado",
+      "Ãrea preparada para gerir fotografias, capas, destaques e ordem visual dos trabalhos reais.",
+    status: "Ativo",
     icon: ImagePlus,
   },
   {
     title: "Valores do simulador",
     description:
-      "Estrutura pensada para ajustar preços, margens, regras de cálculo e cenários de orçamento.",
-    status: "Próxima fase",
+      "Estrutura pensada para ajustar preÃ§os, margens, regras de cÃ¡lculo e cenÃ¡rios de orÃ§amento.",
+    status: "Ativo",
     icon: Euro,
   },
   {
@@ -97,6 +106,14 @@ const siteModules = [
     icon: Sparkles,
   },
 ];
+
+const simulatorCategoryLabels: Record<SimulatorSetting["category"], string> = {
+  moveis: "RemoÃ§Ã£o de mÃ³veis",
+  entulho: "Entulho e limpeza",
+  mudancas: "MudanÃ§as",
+  acessos: "Acessos e pisos",
+  geral: "Base geral",
+};
 
 const money = (value: number) =>
   new Intl.NumberFormat("pt-PT", { style: "currency", currency: "EUR" }).format(value);
@@ -114,11 +131,14 @@ const formatDateTime = (value?: string) => {
     day: "2-digit",
     month: "2-digit",
     year: "numeric",
-  }).format(date)} · ${date.toLocaleTimeString("pt-PT", {
+  }).format(date)} Â· ${date.toLocaleTimeString("pt-PT", {
     hour: "2-digit",
     minute: "2-digit",
   })}`;
 };
+
+const formatSimulatorUnit = (unit: SimulatorSetting["unit"]) =>
+  unit === "eur" ? "EUR" : "Multiplicador";
 
 export default function ColaboradorAdminClient() {
   const router = useRouter();
@@ -146,6 +166,20 @@ export default function ColaboradorAdminClient() {
   const [editSenha, setEditSenha] = useState("");
   const [mostrarSenha, setMostrarSenha] = useState(false);
   const [loadingEdicao, setLoadingEdicao] = useState(false);
+  const [editandoRegistroId, setEditandoRegistroId] = useState<number | null>(null);
+  const [registroForm, setRegistroForm] = useState({
+    data: "",
+    horaEntrada: "",
+    horaPausa: "",
+    horaSaida: "",
+    numeroTrabalhos: "0",
+    valorTotal: "",
+  });
+  const [savingRegistro, setSavingRegistro] = useState(false);
+  const [simulatorSettings, setSimulatorSettings] = useState<SimulatorSetting[]>([]);
+  const [simulatorDrafts, setSimulatorDrafts] = useState<Record<string, string>>({});
+  const [loadingSimulatorSettings, setLoadingSimulatorSettings] = useState(false);
+  const [savingSettingKey, setSavingSettingKey] = useState<string | null>(null);
 
   useEffect(() => {
     const metaRobots = document.createElement("meta");
@@ -168,8 +202,9 @@ export default function ColaboradorAdminClient() {
     }
 
     setToken(storedToken);
-    setAdminNome(storedNome || "Administração");
+    setAdminNome(storedNome || "AdministraÃ§Ã£o");
     void carregarDados(storedToken);
+    void carregarSimulatorSettings(storedToken);
 
     return () => {
       document.head.removeChild(metaRobots);
@@ -184,16 +219,42 @@ export default function ColaboradorAdminClient() {
       });
 
       if (!response.ok) {
-        throw new Error("Não foi possível carregar os dados do painel.");
+        throw new Error("NÃ£o foi possÃ­vel carregar os dados do painel.");
       }
 
       const data = await response.json();
       setColaboradores(Array.isArray(data) ? data : data.colaboradores || []);
       setError("");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Não foi possível carregar os dados do painel.");
+      setError(err instanceof Error ? err.message : "NÃ£o foi possÃ­vel carregar os dados do painel.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const carregarSimulatorSettings = async (authToken: string) => {
+    try {
+      setLoadingSimulatorSettings(true);
+      const response = await fetch("/api/colaboradores/admin/settings/simulador", {
+        headers: { Authorization: `Bearer ${authToken}` },
+      });
+
+      if (!response.ok) {
+        throw new Error("NÃ£o foi possÃ­vel carregar os valores do simulador.");
+      }
+
+      const data = await response.json();
+      const settings = data.settings || [];
+      setSimulatorSettings(settings);
+      setSimulatorDrafts(
+        Object.fromEntries(
+          settings.map((item: SimulatorSetting) => [item.key, String(item.value ?? "")]),
+        ),
+      );
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "NÃ£o foi possÃ­vel carregar os valores do simulador.");
+    } finally {
+      setLoadingSimulatorSettings(false);
     }
   };
 
@@ -289,6 +350,15 @@ export default function ColaboradorAdminClient() {
     [colaboradores],
   );
 
+  const simulatorGroups = useMemo(() => {
+    return simulatorSettings.reduce<Record<string, SimulatorSetting[]>>((acc, setting) => {
+      const category = setting.category || "geral";
+      if (!acc[category]) acc[category] = [];
+      acc[category].push(setting);
+      return acc;
+    }, {});
+  }, [simulatorSettings]);
+
   const handleLogout = () => {
     localStorage.removeItem("colaborador_token");
     localStorage.removeItem("colaborador_nome");
@@ -331,7 +401,7 @@ export default function ColaboradorAdminClient() {
 
       if (!response.ok) {
         const data = await response.json().catch(() => ({}));
-        throw new Error(data.error || "Não foi possível atualizar o colaborador.");
+        throw new Error(data.error || "NÃ£o foi possÃ­vel atualizar o colaborador.");
       }
 
       setEditandoId(null);
@@ -339,7 +409,7 @@ export default function ColaboradorAdminClient() {
       setError("");
       await carregarDados(token);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Não foi possível atualizar o colaborador.");
+      setError(err instanceof Error ? err.message : "NÃ£o foi possÃ­vel atualizar o colaborador.");
     } finally {
       setLoadingEdicao(false);
     }
@@ -356,13 +426,13 @@ export default function ColaboradorAdminClient() {
 
       if (!response.ok) {
         const data = await response.json().catch(() => ({}));
-        throw new Error(data.error || "Não foi possível remover o colaborador.");
+        throw new Error(data.error || "NÃ£o foi possÃ­vel remover o colaborador.");
       }
 
       setError("");
       await carregarDados(token);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Não foi possível remover o colaborador.");
+      setError(err instanceof Error ? err.message : "NÃ£o foi possÃ­vel remover o colaborador.");
     }
   };
 
@@ -391,7 +461,7 @@ export default function ColaboradorAdminClient() {
 
       if (!response.ok) {
         const data = await response.json().catch(() => ({}));
-        throw new Error(data.error || "Não foi possível criar o colaborador.");
+        throw new Error(data.error || "NÃ£o foi possÃ­vel criar o colaborador.");
       }
 
       setCriarNovoVisivel(false);
@@ -403,16 +473,109 @@ export default function ColaboradorAdminClient() {
       setError("");
       await carregarDados(token);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Não foi possível criar o colaborador.");
+      setError(err instanceof Error ? err.message : "NÃ£o foi possÃ­vel criar o colaborador.");
     } finally {
       setLoadingCriar(false);
     }
   };
 
+  const abrirEdicaoRegistro = (registro: RegistroComColaborador) => {
+    setEditandoRegistroId(registro.id);
+    setRegistroForm({
+      data: registro.data ? new Date(registro.data).toISOString().split("T")[0] || "" : "",
+      horaEntrada: registro.horaEntrada || "",
+      horaPausa: registro.horaPausa || "",
+      horaSaida: registro.horaSaida || "",
+      numeroTrabalhos: String(registro.numeroTrabalhos || 0),
+      valorTotal: String(registro.valorTotal || ""),
+    });
+  };
+
+  const guardarRegistro = async (id: number) => {
+    setSavingRegistro(true);
+    try {
+      const response = await fetch(`/api/colaboradores/registros/${id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          ...registroForm,
+          horaPausa: registroForm.horaPausa || null,
+          horaSaida: registroForm.horaSaida || null,
+        }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.error || "NÃ£o foi possÃ­vel atualizar o registo.");
+      }
+
+      setEditandoRegistroId(null);
+      setError("");
+      await carregarDados(token);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "NÃ£o foi possÃ­vel atualizar o registo.");
+    } finally {
+      setSavingRegistro(false);
+    }
+  };
+
+  const apagarRegistro = async (id: number) => {
+    if (!confirm("Tem a certeza de que deseja apagar este registo?")) return;
+
+    try {
+      const response = await fetch(`/api/colaboradores/registros/${id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.error || "NÃ£o foi possÃ­vel apagar o registo.");
+      }
+
+      setError("");
+      await carregarDados(token);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "NÃ£o foi possÃ­vel apagar o registo.");
+    }
+  };
+
+  const guardarSimulatorSetting = async (setting: SimulatorSetting) => {
+    setSavingSettingKey(setting.key);
+    try {
+      const response = await fetch("/api/colaboradores/admin/settings/simulador", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          key: setting.key,
+          value: simulatorDrafts[setting.key],
+        }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.error || "NÃ£o foi possÃ­vel guardar este valor.");
+      }
+
+      setError("");
+      await carregarSimulatorSettings(token);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "NÃ£o foi possÃ­vel guardar este valor.");
+    } finally {
+      setSavingSettingKey(null);
+    }
+  };
+
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#081423] px-6 py-20 text-white">
-        <div className="mx-auto max-w-6xl animate-pulse space-y-6">
+      <div className="min-h-screen bg-[#081423] px-5 py-16 text-white">
+        <div className="mx-auto max-w-6xl animate-pulse space-y-5">
           <div className="h-10 w-72 rounded-full bg-white/10" />
           <div className="grid gap-4 lg:grid-cols-4">
             {Array.from({ length: 4 }).map((_, index) => (
@@ -427,9 +590,9 @@ export default function ColaboradorAdminClient() {
 
   return (
     <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(34,211,238,0.18),_transparent_22%),linear-gradient(180deg,#07111d_0%,#0b1727_52%,#101d31_100%)] text-white">
-      <div className="mx-auto flex max-w-7xl flex-col gap-8 px-4 py-6 lg:flex-row lg:px-8">
-        <aside className="w-full rounded-[34px] border border-white/10 bg-slate-950/55 p-5 backdrop-blur lg:sticky lg:top-6 lg:h-[calc(100vh-3rem)] lg:w-80">
-          <div className="flex items-center gap-3 rounded-[28px] border border-cyan-400/20 bg-cyan-400/[0.08] p-4">
+      <div className="mx-auto flex max-w-[1480px] flex-col gap-6 px-3 py-5 lg:flex-row lg:px-6">
+        <aside className="w-full rounded-[28px] border border-white/10 bg-slate-950/55 p-4 backdrop-blur lg:sticky lg:top-5 lg:h-[calc(100vh-2.5rem)] lg:w-72">
+          <div className="flex items-center gap-3 rounded-[24px] border border-cyan-400/20 bg-cyan-400/[0.08] p-3.5">
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-cyan-400 text-slate-950">
               <ShieldCheck className="h-6 w-6" />
             </div>
@@ -437,7 +600,7 @@ export default function ColaboradorAdminClient() {
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-cyan-200">
                 Backoffice CLYON
               </p>
-              <h2 className="text-lg font-semibold text-white">Gestão operacional</h2>
+              <h2 className="text-lg font-semibold text-white">GestÃ£o operacional</h2>
             </div>
           </div>
 
@@ -471,13 +634,13 @@ export default function ColaboradorAdminClient() {
             })}
           </div>
 
-          <div className="mt-6 rounded-[28px] border border-white/10 bg-white/[0.03] p-4">
+          <div className="mt-5 rounded-[24px] border border-white/10 bg-white/[0.03] p-4">
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-cyan-200">
-              Sessão ativa
+              SessÃ£o ativa
             </p>
             <h3 className="mt-2 text-xl font-semibold text-white">{adminNome}</h3>
             <p className="mt-1 text-sm text-slate-400">
-              Painel pensado para gerir horários, equipa e futuras atualizações do site.
+              Painel pensado para gerir horÃ¡rios, equipa e futuras atualizaÃ§Ãµes do site.
             </p>
             <Button
               onClick={handleLogout}
@@ -490,19 +653,19 @@ export default function ColaboradorAdminClient() {
           </div>
         </aside>
 
-        <main className="min-w-0 flex-1 space-y-6">
-          <section className="rounded-[34px] border border-white/10 bg-white/[0.035] p-6 backdrop-blur">
+        <main className="min-w-0 flex-1 space-y-5">
+          <section className="rounded-[28px] border border-white/10 bg-white/[0.035] p-5 backdrop-blur">
             <div className="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
               <div className="max-w-3xl">
                 <p className="text-xs font-semibold uppercase tracking-[0.24em] text-cyan-200">
-                  Central de gestão
+                  Central de gestÃ£o
                 </p>
-                <h1 className="mt-3 text-4xl font-semibold tracking-tight text-white md:text-5xl">
-                  Um painel mais profissional para gerir equipa, horários e a próxima fase do site.
+                <h1 className="mt-3 text-[2.4rem] font-semibold tracking-tight text-white md:text-[3rem]">
+                  Um painel mais profissional para gerir equipa, horÃ¡rios e a prÃ³xima fase do site.
                 </h1>
-                <p className="mt-4 max-w-2xl text-base leading-8 text-slate-300">
-                  A nova dashboard foi desenhada para controlar a operação diária agora e servir mais tarde
-                  como base para atualizar fotos, textos e valores do simulador sem depender de código.
+                <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-300">
+                  A nova dashboard foi desenhada para controlar a operaÃ§Ã£o diÃ¡ria agora e servir mais tarde
+                  como base para atualizar fotos, textos e valores do simulador sem depender de cÃ³digo.
                 </p>
               </div>
 
@@ -514,9 +677,9 @@ export default function ColaboradorAdminClient() {
                   accent="cyan"
                 />
                 <MiniStat
-                  label="Valor/hora médio"
+                  label="Valor/hora mÃ©dio"
                   value={money(dashboardStats.mediaHora)}
-                  helper="Referência geral da equipa"
+                  helper="ReferÃªncia geral da equipa"
                   accent="emerald"
                 />
               </div>
@@ -543,18 +706,18 @@ export default function ColaboradorAdminClient() {
                   title="Esta semana"
                   hours={`${decimal(dashboardStats.semana.horas)}h`}
                   value={money(dashboardStats.semana.valor)}
-                  helper={`${dashboardStats.semana.trabalhos} trabalhos concluídos`}
+                  helper={`${dashboardStats.semana.trabalhos} trabalhos concluÃ­dos`}
                   tone="blue"
                 />
                 <QuickStat
-                  title="Últimos 15 dias"
+                  title="Ãšltimos 15 dias"
                   hours={`${decimal(dashboardStats.ultimos15.horas)}h`}
                   value={money(dashboardStats.ultimos15.valor)}
                   helper={`${dashboardStats.ultimos15.trabalhos} trabalhos registados`}
                   tone="violet"
                 />
                 <QuickStat
-                  title="Este mês"
+                  title="Este mÃªs"
                   hours={`${decimal(dashboardStats.mes.horas)}h`}
                   value={money(dashboardStats.mes.valor)}
                   helper={`${dashboardStats.mes.trabalhos} trabalhos registados`}
@@ -564,41 +727,41 @@ export default function ColaboradorAdminClient() {
 
               <section className="grid gap-5 xl:grid-cols-[1.5fr,1fr]">
                 <ActionCard
-                  title="Centro de operação"
-                  description="Atalhos rápidos para a rotina da gestão e para o que vem a seguir no backoffice."
+                  title="Centro de operaÃ§Ã£o"
+                  description="Atalhos rÃ¡pidos para a rotina da gestÃ£o e para o que vem a seguir no backoffice."
                 >
                   <div className="grid gap-4 md:grid-cols-2">
                     <StatSurface
                       icon={Users}
-                      title="Gestão de equipa"
-                      body="Crie colaboradores, atualize valores/hora, altere acessos e mantenha a operação organizada."
+                      title="GestÃ£o de equipa"
+                      body="Crie colaboradores, atualize valores/hora, altere acessos e mantenha a operaÃ§Ã£o organizada."
                     />
                     <StatSurface
                       icon={CalendarClock}
-                      title="Controlo de horários"
-                      body="Acompanhe registos, volume de trabalhos e produtividade por colaborador e por período."
+                      title="Controlo de horÃ¡rios"
+                      body="Acompanhe registos, volume de trabalhos e produtividade por colaborador e por perÃ­odo."
                     />
                     <StatSurface
                       icon={Wrench}
                       title="Pronto para crescer"
-                      body="A estrutura já está pensada para suportar gestão de conteúdo do site no próximo passo."
+                      body="A estrutura jÃ¡ estÃ¡ pensada para suportar gestÃ£o de conteÃºdo do site no prÃ³ximo passo."
                     />
                     <StatSurface
                       icon={CheckCircle2}
-                      title="Visão executiva"
-                      body="As métricas principais estão concentradas num único painel para decisões mais rápidas."
+                      title="VisÃ£o executiva"
+                      body="As mÃ©tricas principais estÃ£o concentradas num Ãºnico painel para decisÃµes mais rÃ¡pidas."
                     />
                   </div>
                 </ActionCard>
 
                 <ActionCard
-                  title="Melhor desempenho do mês"
-                  description="Resumo rápido da equipa com melhor faturação no período atual."
+                  title="Melhor desempenho do mÃªs"
+                  description="Resumo rÃ¡pido da equipa com melhor faturaÃ§Ã£o no perÃ­odo atual."
                 >
                   <div className="space-y-3">
                     {topColaboradores.length === 0 && (
                       <div className="rounded-2xl border border-dashed border-white/10 px-4 py-6 text-sm text-slate-400">
-                        Ainda não existem registos suficientes para ordenar o ranking.
+                        Ainda nÃ£o existem registos suficientes para ordenar o ranking.
                       </div>
                     )}
                     {topColaboradores.map((colaborador, index) => (
@@ -632,21 +795,23 @@ export default function ColaboradorAdminClient() {
           )}
 
           {activeSection === "hours" && (
-            <section className="space-y-5 rounded-[34px] border border-white/10 bg-white/[0.035] p-6 backdrop-blur">
+            <section className="space-y-4 rounded-[28px] border border-white/10 bg-white/[0.035] p-5 backdrop-blur">
               <div className="flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-[0.24em] text-cyan-200">
-                    Gestão operacional
+                    GestÃ£o operacional
                   </p>
-                  <h2 className="mt-2 text-3xl font-semibold text-white">Horários e registos da equipa</h2>
-                  <p className="mt-2 max-w-2xl text-sm leading-7 text-slate-300">
-                    Filtra por colaborador, acompanha a cronologia de entradas e saídas e percebe quem está a
-                    gerar mais trabalho no terreno.
+                  <h2 className="mt-2 text-[1.85rem] font-semibold text-white">
+                    HorÃ¡rios, pausas e valores por registo
+                  </h2>
+                  <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-300">
+                    Pode editar horas, pausa, quantidade de trabalhos, valor final e apagar qualquer registo
+                    individual sem sair do painel.
                   </p>
                 </div>
 
                 <div className="rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-slate-300">
-                  Último registo:{" "}
+                  Ãšltimo registo:{" "}
                   <span className="font-medium text-white">{formatDateTime(dashboardStats.ultimoRegisto)}</span>
                 </div>
               </div>
@@ -669,63 +834,192 @@ export default function ColaboradorAdminClient() {
 
               <div className="grid gap-4 xl:grid-cols-2">
                 {todosRegistros.length === 0 && (
-                  <div className="rounded-[28px] border border-dashed border-white/10 px-5 py-10 text-sm text-slate-400 xl:col-span-2">
-                    Ainda não existem registos para o filtro escolhido.
+                  <div className="rounded-[24px] border border-dashed border-white/10 px-5 py-10 text-sm text-slate-400 xl:col-span-2">
+                    Ainda nÃ£o existem registos para o filtro escolhido.
                   </div>
                 )}
-                {todosRegistros.map((registro) => (
-                  <Card
-                    key={registro.id}
-                    className="rounded-[30px] border-white/10 bg-slate-950/35 text-white shadow-[0_18px_60px_rgba(15,23,42,0.25)]"
-                  >
-                    <CardHeader className="pb-3">
-                      <div className="flex items-start justify-between gap-4">
-                        <div>
-                          <CardTitle className="text-xl text-white">{registro.colaboradorNome}</CardTitle>
-                          <CardDescription className="mt-1 text-slate-400">
-                            {formatDateTime(registro.data)}
-                          </CardDescription>
+                {todosRegistros.map((registro) => {
+                  const emEdicao = editandoRegistroId === registro.id;
+
+                  return (
+                    <Card
+                      key={registro.id}
+                      className="rounded-[24px] border-white/10 bg-slate-950/35 text-white shadow-[0_18px_60px_rgba(15,23,42,0.25)]"
+                    >
+                      <CardHeader className="pb-3">
+                        <div className="flex items-start justify-between gap-4">
+                          <div>
+                            <CardTitle className="text-lg text-white">{registro.colaboradorNome}</CardTitle>
+                            <CardDescription className="mt-1 text-slate-400">
+                              {formatDateTime(registro.data)}
+                            </CardDescription>
+                          </div>
+                          <div className="rounded-2xl bg-cyan-400/[0.12] px-3 py-2 text-right">
+                            <p className="text-[11px] uppercase tracking-[0.2em] text-cyan-200">Valor</p>
+                            <p className="text-base font-semibold text-white">
+                              {money(parseFloat(registro.valorTotal || "0"))}
+                            </p>
+                          </div>
                         </div>
-                        <div className="rounded-2xl bg-cyan-400/[0.12] px-3 py-2 text-right">
-                          <p className="text-xs uppercase tracking-[0.2em] text-cyan-200">Valor</p>
-                          <p className="text-lg font-semibold text-white">
-                            {money(parseFloat(registro.valorTotal || "0"))}
-                          </p>
-                        </div>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                        <RecordMeta label="Entrada" value={registro.horaEntrada || "—"} icon={Clock3} />
-                        <RecordMeta label="Pausa" value={registro.horaPausa || "—"} icon={CalendarClock} />
-                        <RecordMeta label="Saída" value={registro.horaSaida || "—"} icon={CheckCircle2} />
-                        <RecordMeta
-                          label="Horas"
-                          value={`${decimal(parseFloat(registro.horasTrabalhadas || "0"))}h`}
-                          icon={Briefcase}
-                        />
-                      </div>
-                      <div className="rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-slate-300">
-                        <span className="font-medium text-white">{registro.numeroTrabalhos}</span> trabalho(s)
-                        registado(s) neste turno.
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        {emEdicao ? (
+                          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                            <Field label="Data">
+                              <input
+                                type="date"
+                                value={registroForm.data}
+                                onChange={(event) =>
+                                  setRegistroForm((state) => ({ ...state, data: event.target.value }))
+                                }
+                                className="h-11 w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 text-white outline-none transition focus:border-cyan-300"
+                              />
+                            </Field>
+                            <Field label="Hora entrada">
+                              <input
+                                type="time"
+                                value={registroForm.horaEntrada}
+                                onChange={(event) =>
+                                  setRegistroForm((state) => ({ ...state, horaEntrada: event.target.value }))
+                                }
+                                className="h-11 w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 text-white outline-none transition focus:border-cyan-300"
+                              />
+                            </Field>
+                            <Field label="Pausa">
+                              <input
+                                type="time"
+                                value={registroForm.horaPausa}
+                                onChange={(event) =>
+                                  setRegistroForm((state) => ({ ...state, horaPausa: event.target.value }))
+                                }
+                                className="h-11 w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 text-white outline-none transition focus:border-cyan-300"
+                              />
+                            </Field>
+                            <Field label="Hora saÃ­da">
+                              <input
+                                type="time"
+                                value={registroForm.horaSaida}
+                                onChange={(event) =>
+                                  setRegistroForm((state) => ({ ...state, horaSaida: event.target.value }))
+                                }
+                                className="h-11 w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 text-white outline-none transition focus:border-cyan-300"
+                              />
+                            </Field>
+                            <Field label="NÃºmero de trabalhos">
+                              <input
+                                type="number"
+                                min="0"
+                                value={registroForm.numeroTrabalhos}
+                                onChange={(event) =>
+                                  setRegistroForm((state) => ({
+                                    ...state,
+                                    numeroTrabalhos: event.target.value,
+                                  }))
+                                }
+                                className="h-11 w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 text-white outline-none transition focus:border-cyan-300"
+                              />
+                            </Field>
+                            <Field label="Valor final">
+                              <input
+                                type="number"
+                                min="0"
+                                step="0.01"
+                                value={registroForm.valorTotal}
+                                onChange={(event) =>
+                                  setRegistroForm((state) => ({ ...state, valorTotal: event.target.value }))
+                                }
+                                className="h-11 w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 text-white outline-none transition focus:border-cyan-300"
+                              />
+                            </Field>
+                            <div className="flex flex-wrap items-end justify-end gap-3 md:col-span-2 xl:col-span-3">
+                              <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => setEditandoRegistroId(null)}
+                                className="h-11 rounded-2xl border-white/10 bg-white/[0.03] text-white hover:bg-white/[0.08]"
+                              >
+                                Cancelar
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => apagarRegistro(registro.id)}
+                                className="h-11 rounded-2xl border-rose-300/20 bg-rose-400/[0.08] text-rose-100 hover:bg-rose-400/[0.14]"
+                              >
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                Apagar
+                              </Button>
+                              <Button
+                                type="button"
+                                disabled={savingRegistro}
+                                onClick={() => guardarRegistro(registro.id)}
+                                className="h-11 rounded-2xl bg-cyan-400 px-5 text-slate-950 hover:bg-cyan-300"
+                              >
+                                {savingRegistro ? "A guardar..." : "Guardar registo"}
+                              </Button>
+                            </div>
+                          </div>
+                        ) : (
+                          <>
+                            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                              <RecordMeta label="Entrada" value={registro.horaEntrada || "â€”"} icon={Clock3} />
+                              <RecordMeta label="Pausa" value={registro.horaPausa || "â€”"} icon={CalendarClock} />
+                              <RecordMeta label="SaÃ­da" value={registro.horaSaida || "â€”"} icon={CheckCircle2} />
+                              <RecordMeta
+                                label="Horas"
+                                value={`${decimal(parseFloat(registro.horasTrabalhadas || "0"))}h`}
+                                icon={Briefcase}
+                              />
+                            </div>
+                            <div className="grid gap-3 md:grid-cols-2">
+                              <div className="rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-slate-300">
+                                <span className="font-medium text-white">{registro.numeroTrabalhos}</span> trabalho(s)
+                                registado(s) neste turno.
+                              </div>
+                              <div className="rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-slate-300">
+                                O total das horas continua a ser recalculado pelo sistema com base nos horÃ¡rios
+                                editados e no valor/hora do colaborador.
+                              </div>
+                            </div>
+                            <div className="flex flex-wrap gap-3">
+                              <Button
+                                type="button"
+                                onClick={() => abrirEdicaoRegistro(registro)}
+                                className="h-11 rounded-2xl bg-cyan-400 px-5 text-slate-950 hover:bg-cyan-300"
+                              >
+                                <Pencil className="mr-2 h-4 w-4" />
+                                Editar horas
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => apagarRegistro(registro.id)}
+                                className="h-11 rounded-2xl border-rose-300/20 bg-rose-400/[0.08] px-5 text-rose-100 hover:bg-rose-400/[0.14]"
+                              >
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                Apagar registo
+                              </Button>
+                            </div>
+                          </>
+                        )}
+                      </CardContent>
+                    </Card>
+                  );
+                })}
               </div>
             </section>
           )}
 
           {activeSection === "team" && (
-            <section className="space-y-5 rounded-[34px] border border-white/10 bg-white/[0.035] p-6 backdrop-blur">
+            <section className="space-y-4 rounded-[28px] border border-white/10 bg-white/[0.035] p-5 backdrop-blur">
               <div className="flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-[0.24em] text-cyan-200">
                     Estrutura da equipa
                   </p>
-                  <h2 className="mt-2 text-3xl font-semibold text-white">Gestão completa de colaboradores</h2>
-                  <p className="mt-2 max-w-2xl text-sm leading-7 text-slate-300">
-                    Centraliza acessos, funções, valores/hora e futuras permissões de gestão para cada membro.
+                  <h2 className="mt-2 text-[1.85rem] font-semibold text-white">GestÃ£o completa de colaboradores</h2>
+                  <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-300">
+                    Centraliza acessos, funÃ§Ãµes, valores/hora e futuras permissÃµes de gestÃ£o para cada membro.
                   </p>
                 </div>
                 <Button
@@ -734,7 +1028,7 @@ export default function ColaboradorAdminClient() {
                   className="h-12 rounded-2xl bg-cyan-400 px-6 text-slate-950 hover:bg-cyan-300"
                 >
                   {criarNovoVisivel ? <X className="mr-2 h-4 w-4" /> : <UserPlus className="mr-2 h-4 w-4" />}
-                  {criarNovoVisivel ? "Fechar criação" : "Novo colaborador"}
+                  {criarNovoVisivel ? "Fechar criaÃ§Ã£o" : "Novo colaborador"}
                 </Button>
               </div>
 
@@ -743,7 +1037,7 @@ export default function ColaboradorAdminClient() {
                   <CardHeader>
                     <CardTitle className="text-2xl text-white">Criar colaborador</CardTitle>
                     <CardDescription className="text-slate-400">
-                      Adiciona um novo elemento à operação com acesso ao sistema e estrutura salarial definida.
+                      Adiciona um novo elemento Ã  operaÃ§Ã£o com acesso ao sistema e estrutura salarial definida.
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="grid gap-4 md:grid-cols-2">
@@ -765,7 +1059,7 @@ export default function ColaboradorAdminClient() {
                         placeholder="Ex.: 8.50"
                       />
                     </Field>
-                    <Field label="Função">
+                    <Field label="FunÃ§Ã£o">
                       <div className="grid gap-2 sm:grid-cols-3">
                         {(["ajudante", "motorista", "admin"] as const).map((funcao) => (
                           <button
@@ -875,13 +1169,13 @@ export default function ColaboradorAdminClient() {
                             accent="cyan"
                           />
                           <MiniStat
-                            label="Últimos 15 dias"
+                            label="Ãšltimos 15 dias"
                             value={`${decimal(parseFloat(colaborador.estatisticas.ultimos15Dias.horas || "0"))}h`}
                             helper={`${colaborador.estatisticas.ultimos15Dias.trabalhos} trabalhos`}
                             accent="violet"
                           />
                           <MiniStat
-                            label="Este mês"
+                            label="Este mÃªs"
                             value={`${decimal(parseFloat(colaborador.estatisticas.mes.horas || "0"))}h`}
                             helper={money(parseFloat(colaborador.estatisticas.mes.valor || "0"))}
                             accent="emerald"
@@ -939,7 +1233,7 @@ export default function ColaboradorAdminClient() {
                                 onClick={() => editarUsuario(colaborador.id)}
                                 className="h-12 rounded-2xl bg-cyan-400 px-6 text-slate-950 hover:bg-cyan-300"
                               >
-                                {loadingEdicao ? "A guardar..." : "Guardar alterações"}
+                                {loadingEdicao ? "A guardar..." : "Guardar alteraÃ§Ãµes"}
                               </Button>
                             </div>
                           </div>
@@ -973,26 +1267,28 @@ export default function ColaboradorAdminClient() {
           )}
 
           {activeSection === "site" && (
-            <section className="space-y-5 rounded-[34px] border border-white/10 bg-white/[0.035] p-6 backdrop-blur">
+            <section className="space-y-4 rounded-[28px] border border-white/10 bg-white/[0.035] p-5 backdrop-blur">
               <div className="flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-[0.24em] text-cyan-200">
-                    Próxima fase
+                    GestÃ£o do site
                   </p>
-                  <h2 className="mt-2 text-3xl font-semibold text-white">Gestão do site e do simulador</h2>
-                  <p className="mt-2 max-w-2xl text-sm leading-7 text-slate-300">
-                    Esta área já está preparada como mapa funcional do próximo passo: mexer em fotos, textos e
-                    valores do simulador a partir do backoffice.
+                  <h2 className="mt-2 text-[1.85rem] font-semibold text-white">
+                    Imagens do site e valores do simulador
+                  </h2>
+                  <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-300">
+                    O gestor de imagens continua separado. Aqui passa a controlar os parÃ¢metros do simulador um a
+                    um, com gravaÃ§Ã£o individual por campo.
                   </p>
                 </div>
                 <div className="flex flex-col items-start gap-3 xl:items-end">
                   <div className="rounded-2xl border border-cyan-300/20 bg-cyan-400/[0.08] px-4 py-3 text-sm text-cyan-100">
-                    Módulos em preparação para a futura gestão de conteúdo.
+                    Cada valor do simulador pode ser revisto e ajustado individualmente.
                   </div>
                   <Button
                     type="button"
                     onClick={() => router.push("/colaboradores/admin/imagens")}
-                    className="bg-cyan-400 text-slate-950 hover:bg-cyan-300"
+                    className="h-11 rounded-2xl bg-cyan-400 px-5 text-slate-950 hover:bg-cyan-300"
                   >
                     Abrir gestor de imagens
                     <ArrowRight className="ml-2 h-4 w-4" />
@@ -1002,20 +1298,15 @@ export default function ColaboradorAdminClient() {
 
               <div className="grid gap-4 lg:grid-cols-3">
                 {siteModules.map((module) => (
-                  <ActionCard
-                    key={module.title}
-                    title={module.title}
-                    description={module.description}
-                    compact
-                  >
+                  <ActionCard key={module.title} title={module.title} description={module.description} compact>
                     <div className="flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-4">
                       <div className="flex items-center gap-3">
-                        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-cyan-400 text-slate-950">
+                        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-cyan-400 text-slate-950">
                           <module.icon className="h-5 w-5" />
                         </div>
                         <div>
                           <p className="text-sm font-semibold text-white">{module.status}</p>
-                          <p className="text-xs text-slate-400">Módulo reservado na arquitetura</p>
+                          <p className="text-xs text-slate-400">MÃ³dulo pronto para evoluir no painel</p>
                         </div>
                       </div>
                       <ArrowRight className="h-5 w-5 text-cyan-200" />
@@ -1025,26 +1316,83 @@ export default function ColaboradorAdminClient() {
               </div>
 
               <ActionCard
-                title="Como esta área vai evoluir"
-                description="Plano pensado para transformar o painel num verdadeiro centro de edição do negócio."
+                title="Valores do simulador"
+                description="Edite preÃ§os, extras e multiplicadores um a um. Cada bloco guarda sÃ³ o valor alterado."
               >
-                <div className="grid gap-4 md:grid-cols-3">
-                  <StatSurface
-                    icon={ImagePlus}
-                    title="Troca de fotografias"
-                    body="Substituição de imagens da home, trabalhos reais, capas de serviço e galerias locais."
-                  />
-                  <StatSurface
-                    icon={Euro}
-                    title="Preços do simulador"
-                    body="Definição de margens, multiplicadores, extras e regras por serviço sem mexer no código."
-                  />
-                  <StatSurface
-                    icon={Sparkles}
-                    title="Textos de campanha"
-                    body="Atualização de títulos, CTAs, destaques sazonais e mensagens promocionais em minutos."
-                  />
-                </div>
+                {loadingSimulatorSettings ? (
+                  <div className="rounded-2xl border border-dashed border-white/10 px-5 py-10 text-sm text-slate-400">
+                    A carregar configuraÃ§Ãµes do simulador...
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {Object.entries(simulatorGroups).map(([category, settings]) => (
+                      <div
+                        key={category}
+                        className="rounded-[24px] border border-white/10 bg-white/[0.03] p-4"
+                      >
+                        <div className="mb-4 flex items-center justify-between gap-3">
+                          <div>
+                            <h3 className="text-lg font-semibold text-white">
+                              {simulatorCategoryLabels[category as keyof typeof simulatorCategoryLabels] || category}
+                            </h3>
+                            <p className="text-sm text-slate-400">
+                              Ajustes separados por Ã¡rea operacional.
+                            </p>
+                          </div>
+                          <div className="rounded-full border border-white/10 bg-slate-950/40 px-3 py-1 text-xs uppercase tracking-[0.18em] text-cyan-200">
+                            {settings.length} valor(es)
+                          </div>
+                        </div>
+
+                        <div className="grid gap-4 lg:grid-cols-2">
+                          {settings.map((setting) => (
+                            <div
+                              key={setting.key}
+                              className="rounded-[20px] border border-white/10 bg-slate-950/40 p-4"
+                            >
+                              <div className="flex items-start justify-between gap-3">
+                                <div>
+                                  <p className="text-sm font-semibold text-white">{setting.label}</p>
+                                  <p className="mt-1 text-xs leading-6 text-slate-400">
+                                    {setting.description || "Sem descriÃ§Ã£o adicional."}
+                                  </p>
+                                </div>
+                                <span className="rounded-full border border-cyan-300/20 bg-cyan-400/[0.08] px-3 py-1 text-[11px] uppercase tracking-[0.18em] text-cyan-100">
+                                  {formatSimulatorUnit(setting.unit)}
+                                </span>
+                              </div>
+
+                              <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-end">
+                                <Field label="Valor">
+                                  <input
+                                    type="number"
+                                    step="0.01"
+                                    value={simulatorDrafts[setting.key] ?? ""}
+                                    onChange={(event) =>
+                                      setSimulatorDrafts((state) => ({
+                                        ...state,
+                                        [setting.key]: event.target.value,
+                                      }))
+                                    }
+                                    className="h-11 w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 text-white outline-none transition focus:border-cyan-300"
+                                  />
+                                </Field>
+                                <Button
+                                  type="button"
+                                  disabled={savingSettingKey === setting.key}
+                                  onClick={() => guardarSimulatorSetting(setting)}
+                                  className="h-11 rounded-2xl bg-cyan-400 px-5 text-slate-950 hover:bg-cyan-300"
+                                >
+                                  {savingSettingKey === setting.key ? "A guardar..." : "Guardar"}
+                                </Button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </ActionCard>
             </section>
           )}
@@ -1077,13 +1425,13 @@ function QuickStat({
 
   return (
     <Card
-      className={`rounded-[30px] border bg-[linear-gradient(180deg,_rgba(255,255,255,0.08),_rgba(255,255,255,0.02))] p-1 text-white shadow-[0_18px_60px_rgba(15,23,42,0.25)] ${toneClass}`}
+      className={`rounded-[24px] border bg-[linear-gradient(180deg,_rgba(255,255,255,0.08),_rgba(255,255,255,0.02))] p-1 text-white shadow-[0_18px_60px_rgba(15,23,42,0.25)] ${toneClass}`}
     >
-      <CardContent className="rounded-[26px] bg-slate-950/45 p-5">
-        <p className="text-sm uppercase tracking-[0.22em] text-slate-300">{title}</p>
-        <p className="mt-4 text-4xl font-semibold text-white">{hours}</p>
-        <p className="mt-2 text-sm text-slate-400">{value}</p>
-        <p className="mt-5 text-sm text-slate-300">{helper}</p>
+      <CardContent className="rounded-[20px] bg-slate-950/45 p-4">
+        <p className="text-xs uppercase tracking-[0.22em] text-slate-300">{title}</p>
+        <p className="mt-3 text-[2rem] font-semibold text-white">{hours}</p>
+        <p className="mt-1 text-sm text-slate-400">{value}</p>
+        <p className="mt-4 text-sm text-slate-300">{helper}</p>
       </CardContent>
     </Card>
   );
@@ -1101,9 +1449,9 @@ function ActionCard({
   compact?: boolean;
 }) {
   return (
-    <Card className="rounded-[32px] border-white/10 bg-slate-950/35 text-white shadow-[0_18px_60px_rgba(15,23,42,0.2)]">
-      <CardHeader className={compact ? "pb-4" : "pb-5"}>
-        <CardTitle className="text-2xl text-white">{title}</CardTitle>
+    <Card className="rounded-[26px] border-white/10 bg-slate-950/35 text-white shadow-[0_18px_60px_rgba(15,23,42,0.2)]">
+      <CardHeader className={compact ? "pb-3" : "pb-4"}>
+        <CardTitle className="text-[1.35rem] text-white">{title}</CardTitle>
         <CardDescription className="text-slate-400">{description}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">{children}</CardContent>
@@ -1121,12 +1469,12 @@ function StatSurface({
   body: string;
 }) {
   return (
-    <div className="rounded-[28px] border border-white/10 bg-white/[0.03] p-4">
-      <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-cyan-400 text-slate-950">
+    <div className="rounded-[22px] border border-white/10 bg-white/[0.03] p-4">
+      <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-cyan-400 text-slate-950">
         <Icon className="h-5 w-5" />
       </div>
-      <h3 className="mt-4 text-lg font-semibold text-white">{title}</h3>
-      <p className="mt-2 text-sm leading-7 text-slate-300">{body}</p>
+      <h3 className="mt-3 text-base font-semibold text-white">{title}</h3>
+      <p className="mt-2 text-sm leading-6 text-slate-300">{body}</p>
     </div>
   );
 }
@@ -1150,9 +1498,9 @@ function MiniStat({
     }[accent];
 
   return (
-    <div className={`rounded-[26px] border px-4 py-4 ${accentClass}`}>
+    <div className={`rounded-[22px] border px-4 py-3.5 ${accentClass}`}>
       <p className="text-xs uppercase tracking-[0.22em]">{label}</p>
-      <p className="mt-3 text-2xl font-semibold text-white">{value}</p>
+      <p className="mt-2 text-[1.55rem] font-semibold text-white">{value}</p>
       <p className="mt-1 text-sm text-slate-300">{helper}</p>
     </div>
   );
@@ -1197,7 +1545,7 @@ function RecordMeta({
         <Icon className="h-4 w-4" />
         <span className="text-xs uppercase tracking-[0.2em]">{label}</span>
       </div>
-      <p className="mt-3 text-lg font-semibold text-white">{value}</p>
+      <p className="mt-2 text-base font-semibold text-white">{value}</p>
     </div>
   );
 }
@@ -1205,8 +1553,10 @@ function RecordMeta({
 function Field({ label, children }: { label: string; children: ReactNode }) {
   return (
     <label className="block space-y-2">
-      <span className="text-sm font-medium text-slate-200">{label}</span>
+      <span className="text-[13px] font-medium text-slate-200">{label}</span>
       {children}
     </label>
   );
 }
+
+
