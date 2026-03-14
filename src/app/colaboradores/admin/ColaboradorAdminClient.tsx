@@ -85,7 +85,7 @@ const siteModules = [
   {
     title: "Valores do simulador",
     description:
-      "Estrutura pensada para ajustar preÃ§os, margens, regras de cÃ¡lculo e cenÃ¡rios de orÃ§amento.",
+      "Estrutura pensada para ajustar preços, margens, regras de cálculo e cenários de orçamento.",
     status: "Próxima fase",
     icon: Euro,
   },
@@ -114,7 +114,7 @@ const formatDateTime = (value?: string) => {
     day: "2-digit",
     month: "2-digit",
     year: "numeric",
-  }).format(date)} Â· ${date.toLocaleTimeString("pt-PT", {
+  }).format(date)} · ${date.toLocaleTimeString("pt-PT", {
     hour: "2-digit",
     minute: "2-digit",
   })}`;
@@ -168,7 +168,7 @@ export default function ColaboradorAdminClient() {
     }
 
     setToken(storedToken);
-    setAdminNome(storedNome || "AdministraÃ§Ã£o");
+    setAdminNome(storedNome || "Administração");
     void carregarDados(storedToken);
 
     return () => {
@@ -184,14 +184,14 @@ export default function ColaboradorAdminClient() {
       });
 
       if (!response.ok) {
-        throw new Error("NÃ£o foi possÃ­vel carregar os dados do painel.");
+        throw new Error("Não foi possível carregar os dados do painel.");
       }
 
       const data = await response.json();
       setColaboradores(Array.isArray(data) ? data : data.colaboradores || []);
       setError("");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "NÃ£o foi possÃ­vel carregar os dados do painel.");
+      setError(err instanceof Error ? err.message : "Não foi possível carregar os dados do painel.");
     } finally {
       setLoading(false);
     }
@@ -331,7 +331,7 @@ export default function ColaboradorAdminClient() {
 
       if (!response.ok) {
         const data = await response.json().catch(() => ({}));
-        throw new Error(data.error || "NÃ£o foi possÃ­vel atualizar o colaborador.");
+        throw new Error(data.error || "Não foi possível atualizar o colaborador.");
       }
 
       setEditandoId(null);
@@ -339,7 +339,7 @@ export default function ColaboradorAdminClient() {
       setError("");
       await carregarDados(token);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "NÃ£o foi possÃ­vel atualizar o colaborador.");
+      setError(err instanceof Error ? err.message : "Não foi possível atualizar o colaborador.");
     } finally {
       setLoadingEdicao(false);
     }
@@ -356,13 +356,13 @@ export default function ColaboradorAdminClient() {
 
       if (!response.ok) {
         const data = await response.json().catch(() => ({}));
-        throw new Error(data.error || "NÃ£o foi possÃ­vel remover o colaborador.");
+        throw new Error(data.error || "Não foi possível remover o colaborador.");
       }
 
       setError("");
       await carregarDados(token);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "NÃ£o foi possÃ­vel remover o colaborador.");
+      setError(err instanceof Error ? err.message : "Não foi possível remover o colaborador.");
     }
   };
 
@@ -391,7 +391,7 @@ export default function ColaboradorAdminClient() {
 
       if (!response.ok) {
         const data = await response.json().catch(() => ({}));
-        throw new Error(data.error || "NÃ£o foi possÃ­vel criar o colaborador.");
+        throw new Error(data.error || "Não foi possível criar o colaborador.");
       }
 
       setCriarNovoVisivel(false);
@@ -403,7 +403,7 @@ export default function ColaboradorAdminClient() {
       setError("");
       await carregarDados(token);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "NÃ£o foi possÃ­vel criar o colaborador.");
+      setError(err instanceof Error ? err.message : "Não foi possível criar o colaborador.");
     } finally {
       setLoadingCriar(false);
     }
@@ -473,11 +473,11 @@ export default function ColaboradorAdminClient() {
 
           <div className="mt-6 rounded-[28px] border border-white/10 bg-white/[0.03] p-4">
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-cyan-200">
-              SessÃ£o ativa
+              Sessão ativa
             </p>
             <h3 className="mt-2 text-xl font-semibold text-white">{adminNome}</h3>
             <p className="mt-1 text-sm text-slate-400">
-              Painel pensado para gerir horários, equipa e futuras atualizaÃ§Ãµes do site.
+              Painel pensado para gerir horários, equipa e futuras atualizações do site.
             </p>
             <Button
               onClick={handleLogout}
@@ -498,10 +498,10 @@ export default function ColaboradorAdminClient() {
                   Central de gestão
                 </p>
                 <h1 className="mt-3 text-4xl font-semibold tracking-tight text-white md:text-5xl">
-                  Um painel mais profissional para gerir equipa, horários e a prÃ³xima fase do site.
+                  Um painel mais profissional para gerir equipa, horários e a próxima fase do site.
                 </h1>
                 <p className="mt-4 max-w-2xl text-base leading-8 text-slate-300">
-                  A nova dashboard foi desenhada para controlar a operação diÃ¡ria agora e servir mais tarde
+                  A nova dashboard foi desenhada para controlar a operação diária agora e servir mais tarde
                   como base para atualizar fotos, textos e valores do simulador sem depender de código.
                 </p>
               </div>
@@ -514,9 +514,9 @@ export default function ColaboradorAdminClient() {
                   accent="cyan"
                 />
                 <MiniStat
-                  label="Valor/hora mÃ©dio"
+                  label="Valor/hora médio"
                   value={money(dashboardStats.mediaHora)}
-                  helper="ReferÃªncia geral da equipa"
+                  helper="Referência geral da equipa"
                   accent="emerald"
                 />
               </div>
@@ -581,12 +581,12 @@ export default function ColaboradorAdminClient() {
                     <StatSurface
                       icon={Wrench}
                       title="Pronto para crescer"
-                      body="A estrutura já estÃ¡ pensada para suportar gestão de conteúdo do site no próximo passo."
+                      body="A estrutura já está pensada para suportar gestão de conteúdo do site no próximo passo."
                     />
                     <StatSurface
                       icon={CheckCircle2}
                       title="Visão executiva"
-                      body="As métricas principais estÃ£o concentradas num único painel para decisões mais rÃ¡pidas."
+                      body="As métricas principais estão concentradas num único painel para decisões mais rápidas."
                     />
                   </div>
                 </ActionCard>
@@ -640,7 +640,7 @@ export default function ColaboradorAdminClient() {
                   </p>
                   <h2 className="mt-2 text-3xl font-semibold text-white">Horários e registos da equipa</h2>
                   <p className="mt-2 max-w-2xl text-sm leading-7 text-slate-300">
-                    Filtra por colaborador, acompanha a cronologia de entradas e saídas e percebe quem estÃ¡ a
+                    Filtra por colaborador, acompanha a cronologia de entradas e saídas e percebe quem está a
                     gerar mais trabalho no terreno.
                   </p>
                 </div>
@@ -981,7 +981,7 @@ export default function ColaboradorAdminClient() {
                   </p>
                   <h2 className="mt-2 text-3xl font-semibold text-white">Gestão do site e do simulador</h2>
                   <p className="mt-2 max-w-2xl text-sm leading-7 text-slate-300">
-                    Esta área já estÃ¡ preparada como mapa funcional do próximo passo: mexer em fotos, textos e
+                    Esta área já está preparada como mapa funcional do próximo passo: mexer em fotos, textos e
                     valores do simulador a partir do backoffice.
                   </p>
                 </div>
@@ -1005,7 +1005,7 @@ export default function ColaboradorAdminClient() {
                         </div>
                         <div>
                           <p className="text-sm font-semibold text-white">{module.status}</p>
-                          <p className="text-xs text-slate-400">MÃ³dulo reservado na arquitetura</p>
+                          <p className="text-xs text-slate-400">Módulo reservado na arquitetura</p>
                         </div>
                       </div>
                       <ArrowRight className="h-5 w-5 text-cyan-200" />
@@ -1200,4 +1200,6 @@ function Field({ label, children }: { label: string; children: ReactNode }) {
     </label>
   );
 }
+
+
 
