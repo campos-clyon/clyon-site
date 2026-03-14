@@ -985,8 +985,18 @@ export default function ColaboradorAdminClient() {
                     valores do simulador a partir do backoffice.
                   </p>
                 </div>
-                <div className="rounded-2xl border border-cyan-300/20 bg-cyan-400/[0.08] px-4 py-3 text-sm text-cyan-100">
-                  Módulos em preparação para a futura gestão de conteúdo.
+                <div className="flex flex-col items-start gap-3 xl:items-end">
+                  <div className="rounded-2xl border border-cyan-300/20 bg-cyan-400/[0.08] px-4 py-3 text-sm text-cyan-100">
+                    Módulos em preparação para a futura gestão de conteúdo.
+                  </div>
+                  <Button
+                    type="button"
+                    onClick={() => router.push("/colaboradores/admin/imagens")}
+                    className="bg-cyan-400 text-slate-950 hover:bg-cyan-300"
+                  >
+                    Abrir gestor de imagens
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
                 </div>
               </div>
 
