@@ -22,6 +22,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { BASE_ADDRESS } from "@/lib/maps-config";
+import { createSimulatorSettingsMap } from "@/lib/simulator-settings";
 
 type CategoriaId =
   | "entulho"
@@ -50,6 +51,10 @@ type MapsPrediction = {
   secondaryText: string;
 };
 
+type SettingsResponse = {
+  settings?: Array<{ key: string; value: string | number }>;
+};
+
 const categorias: Categoria[] = [
   { id: "entulho", nome: "Recolha de entulho", descricao: "Obras, resíduos e limpezas pesadas.", icon: Wrench, calculo: "entulho", trajeto: "base" },
   { id: "moveis", nome: "Recolha de móveis", descricao: "Móveis antigos e recheios.", icon: Package, calculo: "moveis", trajeto: "base" },
@@ -65,6 +70,7 @@ const pessoasOptions: ChoiceOption[] = [1, 2, 3, 4, 5, 6].map((num) => ({
 }));
 
 export default function SimuladorClient() {
+  const [pricingMap, setPricingMap] = useState(() => createSimulatorSettingsMap());
   const [categoriaId, setCategoriaId] = useState<CategoriaId | null>(null);
   const [origem, setOrigem] = useState("");
   const [destino, setDestino] = useState("");
@@ -88,6 +94,27 @@ export default function SimuladorClient() {
   const [orcamento, setOrcamento] = useState<number | null>(null);
 
   const categoria = categorias.find((item) => item.id === categoriaId) ?? null;
+
+  useEffect(() => {
+    let active = true;
+
+    void (async () => {
+      try {
+        const response = await fetch("/api/simulador/settings");
+        if (!response.ok) return;
+        const data = (await response.json()) as SettingsResponse;
+        if (active) {
+          setPricingMap(createSimulatorSettingsMap(data.settings));
+        }
+      } catch {
+        // Mantem os valores locais se a API falhar.
+      }
+    })();
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const resetFlow = () => {
     setOrigem("");
@@ -203,29 +230,54 @@ export default function SimuladorClient() {
 
     let adicionalAcesso = 0;
     if (tipoAcesso === "apartamento") {
-      adicionalAcesso = temElevador === "sim" ? andares * 3 : andares * 6;
+      adicionalAcesso =
+        temElevador === "sim"
+          ? andares * pricingMap.apartamento_com_elevador_por_andar
+          : andares * pricingMap.apartamento_sem_elevador_por_andar;
     }
-    const adicionalDificil = acessoDificil ? 30 : 0;
+    const adicionalDificil = acessoDificil ? pricingMap.acesso_dificil_extra : 0;
     let total = 0;
 
     if (categoria.calculo === "moveis") {
       if (moveisModo === "item") {
         total =
-          pequeno * 5 + medio * 7 + grande * 13 + km * 2.5 + adicionalAcesso + adicionalDificil;
-        total *= 1.3;
+          pequeno * pricingMap.moveis_item_pequeno +
+          medio * pricingMap.moveis_item_medio +
+          grande * pricingMap.moveis_item_grande +
+          km * pricingMap.moveis_distancia_km +
+          adicionalAcesso +
+          adicionalDificil;
+        total *= pricingMap.entulho_multiplicador;
       } else {
-        const base = (horas + 2) * (pessoas + 1) * 9;
-        total = (base + km * 2.5 + adicionalAcesso + adicionalDificil + base * 0.35) * cargasNum;
+        const base = (horas + pricingMap.moveis_carga_base) * (pessoas + 1) * pricingMap.hora_base;
+        total =
+          (base +
+            km * pricingMap.moveis_distancia_km +
+            adicionalAcesso +
+            adicionalDificil +
+            base * pricingMap.moveis_carga_multiplicador) *
+          cargasNum;
       }
     }
 
     if (categoria.calculo === "entulho") {
-      const material = entulhoModo === "chao" ? sacos * 1.5 : sacos;
-      total = (horas * pessoas * 9 + material + km * 2.2 + adicionalAcesso + adicionalDificil) * 1.3;
+      const material = entulhoModo === "chao" ? sacos * pricingMap.entulho_saco_chao_extra : sacos;
+      total =
+        (horas * pessoas * pricingMap.hora_base +
+          material +
+          km * pricingMap.entulho_distancia_km +
+          adicionalAcesso +
+          adicionalDificil) *
+        pricingMap.entulho_multiplicador;
     }
 
     if (categoria.calculo === "mudancas") {
-      total = (horas * pessoas * 9 + km * 2.5 + adicionalAcesso + adicionalDificil) * 1.4;
+      total =
+        (horas * pessoas * pricingMap.hora_base +
+          km * pricingMap.mudancas_distancia_km +
+          adicionalAcesso +
+          adicionalDificil) *
+        pricingMap.mudancas_multiplicador;
     }
 
     setOrcamento(Math.round(total * 100) / 100);

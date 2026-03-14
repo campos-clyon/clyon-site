@@ -53,7 +53,20 @@ export const registrosHoras = mysqlTable('registrosHoras', {
   updatedAt: timestamp('updatedAt').defaultNow().onUpdateNow().notNull(),
 });
 
+export const simulatorSettings = mysqlTable("simulatorSettings", {
+  key: varchar("key", { length: 120 }).primaryKey(),
+  label: varchar("label", { length: 160 }).notNull(),
+  category: varchar("category", { length: 40 }).notNull(),
+  unit: varchar("unit", { length: 24 }).notNull(),
+  value: decimal("value", { precision: 10, scale: 2 }).notNull(),
+  description: text("description"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
 export type Colaborador = typeof colaboradores.$inferSelect;
 export type InsertColaborador = typeof colaboradores.$inferInsert;
 export type RegistroHoras = typeof registrosHoras.$inferSelect;
 export type InsertRegistroHoras = typeof registrosHoras.$inferInsert;
+export type SimulatorSetting = typeof simulatorSettings.$inferSelect;
+export type InsertSimulatorSetting = typeof simulatorSettings.$inferInsert;

@@ -1,21 +1,111 @@
 import { drizzle } from "drizzle-orm/mysql2";
 import mysql from "mysql2/promise";
 import { eq, desc } from "drizzle-orm";
-import { users, colaboradores, registrosHoras } from "../../drizzle/schema";
+import { users, colaboradores, registrosHoras, simulatorSettings } from "../../drizzle/schema";
 import type { InsertUser } from "../../drizzle/schema";
+import { defaultSimulatorSettings } from "@/lib/simulator-settings";
 
 let dbInstance: ReturnType<typeof drizzle<typeof import('../../drizzle/schema')>> | null = null;
+let poolInstance: mysql.Pool | null = null;
 
-export async function getDb() {
+async function getPool() {
   if (!process.env.DATABASE_URL) {
     console.warn("[Database] DATABASE_URL not set");
     return null;
   }
+  if (!poolInstance) {
+    poolInstance = mysql.createPool(process.env.DATABASE_URL);
+  }
+  return poolInstance;
+}
+
+export async function getDb() {
+  const pool = await getPool();
+  if (!pool) return null;
   if (!dbInstance) {
-    const pool = mysql.createPool(process.env.DATABASE_URL);
     dbInstance = drizzle(pool) as any;
   }
   return dbInstance;
+}
+
+let simulatorTableEnsured = false;
+
+export async function ensureSimulatorSettingsTable() {
+  if (simulatorTableEnsured) return;
+
+  const pool = await getPool();
+  if (!pool) throw new Error("Database not available");
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS simulatorSettings (
+      \`key\` varchar(120) NOT NULL PRIMARY KEY,
+      label varchar(160) NOT NULL,
+      category varchar(40) NOT NULL,
+      unit varchar(24) NOT NULL,
+      value decimal(10,2) NOT NULL,
+      description text NULL,
+      createdAt timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updatedAt timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    )
+  `);
+
+  simulatorTableEnsured = true;
+
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  for (const setting of defaultSimulatorSettings) {
+    await db
+      .insert(simulatorSettings)
+      .values({
+        key: setting.key,
+        label: setting.label,
+        category: setting.category,
+        unit: setting.unit,
+        value: setting.value.toFixed(2),
+        description: setting.description,
+      })
+      .onDuplicateKeyUpdate({
+        set: {
+          label: setting.label,
+          category: setting.category,
+          unit: setting.unit,
+          description: setting.description,
+        },
+      });
+  }
+}
+
+export async function getSimulatorSettings() {
+  await ensureSimulatorSettingsTable();
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(simulatorSettings);
+}
+
+export async function upsertSimulatorSetting(data: {
+  key: string;
+  label: string;
+  category: string;
+  unit: string;
+  value: string;
+  description?: string | null;
+}) {
+  await ensureSimulatorSettingsTable();
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db
+    .insert(simulatorSettings)
+    .values(data)
+    .onDuplicateKeyUpdate({
+      set: {
+        label: data.label,
+        category: data.category,
+        unit: data.unit,
+        value: data.value,
+        description: data.description ?? null,
+      },
+    });
 }
 
 // ─── User helpers ───────────────────────────────────────────────────────────

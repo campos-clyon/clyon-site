@@ -1,31 +1,31 @@
-/**
- * API Route catch-all para colaboradores
- * Usa o router Express existente adaptado para Next.js App Router
- */
 import { NextRequest, NextResponse } from "next/server";
-import { getDb } from "@/lib/db";
-import { colaboradores, registrosHoras } from "../../../../../drizzle/schema";
-import { eq, and, gte, lte, desc, isNull } from "drizzle-orm";
 import * as bcrypt from "bcryptjs";
 import * as jose from "jose";
+import { and, desc, eq, isNull } from "drizzle-orm";
+
+import { getDb, getSimulatorSettings, upsertSimulatorSetting } from "@/lib/db";
+import { defaultSimulatorSettings } from "@/lib/simulator-settings";
+import { colaboradores, registrosHoras } from "../../../../../drizzle/schema";
 
 const JWT_SECRET = process.env.JWT_SECRET || "clyon-secret-2026";
 
-// Helper para verificar token
+type JwtPayload = { id: number; nome: string; isAdmin: number };
+type RouteContext = { params: Promise<{ path: string[] }> };
+
 async function verifyToken(req: NextRequest) {
   const token = req.headers.get("authorization")?.replace("Bearer ", "");
   if (!token) return null;
+
   try {
     const secretKey = new TextEncoder().encode(JWT_SECRET);
     const { payload } = await jose.jwtVerify(token, secretKey);
-    return payload as { id: number; nome: string; isAdmin: number };
+    return payload as unknown as JwtPayload;
   } catch {
     return null;
   }
 }
 
-// Helper para gerar token
-async function generateToken(payload: object) {
+async function generateToken(payload: Record<string, unknown>) {
   const secretKey = new TextEncoder().encode(JWT_SECRET);
   return new jose.SignJWT(payload as jose.JWTPayload)
     .setProtectedHeader({ alg: "HS256" })
@@ -33,249 +33,388 @@ async function generateToken(payload: object) {
     .sign(secretKey);
 }
 
+function parseTimeToMinutes(value?: string | null) {
+  if (!value) return 0;
+  const [hours, minutes] = value.split(":").map(Number);
+  if (!Number.isFinite(hours) || !Number.isFinite(minutes)) return 0;
+  return hours * 60 + minutes;
+}
+
+function calculateWorkedHours(
+  horaEntrada?: string | null,
+  horaSaida?: string | null,
+  horaPausa?: string | null,
+) {
+  if (!horaEntrada || !horaSaida) return 0;
+  const totalMinutes = parseTimeToMinutes(horaSaida) - parseTimeToMinutes(horaEntrada);
+  const pauseMinutes = parseTimeToMinutes(horaPausa);
+  return Math.max(0, Number(((totalMinutes - pauseMinutes) / 60).toFixed(2)));
+}
+
+function toIsoDate(input?: string | null) {
+  if (!input) return new Date();
+  const date = new Date(input);
+  return Number.isNaN(date.getTime()) ? new Date() : date;
+}
+
+async function loadAdminDataset(db: Awaited<ReturnType<typeof getDb>>) {
+  if (!db) return { colaboradores: [] };
+
+  const team = await db.select().from(colaboradores);
+  const allRecords = await db.select().from(registrosHoras).orderBy(desc(registrosHoras.data));
+
+  const now = new Date();
+  const weekStart = new Date(now);
+  weekStart.setDate(now.getDate() - now.getDay() + 1);
+  weekStart.setHours(0, 0, 0, 0);
+
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  const fifteenDaysStart = new Date(now);
+  fifteenDaysStart.setDate(now.getDate() - 15);
+
+  const calcPeriod = (records: typeof allRecords) => {
+    const hours = records.reduce((sum, item) => sum + parseFloat(item.horasTrabalhadas || "0"), 0);
+    const value = records.reduce((sum, item) => sum + parseFloat(item.valorTotal || "0"), 0);
+    const jobs = records.reduce((sum, item) => sum + (item.numeroTrabalhos || 0), 0);
+
+    return {
+      horas: hours.toFixed(2),
+      valor: value.toFixed(2),
+      trabalhos: jobs,
+    };
+  };
+
+  return {
+    colaboradores: team.map((member) => {
+      const memberRecords = allRecords.filter((record) => record.colaboradorId === member.id);
+      return {
+        id: member.id,
+        nome: member.nome,
+        funcao: member.funcao,
+        valorHora: member.valorHora,
+        isAdmin: member.isAdmin,
+        createdAt: member.createdAt,
+        updatedAt: member.updatedAt,
+        registros: memberRecords.map((record) => ({
+          id: record.id,
+          colaboradorId: record.colaboradorId,
+          data: record.data?.toISOString() || "",
+          horaEntrada: record.horaEntrada,
+          horaPausa: record.horaPausa,
+          horaSaida: record.horaSaida,
+          numeroTrabalhos: record.numeroTrabalhos || 0,
+          horasTrabalhadas: record.horasTrabalhadas || "0",
+          valorTotal: record.valorTotal || "0",
+        })),
+        estatisticas: {
+          semana: calcPeriod(memberRecords.filter((record) => record.data && record.data >= weekStart)),
+          ultimos15Dias: calcPeriod(memberRecords.filter((record) => record.data && record.data >= fifteenDaysStart)),
+          mes: calcPeriod(memberRecords.filter((record) => record.data && record.data >= monthStart)),
+        },
+      };
+    }),
+  };
+}
+
 async function handleRequest(req: NextRequest, path: string[]) {
   const route = path.join("/");
   const db = await getDb();
-  if (!db) return NextResponse.json({ error: "Banco de dados indispon�vel" }, { status: 500 });
+  if (!db) {
+    return NextResponse.json({ error: "Base de dados indisponivel." }, { status: 500 });
+  }
 
-  // POST /login
   if (route === "login" && req.method === "POST") {
     const { nome, senha } = await req.json();
-    if (!nome || !senha) return NextResponse.json({ error: "Nome e senha s�o obrigat�rios" }, { status: 400 });
+    if (!nome || !senha) {
+      return NextResponse.json({ error: "Nome e palavra-passe sao obrigatorios." }, { status: 400 });
+    }
 
-    const [colab] = await db.select().from(colaboradores).where(eq(colaboradores.nome, nome.toUpperCase()));
-    if (!colab) return NextResponse.json({ error: "Colaborador n�o encontrado" }, { status: 401 });
+    const [colaborador] = await db
+      .select()
+      .from(colaboradores)
+      .where(eq(colaboradores.nome, String(nome).toUpperCase()));
 
-    const senhaValida = await bcrypt.compare(senha, colab.senha);
-    if (!senhaValida) return NextResponse.json({ error: "Senha incorreta" }, { status: 401 });
+    if (!colaborador) {
+      return NextResponse.json({ error: "Colaborador nao encontrado." }, { status: 401 });
+    }
 
-    const token = await generateToken({ id: colab.id, nome: colab.nome, funcao: colab.funcao, isAdmin: colab.isAdmin });
+    const passwordMatches = await bcrypt.compare(String(senha), colaborador.senha);
+    if (!passwordMatches) {
+      return NextResponse.json({ error: "Palavra-passe incorreta." }, { status: 401 });
+    }
+
+    const token = await generateToken({
+      id: colaborador.id,
+      nome: colaborador.nome,
+      funcao: colaborador.funcao,
+      isAdmin: colaborador.isAdmin,
+    });
+
     return NextResponse.json({
       token,
-      colaborador: { id: colab.id, nome: colab.nome, funcao: colab.funcao, valorHora: colab.valorHora, isAdmin: colab.isAdmin },
+      colaborador: {
+        id: colaborador.id,
+        nome: colaborador.nome,
+        funcao: colaborador.funcao,
+        valorHora: colaborador.valorHora,
+        isAdmin: colaborador.isAdmin,
+      },
     });
   }
 
-  // Rotas autenticadas
-  const colaborador = await verifyToken(req);
-  if (!colaborador) return NextResponse.json({ error: "N�o autorizado" }, { status: 401 });
+  const auth = await verifyToken(req);
+  if (!auth) {
+    return NextResponse.json({ error: "Nao autorizado." }, { status: 401 });
+  }
 
-  // POST /registrar-horas
   if (route === "registrar-horas" && req.method === "POST") {
     const body = await req.json();
-    const { data, horaEntrada, horaPausa, horaSaida, numeroTrabalhos } = body;
+    const [member] = await db.select().from(colaboradores).where(eq(colaboradores.id, auth.id));
 
-    const calcHoras = (entrada: string, saida: string, pausa?: string) => {
-      const toMin = (t: string) => { const [h, m] = t.split(":").map(Number); return h * 60 + m; };
-      let total = toMin(saida) - toMin(entrada);
-      if (pausa) total -= 30; // 30 min de pausa padr�o
-      return Math.max(0, total / 60);
-    };
-
-    const horasTrabalhadas = horaSaida ? calcHoras(horaEntrada, horaSaida, horaPausa) : 0;
-    const [colab] = await db.select().from(colaboradores).where(eq(colaboradores.id, colaborador.id));
-    const valorTotal = horasTrabalhadas * (parseFloat(String(colab?.valorHora || 0)));
+    const workedHours = calculateWorkedHours(body.horaEntrada, body.horaSaida, body.horaPausa);
+    const totalValue = workedHours * parseFloat(String(member?.valorHora || 0));
 
     await db.insert(registrosHoras).values({
-      colaboradorId: colaborador.id,
-      data: new Date(data),
-      horaEntrada,
-      horaPausa: horaPausa || null,
-      horaSaida: horaSaida || null,
-      horasTrabalhadas: horasTrabalhadas.toFixed(2),
-      valorTotal: valorTotal.toFixed(2),
-      numeroTrabalhos: parseInt(numeroTrabalhos) || 0,
+      colaboradorId: auth.id,
+      data: toIsoDate(body.data),
+      horaEntrada: String(body.horaEntrada || ""),
+      horaPausa: body.horaPausa || null,
+      horaSaida: body.horaSaida || null,
+      numeroTrabalhos: parseInt(String(body.numeroTrabalhos || 0), 10) || 0,
+      horasTrabalhadas: workedHours.toFixed(2),
+      valorTotal: totalValue.toFixed(2),
     });
 
-    return NextResponse.json({ success: true, horasTrabalhadas, valorTotal });
+    return NextResponse.json({ success: true, horasTrabalhadas: workedHours, valorTotal: totalValue });
   }
 
-  // GET /estatisticas
   if (route === "estatisticas" && req.method === "GET") {
-    const agora = new Date();
-    const inicioSemana = new Date(agora);
-    inicioSemana.setDate(agora.getDate() - agora.getDay() + 1);
-    inicioSemana.setHours(0, 0, 0, 0);
-
-    const inicioMes = new Date(agora.getFullYear(), agora.getMonth(), 1);
-    const inicio15Dias = new Date(agora);
-    inicio15Dias.setDate(agora.getDate() - 15);
-
-    const registros = await db
+    const allRecords = await db
       .select()
       .from(registrosHoras)
-      .where(eq(registrosHoras.colaboradorId, colaborador.id))
+      .where(eq(registrosHoras.colaboradorId, auth.id))
       .orderBy(desc(registrosHoras.data));
 
-    const calcEstat = (regs: typeof registros) => {
-      const horas = regs.reduce((s, r) => s + parseFloat(r.horasTrabalhadas || "0"), 0);
-      const valor = regs.reduce((s, r) => s + parseFloat(r.valorTotal || "0"), 0);
+    const now = new Date();
+    const weekStart = new Date(now);
+    weekStart.setDate(now.getDate() - now.getDay() + 1);
+    weekStart.setHours(0, 0, 0, 0);
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    const fifteenDaysStart = new Date(now);
+    fifteenDaysStart.setDate(now.getDate() - 15);
+
+    const calcPeriod = (records: typeof allRecords) => {
+      const hours = records.reduce((sum, item) => sum + parseFloat(item.horasTrabalhadas || "0"), 0);
+      const value = records.reduce((sum, item) => sum + parseFloat(item.valorTotal || "0"), 0);
+      const jobs = records.reduce((sum, item) => sum + (item.numeroTrabalhos || 0), 0);
       return {
-        horas: horas.toFixed(1),
-        valor: valor.toFixed(2),
-        trabalhos: regs.reduce((s, r) => s + (r.numeroTrabalhos || 0), 0),
-        dias: new Set(regs.map((r) => r.data?.toISOString().split("T")[0])).size,
+        horas: hours.toFixed(1),
+        valor: value.toFixed(2),
+        trabalhos: jobs,
+        dias: new Set(records.map((item) => item.data?.toISOString().split("T")[0])).size,
       };
     };
 
-    const semanaRegs = registros.filter((r) => r.data && r.data >= inicioSemana);
-    const mesRegs = registros.filter((r) => r.data && r.data >= inicioMes);
-    const ultimos15Regs = registros.filter((r) => r.data && r.data >= inicio15Dias);
-
-    const registrosFormatados = registros.slice(0, 10).map((r) => ({
-      ...r,
-      dataFormatada: r.data
-        ? new Date(r.data).toLocaleDateString("pt-PT", { day: "2-digit", month: "2-digit", year: "numeric" })
-        : null,
-    }));
-
     return NextResponse.json({
-      semana: { ...calcEstat(semanaRegs), periodo: `${inicioSemana.toLocaleDateString("pt-PT")} - hoje` },
-      mes: calcEstat(mesRegs),
-      ultimos15Dias: calcEstat(ultimos15Regs),
-      registros: registrosFormatados,
+      semana: { ...calcPeriod(allRecords.filter((item) => item.data && item.data >= weekStart)), periodo: `${weekStart.toLocaleDateString("pt-PT")} - hoje` },
+      mes: calcPeriod(allRecords.filter((item) => item.data && item.data >= monthStart)),
+      ultimos15Dias: calcPeriod(allRecords.filter((item) => item.data && item.data >= fifteenDaysStart)),
+      registros: allRecords.slice(0, 20).map((item) => ({
+        ...item,
+        dataFormatada: item.data
+          ? new Intl.DateTimeFormat("pt-PT", { day: "2-digit", month: "2-digit", year: "numeric" }).format(new Date(item.data))
+          : null,
+      })),
     });
   }
 
-  // GET /registro-em-aberto
   if (route === "registro-em-aberto" && req.method === "GET") {
-    const [aberto] = await db
+    const [openRecord] = await db
       .select()
       .from(registrosHoras)
-      .where(and(eq(registrosHoras.colaboradorId, colaborador.id), isNull(registrosHoras.horaSaida)))
+      .where(and(eq(registrosHoras.colaboradorId, auth.id), isNull(registrosHoras.horaSaida)))
       .orderBy(desc(registrosHoras.data));
-    return NextResponse.json({ registro: aberto || null });
+
+    return NextResponse.json({ registro: openRecord || null });
   }
 
-  // PUT /atualizar-registro/:id
   if (route.startsWith("atualizar-registro/") && req.method === "PUT") {
-    const id = parseInt(route.split("/")[1]);
+    const id = parseInt(route.split("/")[1], 10);
     const body = await req.json();
     await db.update(registrosHoras).set(body).where(eq(registrosHoras.id, id));
     return NextResponse.json({ success: true });
   }
 
-  // DELETE /registros/:id
+  if (route.startsWith("registros/") && req.method === "PUT") {
+    if (!auth.isAdmin) {
+      return NextResponse.json({ error: "Acesso negado." }, { status: 403 });
+    }
+
+    const id = parseInt(route.split("/")[1], 10);
+    const body = await req.json();
+
+    const [record] = await db.select().from(registrosHoras).where(eq(registrosHoras.id, id));
+    if (!record) {
+      return NextResponse.json({ error: "Registo nao encontrado." }, { status: 404 });
+    }
+
+    const [member] = await db.select().from(colaboradores).where(eq(colaboradores.id, record.colaboradorId));
+    const hourRate = parseFloat(String(member?.valorHora || 0));
+
+    const updatedEntrada = body.horaEntrada ?? record.horaEntrada;
+    const updatedPausa = body.horaPausa ?? record.horaPausa;
+    const updatedSaida = body.horaSaida ?? record.horaSaida;
+    const workedHours = calculateWorkedHours(updatedEntrada, updatedSaida, updatedPausa);
+    const computedValue = Number((workedHours * hourRate).toFixed(2));
+    const finalValue =
+      body.valorTotal !== undefined && body.valorTotal !== null && body.valorTotal !== ""
+        ? Number(body.valorTotal)
+        : computedValue;
+
+    await db
+      .update(registrosHoras)
+      .set({
+        data: body.data ? toIsoDate(body.data) : record.data,
+        horaEntrada: updatedEntrada,
+        horaPausa: updatedPausa || null,
+        horaSaida: updatedSaida || null,
+        numeroTrabalhos: parseInt(String(body.numeroTrabalhos ?? record.numeroTrabalhos ?? 0), 10) || 0,
+        horasTrabalhadas: workedHours.toFixed(2),
+        valorTotal: finalValue.toFixed(2),
+      })
+      .where(eq(registrosHoras.id, id));
+
+    return NextResponse.json({ success: true });
+  }
+
   if (route.startsWith("registros/") && req.method === "DELETE") {
-    const id = parseInt(route.split("/")[1]);
+    if (!auth.isAdmin) {
+      return NextResponse.json({ error: "Acesso negado." }, { status: 403 });
+    }
+    const id = parseInt(route.split("/")[1], 10);
     await db.delete(registrosHoras).where(eq(registrosHoras.id, id));
     return NextResponse.json({ success: true });
   }
 
-  // POST /alterar-senha
   if (route === "alterar-senha" && req.method === "POST") {
     const { senhaAtual, novaSenha } = await req.json();
-    const [colab] = await db.select().from(colaboradores).where(eq(colaboradores.id, colaborador.id));
-    if (!colab) return NextResponse.json({ error: "Colaborador n�o encontrado" }, { status: 404 });
+    const [member] = await db.select().from(colaboradores).where(eq(colaboradores.id, auth.id));
+    if (!member) {
+      return NextResponse.json({ error: "Colaborador nao encontrado." }, { status: 404 });
+    }
 
-    const senhaValida = await bcrypt.compare(senhaAtual, colab.senha);
-    if (!senhaValida) return NextResponse.json({ error: "Senha atual incorreta" }, { status: 400 });
+    const passwordMatches = await bcrypt.compare(String(senhaAtual), member.senha);
+    if (!passwordMatches) {
+      return NextResponse.json({ error: "Palavra-passe atual incorreta." }, { status: 400 });
+    }
 
-    const novaSenhaHash = await bcrypt.hash(novaSenha, 10);
-    await db.update(colaboradores).set({ senha: novaSenhaHash }).where(eq(colaboradores.id, colaborador.id));
+    const newPasswordHash = await bcrypt.hash(String(novaSenha), 10);
+    await db.update(colaboradores).set({ senha: newPasswordHash }).where(eq(colaboradores.id, auth.id));
     return NextResponse.json({ success: true });
   }
 
-  // Admin: GET /admin/todos
   if (route === "admin/todos" && req.method === "GET") {
-    if (!colaborador.isAdmin) return NextResponse.json({ error: "Acesso negado" }, { status: 403 });
-    const todos = await db.select().from(colaboradores);
-    const todosRegistros = await db
-      .select()
-      .from(registrosHoras)
-      .orderBy(desc(registrosHoras.data));
-
-    const agora = new Date();
-    const inicioSemana = new Date(agora);
-    inicioSemana.setDate(agora.getDate() - agora.getDay() + 1);
-    inicioSemana.setHours(0, 0, 0, 0);
-
-    const inicioMes = new Date(agora.getFullYear(), agora.getMonth(), 1);
-    const inicio15Dias = new Date(agora);
-    inicio15Dias.setDate(agora.getDate() - 15);
-
-    const calcEstat = (regs: typeof todosRegistros) => {
-      const horas = regs.reduce((s, r) => s + parseFloat(r.horasTrabalhadas || "0"), 0);
-      const valor = regs.reduce((s, r) => s + parseFloat(r.valorTotal || "0"), 0);
-      return {
-        horas: horas.toFixed(2),
-        valor: valor.toFixed(2),
-        trabalhos: regs.reduce((s, r) => s + (r.numeroTrabalhos || 0), 0),
-      };
-    };
-
-    const colaboradoresComDados = todos.map((item) => {
-      const registrosDoColaborador = todosRegistros.filter((registro) => registro.colaboradorId === item.id);
-      const semanaRegs = registrosDoColaborador.filter((r) => r.data && r.data >= inicioSemana);
-      const mesRegs = registrosDoColaborador.filter((r) => r.data && r.data >= inicioMes);
-      const ultimos15Regs = registrosDoColaborador.filter((r) => r.data && r.data >= inicio15Dias);
-
-      return {
-        id: item.id,
-        nome: item.nome,
-        funcao: item.funcao,
-        valorHora: item.valorHora,
-        isAdmin: item.isAdmin,
-        createdAt: item.createdAt,
-        updatedAt: item.updatedAt,
-        registros: registrosDoColaborador.map((registro) => ({
-          id: registro.id,
-          data: registro.data?.toISOString() || "",
-          horaEntrada: registro.horaEntrada,
-          horaPausa: registro.horaPausa,
-          horaSaida: registro.horaSaida,
-          numeroTrabalhos: registro.numeroTrabalhos || 0,
-          horasTrabalhadas: registro.horasTrabalhadas || "0",
-          valorTotal: registro.valorTotal || "0",
-        })),
-        estatisticas: {
-          semana: calcEstat(semanaRegs),
-          ultimos15Dias: calcEstat(ultimos15Regs),
-          mes: calcEstat(mesRegs),
-        },
-      };
-    });
-
-    return NextResponse.json({ colaboradores: colaboradoresComDados });
+    if (!auth.isAdmin) {
+      return NextResponse.json({ error: "Acesso negado." }, { status: 403 });
+    }
+    return NextResponse.json(await loadAdminDataset(db));
   }
 
-  // Admin: POST /criar
-  if (route === "criar" && req.method === "POST") {
-    if (!colaborador.isAdmin) return NextResponse.json({ error: "Acesso negado" }, { status: 403 });
-    const { nome, senha, funcao, valorHora, isAdmin: isAdminNew } = await req.json();
-    const senhaHash = await bcrypt.hash(senha, 10);
-    await db.insert(colaboradores).values({
-      nome: nome.toUpperCase(),
-      senha: senhaHash,
-      funcao,
-      valorHora: String(parseFloat(valorHora)),
-      isAdmin: isAdminNew ? 1 : 0,
+  if (route === "admin/settings/simulador" && req.method === "GET") {
+    if (!auth.isAdmin) {
+      return NextResponse.json({ error: "Acesso negado." }, { status: 403 });
+    }
+    const settings = await getSimulatorSettings();
+    return NextResponse.json({
+      settings: settings.map((item) => ({
+        key: item.key,
+        label: item.label,
+        category: item.category,
+        unit: item.unit,
+        value: item.value,
+        description: item.description,
+      })),
     });
-    return NextResponse.json({ success: true });
   }
 
-  // Admin: PUT /:id/editar
-  if (route.match(/^\d+\/editar$/) && req.method === "PUT") {
-    if (!colaborador.isAdmin) return NextResponse.json({ error: "Acesso negado" }, { status: 403 });
-    const id = parseInt(route.split("/")[0]);
+  if (route === "admin/settings/simulador" && req.method === "PUT") {
+    if (!auth.isAdmin) {
+      return NextResponse.json({ error: "Acesso negado." }, { status: 403 });
+    }
+
     const body = await req.json();
-    if (body.senha) body.senha = await bcrypt.hash(body.senha, 10);
-    await db.update(colaboradores).set(body).where(eq(colaboradores.id, id));
+    const definition = defaultSimulatorSettings.find((item) => item.key === body.key);
+    if (!definition) {
+      return NextResponse.json({ error: "Configuracao invalida." }, { status: 400 });
+    }
+
+    const parsedValue = Number(body.value);
+    if (!Number.isFinite(parsedValue)) {
+      return NextResponse.json({ error: "Valor invalido." }, { status: 400 });
+    }
+
+    await upsertSimulatorSetting({
+      key: definition.key,
+      label: definition.label,
+      category: definition.category,
+      unit: definition.unit,
+      value: parsedValue.toFixed(2),
+      description: definition.description,
+    });
+
     return NextResponse.json({ success: true });
   }
 
-  // Admin: DELETE /:id/deletar
+  if (route === "criar" && req.method === "POST") {
+    if (!auth.isAdmin) {
+      return NextResponse.json({ error: "Acesso negado." }, { status: 403 });
+    }
+
+    const { nome, senha, funcao, valorHora, isAdmin } = await req.json();
+    const passwordHash = await bcrypt.hash(String(senha), 10);
+
+    await db.insert(colaboradores).values({
+      nome: String(nome).toUpperCase(),
+      senha: passwordHash,
+      funcao,
+      valorHora: String(parseFloat(String(valorHora))),
+      isAdmin: isAdmin ? 1 : 0,
+    });
+
+    return NextResponse.json({ success: true });
+  }
+
+  if (route.match(/^\d+\/editar$/) && req.method === "PUT") {
+    if (!auth.isAdmin) {
+      return NextResponse.json({ error: "Acesso negado." }, { status: 403 });
+    }
+
+    const id = parseInt(route.split("/")[0], 10);
+    const body = await req.json();
+    const payload = { ...body } as Record<string, unknown>;
+
+    if (payload.senha) {
+      payload.senha = await bcrypt.hash(String(payload.senha), 10);
+    } else {
+      delete payload.senha;
+    }
+
+    await db.update(colaboradores).set(payload).where(eq(colaboradores.id, id));
+    return NextResponse.json({ success: true });
+  }
+
   if (route.match(/^\d+\/deletar$/) && req.method === "DELETE") {
-    if (!colaborador.isAdmin) return NextResponse.json({ error: "Acesso negado" }, { status: 403 });
-    const id = parseInt(route.split("/")[0]);
+    if (!auth.isAdmin) {
+      return NextResponse.json({ error: "Acesso negado." }, { status: 403 });
+    }
+
+    const id = parseInt(route.split("/")[0], 10);
     await db.delete(colaboradores).where(eq(colaboradores.id, id));
     return NextResponse.json({ success: true });
   }
 
-  return NextResponse.json({ error: "Rota n�o encontrada" }, { status: 404 });
+  return NextResponse.json({ error: "Rota nao encontrada." }, { status: 404 });
 }
-
-type RouteContext = { params: Promise<{ path: string[] }> };
 
 export async function GET(req: NextRequest, context: RouteContext) {
   const { path } = await context.params;
