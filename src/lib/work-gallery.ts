@@ -28,6 +28,107 @@ type GalleryData = {
 
 type GalleryItemInput = Omit<GalleryItem, "id"> & { id?: string };
 
+const defaultGalleryData: GalleryData = {
+  items: [
+    {
+      id: "hero-entulho",
+      section: "hero",
+      title: "Recolha de Entulho",
+      subtitle: "Exemplo inicial para substituir no painel",
+      description: "Imagem inicial enquanto as fotos reais sao carregadas no painel.",
+      alt: "Recolha de entulho",
+      imageUrl: "/images/service-1.webp",
+      order: 1,
+      isActive: true,
+      projectKey: "recolha-entulho",
+    },
+    {
+      id: "hero-moveis",
+      section: "hero",
+      title: "Recolha de Moveis",
+      subtitle: "Exemplo inicial para substituir no painel",
+      description: "Imagem inicial enquanto as fotos reais sao carregadas no painel.",
+      alt: "Recolha de moveis",
+      imageUrl: "/images/service-2.webp",
+      order: 2,
+      isActive: true,
+      projectKey: "recolha-moveis",
+    },
+    {
+      id: "hero-mudancas",
+      section: "hero",
+      title: "Mudancas Completas",
+      subtitle: "Exemplo inicial para substituir no painel",
+      description: "Imagem inicial enquanto as fotos reais sao carregadas no painel.",
+      alt: "Mudancas completas",
+      imageUrl: "/images/service-3.webp",
+      order: 3,
+      isActive: true,
+      projectKey: "mudancas-completas",
+    },
+    {
+      id: "hero-limpeza",
+      section: "hero",
+      title: "Limpeza Pos-Obra",
+      subtitle: "Exemplo inicial para substituir no painel",
+      description: "Imagem inicial enquanto as fotos reais sao carregadas no painel.",
+      alt: "Limpeza pos-obra",
+      imageUrl: "/images/service-4.webp",
+      order: 4,
+      isActive: true,
+      projectKey: "limpeza-pos-obra",
+    },
+    {
+      id: "showcase-entulho",
+      section: "showcase",
+      title: "Recolha de Entulho",
+      subtitle: "Caso inicial",
+      description: "Substitua esta imagem por uma foto real de antes ou depois no painel.",
+      alt: "Caso inicial de recolha de entulho",
+      imageUrl: "/images/service-1.webp",
+      order: 1,
+      isActive: true,
+      projectKey: "recolha-entulho",
+    },
+    {
+      id: "showcase-moveis",
+      section: "showcase",
+      title: "Recolha de Moveis",
+      subtitle: "Caso inicial",
+      description: "Substitua esta imagem por uma foto real de antes ou depois no painel.",
+      alt: "Caso inicial de recolha de moveis",
+      imageUrl: "/images/service-2.webp",
+      order: 2,
+      isActive: true,
+      projectKey: "recolha-moveis",
+    },
+    {
+      id: "showcase-mudancas",
+      section: "showcase",
+      title: "Mudancas Completas",
+      subtitle: "Caso inicial",
+      description: "Substitua esta imagem por uma foto real de antes ou depois no painel.",
+      alt: "Caso inicial de mudancas",
+      imageUrl: "/images/service-3.webp",
+      order: 3,
+      isActive: true,
+      projectKey: "mudancas-completas",
+    },
+    {
+      id: "showcase-limpeza",
+      section: "showcase",
+      title: "Limpeza Pos-Obra",
+      subtitle: "Caso inicial",
+      description: "Substitua esta imagem por uma foto real de antes ou depois no painel.",
+      alt: "Caso inicial de limpeza pos-obra",
+      imageUrl: "/images/service-4.webp",
+      order: 4,
+      isActive: true,
+      projectKey: "limpeza-pos-obra",
+    },
+  ],
+};
+
 const GALLERY_DATA_PATH = path.join(process.cwd(), "data", "work-gallery.json");
 const GALLERY_UPLOAD_DIR = path.join(process.cwd(), "public", "uploads", "work-gallery");
 
@@ -46,22 +147,35 @@ async function ensureGalleryStorage() {
   }
 }
 
+async function ensureGalleryUploadStorage() {
+  await fs.mkdir(path.dirname(GALLERY_DATA_PATH), { recursive: true });
+  await fs.mkdir(GALLERY_UPLOAD_DIR, { recursive: true });
+}
+
+function normalizeItems(items: GalleryItem[]) {
+  return sortItems(
+    (items || []).map((item) => ({
+      ...item,
+      subtitle: item.subtitle || "",
+      description: item.description || "",
+      projectKey: item.projectKey || "",
+    })),
+  );
+}
+
 export async function readGalleryData() {
-  await ensureGalleryStorage();
+  try {
+    const content = await fs.readFile(GALLERY_DATA_PATH, "utf8");
+    const parsed = JSON.parse(content) as GalleryData;
 
-  const content = await fs.readFile(GALLERY_DATA_PATH, "utf8");
-  const parsed = JSON.parse(content) as GalleryData;
-
-  return {
-    items: sortItems(
-      (parsed.items || []).map((item) => ({
-        ...item,
-        subtitle: item.subtitle || "",
-        description: item.description || "",
-        projectKey: item.projectKey || "",
-      })),
-    ),
-  };
+    return {
+      items: normalizeItems(parsed.items || []),
+    };
+  } catch {
+    return {
+      items: normalizeItems(defaultGalleryData.items),
+    };
+  }
 }
 
 export async function writeGalleryData(data: GalleryData) {
@@ -167,7 +281,7 @@ function extensionFromFileName(fileName: string) {
 }
 
 export async function saveGalleryFile(file: File, hint?: string) {
-  await ensureGalleryStorage();
+  await ensureGalleryUploadStorage();
 
   const buffer = Buffer.from(await file.arrayBuffer());
   const baseName = sanitizeFileName(hint || file.name || "imagem");
