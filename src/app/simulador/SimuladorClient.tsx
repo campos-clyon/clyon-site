@@ -24,6 +24,7 @@ import { Label } from "@/components/ui/label";
 import { BASE_ADDRESS } from "@/lib/maps-config";
 import { BUSINESS_PHONE } from "@/lib/seo-data";
 import { createSimulatorSettingsMap } from "@/lib/simulator-settings";
+import { cn } from "@/lib/utils";
 
 type CategoriaId =
   | "entulho"
@@ -65,11 +66,6 @@ const categorias: Categoria[] = [
   { id: "camiao", nome: "Camião com motorista", descricao: "Apoio logístico com base CLYON.", icon: Truck, calculo: "mudancas", trajeto: "base" },
 ];
 
-const pessoasOptions: ChoiceOption[] = [1, 2, 3, 4, 5, 6].map((num) => ({
-  value: String(num),
-  label: `${num} ${num === 1 ? "pessoa" : "pessoas"}`,
-}));
-
 export default function SimuladorClient() {
   const [pricingMap, setPricingMap] = useState(() => createSimulatorSettingsMap());
   const [categoriaId, setCategoriaId] = useState<CategoriaId | null>(null);
@@ -93,8 +89,56 @@ export default function SimuladorClient() {
   const [med, setMed] = useState("");
   const [gra, setGra] = useState("");
   const [orcamento, setOrcamento] = useState<number | null>(null);
+  const [showValidation, setShowValidation] = useState(false);
+  const [pessoasManual, setPessoasManual] = useState(false);
 
   const categoria = categorias.find((item) => item.id === categoriaId) ?? null;
+  const origemValida = categoria?.trajeto === "base" || origem.trim().length >= 3;
+  const destinoValido = destino.trim().length >= 3;
+  const entulhoModoValido = categoria?.calculo !== "entulho" || Boolean(entulhoModo);
+  const quantidadeSacosValida = categoria?.calculo !== "entulho" || Boolean(quantidadeSacos);
+  const moveisModoValido = categoria?.calculo !== "moveis" || Boolean(moveisModo);
+  const cargasValida = categoria?.calculo !== "moveis" || moveisModo !== "carga" || Boolean(cargas);
+  const itensMoveisValidos =
+    categoria?.calculo !== "moveis" ||
+    moveisModo !== "item" ||
+    Boolean(peq || med || gra);
+  const acessoValido = Boolean(tipoAcesso);
+  const pessoasValida = Boolean(quantidadePessoas);
+  const tempoValido = Boolean(tempoEstimado);
+
+  const step1Sequence = [
+    ...(categoria?.trajeto === "custom" ? [{ id: "origem", done: origemValida }] : []),
+    { id: "destino", done: destinoValido },
+    ...(categoria?.calculo === "entulho"
+      ? [
+          { id: "entulhoModo", done: entulhoModoValido },
+          { id: "quantidadeSacos", done: quantidadeSacosValida },
+        ]
+      : []),
+  ];
+
+  const step2Sequence = [
+    ...(categoria?.calculo === "moveis" ? [{ id: "moveisModo", done: moveisModoValido }] : []),
+    ...(categoria?.calculo === "moveis" && moveisModo === "carga"
+      ? [{ id: "cargas", done: cargasValida }]
+      : []),
+    ...(categoria?.calculo === "moveis" && moveisModo === "item"
+      ? [{ id: "itensMoveis", done: itensMoveisValidos }]
+      : []),
+    { id: "tipoAcesso", done: acessoValido },
+    ...(tipoAcesso === "apartamento"
+      ? [
+          { id: "numeroAndares", done: Boolean(numeroAndares) },
+          { id: "temElevador", done: Boolean(temElevador) },
+        ]
+      : []),
+    { id: "quantidadePessoas", done: pessoasValida },
+    { id: "tempoEstimado", done: tempoValido },
+  ];
+
+  const nextStep1Field = step1Sequence.find((item) => !item.done)?.id ?? null;
+  const nextStep2Field = step2Sequence.find((item) => !item.done)?.id ?? null;
 
   useEffect(() => {
     let active = true;
@@ -137,6 +181,8 @@ export default function SimuladorClient() {
     setMed("");
     setGra("");
     setOrcamento(null);
+    setShowValidation(false);
+    setPessoasManual(false);
   };
 
   useEffect(() => {
@@ -180,6 +226,7 @@ export default function SimuladorClient() {
     const origin = categoria?.trajeto === "custom" ? origem.trim() : BASE_ADDRESS;
     const destination = destino.trim();
     if (!origin || !destination) {
+      setShowValidation(true);
       setKmErro("Preencha a morada antes de calcular a distância.");
       return;
     }
@@ -219,6 +266,7 @@ export default function SimuladorClient() {
 
   const calcularOrcamento = () => {
     if (!categoria || km === null) return;
+    setShowValidation(true);
 
     const pessoas = Number(quantidadePessoas || 0);
     const horas = Number(tempoEstimado || 0);
@@ -447,6 +495,11 @@ export default function SimuladorClient() {
                     value={origem}
                     onChange={atualizarOrigem}
                     placeholder="Ex: Rua da Paz, 123, Lisboa"
+                    tone={getFieldTone({
+                      isNext: nextStep1Field === "origem",
+                      isMissing: showValidation && !origemValida,
+                      hasError: Boolean(kmErro) && !origemValida,
+                    })}
                   />
                 ) : (
                   <div className="rounded-[20px] border border-cyan-100 bg-cyan-50/80 p-3.5 text-sm leading-7 text-slate-700">
@@ -460,7 +513,44 @@ export default function SimuladorClient() {
                   value={destino}
                   onChange={atualizarDestino}
                   placeholder="Ex: Rua da Paz, 123, Lisboa"
+                  tone={getFieldTone({
+                    isNext: nextStep1Field === "destino",
+                    isMissing: showValidation && !destinoValido,
+                    hasError: Boolean(kmErro) && !destinoValido,
+                  })}
                 />
+
+                {categoria.calculo === "entulho" ? (
+                  <>
+                    <Field>
+                      <Label>O entulho está em sacos ou no chão? *</Label>
+                      <ChoiceGrid
+                        value={entulhoModo}
+                        onChange={setEntulhoModo}
+                        options={[
+                          { value: "sacos", label: "Em sacos" },
+                          { value: "chao", label: "No chão" },
+                        ]}
+                        tone={getFieldTone({
+                          isNext: nextStep1Field === "entulhoModo",
+                          isMissing: showValidation && !entulhoModoValido,
+                        })}
+                      />
+                    </Field>
+                    <CompactNumberInput
+                      id="sacos"
+                      label="Quantidade de sacos *"
+                      value={quantidadeSacos}
+                      onChange={setQuantidadeSacos}
+                      placeholder="0"
+                      maxWidthClass="w-24"
+                      tone={getFieldTone({
+                        isNext: nextStep1Field === "quantidadeSacos",
+                        isMissing: showValidation && !quantidadeSacosValida,
+                      })}
+                    />
+                  </>
+                ) : null}
 
                 <Button
                   type="button"
@@ -494,26 +584,6 @@ export default function SimuladorClient() {
               <Card className="rounded-[28px] border border-cyan-100 bg-white p-5 shadow-[0_20px_52px_-34px_rgba(14,116,144,0.18)]">
                 <StepTitle number="2" title="Detalhes do serviço" />
                 <div className="mt-4 space-y-4">
-                  {categoria.calculo === "entulho" ? (
-                    <>
-                      <Field>
-                        <Label>O entulho está em sacos ou no chão? *</Label>
-                        <ChoiceGrid
-                          value={entulhoModo}
-                          onChange={setEntulhoModo}
-                          options={[
-                            { value: "sacos", label: "Em sacos" },
-                            { value: "chao", label: "No chão" },
-                          ]}
-                        />
-                      </Field>
-                      <Field>
-                        <Label htmlFor="sacos">Quantidade de sacos *</Label>
-                        <Input id="sacos" type="number" min="1" value={quantidadeSacos} onChange={(event) => setQuantidadeSacos(event.target.value)} />
-                      </Field>
-                    </>
-                  ) : null}
-
                   {categoria.calculo === "moveis" ? (
                     <>
                       <Field>
@@ -525,27 +595,47 @@ export default function SimuladorClient() {
                             { value: "carga", label: "Por carga" },
                             { value: "item", label: "Por item" },
                           ]}
+                          tone={getFieldTone({
+                            isNext: nextStep2Field === "moveisModo",
+                            isMissing: showValidation && !moveisModoValido,
+                          })}
                         />
                       </Field>
                       {moveisModo === "carga" ? (
-                        <Field>
-                          <Label htmlFor="cargas">Quantas cargas? *</Label>
-                          <Input id="cargas" type="number" min="1" value={cargas} onChange={(event) => setCargas(event.target.value)} />
-                        </Field>
+                        <CompactNumberInput
+                          id="cargas"
+                          label="Quantas cargas? *"
+                          value={cargas}
+                          onChange={setCargas}
+                          placeholder="1"
+                          maxWidthClass="w-24"
+                          tone={getFieldTone({
+                            isNext: nextStep2Field === "cargas",
+                            isMissing: showValidation && !cargasValida,
+                          })}
+                        />
                       ) : null}
                       {moveisModo === "item" ? (
-                        <div className="grid gap-4 md:grid-cols-3">
+                        <div className={cn(
+                          "grid gap-4 rounded-[20px] border p-3 md:grid-cols-3",
+                          fieldToneClass(
+                            getFieldTone({
+                              isNext: nextStep2Field === "itensMoveis",
+                              isMissing: showValidation && !itensMoveisValidos,
+                            }),
+                          ),
+                        )}>
                           <Field>
                             <Label htmlFor="peq">Móvel pequeno</Label>
-                            <Input id="peq" type="number" min="0" value={peq} onChange={(event) => setPeq(event.target.value)} />
+                            <Input id="peq" type="number" min="0" value={peq} onChange={(event) => setPeq(event.target.value)} className="h-10 rounded-[14px] text-center" />
                           </Field>
                           <Field>
                             <Label htmlFor="med">Móvel médio</Label>
-                            <Input id="med" type="number" min="0" value={med} onChange={(event) => setMed(event.target.value)} />
+                            <Input id="med" type="number" min="0" value={med} onChange={(event) => setMed(event.target.value)} className="h-10 rounded-[14px] text-center" />
                           </Field>
                           <Field>
                             <Label htmlFor="gra">Móvel grande</Label>
-                            <Input id="gra" type="number" min="0" value={gra} onChange={(event) => setGra(event.target.value)} />
+                            <Input id="gra" type="number" min="0" value={gra} onChange={(event) => setGra(event.target.value)} className="h-10 rounded-[14px] text-center" />
                           </Field>
                         </div>
                       ) : null}
@@ -561,6 +651,10 @@ export default function SimuladorClient() {
                         { value: "apartamento", label: "Apartamento" },
                         { value: "casa", label: "Casa" },
                       ]}
+                      tone={getFieldTone({
+                        isNext: nextStep2Field === "tipoAcesso",
+                        isMissing: showValidation && !acessoValido,
+                      })}
                     />
                   </Field>
 
@@ -568,24 +662,46 @@ export default function SimuladorClient() {
                     <div className="grid gap-4 rounded-[22px] border border-cyan-100 bg-cyan-50/70 p-4 md:grid-cols-2">
                       <Field>
                         <Label htmlFor="andares">Número de andares *</Label>
-                        <Input id="andares" type="number" min="0" value={numeroAndares} onChange={(event) => setNumeroAndares(event.target.value)} />
+                        <Input id="andares" type="number" min="0" value={numeroAndares} onChange={(event) => setNumeroAndares(event.target.value)} className={cn("h-10 w-24 rounded-[14px] text-center", fieldToneClass(getFieldTone({
+                          isNext: nextStep2Field === "numeroAndares",
+                          isMissing: showValidation && tipoAcesso === "apartamento" && !numeroAndares,
+                        })))} />
                       </Field>
                       <Field>
                         <Label>Tem elevador? *</Label>
-                        <ChoiceGrid value={temElevador} onChange={setTemElevador} options={[{ value: "sim", label: "Sim" }, { value: "nao", label: "Não" }]} />
+                        <ChoiceGrid value={temElevador} onChange={setTemElevador} options={[{ value: "sim", label: "Sim" }, { value: "nao", label: "Não" }]} tone={getFieldTone({
+                          isNext: nextStep2Field === "temElevador",
+                          isMissing: showValidation && tipoAcesso === "apartamento" && !temElevador,
+                        })} compact />
                       </Field>
                     </div>
                   ) : null}
 
                   <div className="grid gap-4 md:grid-cols-[1.1fr_0.9fr]">
                     <Field>
-                      <Label>Quantidade de pessoas necessárias *</Label>
-                      <ChoiceGrid value={quantidadePessoas} onChange={setQuantidadePessoas} options={pessoasOptions} columns={3} />
+                      <PeopleSelector
+                        value={quantidadePessoas}
+                        onChange={setQuantidadePessoas}
+                        manualMode={pessoasManual}
+                        onManualModeChange={setPessoasManual}
+                        tone={getFieldTone({
+                          isNext: nextStep2Field === "quantidadePessoas",
+                          isMissing: showValidation && !pessoasValida,
+                        })}
+                      />
                     </Field>
-                    <Field>
-                      <Label htmlFor="tempo">Tempo estimado (horas) *</Label>
-                      <Input id="tempo" type="number" min="0.5" step="0.5" value={tempoEstimado} onChange={(event) => setTempoEstimado(event.target.value)} placeholder="Ex: 2.5" />
-                    </Field>
+                    <CompactNumberInput
+                      id="tempo"
+                      label="Tempo estimado (horas) *"
+                      value={tempoEstimado}
+                      onChange={setTempoEstimado}
+                      placeholder="2.5"
+                      maxWidthClass="w-28"
+                      tone={getFieldTone({
+                        isNext: nextStep2Field === "tempoEstimado",
+                        isMissing: showValidation && !tempoValido,
+                      })}
+                    />
                   </div>
 
                   <div className="flex items-center gap-3 rounded-[20px] border border-cyan-100 bg-cyan-50/70 p-4">
@@ -680,6 +796,36 @@ function Field({ children }: { children: ReactNode }) {
   return <div className="space-y-2.5">{children}</div>;
 }
 
+type FieldTone = "default" | "next" | "warning" | "error";
+
+function getFieldTone({
+  isNext,
+  isMissing,
+  hasError,
+}: {
+  isNext?: boolean;
+  isMissing?: boolean;
+  hasError?: boolean;
+}): FieldTone {
+  if (hasError) return "error";
+  if (isNext) return "next";
+  if (isMissing) return "warning";
+  return "default";
+}
+
+function fieldToneClass(tone: FieldTone) {
+  if (tone === "error") {
+    return "border-red-300 ring-4 ring-red-100";
+  }
+  if (tone === "warning") {
+    return "border-amber-300 ring-4 ring-amber-100";
+  }
+  if (tone === "next") {
+    return "border-cyan-300 ring-4 ring-cyan-100 shadow-[0_0_0_1px_rgba(34,211,238,0.15)]";
+  }
+  return "border-cyan-100";
+}
+
 function StepTitle({ number, title }: { number: string; title: string }) {
   return (
     <div>
@@ -720,12 +866,14 @@ function AddressField({
   value,
   onChange,
   placeholder,
+  tone = "default",
 }: {
   id: string;
   label: string;
   value: string;
   onChange: (value: string) => void;
   placeholder: string;
+  tone?: FieldTone;
 }) {
   const [focused, setFocused] = useState(false);
   const [predictions, setPredictions] = useState<MapsPrediction[]>([]);
@@ -790,6 +938,7 @@ function AddressField({
           onBlur={() => window.setTimeout(() => setFocused(false), 140)}
           placeholder={placeholder}
           autoComplete="street-address"
+          className={cn("h-10 rounded-[14px] bg-white", fieldToneClass(tone))}
         />
         {loading ? (
           <div className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-cyan-600">
@@ -837,11 +986,15 @@ function ChoiceGrid({
   onChange,
   options,
   columns = 2,
+  tone = "default",
+  compact = false,
 }: {
   value: string;
   onChange: (value: string) => void;
   options: ChoiceOption[];
   columns?: 2 | 3;
+  tone?: FieldTone;
+  compact?: boolean;
 }) {
   const gridClass =
     columns === 3
@@ -857,16 +1010,131 @@ function ChoiceGrid({
             key={option.value}
             type="button"
             onClick={() => onChange(option.value)}
-            className={`min-h-14 rounded-[22px] border px-4 py-3 text-left text-sm font-semibold transition ${
+            className={cn(
+              compact
+                ? "min-h-11 rounded-[16px] px-3 py-2 text-center text-sm"
+                : "min-h-14 rounded-[22px] px-4 py-3 text-left text-sm",
+              "border font-semibold transition",
               active
                 ? "border-cyan-400 bg-cyan-500 text-white shadow-[0_16px_30px_-18px_rgba(6,182,212,0.7)]"
-                : "border-cyan-100 bg-white text-slate-700 hover:border-cyan-300 hover:bg-cyan-50"
-            }`}
+                : `${fieldToneClass(tone)} bg-white text-slate-700 hover:border-cyan-300 hover:bg-cyan-50`,
+            )}
           >
             {option.label}
           </button>
         );
       })}
+    </div>
+  );
+}
+
+function CompactNumberInput({
+  id,
+  label,
+  value,
+  onChange,
+  placeholder,
+  maxWidthClass = "w-28",
+  tone = "default",
+}: {
+  id: string;
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  placeholder?: string;
+  maxWidthClass?: string;
+  tone?: FieldTone;
+}) {
+  return (
+    <Field>
+      <Label htmlFor={id}>{label}</Label>
+      <Input
+        id={id}
+        type="number"
+        min="0"
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        placeholder={placeholder}
+        className={cn("h-10 rounded-[14px] text-center", maxWidthClass, fieldToneClass(tone))}
+      />
+    </Field>
+  );
+}
+
+function PeopleSelector({
+  value,
+  onChange,
+  manualMode,
+  onManualModeChange,
+  tone = "default",
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  manualMode: boolean;
+  onManualModeChange: (manual: boolean) => void;
+  tone?: FieldTone;
+}) {
+  return (
+    <div className="space-y-3">
+      {manualMode ? (
+        <div className="flex items-center gap-2">
+          <Input
+            type="number"
+            min="8"
+            value={value}
+            onChange={(event) => onChange(event.target.value)}
+            placeholder="8"
+            className={cn("h-10 w-24 rounded-[14px] text-center", fieldToneClass(tone))}
+          />
+          <button
+            type="button"
+            onClick={() => {
+              onManualModeChange(false);
+              onChange("");
+            }}
+            className="h-10 rounded-[14px] border border-cyan-100 px-3 text-sm font-semibold text-slate-600 transition hover:border-cyan-300 hover:bg-cyan-50"
+          >
+            Voltar
+          </button>
+        </div>
+      ) : (
+        <div className="flex flex-wrap gap-2">
+          {[1, 2, 3, 4, 5, 6, 7].map((num) => {
+            const active = value === String(num) && !manualMode;
+            return (
+              <button
+                key={num}
+                type="button"
+                onClick={() => {
+                  onManualModeChange(false);
+                  onChange(String(num));
+                }}
+                className={cn(
+                  "flex h-10 w-10 items-center justify-center rounded-[14px] border text-sm font-bold transition",
+                  active
+                    ? "border-cyan-400 bg-cyan-500 text-white shadow-[0_16px_30px_-18px_rgba(6,182,212,0.7)]"
+                    : `${fieldToneClass(tone)} bg-white text-slate-700 hover:border-cyan-300 hover:bg-cyan-50`,
+                )}
+              >
+                {num}
+              </button>
+            );
+          })}
+          <button
+            type="button"
+            onClick={() => {
+              onManualModeChange(true);
+              onChange("");
+            }}
+            className={cn(
+              "flex h-10 w-12 items-center justify-center rounded-[14px] border text-sm font-bold transition",
+              `${fieldToneClass(tone)} bg-white text-slate-700 hover:border-cyan-300 hover:bg-cyan-50`,
+            )}
+          >
+            8+
+          </button>
+        </div>
+      )}
     </div>
   );
 }
