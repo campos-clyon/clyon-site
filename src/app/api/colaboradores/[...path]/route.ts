@@ -169,6 +169,19 @@ async function handleRequest(req: NextRequest, path: string[]) {
 
   if (route === "registrar-horas" && req.method === "POST") {
     const body = await req.json();
+    const [openRecord] = await db
+      .select()
+      .from(registrosHoras)
+      .where(and(eq(registrosHoras.colaboradorId, auth.id), isNull(registrosHoras.horaSaida)))
+      .orderBy(desc(registrosHoras.data));
+
+    if (openRecord) {
+      return NextResponse.json(
+        { error: "Existe um dia anterior por fechar. Termine o registo em aberto antes de iniciar outro." },
+        { status: 400 },
+      );
+    }
+
     const [member] = await db.select().from(colaboradores).where(eq(colaboradores.id, auth.id));
 
     const workedHours = calculateWorkedHours(body.horaEntrada, body.horaSaida, body.horaPausa);
@@ -241,7 +254,34 @@ async function handleRequest(req: NextRequest, path: string[]) {
   if (route.startsWith("atualizar-registro/") && req.method === "PUT") {
     const id = parseInt(route.split("/")[1], 10);
     const body = await req.json();
-    await db.update(registrosHoras).set(body).where(eq(registrosHoras.id, id));
+    const [record] = await db.select().from(registrosHoras).where(eq(registrosHoras.id, id));
+    if (!record) {
+      return NextResponse.json({ error: "Registo nao encontrado." }, { status: 404 });
+    }
+
+    const [member] = await db.select().from(colaboradores).where(eq(colaboradores.id, auth.id));
+    const nextEntrada = body.horaEntrada ?? record.horaEntrada;
+    const nextSaida = body.horaSaida ?? record.horaSaida;
+    const nextPausa =
+      body.horaPausa !== undefined
+        ? body.horaPausa || "00:00"
+        : nextSaida && !record.horaPausa
+          ? "00:00"
+          : record.horaPausa;
+    const workedHours = calculateWorkedHours(nextEntrada, nextSaida, nextPausa);
+    const totalValue = workedHours * parseFloat(String(member?.valorHora || 0));
+
+    await db
+      .update(registrosHoras)
+      .set({
+        horaEntrada: nextEntrada,
+        horaPausa: nextPausa || null,
+        horaSaida: nextSaida || null,
+        numeroTrabalhos: parseInt(String(body.numeroTrabalhos ?? record.numeroTrabalhos ?? 0), 10) || 0,
+        horasTrabalhadas: workedHours.toFixed(2),
+        valorTotal: totalValue.toFixed(2),
+      })
+      .where(eq(registrosHoras.id, id));
     return NextResponse.json({ success: true });
   }
 

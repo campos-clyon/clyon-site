@@ -140,8 +140,6 @@ export default function ColaboradorDashboard() {
 
   const [data, setData] = useState(new Date().toISOString().split("T")[0]);
   const [horaEntrada, setHoraEntrada] = useState("");
-  const [numeroTrabalhos, setNumeroTrabalhos] = useState("0");
-
   const [horaPausaUpdate, setHoraPausaUpdate] = useState("");
   const [horaSaidaUpdate, setHoraSaidaUpdate] = useState("");
   const [numeroTrabalhosUpdate, setNumeroTrabalhosUpdate] = useState("0");
@@ -202,11 +200,16 @@ export default function ColaboradorDashboard() {
 
       if (responseRegistro.ok) {
         const dataRegistro = await responseRegistro.json();
-        if (dataRegistro.registroAberto) {
-          setRegistroEmAberto(dataRegistro.registroAberto);
-          setHoraPausaUpdate(dataRegistro.registroAberto.horaPausa || "");
-          setHoraSaidaUpdate(dataRegistro.registroAberto.horaSaida || "");
-          setNumeroTrabalhosUpdate(dataRegistro.registroAberto.numeroTrabalhos.toString());
+        if (dataRegistro.registro) {
+          setRegistroEmAberto(dataRegistro.registro);
+          setHoraPausaUpdate(dataRegistro.registro.horaPausa || "");
+          setHoraSaidaUpdate(dataRegistro.registro.horaSaida || "");
+          setNumeroTrabalhosUpdate(dataRegistro.registro.numeroTrabalhos.toString());
+        } else {
+          setRegistroEmAberto(null);
+          setHoraPausaUpdate("");
+          setHoraSaidaUpdate("");
+          setNumeroTrabalhosUpdate("0");
         }
       }
     } catch (err: any) {
@@ -248,7 +251,7 @@ export default function ColaboradorDashboard() {
           horaEntrada,
           horaPausa: null,
           horaSaida: null,
-          numeroTrabalhos: parseInt(numeroTrabalhos),
+          numeroTrabalhos: 0,
         }),
       });
 
@@ -259,7 +262,6 @@ export default function ColaboradorDashboard() {
 
       setSuccess("Entrada registrada com sucesso!");
       setHoraEntrada("");
-      setNumeroTrabalhos("0");
       await carregarDados(token);
     } catch (err: any) {
       setError(err.message);
@@ -288,7 +290,7 @@ export default function ColaboradorDashboard() {
         body.horaPausa = horaPausaUpdate;
       } else {
         body.horaSaida = horaSaidaUpdate;
-        if (horaPausaUpdate) body.horaPausa = horaPausaUpdate;
+        body.horaPausa = horaPausaUpdate || "00:00";
       }
 
       const response = await fetch(`/api/colaboradores/atualizar-registro/${registroEmAberto.id}`, {
@@ -405,12 +407,15 @@ export default function ColaboradorDashboard() {
                   <PlayCircle className="h-5 w-5" />
                   Registro em aberto
                 </CardTitle>
-                <CardDescription className="text-slate-600">
-                  Entrada registrada em {formatDate(registroEmAberto.data)} às {registroEmAberto.horaEntrada}
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-5 pt-6">
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+              <CardDescription className="text-slate-600">
+                Entrada registrada em {formatDate(registroEmAberto.data)} às {registroEmAberto.horaEntrada}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-5 pt-6">
+              <div className="rounded-2xl border border-cyan-100 bg-cyan-50/70 px-4 py-3 text-sm leading-7 text-slate-600">
+                Para fechar o dia, preencha a pausa apenas se existiu. Se deixar vazio, o sistema considera pausa 0 e fecha o registo com a hora de saída e o número de trabalhos.
+              </div>
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                   <FieldShell label="Hora Pausa (opcional)" icon={<PauseCircle className="h-4 w-4" />}>
                     <Input
                       type="time"
@@ -497,13 +502,13 @@ export default function ColaboradorDashboard() {
                   <PlayCircle className="h-5 w-5" />
                   Registrar Entrada
                 </CardTitle>
-                <CardDescription className="text-slate-600">
-                  Registe a sua entrada para começar o dia de trabalho.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="pt-6">
-                <form onSubmit={handleRegistrarEntrada} className="space-y-5">
-                  <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+              <CardDescription className="text-slate-600">
+                Primeiro registe apenas a entrada. No fim do dia feche o registo com pausa, saída e número de trabalhos.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="pt-6">
+              <form onSubmit={handleRegistrarEntrada} className="space-y-5">
+                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                     <FieldShell label="Data" icon={<Calendar className="h-4 w-4" />}>
                       <Input
                         id="data"
@@ -522,19 +527,6 @@ export default function ColaboradorDashboard() {
                         type="time"
                         value={horaEntrada}
                         onChange={(e) => setHoraEntrada(e.target.value)}
-                        required
-                        disabled={saving}
-                        className="h-11 rounded-2xl border-cyan-200 bg-white"
-                      />
-                    </FieldShell>
-
-                    <FieldShell label="Nº de Trabalhos" icon={<Briefcase className="h-4 w-4" />}>
-                      <Input
-                        id="numeroTrabalhos"
-                        type="number"
-                        min="0"
-                        value={numeroTrabalhos}
-                        onChange={(e) => setNumeroTrabalhos(e.target.value)}
                         required
                         disabled={saving}
                         className="h-11 rounded-2xl border-cyan-200 bg-white"
