@@ -22,6 +22,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { BASE_ADDRESS } from "@/lib/maps-config";
+import { BUSINESS_PHONE } from "@/lib/seo-data";
 import { createSimulatorSettingsMap } from "@/lib/simulator-settings";
 
 type CategoriaId =
@@ -302,21 +303,35 @@ export default function SimuladorClient() {
 
   const confirmarPedido = () => {
     if (!categoria || km === null) return;
-    const detalhes =
-      categoria.trajeto === "custom"
-        ? `Partida: ${origem} | Chegada: ${destino} | Distância: ${km} km`
-        : `Origem base CLYON | Destino: ${destino} | Distância: ${km} km`;
-    const resumo = encodeURIComponent(
-      [
-        `categoria=${categoria.nome}`,
-        `detalhes=${detalhes}`,
-        `tipoAcesso=${tipoAcesso}`,
-        `pessoas=${quantidadePessoas}`,
-        `tempo=${tempoEstimado}`,
-        `valor=${orcamento ?? ""}`,
-      ].join("&"),
-    );
-    window.location.href = `/contactos?origem=simulador&resumo=${resumo}`;
+    const linhas = [
+      "Olá, quero solicitar este serviço com base no simulador.",
+      "",
+      `Serviço: ${categoria.nome}`,
+      categoria.trajeto === "custom" ? `Origem: ${origem}` : "Origem: Base CLYON",
+      `Destino: ${destino}`,
+      `Distância: ${km.toFixed(1)} km`,
+      `Tipo de acesso: ${tipoAcesso || "-"}`,
+      tipoAcesso === "apartamento" ? `Andares: ${numeroAndares || "0"}` : null,
+      tipoAcesso === "apartamento" ? `Elevador: ${temElevador || "-"}` : null,
+      `Pessoas: ${quantidadePessoas || "-"}`,
+      `Tempo estimado: ${tempoEstimado || "-"} h`,
+      `Acesso difícil: ${acessoDificil ? "Sim" : "Não"}`,
+      categoria.calculo === "entulho"
+        ? `Condição: ${entulhoModo || "-"} | Sacos: ${quantidadeSacos || "0"}`
+        : null,
+      categoria.calculo === "moveis" && moveisModo === "carga"
+        ? `Condição: por carga | Cargas: ${cargas || "1"}`
+        : null,
+      categoria.calculo === "moveis" && moveisModo === "item"
+        ? `Condição: por item | Pequeno: ${peq || "0"} | Médio: ${med || "0"} | Grande: ${gra || "0"}`
+        : null,
+      `Valor simulado: EUR ${orcamento?.toFixed(2) ?? "-"}`,
+      "",
+      "Peço confirmação deste valor aproximado com um atendente.",
+    ].filter(Boolean);
+
+    const mensagem = encodeURIComponent(linhas.join("\n"));
+    window.location.href = `https://wa.me/${BUSINESS_PHONE.replace(/\D/g, "")}?text=${mensagem}`;
   };
 
   if (!categoria) {
@@ -420,11 +435,11 @@ export default function SimuladorClient() {
       </section>
 
       <section className="bg-slate-50 py-16">
-        <div className="mx-auto grid max-w-7xl gap-8 px-4 sm:px-6 xl:grid-cols-[1.1fr_0.9fr] lg:px-8">
-          <div className="space-y-6">
-            <Card className="rounded-[30px] border border-cyan-100 bg-white p-6 shadow-[0_24px_60px_-34px_rgba(14,116,144,0.18)]">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="grid gap-6 lg:grid-cols-2 lg:items-start">
+            <Card className="rounded-[28px] border border-cyan-100 bg-white p-5 shadow-[0_20px_52px_-34px_rgba(14,116,144,0.18)]">
               <StepTitle number="1" title="Morada e distância" />
-              <div className="mt-5 space-y-5">
+              <div className="mt-4 space-y-4">
                 {categoria.trajeto === "custom" ? (
                   <AddressField
                     id="origem"
@@ -434,7 +449,7 @@ export default function SimuladorClient() {
                     placeholder="Ex: Rua da Paz, 123, Lisboa"
                   />
                 ) : (
-                  <div className="rounded-[22px] border border-cyan-100 bg-cyan-50/80 p-4 text-sm leading-7 text-slate-700">
+                  <div className="rounded-[20px] border border-cyan-100 bg-cyan-50/80 p-3.5 text-sm leading-7 text-slate-700">
                     A origem operacional é a base CLYON e é aplicada automaticamente.
                   </div>
                 )}
@@ -451,22 +466,22 @@ export default function SimuladorClient() {
                   type="button"
                   onClick={calcularDistancia}
                   disabled={!podeCalcularDistancia || kmLoading}
-                  className="w-full rounded-2xl bg-cyan-500 py-6 text-base font-bold text-white hover:bg-cyan-400"
+                  className="w-full rounded-2xl bg-cyan-500 py-5 text-base font-bold text-white hover:bg-cyan-400"
                 >
                   {kmLoading ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Route className="mr-2 h-5 w-5" />}
                   Calcular distância
                 </Button>
 
                 {kmErro ? (
-                  <div className="rounded-[22px] border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-7 text-amber-900">
+                  <div className="rounded-[20px] border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-7 text-amber-900">
                     {kmErro}
                   </div>
                 ) : null}
 
                 {km !== null ? (
-                  <div className="rounded-[24px] border border-cyan-100 bg-cyan-50/70 p-5">
+                  <div className="rounded-[22px] border border-cyan-100 bg-cyan-50/70 p-4">
                     <p className="text-sm font-semibold uppercase tracking-[0.16em] text-cyan-700">Distância calculada</p>
-                    <p className="mt-2 text-4xl font-bold leading-none text-slate-950">{km.toFixed(1)} km</p>
+                    <p className="mt-2 text-[2.5rem] font-bold leading-none text-slate-950">{km.toFixed(1)} km</p>
                     <p className="mt-2 text-sm leading-7 text-slate-600">
                       Estes quilómetros serão usados no cálculo final.
                     </p>
@@ -476,9 +491,9 @@ export default function SimuladorClient() {
             </Card>
 
             {km !== null ? (
-              <Card className="rounded-[30px] border border-cyan-100 bg-white p-6 shadow-[0_24px_60px_-34px_rgba(14,116,144,0.18)]">
+              <Card className="rounded-[28px] border border-cyan-100 bg-white p-5 shadow-[0_20px_52px_-34px_rgba(14,116,144,0.18)]">
                 <StepTitle number="2" title="Detalhes do serviço" />
-                <div className="mt-5 space-y-5">
+                <div className="mt-4 space-y-4">
                   {categoria.calculo === "entulho" ? (
                     <>
                       <Field>
@@ -550,7 +565,7 @@ export default function SimuladorClient() {
                   </Field>
 
                   {tipoAcesso === "apartamento" ? (
-                    <div className="grid gap-4 rounded-[24px] border border-cyan-100 bg-cyan-50/70 p-4 md:grid-cols-2">
+                    <div className="grid gap-4 rounded-[22px] border border-cyan-100 bg-cyan-50/70 p-4 md:grid-cols-2">
                       <Field>
                         <Label htmlFor="andares">Número de andares *</Label>
                         <Input id="andares" type="number" min="0" value={numeroAndares} onChange={(event) => setNumeroAndares(event.target.value)} />
@@ -573,7 +588,7 @@ export default function SimuladorClient() {
                     </Field>
                   </div>
 
-                  <div className="flex items-center gap-3 rounded-[22px] border border-cyan-100 bg-cyan-50/70 p-4">
+                  <div className="flex items-center gap-3 rounded-[20px] border border-cyan-100 bg-cyan-50/70 p-4">
                     <Checkbox id="dificil" checked={acessoDificil} onCheckedChange={(checked) => setAcessoDificil(Boolean(checked))} />
                     <Label htmlFor="dificil" className="cursor-pointer font-medium leading-6">
                       O acesso é considerado difícil
@@ -584,37 +599,73 @@ export default function SimuladorClient() {
                     type="button"
                     onClick={calcularOrcamento}
                     disabled={!podeCalcularOrcamento}
-                    className="w-full rounded-2xl bg-cyan-500 py-6 text-lg font-bold text-white hover:bg-cyan-400"
+                    className="w-full rounded-2xl bg-cyan-500 py-5 text-base font-bold text-white hover:bg-cyan-400"
                   >
                     <Calculator className="mr-2 h-5 w-5" />
                     Calcular orçamento
                   </Button>
                 </div>
               </Card>
-            ) : null}
+            ) : <div className="hidden lg:block" />}
           </div>
 
-          <Card className="h-fit rounded-[30px] border border-slate-900 bg-[linear-gradient(160deg,#082f49_0%,#041c2d_100%)] p-6 text-white shadow-[0_28px_70px_-34px_rgba(2,132,199,0.4)] xl:sticky xl:top-28">
+          <Card className="mt-6 rounded-[28px] border border-slate-900 bg-[linear-gradient(160deg,#082f49_0%,#041c2d_100%)] p-5 text-white shadow-[0_28px_70px_-34px_rgba(2,132,199,0.4)]">
             <p className="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-200">Resumo</p>
-            <h2 className="mt-3 text-[1.75rem] font-bold leading-tight">{categoria.nome}</h2>
-            <p className="mt-3 text-sm leading-7 text-slate-300">{categoria.descricao}</p>
-            <div className="mt-6 space-y-3 rounded-[24px] border border-white/10 bg-white/5 p-4">
+            <div className="mt-3 grid gap-5 lg:grid-cols-[0.95fr_1.05fr] lg:items-start">
+              <div>
+                <h2 className="text-[1.65rem] font-bold leading-tight">{categoria.nome}</h2>
+                <p className="mt-3 text-sm leading-7 text-slate-300">{categoria.descricao}</p>
+              </div>
+              <div className="rounded-[24px] border border-cyan-300/20 bg-cyan-400/10 p-5">
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-cyan-200">
+                  Valor simulado
+                </p>
+                <p className="mt-2 text-[2.2rem] font-bold leading-none text-white">
+                  {orcamento !== null ? `EUR ${orcamento.toFixed(2)}` : "--"}
+                </p>
+                <p className="mt-2 text-sm leading-6 text-cyan-50/85">
+                  {orcamento !== null
+                    ? "Estimativa pronta para envio."
+                    : "Preencha os dados para ver o valor estimado."}
+                </p>
+              </div>
+            </div>
+            <div className="mt-5 space-y-3 rounded-[22px] border border-white/10 bg-white/5 p-4">
+              {categoria.trajeto === "custom" ? (
+                <SummaryRow icon={<MapPin className="h-4.5 w-4.5" />} label="Origem" value={origem || "Ainda não definida"} />
+              ) : (
+                <SummaryRow icon={<MapPin className="h-4.5 w-4.5" />} label="Origem" value="Base CLYON" />
+              )}
               <SummaryRow icon={<MapPin className="h-4.5 w-4.5" />} label="Destino" value={destino || "Ainda não definido"} />
               <SummaryRow icon={<Route className="h-4.5 w-4.5" />} label="Distância" value={km !== null ? `${km.toFixed(1)} km` : "Calcule a distância"} />
-              <SummaryRow icon={<Calculator className="h-4.5 w-4.5" />} label="Valor" value={orcamento !== null ? `EUR ${orcamento.toFixed(2)}` : "Ainda não calculado"} />
+              <SummaryRow
+                icon={<Calculator className="h-4.5 w-4.5" />}
+                label="Condições"
+                value={[
+                  tipoAcesso ? `Acesso: ${tipoAcesso}` : null,
+                  quantidadePessoas ? `Pessoas: ${quantidadePessoas}` : null,
+                  tempoEstimado ? `Tempo: ${tempoEstimado} h` : null,
+                  acessoDificil ? "Acesso difícil" : null,
+                ].filter(Boolean).join(" | ") || "Preencha os detalhes do serviço"}
+              />
             </div>
 
             {orcamento !== null ? (
-              <Button
-                type="button"
-                onClick={confirmarPedido}
-                className="mt-6 w-full rounded-2xl bg-cyan-500 py-6 text-base font-bold text-white hover:bg-cyan-400"
-              >
-                <Phone className="mr-2 h-5 w-5" />
-                Confirmar pedido
-              </Button>
+              <>
+                <div className="mt-5 rounded-[22px] border border-amber-200/35 bg-amber-50/10 px-4 py-3 text-sm leading-7 text-cyan-50">
+                  Estes valores são aproximados e devem ser confirmados por um atendente.
+                </div>
+                <Button
+                  type="button"
+                  onClick={confirmarPedido}
+                  className="mt-4 w-full rounded-2xl bg-cyan-500 py-6 text-base font-bold text-white hover:bg-cyan-400"
+                >
+                  <Phone className="mr-2 h-5 w-5" />
+                  Solicitar este serviço no WhatsApp
+                </Button>
+              </>
             ) : (
-              <div className="mt-6 rounded-[24px] border border-dashed border-white/15 bg-white/5 p-4 text-sm leading-7 text-slate-300">
+              <div className="mt-5 rounded-[22px] border border-dashed border-white/15 bg-white/5 p-4 text-sm leading-7 text-slate-300">
                 Calcule a distância e complete os detalhes para ver o valor final.
               </div>
             )}
