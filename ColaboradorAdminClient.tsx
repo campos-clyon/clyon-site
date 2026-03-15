@@ -77,6 +77,8 @@ type SimulatorSetting = {
 
 type AdminSection = "overview" | "team" | "hours" | "site";
 
+const functionOptions: Array<Colaborador["funcao"]> = ["admin", "motorista", "ajudante"];
+
 const adminNavItems: Array<{
   id: AdminSection;
   icon: ComponentType<{ className?: string }>;
@@ -164,6 +166,12 @@ const getInitials = (name: string) =>
     .map((part) => part[0]?.toUpperCase() || "")
     .join("");
 
+const formatRoleLabel = (role: Colaborador["funcao"]) => {
+  if (role === "admin") return "Administrador";
+  if (role === "motorista") return "Motorista";
+  return "Ajudante";
+};
+
 export default function ColaboradorAdminClient() {
   const router = useRouter();
 
@@ -187,6 +195,7 @@ export default function ColaboradorAdminClient() {
   const [editandoId, setEditandoId] = useState<number | null>(null);
   const [editNome, setEditNome] = useState("");
   const [editValorHora, setEditValorHora] = useState("");
+  const [editFuncao, setEditFuncao] = useState<Colaborador["funcao"]>("ajudante");
   const [editSenha, setEditSenha] = useState("");
   const [mostrarSenha, setMostrarSenha] = useState(false);
   const [loadingEdicao, setLoadingEdicao] = useState(false);
@@ -477,6 +486,7 @@ export default function ColaboradorAdminClient() {
     setEditandoId(colaborador.id);
     setEditNome(colaborador.nome);
     setEditValorHora(String(colaborador.valorHora));
+    setEditFuncao(colaborador.funcao);
     setEditSenha("");
     setMostrarSenha(false);
   };
@@ -492,6 +502,7 @@ export default function ColaboradorAdminClient() {
       const body: Record<string, unknown> = {
         nome: editNome.toUpperCase(),
         valorHora: parseFloat(editValorHora),
+        funcao: editFuncao,
       };
 
       if (editSenha) body.senha = editSenha;
@@ -1338,9 +1349,9 @@ export default function ColaboradorAdminClient() {
                   <p className="text-xs font-semibold uppercase tracking-[0.24em] text-cyan-200">
                     Estrutura da equipa
                   </p>
-                  <h2 className="mt-2 text-[1.85rem] font-semibold text-white">GestÃ£o completa de colaboradores</h2>
+                  <h2 className="mt-2 text-[1.85rem] font-semibold text-white">Gestão completa de colaboradores</h2>
                   <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-300">
-                    Centraliza acessos, funÃ§Ãµes, valores/hora e futuras permissÃµes de gestÃ£o para cada membro.
+                    Centraliza acessos, funções, valores/hora e futuras permissões de gestão para cada membro.
                   </p>
                 </div>
                 <Button
@@ -1349,7 +1360,7 @@ export default function ColaboradorAdminClient() {
                   className="h-12 rounded-2xl bg-cyan-400 px-6 text-slate-950 hover:bg-cyan-300"
                 >
                   {criarNovoVisivel ? <X className="mr-2 h-4 w-4" /> : <UserPlus className="mr-2 h-4 w-4" />}
-                  {criarNovoVisivel ? "Fechar criaÃ§Ã£o" : "Novo colaborador"}
+                  {criarNovoVisivel ? "Fechar criação" : "Novo colaborador"}
                 </Button>
               </div>
 
@@ -1380,9 +1391,9 @@ export default function ColaboradorAdminClient() {
                         placeholder="Ex.: 8.50"
                       />
                     </Field>
-                    <Field label="FunÃ§Ã£o">
+                    <Field label="Função">
                       <div className="grid gap-2 sm:grid-cols-3">
-                        {(["ajudante", "motorista", "admin"] as const).map((funcao) => (
+                        {functionOptions.map((funcao) => (
                           <button
                             key={funcao}
                             type="button"
@@ -1393,7 +1404,7 @@ export default function ColaboradorAdminClient() {
                                 : "border-white/10 bg-white/[0.03] text-white hover:bg-white/[0.06]"
                             }`}
                           >
-                            {funcao}
+                            {formatRoleLabel(funcao)}
                           </button>
                         ))}
                       </div>
@@ -1464,7 +1475,7 @@ export default function ColaboradorAdminClient() {
                             <CardTitle className="text-2xl text-white">{colaborador.nome}</CardTitle>
                             <CardDescription className="mt-2 flex flex-wrap gap-2 text-slate-300">
                               <span className="rounded-full border border-white/10 bg-white/[0.03] px-3 py-1 capitalize">
-                                {colaborador.funcao}
+                                {formatRoleLabel(colaborador.funcao)}
                               </span>
                               {colaborador.isAdmin === 1 && (
                                 <span className="rounded-full border border-cyan-300/30 bg-cyan-400/[0.14] px-3 py-1 text-cyan-100">
@@ -1490,13 +1501,13 @@ export default function ColaboradorAdminClient() {
                             accent="cyan"
                           />
                           <MiniStat
-                            label="Ãšltimos 15 dias"
+                            label="Últimos 15 dias"
                             value={`${decimal(parseFloat(colaborador.estatisticas.ultimos15Dias.horas || "0"))}h`}
                             helper={`${colaborador.estatisticas.ultimos15Dias.trabalhos} trabalhos`}
                             accent="violet"
                           />
                           <MiniStat
-                            label="Este mÃªs"
+                            label="Este mês"
                             value={`${decimal(parseFloat(colaborador.estatisticas.mes.horas || "0"))}h`}
                             helper={money(parseFloat(colaborador.estatisticas.mes.valor || "0"))}
                             accent="emerald"
@@ -1520,6 +1531,24 @@ export default function ColaboradorAdminClient() {
                                 onChange={(event) => setEditValorHora(event.target.value)}
                                 className="h-12 w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 text-white outline-none transition focus:border-cyan-300"
                               />
+                            </Field>
+                            <Field label="Função">
+                              <div className="grid gap-2 sm:grid-cols-3">
+                                {functionOptions.map((funcao) => (
+                                  <button
+                                    key={funcao}
+                                    type="button"
+                                    onClick={() => setEditFuncao(funcao)}
+                                    className={`rounded-2xl border px-4 py-3 text-sm font-medium transition ${
+                                      editFuncao === funcao
+                                        ? "border-cyan-300 bg-cyan-400 text-slate-950"
+                                        : "border-white/10 bg-white/[0.03] text-white hover:bg-white/[0.06]"
+                                    }`}
+                                  >
+                                    {formatRoleLabel(funcao)}
+                                  </button>
+                                ))}
+                              </div>
                             </Field>
                             <Field label="Nova palavra-passe (opcional)">
                               <div className="relative">
@@ -1554,7 +1583,7 @@ export default function ColaboradorAdminClient() {
                                 onClick={() => editarUsuario(colaborador.id)}
                                 className="h-12 rounded-2xl bg-cyan-400 px-6 text-slate-950 hover:bg-cyan-300"
                               >
-                                {loadingEdicao ? "A guardar..." : "Guardar alteraÃ§Ãµes"}
+                                {loadingEdicao ? "A guardar..." : "Guardar alterações"}
                               </Button>
                             </div>
                           </div>

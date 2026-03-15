@@ -265,7 +265,7 @@ export default function ColaboradorDashboard() {
         throw new Error(result.error || "Erro ao registrar entrada");
       }
 
-      setSuccess("Entrada registrada com sucesso!");
+      setSuccess("Entrada registada com sucesso!");
       setHoraEntrada("");
       await carregarDados(token);
     } catch (err: any) {
@@ -368,7 +368,7 @@ export default function ColaboradorDashboard() {
                 className="rounded-2xl border-cyan-200 bg-white text-slate-700 hover:bg-cyan-50"
               >
                 <Lock className="mr-2 h-4 w-4" />
-                Alterar Senha
+                Alterar palavra-passe
               </Button>
               <Button
                 variant="outline"
@@ -411,7 +411,7 @@ export default function ColaboradorDashboard() {
               <CardHeader className="rounded-t-[30px] border-b border-cyan-100 bg-cyan-50/70">
                 <CardTitle className="flex items-center gap-2 text-cyan-700">
                   <PlayCircle className="h-5 w-5" />
-                  Registro em aberto
+                  Registo em aberto
                 </CardTitle>
               <CardDescription className="text-slate-600">
                 Entrada registrada em {formatDate(registroEmAberto.data)} às {registroEmAberto.horaEntrada}
