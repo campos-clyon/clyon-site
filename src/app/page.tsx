@@ -257,19 +257,21 @@ export default async function HomePage() {
             {services.map((service) => (
               <article
                 key={service.name}
-                className="overflow-hidden rounded-[30px] border border-cyan-100 bg-white shadow-[0_22px_55px_-34px_rgba(14,116,144,0.18)]"
+                className="group overflow-hidden rounded-[30px] border border-cyan-200/90 bg-white shadow-[0_24px_70px_-36px_rgba(8,145,178,0.26)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_32px_90px_-38px_rgba(8,145,178,0.32)]"
               >
-                <div className="flex h-24 items-center justify-center bg-cyan-50/90">
-                  <service.icon className="h-8 w-8 text-cyan-600" />
+                <div className="flex h-28 items-center justify-center border-b border-cyan-100/90 bg-gradient-to-br from-cyan-100 via-cyan-50 to-cyan-100/80">
+                  <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-cyan-200/90 bg-white/85 shadow-[0_14px_30px_-18px_rgba(8,145,178,0.35)]">
+                    <service.icon className="h-8 w-8 text-cyan-700" />
+                  </div>
                 </div>
-                <div className="p-4">
+                <div className="bg-white p-5">
                   <h3 className="text-[1.55rem] font-bold leading-tight text-slate-950">{service.name}</h3>
-                  <p className="mt-2.5 text-[0.9rem] leading-6 text-slate-600">
+                  <p className="mt-3 text-[0.96rem] leading-7 text-slate-600">
                     {service.description}
                   </p>
                   <Link
                     href="/simulador"
-                    className="mt-3 inline-flex items-center text-[0.9rem] font-semibold text-cyan-700 transition hover:text-cyan-500"
+                    className="mt-4 inline-flex items-center rounded-full bg-slate-50 px-3.5 py-2 text-[0.92rem] font-semibold text-cyan-800 transition group-hover:bg-cyan-50 group-hover:text-cyan-700 hover:text-cyan-600"
                   >
                     Pedir orçamento
                     <ArrowRight className="ml-2 h-3.5 w-3.5" />
