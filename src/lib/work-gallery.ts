@@ -23,6 +23,14 @@ export type GalleryItem = {
   phase?: GalleryPhase;
 };
 
+function resolveGalleryImageUrl(item: GalleryItem) {
+  if (item.imageUrl.startsWith("data:image/")) {
+    return `/api/media/gallery/render/${item.id}`;
+  }
+
+  return item.imageUrl;
+}
+
 type GalleryData = {
   items: GalleryItem[];
 };
@@ -363,7 +371,7 @@ export async function replaceGalleryFile(previousUrl: string, file: File, hint?:
 export async function getHeroCarouselImages() {
   const items = await listPublicGalleryItems("hero");
   return items.map((item) => ({
-    url: item.imageUrl,
+    url: resolveGalleryImageUrl(item),
     alt: item.alt,
     title: item.title,
     subtitle:
@@ -391,7 +399,10 @@ export async function getShowcaseProjects() {
       title: first?.title || "Trabalho real",
       subtitle: first?.subtitle || "",
       description: first?.description || "",
-      items: orderedItems,
+      items: orderedItems.map((item) => ({
+        ...item,
+        imageUrl: resolveGalleryImageUrl(item),
+      })),
     };
   });
 }

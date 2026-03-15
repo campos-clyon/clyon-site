@@ -1,7 +1,8 @@
-import { unstable_noStore as noStore } from "next/cache";
 import Link from "next/link";
 import { ArrowRight, ArrowUpRight, MessageSquareQuote, Sparkles } from "lucide-react";
 import { getShowcaseProjects, phaseLabel } from "@/lib/work-gallery";
+
+export const revalidate = 300;
 
 const testimonials = [
   {
@@ -41,7 +42,6 @@ const stats = [
 ];
 
 export default async function TrabalhosPage() {
-  noStore();
   const showcaseProjects = await getShowcaseProjects();
 
   return (
