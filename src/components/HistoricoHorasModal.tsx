@@ -93,7 +93,7 @@ export function HistoricoHorasModal({
                   <div className="flex flex-col gap-3 border-b border-slate-200 pb-3 sm:flex-row sm:items-center sm:justify-between">
                     <div>
                       <p className="text-base font-bold text-slate-950">
-                        {registro.data ? formatDate(registro.data) : "-"}
+                        {registro.dataFormatada || (registro.data ? formatDate(registro.data) : "-")}
                       </p>
                       <p className="mt-1 text-sm text-slate-500">
                         {registro.numeroTrabalhos} trabalho(s)

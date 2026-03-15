@@ -314,6 +314,34 @@ async function handleRequest(req: NextRequest, path: string[]) {
     return NextResponse.json({ registro: openRecord || null });
   }
 
+  if (route === "historico" && req.method === "GET") {
+    const requestedColaboradorId = parseInt(req.nextUrl.searchParams.get("colaboradorId") || "", 10);
+    const page = Math.max(1, parseInt(req.nextUrl.searchParams.get("page") || "1", 10) || 1);
+    const limit = Math.max(1, parseInt(req.nextUrl.searchParams.get("limit") || "10", 10) || 10);
+    const colaboradorId = auth.isAdmin && Number.isFinite(requestedColaboradorId) ? requestedColaboradorId : auth.id;
+
+    const allRecords = await db
+      .select()
+      .from(registrosHoras)
+      .where(eq(registrosHoras.colaboradorId, colaboradorId))
+      .orderBy(desc(registrosHoras.data), desc(registrosHoras.id));
+
+    const total = allRecords.length;
+    const totalPages = Math.max(1, Math.ceil(total / limit));
+    const startIndex = (page - 1) * limit;
+    const registros = allRecords.slice(startIndex, startIndex + limit).map((item) => ({
+      ...item,
+      dataFormatada: item.data ? formatLisbonDate(new Date(item.data)) : null,
+    }));
+
+    return NextResponse.json({
+      registros,
+      total,
+      page,
+      totalPages,
+    });
+  }
+
   if (route.startsWith("atualizar-registro/") && req.method === "PUT") {
     const id = parseInt(route.split("/")[1], 10);
     const body = await req.json();
