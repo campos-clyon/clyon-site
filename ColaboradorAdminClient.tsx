@@ -100,14 +100,14 @@ const siteModules = [
   {
     title: "Galeria de trabalhos",
     description:
-      "Ãrea preparada para gerir fotografias, capas, destaques e ordem visual dos trabalhos reais.",
+      "Área preparada para gerir fotografias, capas, destaques e ordem visual dos trabalhos reais.",
     status: "Ativo",
     icon: ImagePlus,
   },
   {
     title: "Valores do simulador",
     description:
-      "Estrutura pensada para ajustar preÃ§os, margens, regras de cÃ¡lculo e cenÃ¡rios de orÃ§amento.",
+      "Estrutura pensada para ajustar preços, margens, regras de cálculo e cenários de orçamento.",
     status: "Ativo",
     icon: Euro,
   },
@@ -121,12 +121,28 @@ const siteModules = [
 ];
 
 const simulatorCategoryLabels: Record<SimulatorSetting["category"], string> = {
-  moveis: "RemoÃ§Ã£o de mÃ³veis",
-  entulho: "Entulho e limpeza",
-  mudancas: "MudanÃ§as",
-  acessos: "Acessos e pisos",
+  moveis: "Móveis",
+  entulho: "Entulho, monos e pós-obra",
+  mudancas: "Mudanças e camião",
+  acessos: "Acessos, andares e elevador",
   geral: "Base geral",
 };
+
+const simulatorCategoryDescriptions: Record<SimulatorSetting["category"], string> = {
+  moveis: "Valores ligados à recolha de móveis, volumes e cargas.",
+  entulho: "Valores ligados a entulho, monos, sacos e limpeza pós-obra.",
+  mudancas: "Valores ligados a mudanças, transporte e camião com motorista.",
+  acessos: "Extras de acesso, andares, elevador e dificuldade operacional.",
+  geral: "Base horária e referências comuns a todos os simuladores.",
+};
+
+const simulatorCategoryOrder: SimulatorSetting["category"][] = [
+  "entulho",
+  "moveis",
+  "mudancas",
+  "acessos",
+  "geral",
+];
 
 const money = (value: number) =>
   new Intl.NumberFormat("pt-PT", { style: "currency", currency: "EUR" }).format(value);
@@ -236,7 +252,7 @@ export default function ColaboradorAdminClient() {
     }
 
     setToken(storedToken);
-    setAdminNome(storedNome || "AdministraÃ§Ã£o");
+    setAdminNome(storedNome || "Administração");
     void carregarDados(storedToken);
     void carregarSimulatorSettings(storedToken);
 
@@ -253,14 +269,14 @@ export default function ColaboradorAdminClient() {
       });
 
       if (!response.ok) {
-        throw new Error("NÃ£o foi possÃ­vel carregar os dados do painel.");
+        throw new Error("Não foi possível carregar os dados do painel.");
       }
 
       const data = await response.json();
       setColaboradores(Array.isArray(data) ? data : data.colaboradores || []);
       setError("");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "NÃ£o foi possÃ­vel carregar os dados do painel.");
+      setError(err instanceof Error ? err.message : "Não foi possível carregar os dados do painel.");
     } finally {
       setLoading(false);
     }
@@ -274,7 +290,7 @@ export default function ColaboradorAdminClient() {
       });
 
       if (!response.ok) {
-        throw new Error("NÃ£o foi possÃ­vel carregar os valores do simulador.");
+        throw new Error("Não foi possível carregar os valores do simulador.");
       }
 
       const data = await response.json();
@@ -286,7 +302,7 @@ export default function ColaboradorAdminClient() {
         ),
       );
     } catch (err) {
-      setError(err instanceof Error ? err.message : "NÃ£o foi possÃ­vel carregar os valores do simulador.");
+      setError(err instanceof Error ? err.message : "Não foi possível carregar os valores do simulador.");
     } finally {
       setLoadingSimulatorSettings(false);
     }
@@ -389,12 +405,17 @@ export default function ColaboradorAdminClient() {
   );
 
   const simulatorGroups = useMemo(() => {
-    return simulatorSettings.reduce<Record<string, SimulatorSetting[]>>((acc, setting) => {
+    const grouped = simulatorSettings.reduce<Record<string, SimulatorSetting[]>>((acc, setting) => {
       const category = setting.category || "geral";
       if (!acc[category]) acc[category] = [];
       acc[category].push(setting);
       return acc;
     }, {});
+
+    return simulatorCategoryOrder.map((category) => ({
+      category,
+      settings: [...(grouped[category] || [])].sort((a, b) => a.label.localeCompare(b.label, "pt-PT")),
+    }));
   }, [simulatorSettings]);
 
   const latestRecords = useMemo(() => todosRegistros.slice(0, 5), [todosRegistros]);
@@ -518,7 +539,7 @@ export default function ColaboradorAdminClient() {
 
       if (!response.ok) {
         const data = await response.json().catch(() => ({}));
-        throw new Error(data.error || "NÃ£o foi possÃ­vel atualizar o colaborador.");
+        throw new Error(data.error || "Não foi possível atualizar o colaborador.");
       }
 
       setEditandoId(null);
@@ -526,7 +547,7 @@ export default function ColaboradorAdminClient() {
       setError("");
       await carregarDados(token);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "NÃ£o foi possÃ­vel atualizar o colaborador.");
+      setError(err instanceof Error ? err.message : "Não foi possível atualizar o colaborador.");
     } finally {
       setLoadingEdicao(false);
     }
@@ -543,13 +564,13 @@ export default function ColaboradorAdminClient() {
 
       if (!response.ok) {
         const data = await response.json().catch(() => ({}));
-        throw new Error(data.error || "NÃ£o foi possÃ­vel remover o colaborador.");
+        throw new Error(data.error || "Não foi possível remover o colaborador.");
       }
 
       setError("");
       await carregarDados(token);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "NÃ£o foi possÃ­vel remover o colaborador.");
+      setError(err instanceof Error ? err.message : "Não foi possível remover o colaborador.");
     }
   };
 
@@ -578,7 +599,7 @@ export default function ColaboradorAdminClient() {
 
       if (!response.ok) {
         const data = await response.json().catch(() => ({}));
-        throw new Error(data.error || "NÃ£o foi possÃ­vel criar o colaborador.");
+        throw new Error(data.error || "Não foi possível criar o colaborador.");
       }
 
       setCriarNovoVisivel(false);
@@ -590,7 +611,7 @@ export default function ColaboradorAdminClient() {
       setError("");
       await carregarDados(token);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "NÃ£o foi possÃ­vel criar o colaborador.");
+      setError(err instanceof Error ? err.message : "Não foi possível criar o colaborador.");
     } finally {
       setLoadingCriar(false);
     }
@@ -628,14 +649,14 @@ export default function ColaboradorAdminClient() {
 
       if (!response.ok) {
         const data = await response.json().catch(() => ({}));
-        throw new Error(data.error || "NÃ£o foi possÃ­vel atualizar o registo.");
+        throw new Error(data.error || "Não foi possível atualizar o registo.");
       }
 
       setEditandoRegistroId(null);
       setError("");
       await carregarDados(token);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "NÃ£o foi possÃ­vel atualizar o registo.");
+      setError(err instanceof Error ? err.message : "Não foi possível atualizar o registo.");
     } finally {
       setSavingRegistro(false);
     }
@@ -652,13 +673,13 @@ export default function ColaboradorAdminClient() {
 
       if (!response.ok) {
         const data = await response.json().catch(() => ({}));
-        throw new Error(data.error || "NÃ£o foi possÃ­vel apagar o registo.");
+        throw new Error(data.error || "Não foi possível apagar o registo.");
       }
 
       setError("");
       await carregarDados(token);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "NÃ£o foi possÃ­vel apagar o registo.");
+      setError(err instanceof Error ? err.message : "Não foi possível apagar o registo.");
     }
   };
 
@@ -679,13 +700,13 @@ export default function ColaboradorAdminClient() {
 
       if (!response.ok) {
         const data = await response.json().catch(() => ({}));
-        throw new Error(data.error || "NÃ£o foi possÃ­vel guardar este valor.");
+        throw new Error(data.error || "Não foi possível guardar este valor.");
       }
 
       setError("");
       await carregarSimulatorSettings(token);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "NÃ£o foi possÃ­vel guardar este valor.");
+      setError(err instanceof Error ? err.message : "Não foi possível guardar este valor.");
     } finally {
       setSavingSettingKey(null);
     }
@@ -779,14 +800,14 @@ export default function ColaboradorAdminClient() {
               <CardContent className="flex h-full flex-col justify-between gap-5 p-6">
                 <div>
                   <p className="text-sm font-semibold uppercase tracking-[0.28em] text-cyan-100">
-                    Central de gestao
+                    Central de gestão
                   </p>
                   <h1 className="mt-3 max-w-3xl text-[clamp(2rem,4vw,3.3rem)] font-semibold leading-[1.06] text-white">
                     Bem-vindo, {adminNome.split(" ")[0] || adminNome}.
                   </h1>
                   <p className="mt-4 max-w-2xl text-base leading-7 text-slate-300">
-                    Um dashboard com a estrutura mais proxima da referencia visual, mas usando as cores da
-                    CLYON e mantendo as funcoes operacionais do painel.
+                    Um dashboard com a estrutura mais próxima da referência visual, mas usando as cores da
+                    CLYON e mantendo as funções operacionais do painel.
                   </p>
                 </div>
 
@@ -797,7 +818,7 @@ export default function ColaboradorAdminClient() {
                     className="h-11 rounded-[16px] bg-cyan-400 px-5 text-slate-950 hover:bg-cyan-300"
                   >
                     <Users className="mr-2 h-4 w-4" />
-                    Abrir equipe
+                    Abrir equipa
                   </Button>
                   <Button
                     type="button"
@@ -806,7 +827,7 @@ export default function ColaboradorAdminClient() {
                     className="h-11 rounded-[16px] border-white/10 bg-white/[0.03] px-5 text-white hover:bg-white/[0.08]"
                   >
                     <CalendarClock className="mr-2 h-4 w-4" />
-                    Abrir horarios
+                    Abrir horários
                   </Button>
                 </div>
               </CardContent>
@@ -815,8 +836,8 @@ export default function ColaboradorAdminClient() {
             <QuickStat
               title="Colaboradores"
               hours={String(dashboardStats.ativos)}
-              value="Equipe ativa"
-              helper={`${dashboardStats.admins} admin(s) no painel`}
+               value="Equipa ativa"
+              helper={`${dashboardStats.admins} administrador(es) no painel`}
               tone="cyan"
             />
             <QuickStat
@@ -836,8 +857,8 @@ export default function ColaboradorAdminClient() {
             <QuickStat
               title="Valor/hora"
               hours={money(dashboardStats.mediaHora)}
-              value="Media geral"
-              helper="Referencia da equipa"
+               value="Média geral"
+               helper="Referência da equipa"
               tone="emerald"
             />
           </section>
@@ -846,8 +867,8 @@ export default function ColaboradorAdminClient() {
             <>
               <section className="grid gap-4 xl:grid-cols-[0.82fr_1.45fr_1fr]">
                 <ActionCard
-                  title="Sessao ativa"
-                  description="Resumo do utilizador e do estado atual do painel."
+                    title="Sessão ativa"
+                    description="Resumo do utilizador e do estado atual do painel."
                 >
                   <div className="flex flex-col items-center text-center">
                     <div className="flex h-28 w-28 items-center justify-center rounded-full bg-cyan-400 text-3xl font-semibold text-slate-950">
@@ -858,8 +879,8 @@ export default function ColaboradorAdminClient() {
                   </div>
 
                   <div className="grid gap-3">
-                    <RecordMeta label="Ultimo registo" value={formatDateTime(dashboardStats.ultimoRegisto)} icon={CalendarClock} />
-                    <RecordMeta label="Media hora" value={money(dashboardStats.mediaHora)} icon={Euro} />
+                    <RecordMeta label="Último registo" value={formatDateTime(dashboardStats.ultimoRegisto)} icon={CalendarClock} />
+                    <RecordMeta label="Média/hora" value={money(dashboardStats.mediaHora)} icon={Euro} />
                     <RecordMeta label="Ativos" value={`${dashboardStats.ativos} colaboradores`} icon={Users} />
                   </div>
 
@@ -873,11 +894,11 @@ export default function ColaboradorAdminClient() {
                 </ActionCard>
 
                 <ActionCard
-                  title="Grafico de atividade"
-                  description="Comparacao rapida entre horas e trabalhos por periodo."
+                    title="Gráfico de atividade"
+                    description="Comparação rápida entre horas e trabalhos por período."
                 >
                   <div className="flex gap-2">
-                    {["Semana", "Mes", "Ano"].map((item) => (
+                    {["Semana", "Mês", "Ano"].map((item) => (
                       <div
                         key={item}
                         className={`rounded-[14px] px-3 py-2 text-xs font-semibold ${
@@ -1064,16 +1085,16 @@ export default function ColaboradorAdminClient() {
                       className="flex w-full items-center justify-between gap-3 rounded-[18px] border border-white/10 bg-white/[0.03] px-4 py-4 text-left transition hover:bg-white/[0.06]"
                     >
                       <div>
-                        <p className="text-sm font-semibold text-white">Gestao do site</p>
-                        <p className="text-xs text-slate-400">Media e simulador num unico fluxo.</p>
+                        <p className="text-sm font-semibold text-white">Gestão do site</p>
+                        <p className="text-xs text-slate-400">Media e simulador num único fluxo.</p>
                       </div>
                       <ArrowRight className="h-5 w-5 text-cyan-100" />
                     </button>
                   </ActionCard>
 
                   <ActionCard
-                    title="Melhor desempenho do mes"
-                    description="Ranking atual por faturacao."
+                    title="Melhor desempenho do mês"
+                    description="Ranking atual por faturação."
                     compact
                   >
                     <div className="space-y-3">
@@ -1369,7 +1390,7 @@ export default function ColaboradorAdminClient() {
                   <CardHeader>
                     <CardTitle className="text-2xl text-white">Criar colaborador</CardTitle>
                     <CardDescription className="text-slate-400">
-                      Adiciona um novo elemento Ã  operaÃ§Ã£o com acesso ao sistema e estrutura salarial definida.
+                      Adiciona um novo elemento à operação com acesso ao sistema e estrutura salarial definida.
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="grid gap-4 md:grid-cols-2">
@@ -1621,14 +1642,14 @@ export default function ColaboradorAdminClient() {
               <div className="flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-[0.24em] text-cyan-200">
-                    GestÃ£o do site
+                    Gestão do site
                   </p>
                   <h2 className="mt-2 text-[1.85rem] font-semibold text-white">
                     Imagens do site e valores do simulador
                   </h2>
                   <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-300">
-                    O gestor de imagens continua separado. Aqui passa a controlar os parÃ¢metros do simulador um a
-                    um, com gravaÃ§Ã£o individual por campo.
+                    O gestor de imagens continua separado. Aqui passa a controlar os parâmetros do simulador um a
+                    um, com gravação individual por campo.
                   </p>
                 </div>
                 <div className="flex flex-col items-start gap-3 xl:items-end">
@@ -1656,7 +1677,7 @@ export default function ColaboradorAdminClient() {
                         </div>
                         <div>
                           <p className="text-sm font-semibold text-white">{module.status}</p>
-                          <p className="text-xs text-slate-400">MÃ³dulo pronto para evoluir no painel</p>
+                          <p className="text-xs text-slate-400">Módulo pronto para evoluir no painel</p>
                         </div>
                       </div>
                       <ArrowRight className="h-5 w-5 text-cyan-200" />
@@ -1667,26 +1688,26 @@ export default function ColaboradorAdminClient() {
 
               <ActionCard
                 title="Valores do simulador"
-                description="Edite preÃ§os, extras e multiplicadores um a um. Cada bloco guarda sÃ³ o valor alterado."
+                description="Todos os valores do simulador estão visíveis abaixo, separados por categoria operacional para facilitar a gestão."
               >
                 {loadingSimulatorSettings ? (
                   <div className="rounded-2xl border border-dashed border-white/10 px-5 py-10 text-sm text-slate-400">
-                    A carregar configuraÃ§Ãµes do simulador...
+                    A carregar configurações do simulador...
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    {Object.entries(simulatorGroups).map(([category, settings]) => (
+                    {simulatorGroups.map(({ category, settings }) => (
                       <div
                         key={category}
-                        className="rounded-[24px] border border-white/10 bg-white/[0.03] p-4"
+                        className="rounded-[24px] border border-cyan-300/15 bg-white/[0.03] p-5"
                       >
                         <div className="mb-4 flex items-center justify-between gap-3">
                           <div>
                             <h3 className="text-lg font-semibold text-white">
-                              {simulatorCategoryLabels[category as keyof typeof simulatorCategoryLabels] || category}
+                              {simulatorCategoryLabels[category]}
                             </h3>
                             <p className="text-sm text-slate-400">
-                              Ajustes separados por Ã¡rea operacional.
+                              {simulatorCategoryDescriptions[category]}
                             </p>
                           </div>
                           <div className="rounded-full border border-white/10 bg-slate-950/40 px-3 py-1 text-xs uppercase tracking-[0.18em] text-cyan-200">
@@ -1694,7 +1715,12 @@ export default function ColaboradorAdminClient() {
                           </div>
                         </div>
 
-                        <div className="grid gap-4 lg:grid-cols-2">
+                        {settings.length === 0 ? (
+                          <div className="rounded-2xl border border-dashed border-white/10 px-4 py-6 text-sm text-slate-400">
+                            Sem valores configurados nesta categoria.
+                          </div>
+                        ) : (
+                        <div className="grid gap-4 xl:grid-cols-2">
                           {settings.map((setting) => (
                             <div
                               key={setting.key}
@@ -1704,7 +1730,10 @@ export default function ColaboradorAdminClient() {
                                 <div>
                                   <p className="text-sm font-semibold text-white">{setting.label}</p>
                                   <p className="mt-1 text-xs leading-6 text-slate-400">
-                                    {setting.description || "Sem descriÃ§Ã£o adicional."}
+                                    {setting.description || "Sem descrição adicional."}
+                                  </p>
+                                  <p className="mt-2 text-[11px] uppercase tracking-[0.16em] text-slate-500">
+                                    Chave: {setting.key}
                                   </p>
                                 </div>
                                 <span className="rounded-full border border-cyan-300/20 bg-cyan-400/[0.08] px-3 py-1 text-[11px] uppercase tracking-[0.18em] text-cyan-100">
@@ -1739,6 +1768,7 @@ export default function ColaboradorAdminClient() {
                             </div>
                           ))}
                         </div>
+                        )}
                       </div>
                     ))}
                   </div>
