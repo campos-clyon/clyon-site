@@ -92,6 +92,14 @@ function formatLisbonDate(date: Date) {
   }).format(date);
 }
 
+function getIsoWeekNumber(date: Date) {
+  const target = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
+  const dayNumber = target.getUTCDay() || 7;
+  target.setUTCDate(target.getUTCDate() + 4 - dayNumber);
+  const yearStart = new Date(Date.UTC(target.getUTCFullYear(), 0, 1));
+  return Math.ceil((((target.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
+}
+
 function getLisbonPeriodAnchors() {
   const nowParts = getLisbonDateParts();
   const today = createLisbonDateAtMidnight(nowParts.year, nowParts.month, nowParts.day);
@@ -261,6 +269,8 @@ async function handleRequest(req: NextRequest, path: string[]) {
       .orderBy(desc(registrosHoras.data));
 
     const { today, weekStart, monthStart, fifteenDaysStart } = getLisbonPeriodAnchors();
+    const todayLabel = formatLisbonDate(today);
+    const currentWeek = getIsoWeekNumber(today);
 
     const calcPeriod = (records: typeof allRecords) => {
       const hours = records.reduce((sum, item) => sum + parseFloat(item.horasTrabalhadas || "0"), 0);
@@ -275,9 +285,13 @@ async function handleRequest(req: NextRequest, path: string[]) {
     };
 
     return NextResponse.json({
+      hoje: {
+        ...calcPeriod(allRecords.filter((item) => item.data && formatLisbonDate(new Date(item.data)) === todayLabel)),
+        periodo: `${todayLabel} - hoje`,
+      },
       semana: {
         ...calcPeriod(allRecords.filter((item) => item.data && item.data >= weekStart)),
-        periodo: `${formatLisbonDate(today)} - hoje`,
+        periodo: `Semana ${currentWeek}`,
       },
       mes: calcPeriod(allRecords.filter((item) => item.data && item.data >= monthStart)),
       ultimos15Dias: calcPeriod(allRecords.filter((item) => item.data && item.data >= fifteenDaysStart)),

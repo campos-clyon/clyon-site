@@ -31,6 +31,7 @@ interface Estatisticas {
 }
 
 interface DadosEstatisticas {
+  hoje: Estatisticas & { periodo?: string };
   semana: Estatisticas & { periodo?: string };
   ultimos15Dias: Estatisticas;
   mes: Estatisticas;
@@ -56,11 +57,13 @@ function formatDate(date: string) {
 
 function DashboardStat({
   title,
+  resolvedTitle,
   hours,
   value,
   jobs,
 }: {
   title: string;
+  resolvedTitle?: string;
   hours: string;
   value: string;
   jobs: number;
@@ -68,7 +71,9 @@ function DashboardStat({
   return (
     <Card className="rounded-[28px] border-cyan-100 bg-white shadow-[0_22px_50px_-36px_rgba(14,116,144,0.16)]">
       <CardHeader className="pb-2">
-        <CardTitle className="text-sm uppercase tracking-[0.16em] text-cyan-700">{title}</CardTitle>
+        <CardTitle className="text-sm uppercase tracking-[0.16em] text-cyan-700">
+          {resolvedTitle || title}
+        </CardTitle>
       </CardHeader>
       <CardContent>
         <div className="text-3xl font-bold text-slate-950">{hours || "0"}h</div>
@@ -378,16 +383,17 @@ export default function ColaboradorDashboard() {
 
           <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-3">
             <DashboardStat
-              title={estatisticas?.semana.periodo || "Semana"}
-              hours={estatisticas?.semana.horas || "0"}
-              value={estatisticas?.semana.valor || "0.00"}
-              jobs={estatisticas?.semana.trabalhos || 0}
+              title={estatisticas?.hoje.periodo || "Hoje"}
+              hours={estatisticas?.hoje.horas || "0"}
+              value={estatisticas?.hoje.valor || "0.00"}
+              jobs={estatisticas?.hoje.trabalhos || 0}
             />
             <DashboardStat
               title="Últimos 15 dias"
-              hours={estatisticas?.ultimos15Dias.horas || "0"}
-              value={estatisticas?.ultimos15Dias.valor || "0.00"}
-              jobs={estatisticas?.ultimos15Dias.trabalhos || 0}
+              resolvedTitle={estatisticas?.semana.periodo || "Semana"}
+              hours={estatisticas?.semana.horas || "0"}
+              value={estatisticas?.semana.valor || "0.00"}
+              jobs={estatisticas?.semana.trabalhos || 0}
             />
             <DashboardStat
               title="Este mês"
