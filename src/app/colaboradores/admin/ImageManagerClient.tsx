@@ -595,6 +595,17 @@ type GallerySectionCardProps = {
   onReplacementChange: (id: string, event: ChangeEvent<HTMLInputElement>) => void;
 };
 
+function formatImageUrlLabel(value: string) {
+  if (!value) return "Sem imagem definida";
+  if (value.startsWith("data:image/")) {
+    return "Imagem interna guardada no sistema";
+  }
+  if (value.length > 72) {
+    return `${value.slice(0, 69)}...`;
+  }
+  return value;
+}
+
 function GallerySectionCard({
   title,
   description,
@@ -639,7 +650,12 @@ function GallerySectionCard({
                     onChange={(event) => onReplacementChange(item.id, event)}
                   />
                 </div>
-                <p className="text-xs text-slate-500">{item.imageUrl}</p>
+                <p
+                  className="max-w-full overflow-hidden text-ellipsis whitespace-nowrap text-xs text-slate-500"
+                  title={item.imageUrl.startsWith("data:image/") ? "Imagem interna guardada no sistema" : item.imageUrl}
+                >
+                  {formatImageUrlLabel(item.imageUrl)}
+                </p>
               </div>
 
               <div className="grid gap-4">
