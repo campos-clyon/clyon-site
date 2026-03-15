@@ -1,16 +1,27 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
-import { 
-  LogOut, Clock, Calendar, Briefcase, DollarSign, 
-  Loader2, Save, AlertCircle, CheckCircle, Lock, PlayCircle, PauseCircle, StopCircle, History
+import {
+  AlertCircle,
+  Briefcase,
+  Calendar,
+  CheckCircle,
+  Clock,
+  History,
+  Loader2,
+  Lock,
+  LogOut,
+  PauseCircle,
+  PlayCircle,
+  StopCircle,
 } from "lucide-react";
+
 import { HistoricoHorasModal } from "@/components/HistoricoHorasModal";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 interface Estatisticas {
   horas: string;
@@ -35,23 +46,90 @@ interface RegistroEmAberto {
   numeroTrabalhos: number;
 }
 
+function formatDate(date: string) {
+  return new Date(date).toLocaleDateString("pt-PT", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  });
+}
+
+function DashboardStat({
+  title,
+  hours,
+  value,
+  jobs,
+}: {
+  title: string;
+  hours: string;
+  value: string;
+  jobs: number;
+}) {
+  return (
+    <Card className="rounded-[28px] border-cyan-100 bg-white shadow-[0_22px_50px_-36px_rgba(14,116,144,0.16)]">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-sm uppercase tracking-[0.16em] text-cyan-700">{title}</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="text-3xl font-bold text-slate-950">{hours || "0"}h</div>
+        <div className="mt-2 text-2xl font-semibold text-cyan-600">€{value || "0.00"}</div>
+        <div className="mt-2 text-sm text-slate-500">{jobs || 0} trabalhos</div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function MessageBanner({
+  type,
+  text,
+}: {
+  type: "error" | "success";
+  text: string;
+}) {
+  const isError = type === "error";
+  return (
+    <div
+      className={`mb-4 flex items-center gap-2 rounded-2xl border px-4 py-3 shadow-sm ${
+        isError
+          ? "border-red-200 bg-red-50 text-red-700"
+          : "border-emerald-200 bg-emerald-50 text-emerald-700"
+      }`}
+    >
+      {isError ? (
+        <AlertCircle className="h-5 w-5 flex-shrink-0" />
+      ) : (
+        <CheckCircle className="h-5 w-5 flex-shrink-0" />
+      )}
+      <span>{text}</span>
+    </div>
+  );
+}
+
+function FieldShell({
+  label,
+  icon,
+  children,
+}: {
+  label: string;
+  icon: React.ReactNode;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="space-y-2">
+      <Label className="flex items-center gap-2 text-sm font-semibold text-slate-700">
+        {icon}
+        {label}
+      </Label>
+      {children}
+    </div>
+  );
+}
+
 export default function ColaboradorDashboard() {
   const router = useRouter();
-  
+
   const [nomeColaborador, setNomeColaborador] = useState("");
   const [loading, setLoading] = useState(true);
-
-  // Add noindex meta tag for SEO
-  useEffect(() => {
-    const metaRobots = document.createElement('meta');
-    metaRobots.name = 'robots';
-    metaRobots.content = 'noindex, nofollow';
-    document.head.appendChild(metaRobots);
-
-    return () => {
-      document.head.removeChild(metaRobots);
-    };
-  }, []);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -60,22 +138,31 @@ export default function ColaboradorDashboard() {
   const [showHistorico, setShowHistorico] = useState(false);
   const [colaboradorId, setColaboradorId] = useState<number | null>(null);
 
-  // Campos do formulário para NOVA entrada
-  const [data, setData] = useState(new Date().toISOString().split('T')[0]);
+  const [data, setData] = useState(new Date().toISOString().split("T")[0]);
   const [horaEntrada, setHoraEntrada] = useState("");
   const [numeroTrabalhos, setNumeroTrabalhos] = useState("0");
 
-  // Campos para ATUALIZAR registro em aberto
   const [horaPausaUpdate, setHoraPausaUpdate] = useState("");
   const [horaSaidaUpdate, setHoraSaidaUpdate] = useState("");
   const [numeroTrabalhosUpdate, setNumeroTrabalhosUpdate] = useState("0");
+
+  useEffect(() => {
+    const metaRobots = document.createElement("meta");
+    metaRobots.name = "robots";
+    metaRobots.content = "noindex, nofollow";
+    document.head.appendChild(metaRobots);
+
+    return () => {
+      document.head.removeChild(metaRobots);
+    };
+  }, []);
 
   useEffect(() => {
     const token = localStorage.getItem("colaborador_token");
     const nome = localStorage.getItem("colaborador_nome");
     const id = localStorage.getItem("colaborador_id");
     const isAdmin = localStorage.getItem("colaborador_isAdmin");
-    
+
     if (!token) {
       router.push("/colaboradores");
       return;
@@ -85,19 +172,18 @@ export default function ColaboradorDashboard() {
       router.push("/colaboradores/admin");
       return;
     }
-    
+
     setNomeColaborador(nome || "");
     if (id) setColaboradorId(parseInt(id));
-    carregarDados(token);
+    void carregarDados(token);
   }, []);
 
   const carregarDados = async (token: string) => {
     try {
-      // Carregar estatísticas
       const responseEstatisticas = await fetch("/api/colaboradores/estatisticas", {
-        headers: { Authorization: `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${token}` },
       });
-      
+
       if (!responseEstatisticas.ok) {
         if (responseEstatisticas.status === 401) {
           localStorage.removeItem("colaborador_token");
@@ -106,13 +192,12 @@ export default function ColaboradorDashboard() {
         }
         throw new Error("Erro ao carregar estatísticas");
       }
-      
+
       const dataEstatisticas = await responseEstatisticas.json();
       setEstatisticas(dataEstatisticas);
 
-      // Carregar registro em aberto
       const responseRegistro = await fetch("/api/colaboradores/registro-em-aberto", {
-        headers: { Authorization: `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${token}` },
       });
 
       if (responseRegistro.ok) {
@@ -156,19 +241,18 @@ export default function ColaboradorDashboard() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           data,
           horaEntrada,
           horaPausa: null,
           horaSaida: null,
-          numeroTrabalhos: parseInt(numeroTrabalhos)
-        })
+          numeroTrabalhos: parseInt(numeroTrabalhos),
+        }),
       });
 
       const result = await response.json();
-
       if (!response.ok) {
         throw new Error(result.error || "Erro ao registrar entrada");
       }
@@ -176,8 +260,6 @@ export default function ColaboradorDashboard() {
       setSuccess("Entrada registrada com sucesso!");
       setHoraEntrada("");
       setNumeroTrabalhos("0");
-      
-      // Recarregar dados
       await carregarDados(token);
     } catch (err: any) {
       setError(err.message);
@@ -186,7 +268,7 @@ export default function ColaboradorDashboard() {
     }
   };
 
-  const handleAtualizarRegistro = async (tipo: 'pausa' | 'saida') => {
+  const handleAtualizarRegistro = async (tipo: "pausa" | "saida") => {
     setError("");
     setSuccess("");
     setSaving(true);
@@ -199,40 +281,34 @@ export default function ColaboradorDashboard() {
 
     try {
       const body: any = {
-        numeroTrabalhos: parseInt(numeroTrabalhosUpdate)
+        numeroTrabalhos: parseInt(numeroTrabalhosUpdate),
       };
 
-      if (tipo === 'pausa') {
+      if (tipo === "pausa") {
         body.horaPausa = horaPausaUpdate;
-      } else if (tipo === 'saida') {
+      } else {
         body.horaSaida = horaSaidaUpdate;
-        if (horaPausaUpdate) {
-          body.horaPausa = horaPausaUpdate;
-        }
+        if (horaPausaUpdate) body.horaPausa = horaPausaUpdate;
       }
 
       const response = await fetch(`/api/colaboradores/atualizar-registro/${registroEmAberto.id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`
+          Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(body)
+        body: JSON.stringify(body),
       });
 
       const result = await response.json();
-
       if (!response.ok) {
         throw new Error(result.error || "Erro ao atualizar registro");
       }
 
-      setSuccess(tipo === 'pausa' ? "Pausa registrada com sucesso!" : "Saída registrada com sucesso!");
-      
-      // Recarregar dados
+      setSuccess(tipo === "pausa" ? "Pausa registrada com sucesso!" : "Saída registrada com sucesso!");
       await carregarDados(token);
-      
-      // Se registrou saída, limpar o registro em aberto
-      if (tipo === 'saida') {
+
+      if (tipo === "saida") {
         setRegistroEmAberto(null);
         setHoraPausaUpdate("");
         setHoraSaidaUpdate("");
@@ -247,342 +323,294 @@ export default function ColaboradorDashboard() {
 
   if (loading) {
     return (
-      <>
-        <div className="min-h-screen bg-gradient-to-br from-[#0a1f3d] via-[#0d2847] to-[#0a1f3d] flex items-center justify-center">
-        <Loader2 className="w-8 h-8 text-[#0097b2] animate-spin" />
+      <div className="flex min-h-screen items-center justify-center bg-[radial-gradient(circle_at_top_left,rgba(34,211,238,0.16),transparent_24%),linear-gradient(180deg,#f8fcff_0%,#eef7fb_100%)]">
+        <Loader2 className="h-8 w-8 animate-spin text-cyan-600" />
       </div>
-      </>
     );
   }
 
   return (
     <>
-      <div className="min-h-screen bg-gradient-to-br from-[#0a1f3d] via-[#0d2847] to-[#0a1f3d] p-4 pt-24">
-        <div className="max-w-4xl mx-auto">
-        {/* Header */}
-        <div className="flex justify-between items-center mb-6">
-          <div>
-            <h1 className="text-2xl font-bold text-white">Olá, {nomeColaborador}!</h1>
-            <p className="text-gray-400">Registe as suas horas de trabalho</p>
-          </div>
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              onClick={() => setShowHistorico(true)}
-              className="text-white border-white/30 hover:bg-white/10"
-            >
-              <History className="w-4 h-4 mr-2" />
-              Histórico
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => router.push("/colaboradores/alterar-senha")}
-              className="text-white border-white/30 hover:bg-white/10"
-            >
-              <Lock className="w-4 h-4 mr-2" />
-              Alterar Senha
-            </Button>
-            <Button
-              variant="outline"
-              onClick={handleLogout}
-              className="text-white border-white/30 hover:bg-white/10"
-            >
-              <LogOut className="w-4 h-4 mr-2" />
-              Sair
-            </Button>
-          </div>
-        </div>
-
-        {/* Estatísticas */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          <Card className="bg-white/10 border-white/20">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm text-gray-300">{estatisticas?.semana.periodo || "Semana 6"}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-white">{estatisticas?.semana.horas || "0"}h</div>
-              <div className="text-[#0097b2] font-semibold">€{estatisticas?.semana.valor || "0.00"}</div>
-              <div className="text-xs text-gray-400">{estatisticas?.semana.trabalhos || 0} trabalhos</div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-white/10 border-white/20">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm text-gray-300">Últimos 15 Dias</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-white">{estatisticas?.ultimos15Dias.horas || "0"}h</div>
-              <div className="text-[#0097b2] font-semibold">€{estatisticas?.ultimos15Dias.valor || "0.00"}</div>
-              <div className="text-xs text-gray-400">{estatisticas?.ultimos15Dias.trabalhos || 0} trabalhos</div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-white/10 border-white/20">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm text-gray-300">Este Mês</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-white">{estatisticas?.mes.horas || "0"}h</div>
-              <div className="text-[#0097b2] font-semibold">€{estatisticas?.mes.valor || "0.00"}</div>
-              <div className="text-xs text-gray-400">{estatisticas?.mes.trabalhos || 0} trabalhos</div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Mensagens */}
-        {error && (
-          <div className="mb-4 p-4 bg-red-900/50 border border-red-700 rounded-lg flex items-center gap-2 text-red-200">
-            <AlertCircle className="w-5 h-5 flex-shrink-0" />
-            <span>{error}</span>
-          </div>
-        )}
-
-        {success && (
-          <div className="mb-4 p-4 bg-green-900/50 border border-green-700 rounded-lg flex items-center gap-2 text-green-200">
-            <CheckCircle className="w-5 h-5 flex-shrink-0" />
-            <span>{success}</span>
-          </div>
-        )}
-
-        {/* REGISTRO EM ABERTO */}
-        {registroEmAberto && (
-          <Card className="shadow-2xl mb-6 border-[#0097b2] border-2">
-            <CardHeader className="bg-[#0097b2]/10">
-              <CardTitle className="text-[#0097b2] flex items-center gap-2">
-                <PlayCircle className="w-5 h-5" />
-                Registro em Aberto
-              </CardTitle>
-              <CardDescription>
-                Entrada registrada em {new Date(registroEmAberto.data).toLocaleDateString('pt-PT')} às {registroEmAberto.horaEntrada}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="pt-6 space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="space-y-2">
-                  <Label className="flex items-center gap-2 text-gray-900 font-semibold">
-                    <PauseCircle className="w-4 h-4" />
-                    Hora Pausa (opcional)
-                  </Label>
-                  <Input
-                    type="time"
-                    value={horaPausaUpdate}
-                    onChange={(e) => setHoraPausaUpdate(e.target.value)}
-                    disabled={saving || !!registroEmAberto.horaSaida}
-                    className="bg-white border-2 border-[#0097b2] text-gray-900 font-semibold placeholder-gray-500 focus:ring-2 focus:ring-[#0097b2] focus:border-[#0097b2]"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label className="flex items-center gap-2 text-gray-900 font-semibold">
-                    <StopCircle className="w-4 h-4" />
-                    Hora Saída
-                  </Label>
-                  <Input
-                    type="time"
-                    value={horaSaidaUpdate}
-                    onChange={(e) => setHoraSaidaUpdate(e.target.value)}
-                    disabled={saving || !!registroEmAberto.horaSaida}
-                    className="bg-white border-2 border-red-500 text-gray-900 font-semibold placeholder-gray-500 focus:ring-2 focus:ring-red-500 focus:border-red-500"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label className="flex items-center gap-2 text-gray-900 font-semibold">
-                    <Briefcase className="w-4 h-4" />
-                    Nº de Trabalhos
-                  </Label>
-                  <Input
-                    type="number"
-                    min="0"
-                    value={numeroTrabalhosUpdate}
-                    onChange={(e) => setNumeroTrabalhosUpdate(e.target.value)}
-                    disabled={saving || !!registroEmAberto.horaSaida}
-                    className="bg-white border-2 border-orange-500 text-gray-900 font-semibold placeholder-gray-500 focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                  />
-                </div>
+      <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,rgba(34,211,238,0.16),transparent_24%),linear-gradient(180deg,#f8fcff_0%,#eef7fb_100%)] px-4 pb-12 pt-24">
+        <div className="mx-auto max-w-6xl">
+          <div className="mb-6 rounded-[32px] border border-cyan-100 bg-white/92 p-6 shadow-[0_24px_60px_-34px_rgba(14,116,144,0.18)] backdrop-blur-sm lg:flex lg:items-end lg:justify-between">
+            <div>
+              <div className="inline-flex items-center rounded-full border border-cyan-200 bg-cyan-50 px-4 py-2 text-sm font-semibold uppercase tracking-[0.2em] text-cyan-700">
+                Dashboard do colaborador
               </div>
+              <h1 className="mt-4 text-[2.2rem] font-bold leading-tight text-slate-950">
+                Olá, {nomeColaborador}!
+              </h1>
+              <p className="mt-2 max-w-2xl text-base leading-7 text-slate-600">
+                Registe as suas horas com um fluxo claro, visual e rápido de usar.
+              </p>
+            </div>
 
-              {!registroEmAberto.horaSaida && (
-                <div className="flex gap-3">
-                  {!registroEmAberto.horaPausa && horaPausaUpdate && (
+            <div className="mt-5 flex flex-wrap gap-3 lg:mt-0">
+              <Button
+                variant="outline"
+                onClick={() => setShowHistorico(true)}
+                className="rounded-2xl border-cyan-200 bg-white text-slate-700 hover:bg-cyan-50"
+              >
+                <History className="mr-2 h-4 w-4" />
+                Histórico
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => router.push("/colaboradores/alterar-senha")}
+                className="rounded-2xl border-cyan-200 bg-white text-slate-700 hover:bg-cyan-50"
+              >
+                <Lock className="mr-2 h-4 w-4" />
+                Alterar Senha
+              </Button>
+              <Button
+                variant="outline"
+                onClick={handleLogout}
+                className="rounded-2xl border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+              >
+                <LogOut className="mr-2 h-4 w-4" />
+                Sair
+              </Button>
+            </div>
+          </div>
+
+          <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-3">
+            <DashboardStat
+              title={estatisticas?.semana.periodo || "Semana"}
+              hours={estatisticas?.semana.horas || "0"}
+              value={estatisticas?.semana.valor || "0.00"}
+              jobs={estatisticas?.semana.trabalhos || 0}
+            />
+            <DashboardStat
+              title="Últimos 15 dias"
+              hours={estatisticas?.ultimos15Dias.horas || "0"}
+              value={estatisticas?.ultimos15Dias.valor || "0.00"}
+              jobs={estatisticas?.ultimos15Dias.trabalhos || 0}
+            />
+            <DashboardStat
+              title="Este mês"
+              hours={estatisticas?.mes.horas || "0"}
+              value={estatisticas?.mes.valor || "0.00"}
+              jobs={estatisticas?.mes.trabalhos || 0}
+            />
+          </div>
+
+          {error ? <MessageBanner type="error" text={error} /> : null}
+          {success ? <MessageBanner type="success" text={success} /> : null}
+
+          {registroEmAberto ? (
+            <Card className="mb-6 rounded-[30px] border-cyan-200 bg-white shadow-[0_26px_60px_-34px_rgba(14,116,144,0.2)]">
+              <CardHeader className="rounded-t-[30px] border-b border-cyan-100 bg-cyan-50/70">
+                <CardTitle className="flex items-center gap-2 text-cyan-700">
+                  <PlayCircle className="h-5 w-5" />
+                  Registro em aberto
+                </CardTitle>
+                <CardDescription className="text-slate-600">
+                  Entrada registrada em {formatDate(registroEmAberto.data)} às {registroEmAberto.horaEntrada}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-5 pt-6">
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                  <FieldShell label="Hora Pausa (opcional)" icon={<PauseCircle className="h-4 w-4" />}>
+                    <Input
+                      type="time"
+                      value={horaPausaUpdate}
+                      onChange={(e) => setHoraPausaUpdate(e.target.value)}
+                      disabled={saving || !!registroEmAberto.horaSaida}
+                      className="h-11 rounded-2xl border-cyan-200 bg-white"
+                    />
+                  </FieldShell>
+
+                  <FieldShell label="Hora Saída" icon={<StopCircle className="h-4 w-4" />}>
+                    <Input
+                      type="time"
+                      value={horaSaidaUpdate}
+                      onChange={(e) => setHoraSaidaUpdate(e.target.value)}
+                      disabled={saving || !!registroEmAberto.horaSaida}
+                      className="h-11 rounded-2xl border-red-200 bg-white"
+                    />
+                  </FieldShell>
+
+                  <FieldShell label="Nº de Trabalhos" icon={<Briefcase className="h-4 w-4" />}>
+                    <Input
+                      type="number"
+                      min="0"
+                      value={numeroTrabalhosUpdate}
+                      onChange={(e) => setNumeroTrabalhosUpdate(e.target.value)}
+                      disabled={saving || !!registroEmAberto.horaSaida}
+                      className="h-11 rounded-2xl border-amber-200 bg-white"
+                    />
+                  </FieldShell>
+                </div>
+
+                {!registroEmAberto.horaSaida ? (
+                  <div className="flex flex-col gap-3 sm:flex-row">
+                    {!registroEmAberto.horaPausa && horaPausaUpdate ? (
+                      <Button
+                        onClick={() => handleAtualizarRegistro("pausa")}
+                        disabled={saving || !horaPausaUpdate}
+                        className="rounded-2xl bg-amber-500 text-white hover:bg-amber-600"
+                      >
+                        {saving ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Salvando...
+                          </>
+                        ) : (
+                          <>
+                            <PauseCircle className="mr-2 h-4 w-4" />
+                            Registrar Pausa
+                          </>
+                        )}
+                      </Button>
+                    ) : null}
+
                     <Button
-                      onClick={() => handleAtualizarRegistro('pausa')}
-                      disabled={saving || !horaPausaUpdate}
-                      className="bg-orange-600 hover:bg-orange-700 text-white"
+                      onClick={() => handleAtualizarRegistro("saida")}
+                      disabled={saving || !horaSaidaUpdate}
+                      className="flex-1 rounded-2xl bg-red-500 text-white hover:bg-red-600"
                     >
                       {saving ? (
                         <>
-                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                           Salvando...
                         </>
                       ) : (
                         <>
-                          <PauseCircle className="w-4 h-4 mr-2" />
-                          Registrar Pausa
+                          <StopCircle className="mr-2 h-4 w-4" />
+                          Registrar Saída
                         </>
                       )}
                     </Button>
-                  )}
+                  </div>
+                ) : (
+                  <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-700">
+                    ✓ Registro completo! Saída registrada às {registroEmAberto.horaSaida}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          ) : (
+            <Card className="rounded-[30px] border-cyan-200 bg-white shadow-[0_26px_60px_-34px_rgba(14,116,144,0.2)]">
+              <CardHeader className="rounded-t-[30px] border-b border-cyan-100 bg-cyan-50/70">
+                <CardTitle className="flex items-center gap-2 text-cyan-700">
+                  <PlayCircle className="h-5 w-5" />
+                  Registrar Entrada
+                </CardTitle>
+                <CardDescription className="text-slate-600">
+                  Registe a sua entrada para começar o dia de trabalho.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="pt-6">
+                <form onSubmit={handleRegistrarEntrada} className="space-y-5">
+                  <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                    <FieldShell label="Data" icon={<Calendar className="h-4 w-4" />}>
+                      <Input
+                        id="data"
+                        type="date"
+                        value={data}
+                        onChange={(e) => setData(e.target.value)}
+                        required
+                        disabled={saving}
+                        className="h-11 rounded-2xl border-cyan-200 bg-white"
+                      />
+                    </FieldShell>
+
+                    <FieldShell label="Hora Entrada" icon={<Clock className="h-4 w-4" />}>
+                      <Input
+                        id="horaEntrada"
+                        type="time"
+                        value={horaEntrada}
+                        onChange={(e) => setHoraEntrada(e.target.value)}
+                        required
+                        disabled={saving}
+                        className="h-11 rounded-2xl border-cyan-200 bg-white"
+                      />
+                    </FieldShell>
+
+                    <FieldShell label="Nº de Trabalhos" icon={<Briefcase className="h-4 w-4" />}>
+                      <Input
+                        id="numeroTrabalhos"
+                        type="number"
+                        min="0"
+                        value={numeroTrabalhos}
+                        onChange={(e) => setNumeroTrabalhos(e.target.value)}
+                        required
+                        disabled={saving}
+                        className="h-11 rounded-2xl border-cyan-200 bg-white"
+                      />
+                    </FieldShell>
+                  </div>
 
                   <Button
-                    onClick={() => handleAtualizarRegistro('saida')}
-                    disabled={saving || !horaSaidaUpdate}
-                    className="bg-red-600 hover:bg-red-700 text-white flex-1"
+                    type="submit"
+                    className="h-12 w-full rounded-2xl bg-cyan-500 font-semibold text-white hover:bg-cyan-600"
+                    disabled={saving}
                   >
                     {saving ? (
                       <>
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Salvando...
+                        <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                        Registrando...
                       </>
                     ) : (
                       <>
-                        <StopCircle className="w-4 h-4 mr-2" />
-                        Registrar Saída
+                        <PlayCircle className="mr-2 h-5 w-5" />
+                        Registrar Entrada
                       </>
                     )}
                   </Button>
-                </div>
-              )}
+                </form>
+              </CardContent>
+            </Card>
+          )}
 
-              {registroEmAberto.horaSaida && (
-                <div className="p-3 bg-green-900/30 border border-green-700 rounded text-green-200 text-sm">
-                  ✓ Registro completo! Saída registrada às {registroEmAberto.horaSaida}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        )}
-
-        {/* FORMULÁRIO DE NOVA ENTRADA */}
-        {!registroEmAberto && (
-          <Card className="shadow-2xl">
-            <CardHeader>
-              <CardTitle className="text-[#0097b2] flex items-center gap-2">
-                <PlayCircle className="w-5 h-5" />
-                Registrar Entrada
-              </CardTitle>
-              <CardDescription>
-                Registre sua entrada para começar o dia de trabalho
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleRegistrarEntrada} className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="data" className="flex items-center gap-2">
-                      <Calendar className="w-4 h-4" />
-                      Data
-                    </Label>
-                    <Input
-                      id="data"
-                      type="date"
-                      value={data}
-                      onChange={(e) => setData(e.target.value)}
-                      required
-                      disabled={saving}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="horaEntrada" className="flex items-center gap-2">
-                      <Clock className="w-4 h-4" />
-                      Hora Entrada
-                    </Label>
-                    <Input
-                      id="horaEntrada"
-                      type="time"
-                      value={horaEntrada}
-                      onChange={(e) => setHoraEntrada(e.target.value)}
-                      required
-                      disabled={saving}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="numeroTrabalhos" className="flex items-center gap-2">
-                      <Briefcase className="w-4 h-4" />
-                      Nº de Trabalhos
-                    </Label>
-                    <Input
-                      id="numeroTrabalhos"
-                      type="number"
-                      min="0"
-                      value={numeroTrabalhos}
-                      onChange={(e) => setNumeroTrabalhos(e.target.value)}
-                      required
-                      disabled={saving}
-                    />
-                  </div>
-                </div>
-
-                <Button
-                  type="submit"
-                  className="w-full bg-[#0097b2] hover:bg-[#007a8f] text-white font-semibold h-12"
-                  disabled={saving}
-                >
-                  {saving ? (
-                    <>
-                      <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                      Registrando...
-                    </>
-                  ) : (
-                    <>
-                      <PlayCircle className="w-5 h-5 mr-2" />
-                      Registrar Entrada
-                    </>
-                  )}
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Histórico de Registros */}
-        {estatisticas && estatisticas.registros.length > 0 && (
-          <Card className="mt-6 shadow-2xl">
-            <CardHeader>
-              <CardTitle className="text-[#0097b2]">Histórico Recente</CardTitle>
-              <CardDescription>Seus últimos registros de horas</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {estatisticas.registros.slice(0, 5).map((registro: any) => (
-                  <div
-                    key={registro.id}
-                    className="p-4 bg-slate-50 border border-slate-200 rounded-lg hover:bg-slate-100 transition-colors"
-                  >
-                    <div className="flex justify-between items-start mb-3 pb-3 border-b border-slate-200">
-                      <div className="text-slate-800 font-bold text-base">
-                        {registro.dataFormatada || (typeof registro.data === 'string' ? new Date(registro.data).toLocaleDateString('pt-PT', { day: '2-digit', month: '2-digit', year: 'numeric' }) : 'Data indisponível')}
+          {estatisticas && estatisticas.registros.length > 0 ? (
+            <Card className="mt-6 rounded-[30px] border-cyan-100 bg-white shadow-[0_22px_50px_-36px_rgba(14,116,144,0.16)]">
+              <CardHeader className="border-b border-cyan-100 bg-cyan-50/50">
+                <CardTitle className="text-cyan-700">Histórico Recente</CardTitle>
+                <CardDescription className="text-slate-600">
+                  Os seus últimos registos de horas
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="pt-6">
+                <div className="space-y-3">
+                  {estatisticas.registros.slice(0, 5).map((registro: any) => (
+                    <div
+                      key={registro.id}
+                      className="rounded-[24px] border border-cyan-100 bg-slate-50/80 p-4 transition-colors hover:bg-cyan-50/60"
+                    >
+                      <div className="mb-3 flex items-start justify-between border-b border-slate-200 pb-3">
+                        <div className="text-base font-bold text-slate-800">
+                          {registro.dataFormatada ||
+                            (typeof registro.data === "string"
+                              ? formatDate(registro.data)
+                              : "Data indisponível")}
+                        </div>
+                        <div className="text-lg font-bold text-cyan-600">{registro.horasTrabalhadas}h</div>
                       </div>
-                      <div className="text-[#0097b2] font-bold text-lg">{registro.horasTrabalhadas}h</div>
+                      <div className="mt-2 grid grid-cols-3 gap-2 text-sm text-slate-700">
+                        <div>Entrada: {registro.horaEntrada}</div>
+                        <div>Pausa: {registro.horaPausa || "--:--"}</div>
+                        <div>Saída: {registro.horaSaida || "--:--"}</div>
+                      </div>
+                      <div className="mt-2 text-xs text-slate-600">{registro.numeroTrabalhos} trabalho(s)</div>
                     </div>
-                    <div className="grid grid-cols-3 gap-2 text-sm text-slate-700 mt-2">
-                      <div>Entrada: {registro.horaEntrada}</div>
-                      <div>Pausa: {registro.horaPausa || '--:--'}</div>
-                      <div>Saída: {registro.horaSaida || '--:--'}</div>
-                    </div>
-                    <div className="mt-2 text-xs text-slate-600">
-                      {registro.numeroTrabalhos} trabalho(s)
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        )}
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          ) : null}
         </div>
       </div>
-      
-      {/* Modal de Histórico */}
-      {colaboradorId && (
+
+      {colaboradorId ? (
         <HistoricoHorasModal
           isOpen={showHistorico}
           onClose={() => setShowHistorico(false)}
           colaboradorId={colaboradorId}
           colaboradorNome={nomeColaborador}
         />
-      )}
+      ) : null}
     </>
   );
 }
