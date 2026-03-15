@@ -348,13 +348,22 @@ async function handleRequest(req: NextRequest, path: string[]) {
     }
 
     const [member] = await db.select().from(colaboradores).where(eq(colaboradores.id, record.colaboradorId));
-    const hourRate = parseFloat(String(member?.valorHora || 0));
+    const nextHourRate =
+      body.valorHora !== undefined && body.valorHora !== null && body.valorHora !== ""
+        ? Number(body.valorHora)
+        : parseFloat(String(member?.valorHora || 0));
+    if (body.valorHora !== undefined && body.valorHora !== null && body.valorHora !== "") {
+      await db
+        .update(colaboradores)
+        .set({ valorHora: nextHourRate.toFixed(2) })
+        .where(eq(colaboradores.id, record.colaboradorId));
+    }
 
     const updatedEntrada = body.horaEntrada ?? record.horaEntrada;
     const updatedPausa = body.horaPausa ?? record.horaPausa;
     const updatedSaida = body.horaSaida ?? record.horaSaida;
     const workedHours = calculateWorkedHours(updatedEntrada, updatedSaida, updatedPausa);
-    const computedValue = Number((workedHours * hourRate).toFixed(2));
+    const computedValue = Number((workedHours * nextHourRate).toFixed(2));
     const finalValue =
       body.valorTotal !== undefined && body.valorTotal !== null && body.valorTotal !== ""
         ? Number(body.valorTotal)

@@ -63,6 +63,7 @@ type Colaborador = {
 type RegistroComColaborador = Registro & {
   colaboradorId: number;
   colaboradorNome: string;
+  colaboradorValorHora: string;
 };
 
 type SimulatorSetting = {
@@ -87,10 +88,10 @@ const adminNavItems: Array<{
 ];
 
 const sectionLabels: Record<AdminSection, string> = {
-  overview: "Inicio",
-  team: "Equipe",
-  hours: "Horarios",
-  site: "Configuracoes",
+  overview: "Início",
+  team: "Equipa",
+  hours: "Horários",
+  site: "Configurações",
 };
 
 const siteModules = [
@@ -196,6 +197,7 @@ export default function ColaboradorAdminClient() {
     horaPausa: "",
     horaSaida: "",
     numeroTrabalhos: "0",
+    valorHora: "",
     valorTotal: "",
   });
   const [savingRegistro, setSavingRegistro] = useState(false);
@@ -294,6 +296,7 @@ export default function ColaboradorAdminClient() {
             ...registro,
             colaboradorId: colaborador.id,
             colaboradorNome: colaborador.nome,
+            colaboradorValorHora: colaborador.valorHora,
           })),
         )
         .sort((a, b) => new Date(b.data).getTime() - new Date(a.data).getTime()),
@@ -590,6 +593,7 @@ export default function ColaboradorAdminClient() {
       horaPausa: registro.horaPausa || "",
       horaSaida: registro.horaSaida || "",
       numeroTrabalhos: String(registro.numeroTrabalhos || 0),
+      valorHora: String(registro.colaboradorValorHora || ""),
       valorTotal: String(registro.valorTotal || ""),
     });
   };
@@ -605,6 +609,7 @@ export default function ColaboradorAdminClient() {
         },
         body: JSON.stringify({
           ...registroForm,
+          valorHora: registroForm.valorHora || null,
           horaPausa: registroForm.horaPausa || null,
           horaSaida: registroForm.horaSaida || null,
         }),
@@ -1097,19 +1102,19 @@ export default function ColaboradorAdminClient() {
               <div className="flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-[0.24em] text-cyan-200">
-                    GestÃ£o operacional
+                    Gestão operacional
                   </p>
                   <h2 className="mt-2 text-[1.85rem] font-semibold text-white">
-                    HorÃ¡rios, pausas e valores por registo
+                    Horários, pausas e valores por registo
                   </h2>
                   <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-300">
-                    Pode editar horas, pausa, quantidade de trabalhos, valor final e apagar qualquer registo
+                    Pode editar horas, pausa, quantidade de trabalhos, valor/hora, valor final e apagar qualquer registo
                     individual sem sair do painel.
                   </p>
                 </div>
 
                 <div className="rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-slate-300">
-                  Ãšltimo registo:{" "}
+                  Último registo:{" "}
                   <span className="font-medium text-white">{formatDateTime(dashboardStats.ultimoRegisto)}</span>
                 </div>
               </div>
@@ -1133,7 +1138,7 @@ export default function ColaboradorAdminClient() {
               <div className="grid gap-4 xl:grid-cols-2">
                 {todosRegistros.length === 0 && (
                   <div className="rounded-[24px] border border-dashed border-white/10 px-5 py-10 text-sm text-slate-400 xl:col-span-2">
-                    Ainda nÃ£o existem registos para o filtro escolhido.
+                    Ainda não existem registos para o filtro escolhido.
                   </div>
                 )}
                 {todosRegistros.map((registro) => {
@@ -1193,7 +1198,7 @@ export default function ColaboradorAdminClient() {
                                 className="h-11 w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 text-white outline-none transition focus:border-cyan-300"
                               />
                             </Field>
-                            <Field label="Hora saÃ­da">
+                            <Field label="Hora saída">
                               <input
                                 type="time"
                                 value={registroForm.horaSaida}
@@ -1203,7 +1208,7 @@ export default function ColaboradorAdminClient() {
                                 className="h-11 w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 text-white outline-none transition focus:border-cyan-300"
                               />
                             </Field>
-                            <Field label="NÃºmero de trabalhos">
+                            <Field label="Número de trabalhos">
                               <input
                                 type="number"
                                 min="0"
@@ -1213,6 +1218,18 @@ export default function ColaboradorAdminClient() {
                                     ...state,
                                     numeroTrabalhos: event.target.value,
                                   }))
+                                }
+                                className="h-11 w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 text-white outline-none transition focus:border-cyan-300"
+                              />
+                            </Field>
+                            <Field label="Valor/hora">
+                              <input
+                                type="number"
+                                min="0"
+                                step="0.01"
+                                value={registroForm.valorHora}
+                                onChange={(event) =>
+                                  setRegistroForm((state) => ({ ...state, valorHora: event.target.value }))
                                 }
                                 className="h-11 w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 text-white outline-none transition focus:border-cyan-300"
                               />
@@ -1260,9 +1277,9 @@ export default function ColaboradorAdminClient() {
                         ) : (
                           <>
                             <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                              <RecordMeta label="Entrada" value={registro.horaEntrada || "â€”"} icon={Clock3} />
-                              <RecordMeta label="Pausa" value={registro.horaPausa || "â€”"} icon={CalendarClock} />
-                              <RecordMeta label="SaÃ­da" value={registro.horaSaida || "â€”"} icon={CheckCircle2} />
+                              <RecordMeta label="Entrada" value={registro.horaEntrada || "—"} icon={Clock3} />
+                              <RecordMeta label="Pausa" value={registro.horaPausa || "—"} icon={CalendarClock} />
+                              <RecordMeta label="Saída" value={registro.horaSaida || "—"} icon={CheckCircle2} />
                               <RecordMeta
                                 label="Horas"
                                 value={`${decimal(parseFloat(registro.horasTrabalhadas || "0"))}h`}
@@ -1275,7 +1292,13 @@ export default function ColaboradorAdminClient() {
                                 registado(s) neste turno.
                               </div>
                               <div className="rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-slate-300">
-                                O total das horas continua a ser recalculado pelo sistema com base nos horÃ¡rios
+                                Valor/hora atual do colaborador:{" "}
+                                <span className="font-medium text-white">
+                                  {money(parseFloat(registro.colaboradorValorHora || "0"))}
+                                </span>
+                              </div>
+                              <div className="rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-slate-300">
+                                O total das horas continua a ser recalculado pelo sistema com base nos horários
                                 editados e no valor/hora do colaborador.
                               </div>
                             </div>
