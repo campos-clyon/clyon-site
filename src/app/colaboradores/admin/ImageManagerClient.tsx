@@ -78,6 +78,7 @@ export default function ColaboradorAdminClient() {
   const router = useRouter();
   const [items, setItems] = useState<GalleryItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
@@ -101,7 +102,8 @@ export default function ColaboradorAdminClient() {
     setError("");
 
     try {
-      const response = await fetch("/api/media/gallery", {
+      const response = await fetch(`/api/media/gallery?_=${Date.now()}`, {
+        cache: "no-store",
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -125,6 +127,27 @@ export default function ColaboradorAdminClient() {
       }
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function handleRefresh() {
+    const token = localStorage.getItem("colaborador_token");
+
+    if (!token) {
+      router.push("/colaboradores");
+      return;
+    }
+
+    setRefreshing(true);
+    setMessage("");
+    setError("");
+
+    try {
+      router.refresh();
+      await loadGallery(token);
+      setMessage("Galeria atualizada.");
+    } finally {
+      setRefreshing(false);
     }
   }
 
@@ -363,16 +386,12 @@ export default function ColaboradorAdminClient() {
           <div className="flex gap-3">
             <Button
               variant="outline"
-              onClick={() => {
-                const token = localStorage.getItem("colaborador_token");
-                if (token) {
-                  void loadGallery(token);
-                }
-              }}
+              onClick={() => void handleRefresh()}
+              disabled={loading || refreshing || saving}
               className="border-white/20 bg-white/5 text-white hover:bg-white/10"
             >
-              <RefreshCcw className="mr-2 h-4 w-4" />
-              Atualizar
+              <RefreshCcw className={`mr-2 h-4 w-4 ${refreshing ? "animate-spin" : ""}`} />
+              {refreshing ? "A atualizar..." : "Atualizar"}
             </Button>
             <Button
               variant="outline"
