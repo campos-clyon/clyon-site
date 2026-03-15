@@ -120,29 +120,67 @@ const siteModules = [
   },
 ];
 
-const simulatorCategoryLabels: Record<SimulatorSetting["category"], string> = {
-  moveis: "Móveis",
-  entulho: "Entulho, monos e pós-obra",
-  mudancas: "Mudanças e camião",
-  acessos: "Acessos, andares e elevador",
-  geral: "Base geral",
-};
-
-const simulatorCategoryDescriptions: Record<SimulatorSetting["category"], string> = {
-  moveis: "Valores ligados à recolha de móveis, volumes e cargas.",
-  entulho: "Valores ligados a entulho, monos, sacos e limpeza pós-obra.",
-  mudancas: "Valores ligados a mudanças, transporte e camião com motorista.",
-  acessos: "Extras de acesso, andares, elevador e dificuldade operacional.",
-  geral: "Base horária e referências comuns a todos os simuladores.",
-};
-
-const simulatorCategoryOrder: SimulatorSetting["category"][] = [
-  "entulho",
-  "moveis",
-  "mudancas",
-  "acessos",
-  "geral",
-];
+const simulatorDisplayGroups = [
+  {
+    id: "entulho",
+    label: "Entulho",
+    description: "Valores específicos para recolha de entulho.",
+    keys: ["entulho_saco_chao_extra", "entulho_distancia_km", "entulho_multiplicador"],
+  },
+  {
+    id: "monos",
+    label: "Monos",
+    description: "Valores partilhados para recolha de monos e volumes semelhantes.",
+    keys: ["entulho_distancia_km", "entulho_multiplicador"],
+  },
+  {
+    id: "pos_obra",
+    label: "Pós-obra",
+    description: "Valores partilhados para limpeza pós-obra e resíduos de obra.",
+    keys: ["entulho_distancia_km", "entulho_multiplicador"],
+  },
+  {
+    id: "moveis",
+    label: "Móveis",
+    description: "Valores ligados à recolha de móveis, volumes e cargas.",
+    keys: [
+      "moveis_item_pequeno",
+      "moveis_item_medio",
+      "moveis_item_grande",
+      "moveis_distancia_km",
+      "moveis_carga_base",
+      "moveis_carga_multiplicador",
+    ],
+  },
+  {
+    id: "mudancas",
+    label: "Mudanças",
+    description: "Valores específicos para mudanças e transporte completo.",
+    keys: ["mudancas_distancia_km", "mudancas_multiplicador"],
+  },
+  {
+    id: "camiao",
+    label: "Camião com motorista",
+    description: "Valores partilhados com o serviço de mudanças e transporte simples.",
+    keys: ["mudancas_distancia_km", "mudancas_multiplicador"],
+  },
+  {
+    id: "acessos",
+    label: "Acessos, andares e elevador",
+    description: "Extras de acesso, andares, elevador e dificuldade operacional.",
+    keys: [
+      "apartamento_com_elevador_por_andar",
+      "apartamento_sem_elevador_por_andar",
+      "acesso_dificil_extra",
+    ],
+  },
+  {
+    id: "geral",
+    label: "Base geral",
+    description: "Base horária e referências comuns a todos os simuladores.",
+    keys: ["hora_base"],
+  },
+] as const;
 
 const money = (value: number) =>
   new Intl.NumberFormat("pt-PT", { style: "currency", currency: "EUR" }).format(value);
@@ -405,16 +443,15 @@ export default function ColaboradorAdminClient() {
   );
 
   const simulatorGroups = useMemo(() => {
-    const grouped = simulatorSettings.reduce<Record<string, SimulatorSetting[]>>((acc, setting) => {
-      const category = setting.category || "geral";
-      if (!acc[category]) acc[category] = [];
-      acc[category].push(setting);
-      return acc;
-    }, {});
+    const settingsMap = new Map(simulatorSettings.map((setting) => [setting.key, setting]));
 
-    return simulatorCategoryOrder.map((category) => ({
-      category,
-      settings: [...(grouped[category] || [])].sort((a, b) => a.label.localeCompare(b.label, "pt-PT")),
+    return simulatorDisplayGroups.map((group) => ({
+      id: group.id,
+      label: group.label,
+      description: group.description,
+      settings: group.keys
+        .map((key) => settingsMap.get(key))
+        .filter((setting): setting is SimulatorSetting => Boolean(setting)),
     }));
   }, [simulatorSettings]);
 
@@ -1696,32 +1733,30 @@ export default function ColaboradorAdminClient() {
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    {simulatorGroups.map(({ category, settings }) => (
+                    {simulatorGroups.map((group) => (
                       <div
-                        key={category}
+                        key={group.id}
                         className="rounded-[24px] border border-cyan-300/15 bg-white/[0.03] p-5"
                       >
                         <div className="mb-4 flex items-center justify-between gap-3">
                           <div>
-                            <h3 className="text-lg font-semibold text-white">
-                              {simulatorCategoryLabels[category]}
-                            </h3>
+                            <h3 className="text-lg font-semibold text-white">{group.label}</h3>
                             <p className="text-sm text-slate-400">
-                              {simulatorCategoryDescriptions[category]}
+                              {group.description}
                             </p>
                           </div>
                           <div className="rounded-full border border-white/10 bg-slate-950/40 px-3 py-1 text-xs uppercase tracking-[0.18em] text-cyan-200">
-                            {settings.length} valor(es)
+                            {group.settings.length} valor(es)
                           </div>
                         </div>
 
-                        {settings.length === 0 ? (
+                        {group.settings.length === 0 ? (
                           <div className="rounded-2xl border border-dashed border-white/10 px-4 py-6 text-sm text-slate-400">
                             Sem valores configurados nesta categoria.
                           </div>
                         ) : (
                         <div className="grid gap-4 xl:grid-cols-2">
-                          {settings.map((setting) => (
+                          {group.settings.map((setting) => (
                             <div
                               key={setting.key}
                               className="rounded-[20px] border border-white/10 bg-slate-950/40 p-4"
