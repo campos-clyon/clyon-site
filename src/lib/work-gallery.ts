@@ -153,6 +153,12 @@ async function ensureGalleryUploadStorage() {
   await fs.mkdir(GALLERY_UPLOAD_DIR, { recursive: true });
 }
 
+async function fileToDataUrl(file: File) {
+  const buffer = Buffer.from(await file.arrayBuffer());
+  const mimeType = file.type || "image/jpeg";
+  return `data:${mimeType};base64,${buffer.toString("base64")}`;
+}
+
 function normalizeItems(items: GalleryItem[]) {
   return sortItems(
     (items || []).map((item) => ({
@@ -325,6 +331,12 @@ function extensionFromFileName(fileName: string) {
 }
 
 export async function saveGalleryFile(file: File, hint?: string) {
+  const db = await getDb();
+
+  if (db) {
+    return fileToDataUrl(file);
+  }
+
   await ensureGalleryUploadStorage();
 
   const buffer = Buffer.from(await file.arrayBuffer());

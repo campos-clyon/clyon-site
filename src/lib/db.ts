@@ -123,7 +123,7 @@ export async function ensureGalleryMediaTable() {
       subtitle text NULL,
       description text NULL,
       alt varchar(220) NOT NULL,
-      imageUrl text NOT NULL,
+      imageUrl longtext NOT NULL,
       \`order\` int NOT NULL DEFAULT 1,
       isActive int NOT NULL DEFAULT 1,
       projectKey varchar(160) NULL,
@@ -131,6 +131,11 @@ export async function ensureGalleryMediaTable() {
       createdAt timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
       updatedAt timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
     )
+  `);
+
+  await pool.query(`
+    ALTER TABLE galleryMedia
+    MODIFY COLUMN imageUrl longtext NOT NULL
   `);
 
   galleryMediaTableEnsured = true;

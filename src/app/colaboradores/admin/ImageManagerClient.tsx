@@ -60,6 +60,20 @@ const defaultForm: GalleryFormState = {
   isActive: true,
 };
 
+async function readResponsePayload(response: Response) {
+  const text = await response.text();
+
+  if (!text) {
+    return {};
+  }
+
+  try {
+    return JSON.parse(text);
+  } catch {
+    return { error: text };
+  }
+}
+
 export default function ColaboradorAdminClient() {
   const router = useRouter();
   const [items, setItems] = useState<GalleryItem[]>([]);
@@ -91,7 +105,7 @@ export default function ColaboradorAdminClient() {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      const data = await response.json();
+      const data = await readResponsePayload(response);
 
       if (!response.ok) {
         throw new Error(data.error || "Não foi possível carregar a galeria.");
@@ -193,7 +207,7 @@ export default function ColaboradorAdminClient() {
         });
       }
 
-      const data = await response.json();
+      const data = await readResponsePayload(response);
 
       if (!response.ok) {
         throw new Error(data.error || "Não foi possível guardar a imagem.");
@@ -266,7 +280,7 @@ export default function ColaboradorAdminClient() {
         });
       }
 
-      const data = await response.json();
+      const data = await readResponsePayload(response);
 
       if (!response.ok) {
         throw new Error(data.error || "Não foi possível guardar as alterações.");
@@ -304,7 +318,7 @@ export default function ColaboradorAdminClient() {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      const data = await response.json();
+      const data = await readResponsePayload(response);
 
       if (!response.ok) {
         throw new Error(data.error || "Não foi possível apagar a imagem.");
