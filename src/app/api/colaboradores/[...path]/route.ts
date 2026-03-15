@@ -8,6 +8,7 @@ import { defaultSimulatorSettings } from "@/lib/simulator-settings";
 import { colaboradores, registrosHoras } from "../../../../../drizzle/schema";
 
 const JWT_SECRET = process.env.JWT_SECRET || "clyon-secret-2026";
+const LISBON_TIMEZONE = "Europe/Lisbon";
 
 type JwtPayload = { id: number; nome: string; isAdmin: number };
 type RouteContext = { params: Promise<{ path: string[] }> };
@@ -57,20 +58,71 @@ function toIsoDate(input?: string | null) {
   return Number.isNaN(date.getTime()) ? new Date() : date;
 }
 
+function getLisbonDateParts(date = new Date()) {
+  const formatter = new Intl.DateTimeFormat("en-CA", {
+    timeZone: LISBON_TIMEZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    weekday: "short",
+  });
+
+  const parts = formatter.formatToParts(date);
+  const get = (type: Intl.DateTimeFormatPartTypes) =>
+    parts.find((part) => part.type === type)?.value || "";
+
+  return {
+    year: Number(get("year")),
+    month: Number(get("month")),
+    day: Number(get("day")),
+    weekday: get("weekday"),
+  };
+}
+
+function createLisbonDateAtMidnight(year: number, month: number, day: number) {
+  return new Date(Date.UTC(year, month - 1, day, 0, 0, 0));
+}
+
+function formatLisbonDate(date: Date) {
+  return new Intl.DateTimeFormat("pt-PT", {
+    timeZone: LISBON_TIMEZONE,
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  }).format(date);
+}
+
+function getLisbonPeriodAnchors() {
+  const nowParts = getLisbonDateParts();
+  const today = createLisbonDateAtMidnight(nowParts.year, nowParts.month, nowParts.day);
+  const weekdayMap: Record<string, number> = {
+    Mon: 1,
+    Tue: 2,
+    Wed: 3,
+    Thu: 4,
+    Fri: 5,
+    Sat: 6,
+    Sun: 7,
+  };
+  const weekday = weekdayMap[nowParts.weekday] || 1;
+
+  const weekStart = new Date(today);
+  weekStart.setUTCDate(today.getUTCDate() - (weekday - 1));
+
+  const monthStart = createLisbonDateAtMidnight(nowParts.year, nowParts.month, 1);
+  const fifteenDaysStart = new Date(today);
+  fifteenDaysStart.setUTCDate(today.getUTCDate() - 15);
+
+  return { today, weekStart, monthStart, fifteenDaysStart };
+}
+
 async function loadAdminDataset(db: Awaited<ReturnType<typeof getDb>>) {
   if (!db) return { colaboradores: [] };
 
   const team = await db.select().from(colaboradores);
   const allRecords = await db.select().from(registrosHoras).orderBy(desc(registrosHoras.data));
 
-  const now = new Date();
-  const weekStart = new Date(now);
-  weekStart.setDate(now.getDate() - now.getDay() + 1);
-  weekStart.setHours(0, 0, 0, 0);
-
-  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-  const fifteenDaysStart = new Date(now);
-  fifteenDaysStart.setDate(now.getDate() - 15);
+  const { weekStart, monthStart, fifteenDaysStart } = getLisbonPeriodAnchors();
 
   const calcPeriod = (records: typeof allRecords) => {
     const hours = records.reduce((sum, item) => sum + parseFloat(item.horasTrabalhadas || "0"), 0);
@@ -208,13 +260,7 @@ async function handleRequest(req: NextRequest, path: string[]) {
       .where(eq(registrosHoras.colaboradorId, auth.id))
       .orderBy(desc(registrosHoras.data));
 
-    const now = new Date();
-    const weekStart = new Date(now);
-    weekStart.setDate(now.getDate() - now.getDay() + 1);
-    weekStart.setHours(0, 0, 0, 0);
-    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-    const fifteenDaysStart = new Date(now);
-    fifteenDaysStart.setDate(now.getDate() - 15);
+    const { today, weekStart, monthStart, fifteenDaysStart } = getLisbonPeriodAnchors();
 
     const calcPeriod = (records: typeof allRecords) => {
       const hours = records.reduce((sum, item) => sum + parseFloat(item.horasTrabalhadas || "0"), 0);
@@ -229,7 +275,10 @@ async function handleRequest(req: NextRequest, path: string[]) {
     };
 
     return NextResponse.json({
-      semana: { ...calcPeriod(allRecords.filter((item) => item.data && item.data >= weekStart)), periodo: `${weekStart.toLocaleDateString("pt-PT")} - hoje` },
+      semana: {
+        ...calcPeriod(allRecords.filter((item) => item.data && item.data >= weekStart)),
+        periodo: `${formatLisbonDate(today)} - hoje`,
+      },
       mes: calcPeriod(allRecords.filter((item) => item.data && item.data >= monthStart)),
       ultimos15Dias: calcPeriod(allRecords.filter((item) => item.data && item.data >= fifteenDaysStart)),
       registros: allRecords.slice(0, 20).map((item) => ({
