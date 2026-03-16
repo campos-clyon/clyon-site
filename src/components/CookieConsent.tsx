@@ -43,13 +43,34 @@ export default function CookieConsent() {
   const [preferences, setPreferences] = useState<CookiePreferences>(defaultCookiePreferences);
 
   useEffect(() => {
-    const consent = readConsent();
-    if (!consent) {
-      setVisible(true);
-      return;
-    }
+    let cancelled = false;
 
-    setPreferences(consent.preferences);
+    const hydrateConsent = () => {
+      if (cancelled) return;
+
+      const consent = readConsent();
+      if (!consent) {
+        setVisible(true);
+        return;
+      }
+
+      setPreferences(consent.preferences);
+    };
+
+    const idleId =
+      typeof window.requestIdleCallback === "function"
+        ? window.requestIdleCallback(hydrateConsent, { timeout: 1200 })
+        : window.setTimeout(hydrateConsent, 500);
+
+    return () => {
+      cancelled = true;
+      if (typeof idleId === "number") {
+        window.clearTimeout(idleId);
+        return;
+      }
+
+      window.cancelIdleCallback?.(idleId);
+    };
   }, []);
 
   useEffect(() => {

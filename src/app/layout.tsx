@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import { Inter, Poppins } from "next/font/google";
 
+import DeferredCookieConsent from "@/components/DeferredCookieConsent";
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
-import CookieConsent from "@/components/CookieConsent";
 import { TrpcProvider } from "@/components/TrpcProvider";
 import {
   BUSINESS_ADDRESS,
@@ -186,7 +186,7 @@ export default function RootLayout({
           <Header />
           <main className="pt-[64px]">{children}</main>
           <Footer />
-          <CookieConsent />
+          <DeferredCookieConsent />
         </TrpcProvider>
       </body>
     </html>

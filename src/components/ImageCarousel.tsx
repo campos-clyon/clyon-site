@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 interface CarouselImage {
@@ -46,14 +47,20 @@ export default function ImageCarousel({
   if (images.length === 0) return null;
 
   const currentImage = images[currentIndex];
+  const isApiImage = currentImage.url.startsWith("/api/");
 
   return (
     <div className="group relative h-full w-full overflow-hidden rounded-[24px]">
-      <img
+      <Image
+        key={currentImage.url}
         src={currentImage.url}
         alt={currentImage.alt}
-        className="h-full w-full object-cover object-center transition-transform duration-500"
-        loading="eager"
+        fill
+        priority={currentIndex === 0}
+        quality={74}
+        sizes="(min-width: 1280px) 560px, (min-width: 1024px) 46vw, 100vw"
+        unoptimized={isApiImage}
+        className="object-cover object-center transition-transform duration-500"
       />
 
       {(currentImage.title || currentImage.subtitle) && (

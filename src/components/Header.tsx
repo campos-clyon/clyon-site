@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import { ArrowRight, Menu, MessageCircle, X } from "lucide-react";
@@ -19,12 +20,14 @@ export default function Header() {
     <header className="fixed left-0 right-0 top-0 z-50 border-b border-slate-200/40 bg-white/95 shadow-[0_10px_30px_-18px_rgba(15,23,42,0.28)] backdrop-blur-md">
       <div className="mx-auto flex w-full max-w-7xl items-center justify-between px-6 py-2.5 lg:px-8">
         <Link href="/" className="flex-shrink-0 cursor-pointer">
-          <img
+          <Image
             src="/logo-clyon-icon.webp"
             alt="CLYON - Recolha de Móveis e Entulho"
             className="h-[46px] w-auto scale-x-105"
-            width="205"
-            height="84"
+            width={205}
+            height={84}
+            priority
+            sizes="205px"
           />
         </Link>
 
