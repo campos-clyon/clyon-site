@@ -58,13 +58,13 @@ type SettingsResponse = {
 };
 
 const categorias: Categoria[] = [
-const categorias: Categoria[] = [
-  { id: "entulho", nome: "Recolha de entulho", descricao: "Obras, res?duos e limpezas pesadas.", icon: Wrench, calculo: "entulho", trajeto: "base" },
-  { id: "moveis", nome: "Recolha de m?veis", descricao: "M?veis antigos e recheios.", icon: Package, calculo: "moveis", trajeto: "base" },
+  { id: "entulho", nome: "Recolha de entulho", descricao: "Obras, resíduos e limpezas pesadas.", icon: Wrench, calculo: "entulho", trajeto: "base" },
+  { id: "moveis", nome: "Recolha de móveis", descricao: "Móveis antigos e recheios.", icon: Package, calculo: "moveis", trajeto: "base" },
   { id: "monos", nome: "Recolha de monos", descricao: "Volumes grandes, sucata e despejos.", icon: Package, calculo: "moveis", trajeto: "base" },
-  { id: "limpeza", nome: "Limpeza p?s-obra", descricao: "Acabamento final e recolha associada.", icon: Sparkles, calculo: "entulho", trajeto: "base" },
-  { id: "mudancas", nome: "Mudan?as", descricao: "Origem e destino reais com c?lculo autom?tico.", icon: Truck, calculo: "mudancas", trajeto: "custom" },
-  { id: "camiao", nome: "Cami?o com motorista", descricao: "Apoio log?stico com base CLYON.", icon: Truck, calculo: "mudancas", trajeto: "base" },
+  { id: "limpeza", nome: "Limpeza pós-obra", descricao: "Acabamento final e recolha associada.", icon: Sparkles, calculo: "entulho", trajeto: "base" },
+  { id: "mudancas", nome: "Mudanças", descricao: "Origem e destino reais com cálculo automático.", icon: Truck, calculo: "mudancas", trajeto: "custom" },
+  { id: "camiao", nome: "Camião com motorista", descricao: "Apoio logístico com base CLYON.", icon: Truck, calculo: "mudancas", trajeto: "base" },
+];
 
 const categoriaIds = new Set<CategoriaId>(["entulho", "moveis", "monos", "limpeza", "mudancas", "camiao"]);
 
