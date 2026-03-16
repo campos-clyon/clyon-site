@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
-import { ArrowRight, Menu, MessageCircle, X } from "lucide-react";
+import { ArrowRight, Menu, X } from "lucide-react";
 
 export default function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -40,9 +40,11 @@ export default function Header() {
         </nav>
 
         <div className="flex flex-shrink-0 items-center gap-2 sm:gap-3">
-          <Link href="/trabalhos" className="site-btn-secondary hidden px-4 py-2 lg:inline-flex">
-            <span className="!text-sm !font-semibold !text-[#047faa]">Ver Trabalhos</span>
-          </Link>
+          <div className="hidden lg:block">
+            <Link href="/trabalhos" className="site-btn-secondary px-4 py-2">
+              <span className="!text-sm !font-semibold !text-[#047faa]">Ver Trabalhos</span>
+            </Link>
+          </div>
 
           <Link href="/simulador" className="site-btn-primary px-4 py-2.5 sm:px-5">
             <span className="!text-sm !font-semibold !text-white">Simular</span>
@@ -51,7 +53,7 @@ export default function Header() {
 
           <button
             className="inline-flex rounded-xl border border-cyan-200 bg-white p-2.5 text-slate-600 transition-colors hover:text-cyan-600 lg:hidden"
-            onClick={() => setMenuOpen(!menuOpen)}
+            onClick={() => setMenuOpen((open) => !open)}
             aria-label="Abrir menu"
           >
             {menuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
@@ -61,33 +63,26 @@ export default function Header() {
 
       {menuOpen && (
         <div className="border-t border-cyan-100/60 bg-white/95 backdrop-blur lg:hidden">
-          <nav className="space-y-1 px-6 py-4">
+          <nav className="grid gap-2 px-4 py-4">
             {navLinks.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
-                className="block rounded-xl px-4 py-3 text-sm font-medium text-slate-600 transition-colors hover:bg-cyan-50 hover:text-cyan-600"
+                className="rounded-2xl border border-cyan-100 bg-white px-4 py-3 text-base font-semibold text-slate-700 transition-colors hover:bg-cyan-50 hover:text-cyan-600"
                 onClick={() => setMenuOpen(false)}
               >
                 {link.label}
               </Link>
             ))}
-            <div className="space-y-2 pt-3">
-              <Link href="/simulador" className="site-btn-primary flex w-full py-3" onClick={() => setMenuOpen(false)}>
-                <ArrowRight className="h-4 w-4" />
-                Simular
-              </Link>
-              <button
-                className="site-btn-secondary flex w-full py-3"
-                onClick={() => {
-                  window.location.href = "/contactos";
-                  setMenuOpen(false);
-                }}
-              >
-                <MessageCircle className="h-4 w-4" />
-                Contactos
-              </button>
-            </div>
+
+            <Link
+              href="/simulador"
+              className="site-btn-primary mt-2 flex w-full py-3"
+              onClick={() => setMenuOpen(false)}
+            >
+              <ArrowRight className="h-4 w-4" />
+              Simular
+            </Link>
           </nav>
         </div>
       )}
