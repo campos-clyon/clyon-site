@@ -90,8 +90,8 @@ export default function SimuladorClient({ initialCategoriaId = null }: Simulador
 
   const [tipoAcesso, setTipoAcesso] = useState("");
   const [quantidadePessoas, setQuantidadePessoas] = useState("");
-  const [tempoEstimado, setTempoEstimado] = useState("");
-  const [numeroAndares, setNumeroAndares] = useState("");
+  const [tempoEstimado, setTempoEstimado] = useState("2");
+  const [numeroAndares, setNumeroAndares] = useState("1");
   const [temElevador, setTemElevador] = useState("");
   const [acessoDificil, setAcessoDificil] = useState(false);
   const [entulhoModo, setEntulhoModo] = useState("");
@@ -188,8 +188,8 @@ export default function SimuladorClient({ initialCategoriaId = null }: Simulador
     setKmErro("");
     setTipoAcesso("");
     setQuantidadePessoas("");
-    setTempoEstimado("");
-    setNumeroAndares("");
+    setTempoEstimado("2");
+    setNumeroAndares("1");
     setTemElevador("");
     setAcessoDificil(false);
     setEntulhoModo("");
@@ -700,7 +700,7 @@ export default function SimuladorClient({ initialCategoriaId = null }: Simulador
                     <div className="grid gap-4 rounded-[22px] border border-cyan-100 bg-cyan-50/70 p-4 md:grid-cols-2">
                       <Field>
                         <Label htmlFor="andares">Número de andares *</Label>
-                        <Input id="andares" type="number" min="0" value={numeroAndares} onChange={(event) => setNumeroAndares(event.target.value)} className={cn("h-10 w-24 rounded-[14px] text-center", fieldToneClass(getFieldTone({
+                        <Input id="andares" type="number" min="1" value={numeroAndares} onChange={(event) => setNumeroAndares(event.target.value)} className={cn("h-10 w-24 rounded-[14px] text-center", fieldToneClass(getFieldTone({
                           isNext: nextStep2Field === "numeroAndares",
                           isMissing: showValidation && tipoAcesso === "apartamento" && !numeroAndares,
                         })))} />
@@ -717,6 +717,7 @@ export default function SimuladorClient({ initialCategoriaId = null }: Simulador
 
                   <div className="grid gap-4 md:grid-cols-[1.1fr_0.9fr]">
                     <Field>
+                      <Label>Quantidade de pessoas necessárias *</Label>
                       <PeopleSelector
                         value={quantidadePessoas}
                         onChange={setQuantidadePessoas}
@@ -733,7 +734,7 @@ export default function SimuladorClient({ initialCategoriaId = null }: Simulador
                       label="Tempo estimado (horas) *"
                       value={tempoEstimado}
                       onChange={setTempoEstimado}
-                      placeholder="2.5"
+                      placeholder="2"
                       maxWidthClass="w-28"
                       tone={getFieldTone({
                         isNext: nextStep2Field === "tempoEstimado",
