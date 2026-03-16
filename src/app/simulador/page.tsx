@@ -22,7 +22,7 @@ export const metadata: Metadata = {
 export const revalidate = 86400;
 
 type SimuladorPageProps = {
-  searchParams?: Promise<{ categoria?: string }> | { categoria?: string };
+  searchParams?: Promise<{ categoria?: string }>;
 };
 
 export default async function SimuladorPage({ searchParams }: SimuladorPageProps) {
