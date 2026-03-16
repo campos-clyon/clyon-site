@@ -36,7 +36,7 @@ export default function RegioesPage() {
               <MapPin className="h-4 w-4" />
               Cobertura regional
             </div>
-            <h1 className="mt-5 max-w-[14ch] text-4xl font-bold tracking-tight text-slate-950 md:text-6xl">
+            <h1 className="mt-5 max-w-[14ch] text-4xl font-bold leading-[1.14] tracking-tight text-slate-950 md:text-6xl md:leading-[1.08]">
               Regiões e cidades onde a CLYON já atua.
             </h1>
             <p className="mt-5 max-w-3xl text-lg leading-8 text-slate-600">
@@ -89,7 +89,7 @@ export default function RegioesPage() {
 
                 <Link
                   href={`/regioes/${region.slug}`}
-                  className="mt-6 inline-flex items-center rounded-2xl bg-cyan-500 px-5 py-3 text-sm font-semibold text-white shadow-[0_18px_40px_-22px_rgba(6,182,212,0.75)] transition hover:-translate-y-0.5 hover:bg-cyan-400 [&_*]:text-white"
+                  className="mt-6 inline-flex items-center rounded-2xl bg-cyan-500 px-5 py-3 text-sm font-semibold text-white shadow-[0_18px_40px_-22px_rgba(6,182,212,0.75)] transition hover:-translate-y-0.5 hover:bg-cyan-400 hover:text-white focus:text-white [&_*]:!text-white"
                 >
                   Ver região
                   <ArrowRight className="ml-2 h-4 w-4" />
