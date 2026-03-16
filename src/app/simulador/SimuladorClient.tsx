@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useSearchParams } from "next/navigation";
 import {
   ArrowLeft,
   ArrowRight,
@@ -66,7 +67,10 @@ const categorias: Categoria[] = [
   { id: "camiao", nome: "Camião com motorista", descricao: "Apoio logístico com base CLYON.", icon: Truck, calculo: "mudancas", trajeto: "base" },
 ];
 
+const categoriaIds = new Set<CategoriaId>(["entulho", "moveis", "monos", "limpeza", "mudancas", "camiao"]);
+
 export default function SimuladorClient() {
+  const searchParams = useSearchParams();
   const summaryValueRef = useRef<HTMLDivElement | null>(null);
   const [pricingMap, setPricingMap] = useState(() => createSimulatorSettingsMap());
   const [categoriaId, setCategoriaId] = useState<CategoriaId | null>(null);
@@ -162,6 +166,13 @@ export default function SimuladorClient() {
       active = false;
     };
   }, []);
+
+  useEffect(() => {
+    const categoriaParam = searchParams.get("categoria");
+    if (!categoriaParam || !categoriaIds.has(categoriaParam as CategoriaId)) return;
+
+    setCategoriaId((current) => (current === categoriaParam ? current : (categoriaParam as CategoriaId)));
+  }, [searchParams]);
 
   const resetFlow = () => {
     setOrigem("");

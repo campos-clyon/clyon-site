@@ -4,6 +4,16 @@ import { ArrowRight, MapPin } from "lucide-react";
 
 import { REGIONS, SERVICES, SITE_URL, getRegionCities } from "@/lib/seo-data";
 
+const simulatorCategoryMap: Record<string, string> = {
+  "recolha-entulho": "entulho",
+  "recolha-moveis": "moveis",
+  "recolha-monos": "monos",
+  "esvaziamento-casas": "moveis",
+  "limpeza-pos-obra": "limpeza",
+  mudancas: "mudancas",
+  "camiao-com-motorista": "camiao",
+};
+
 export const metadata: Metadata = {
   title: "Regiões de Atuação em Lisboa, Margem Sul e Setúbal | CLYON",
   description:
@@ -79,7 +89,7 @@ export default function RegioesPage() {
 
                 <Link
                   href={`/regioes/${region.slug}`}
-                  className="mt-6 inline-flex items-center rounded-2xl bg-cyan-500 px-5 py-3 text-sm font-semibold text-white shadow-[0_18px_40px_-22px_rgba(6,182,212,0.75)] transition hover:-translate-y-0.5 hover:bg-cyan-400"
+                  className="mt-6 inline-flex items-center rounded-2xl bg-cyan-500 px-5 py-3 text-sm font-semibold text-white shadow-[0_18px_40px_-22px_rgba(6,182,212,0.75)] transition hover:-translate-y-0.5 hover:bg-cyan-400 [&_*]:text-white"
                 >
                   Ver região
                   <ArrowRight className="ml-2 h-4 w-4" />
@@ -98,12 +108,13 @@ export default function RegioesPage() {
           </h2>
           <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             {SERVICES.map((service) => (
-              <div
+              <Link
                 key={service.slug}
-                className="rounded-[22px] border border-white/10 bg-white/5 px-4 py-4 text-sm font-medium text-slate-100"
+                href={`/simulador?categoria=${simulatorCategoryMap[service.slug] ?? "moveis"}`}
+                className="rounded-[22px] border border-white/10 bg-white/5 px-4 py-4 text-sm font-medium text-slate-100 transition hover:border-cyan-300/30 hover:bg-cyan-400/10 hover:text-white"
               >
                 {service.name}
-              </div>
+              </Link>
             ))}
           </div>
         </div>
