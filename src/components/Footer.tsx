@@ -5,6 +5,7 @@ import CookiePreferencesLink from "@/components/CookiePreferencesLink";
 import { BUSINESS_PHONE } from "@/lib/seo-data";
 
 export default function Footer() {
+  const currentYear = new Date().getFullYear();
   const whatsappNumber = BUSINESS_PHONE.replace(/[^\d]/g, "");
   const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent("Olá! Gostava de pedir um orçamento à CLYON.")}`;
 
@@ -110,18 +111,12 @@ export default function Footer() {
           </div>
 
           <div className="mt-10 flex flex-col items-center justify-between gap-4 border-t border-white/10 pt-7 md:flex-row">
-            <p className="text-sm text-cyan-50/68">© CLYON 2025 - Todos os direitos reservados</p>
+            <p className="text-sm text-cyan-50/68">© CLYON {currentYear} - Todos os direitos reservados</p>
             <div className="flex flex-wrap items-center justify-center gap-4">
-              <Link
-                href="/privacidade"
-                className="text-sm text-cyan-50/68 transition-colors hover:text-white"
-              >
+              <Link href="/privacidade" className="text-sm text-cyan-50/68 transition-colors hover:text-white">
                 Política de Privacidade
               </Link>
-              <Link
-                href="/privacidade"
-                className="text-sm text-cyan-50/68 transition-colors hover:text-white"
-              >
+              <Link href="/privacidade" className="text-sm text-cyan-50/68 transition-colors hover:text-white">
                 Política de Cookies
               </Link>
               <CookiePreferencesLink />
