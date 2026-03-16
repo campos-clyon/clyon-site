@@ -76,23 +76,25 @@ export default function CookieConsent() {
   return (
     <>
       {visible ? (
-        <div className="fixed inset-x-0 bottom-0 z-[70] px-4 pb-4 sm:px-6 lg:px-8">
-          <div className="mx-auto max-w-6xl rounded-[30px] border border-cyan-100 bg-white p-5 shadow-[0_24px_60px_-28px_rgba(15,23,42,0.28)] sm:p-6">
-            <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-              <div className="max-w-3xl">
-                <div className="inline-flex items-center gap-2 rounded-full border border-cyan-200 bg-cyan-50 px-4 py-2 text-sm font-semibold uppercase tracking-[0.18em] text-cyan-700">
+        <div className="fixed inset-x-0 bottom-0 z-[70] border-t border-white/10 bg-[#121c33] shadow-[0_-12px_36px_-18px_rgba(15,23,42,0.45)]">
+          <div className="mx-auto flex max-w-7xl flex-col gap-5 px-4 py-5 sm:px-6 lg:flex-row lg:items-center lg:justify-between lg:px-8">
+            <div className="max-w-4xl">
+              <div className="flex items-start gap-3">
+                <div className="mt-0.5 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-2xl bg-white/8 text-cyan-200">
                   <Cookie className="h-4 w-4" />
-                  Cookies
                 </div>
-                <h2 className="mt-4 text-2xl font-bold text-slate-950">Utilizamos cookies para melhorar a experiência no site.</h2>
-                <p className="mt-3 text-sm leading-7 text-slate-600 sm:text-base">
-                  Os cookies essenciais mantêm o site funcional. Pode também permitir cookies de análise e marketing
-                  para melhorar medições e campanhas. Consulte a{" "}
-                  <Link href="/privacidade" className="font-semibold text-cyan-700 hover:text-cyan-600">
-                    política de privacidade e cookies
+                <div>
+                  <p className="text-base font-semibold text-white">
+                    Utilizamos cookies para melhorar a sua experiência no nosso site.
+                  </p>
+                  <p className="mt-2 text-sm leading-7 text-slate-300">
+                    Os cookies essenciais mantêm o site funcional. Pode gerir preferências de analítica e marketing
+                    sempre que quiser.
+                  </p>
+                  <Link href="/privacidade" className="mt-2 inline-block text-sm font-medium text-cyan-300 underline underline-offset-4 hover:text-cyan-200">
+                    Ver Política de Privacidade
                   </Link>
-                  .
-                </p>
+                </div>
 
                 {showPreferences ? (
                   <div className="mt-5 grid gap-3 sm:grid-cols-3">
@@ -129,7 +131,7 @@ export default function CookieConsent() {
                 ) : null}
               </div>
 
-              <div className="flex flex-col gap-3 sm:flex-row lg:justify-end">
+              <div className="flex flex-col gap-3 sm:flex-row lg:flex-shrink-0 lg:justify-end">
                 {showPreferences ? (
                   <button
                     type="button"
@@ -142,7 +144,7 @@ export default function CookieConsent() {
                   <button
                     type="button"
                     onClick={() => setShowPreferences(true)}
-                    className="inline-flex items-center justify-center rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                    className="inline-flex items-center justify-center rounded-2xl border border-white/20 bg-white/6 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
                   >
                     <Settings2 className="mr-2 h-4 w-4" />
                     Gerir cookies
@@ -151,14 +153,14 @@ export default function CookieConsent() {
                 <button
                   type="button"
                   onClick={handleReject}
-                  className="inline-flex items-center justify-center rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                  className="inline-flex items-center justify-center rounded-2xl border border-white/20 bg-transparent px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/8"
                 >
                   Recusar opcionais
                 </button>
                 <button
                   type="button"
                   onClick={handleAccept}
-                  className="inline-flex items-center justify-center rounded-2xl bg-emerald-500 px-5 py-3 text-sm font-semibold text-white shadow-[0_16px_34px_-18px_rgba(16,185,129,0.65)] transition hover:bg-emerald-400"
+                  className="inline-flex items-center justify-center rounded-2xl bg-cyan-500 px-5 py-3 text-sm font-semibold text-white shadow-[0_16px_34px_-18px_rgba(6,182,212,0.65)] transition hover:bg-cyan-400"
                 >
                   Aceitar cookies
                 </button>
