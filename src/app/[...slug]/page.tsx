@@ -213,13 +213,13 @@ export default async function ServiceCityPage({ params }: Props) {
               <div className="mt-7 flex flex-col gap-3 sm:flex-row">
                 <Link
                   href="/simulador"
-                  className="inline-flex items-center justify-center rounded-2xl bg-cyan-500 px-6 py-3.5 text-base font-semibold text-white shadow-[0_18px_40px_-22px_rgba(6,182,212,0.75)] transition hover:-translate-y-0.5 hover:bg-cyan-400"
+                  className="site-btn-primary px-6 py-3.5 text-base"
                 >
                   Pedir orçamento
                 </Link>
                 <Link
                   href={CONTACT_PATH}
-                  className="inline-flex items-center justify-center rounded-2xl border border-cyan-200 bg-white px-6 py-3.5 text-base font-semibold text-cyan-700 transition hover:bg-cyan-50"
+                  className="site-btn-secondary px-6 py-3.5 text-base"
                 >
                   Falar connosco
                   <ArrowRight className="ml-2 h-4 w-4" />
