@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 import Link from "next/link";
 import {
   ArrowRight,
@@ -349,7 +349,7 @@ export default async function ServiceCityPage({ params }: Props) {
 
         <div className="mt-8 rounded-[30px] border border-cyan-100 bg-white p-7 shadow-[0_24px_60px_-34px_rgba(14,116,144,0.14)]">
           <p className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-700">
-            CTA local
+            Pedido local
           </p>
           <h2 className="mt-3 text-3xl font-bold text-slate-950">
             Precisa de {service.shortName} em {city.name}?
@@ -392,3 +392,4 @@ export default async function ServiceCityPage({ params }: Props) {
     </div>
   );
 }
+

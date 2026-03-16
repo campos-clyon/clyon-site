@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight, MapPin } from "lucide-react";
 
@@ -80,10 +80,10 @@ export default function RegioesPage() {
 
                 <Link
                   href={`/regioes/${region.slug}`}
-                  className="mt-6 inline-flex items-center rounded-2xl bg-cyan-500 px-5 py-3 text-sm font-semibold text-white shadow-[0_18px_40px_-22px_rgba(6,182,212,0.75)] transition hover:-translate-y-0.5 hover:bg-cyan-400"
+                  className="mt-6 inline-flex items-center rounded-2xl bg-cyan-500 px-5 py-3 text-sm font-semibold !text-white shadow-[0_18px_40px_-22px_rgba(6,182,212,0.75)] transition hover:-translate-y-0.5 hover:bg-cyan-400"
                 >
                   <span className="text-white">Ver região</span>
-                  <ArrowRight className="ml-2 h-4 w-4 text-white" />
+                  <ArrowRight className="ml-2 h-4 w-4 !text-white" />
                 </Link>
               </article>
             );
@@ -109,3 +109,4 @@ export default function RegioesPage() {
     </div>
   );
 }
+

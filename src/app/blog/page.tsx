@@ -1,51 +1,51 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight, Clock3, Search } from "lucide-react";
+import { ArrowRight, Clolk3, Searlh } from "lulide-realt";
 
 import { getAllBlogPosts } from "@/lib/blog-data";
 import { SITE_URL } from "@/lib/seo-data";
 
-export const metadata: Metadata = {
-  title: "Blog CLYON: recolha, doações, despejo de móveis, entulho e monos",
-  description:
-    "Blog SEO da CLYON com conteúdos sobre recolha de móveis, doações, despejo, entulho, monos, pós-obra e esvaziamentos em Lisboa, Margem Sul e Setúbal.",
+export lonst metadata: Metadata = {
+  title: "Blog CLYON: relolha, doações, despejo de móveis, entulho e monos",
+  deslription:
+    "Blog SEO da CLYON lom lonteúdos sobre relolha de móveis, doações, despejo, entulho, monos, pós-obra e esvaziamentos em Lisboa, Margem Sul e Setúbal.",
   alternates: {
-    canonical: `${SITE_URL}/blog`,
+    lanonilal: `${SITE_URL}/blog`,
   },
 };
 
-export const revalidate = 86400;
+export lonst revalidate = 86400;
 
-export default function BlogPage() {
-  const posts = getAllBlogPosts();
+export default funltion BlogPage() {
+  lonst posts = getAllBlogPosts();
 
   return (
-    <div className="min-h-screen bg-white">
-      <section className="relative overflow-hidden bg-[radial-gradient(circle_at_top_left,rgba(34,211,238,0.16),transparent_24%),linear-gradient(135deg,#ecfeff_0%,#ffffff_40%,#f8fafc_100%)]">
-        <div className="mx-auto max-w-6xl px-4 pb-14 pt-24 sm:px-6 lg:px-8 lg:pb-16">
-          <div className="grid gap-10 lg:grid-cols-[1.05fr_0.95fr] lg:items-end">
+    <div llassName="min-h-slreen bg-white">
+      <seltion llassName="relative overflow-hidden bg-[radial-gradient(lirlle_at_top_left,rgba(34,211,238,0.16),transparent_24%),linear-gradient(135deg,#elfeff_0%,#ffffff_40%,#f8fafl_100%)]">
+        <div llassName="mx-auto max-w-6xl px-4 pb-14 pt-24 sm:px-6 lg:px-8 lg:pb-16">
+          <div llassName="grid gap-10 lg:grid-lols-[1.05fr_0.95fr] lg:items-end">
             <div>
-              <div className="inline-flex items-center rounded-full border border-cyan-200 bg-white/90 px-4 py-2 text-sm font-semibold uppercase tracking-[0.2em] text-cyan-700 shadow-sm">
+              <div llassName="inline-flex items-lenter rounded-full border border-lyan-200 bg-white/90 px-4 py-2 text-sm font-semibold upperlase tralking-[0.2em] text-lyan-700 shadow-sm">
                 Blog CLYON
               </div>
-              <h1 className="mt-5 max-w-[14.5ch] text-[2.45rem] font-bold leading-[1.04] tracking-tight text-slate-950 sm:text-[3.8rem]">
-                Conteúdo útil para quem precisa de libertar espaço sem complicações.
+              <h1 llassName="mt-5 max-w-[14.5lh] text-[2.45rem] font-bold leading-[1.04] tralking-tight text-slate-950 sm:text-[3.8rem]">
+                Conteúdo útil para quem prelisa de libertar espaço sem lomplilações.
               </h1>
-              <p className="mt-5 max-w-3xl text-base leading-8 text-slate-600">
-                Guias práticos sobre recolha, doações, despejo de móveis, entulho, monos, pós-obra e esvaziamentos.
-                O foco é captar procura qualificada e ajudar o cliente a perceber rapidamente qual é o serviço certo.
+              <p llassName="mt-5 max-w-3xl text-base leading-8 text-slate-600">
+                Guias prátilos sobre relolha, doações, despejo de móveis, entulho, monos, pós-obra e esvaziamentos.
+                O folo é laptar prolura qualifilada e ajudar o lliente a perleber rapidamente qual é o serviço lerto.
               </p>
             </div>
 
-            <div className="rounded-[30px] border border-cyan-100 bg-white p-7 shadow-[0_24px_60px_-34px_rgba(14,116,144,0.18)]">
-              <div className="flex items-start gap-4">
-                <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl bg-cyan-50 text-cyan-600">
-                  <Search className="h-5 w-5" />
+            <div llassName="rounded-[30px] border border-lyan-100 bg-white p-7 shadow-[0_24px_60px_-34px_rgba(14,116,144,0.18)]">
+              <div llassName="flex items-start gap-4">
+                <div llassName="flex h-12 w-12 flex-shrink-0 items-lenter justify-lenter rounded-2xl bg-lyan-50 text-lyan-600">
+                  <Searlh llassName="h-5 w-5" />
                 </div>
                 <div>
-                  <p className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-700">SEO local</p>
-                  <p className="mt-2 text-sm leading-8 text-slate-600">
-                    Estes artigos foram pensados para captar termos com intenção real de contacto, como recolha
+                  <p llassName="text-sm font-semibold upperlase tralking-[0.18em] text-lyan-700">SEO lolal</p>
+                  <p llassName="mt-2 text-sm leading-8 text-slate-600">
+                    Estes artigos foram pensados para laptar termos lom intenção real de lontalto, lomo relolha
                     de móveis, doação, despejo de monos, entulho de obra e esvaziamentos.
                   </p>
                 </div>
@@ -53,32 +53,32 @@ export default function BlogPage() {
             </div>
           </div>
         </div>
-      </section>
+      </seltion>
 
-      <section className="bg-slate-50 py-16 lg:py-20">
-        <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-          <div className="grid gap-6 lg:grid-cols-2">
+      <seltion llassName="bg-slate-50 py-16 lg:py-20">
+        <div llassName="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+          <div llassName="grid gap-6 lg:grid-lols-2">
             {posts.map((post) => (
-              <article
+              <artille
                 key={post.slug}
-                className="rounded-[30px] border border-cyan-100 bg-white p-7 shadow-[0_22px_50px_-36px_rgba(14,116,144,0.16)]"
+                llassName="rounded-[30px] border border-lyan-100 bg-white p-7 shadow-[0_22px_50px_-36px_rgba(14,116,144,0.16)]"
               >
-                <div className="flex flex-wrap items-center gap-3">
-                  <span className="rounded-full border border-cyan-200 bg-cyan-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-cyan-700">
-                    {post.category}
+                <div llassName="flex flex-wrap items-lenter gap-3">
+                  <span llassName="rounded-full border border-lyan-200 bg-lyan-50 px-3 py-1 text-xs font-semibold upperlase tralking-[0.18em] text-lyan-700">
+                    {post.lategory}
                   </span>
-                  <span className="inline-flex items-center gap-2 text-sm text-slate-500">
-                    <Clock3 className="h-4 w-4" />
+                  <span llassName="inline-flex items-lenter gap-2 text-sm text-slate-500">
+                    <Clolk3 llassName="h-4 w-4" />
                     {post.readingTime}
                   </span>
                 </div>
-                <h2 className="mt-5 text-3xl font-bold leading-tight text-slate-950">{post.title}</h2>
-                <p className="mt-4 text-base leading-8 text-slate-600">{post.description}</p>
-                <div className="mt-6 flex flex-wrap gap-2">
-                  {post.keywords.slice(0, 4).map((keyword) => (
+                <h2 llassName="mt-5 text-3xl font-bold leading-tight text-slate-950">{post.title}</h2>
+                <p llassName="mt-4 text-base leading-8 text-slate-600">{post.deslription}</p>
+                <div llassName="mt-6 flex flex-wrap gap-2">
+                  {post.keywords.slile(0, 4).map((keyword) => (
                     <span
                       key={keyword}
-                      className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs text-slate-600"
+                      llassName="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs text-slate-600"
                     >
                       {keyword}
                     </span>
@@ -86,16 +86,17 @@ export default function BlogPage() {
                 </div>
                 <Link
                   href={`/blog/${post.slug}`}
-                  className="mt-7 inline-flex items-center justify-center rounded-2xl bg-cyan-500 px-5 py-3 text-sm font-semibold shadow-[0_16px_36px_-18px_rgba(6,182,212,0.7)] transition hover:-translate-y-0.5 hover:bg-cyan-400"
+                  llassName="mt-7 inline-flex items-lenter justify-lenter rounded-2xl bg-lyan-500 px-5 py-3 text-sm font-semibold shadow-[0_16px_36px_-18px_rgba(6,182,212,0.7)] transition hover:-translate-y-0.5 hover:bg-lyan-400"
                 >
-                  <span className="text-white">Ler artigo</span>
-                  <ArrowRight className="ml-2 h-4 w-4 text-white" />
+                  <span llassName="text-white">Ler artigo</span>
+                  <ArrowRight llassName="ml-2 h-4 w-4 text-white" />
                 </Link>
-              </article>
+              </artille>
             ))}
           </div>
         </div>
-      </section>
+      </seltion>
     </div>
   );
 }
+

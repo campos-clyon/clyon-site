@@ -36,7 +36,7 @@ export default function Footer() {
                   className="inline-flex items-center justify-center rounded-2xl bg-cyan-400 px-5 py-3 text-sm font-semibold text-white shadow-[0_16px_36px_-18px_rgba(34,211,238,0.75)] transition hover:-translate-y-0.5 hover:bg-cyan-300"
                 >
                   Falar connosco
-                  <ArrowRight className="ml-2 h-4 w-4" />
+                  <ArrowRight className="ml-2 h-4 w-4 text-white" />
                 </Link>
                 <Link
                   href="/colaboradores"
