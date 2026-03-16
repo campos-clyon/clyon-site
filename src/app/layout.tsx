@@ -8,6 +8,7 @@ import { TrpcProvider } from "@/components/TrpcProvider";
 import {
   BUSINESS_ADDRESS,
   BUSINESS_EMAIL,
+  BUSINESS_INSTAGRAM,
   BUSINESS_NAME,
   BUSINESS_PHONE,
   REGIONS,
@@ -119,6 +120,7 @@ const localBusinessSchema = {
     postalCode: "2845-513",
     addressCountry: "PT",
   },
+  sameAs: [BUSINESS_INSTAGRAM],
   areaServed: REGIONS.map((region) => ({
     "@type": "AdministrativeArea",
     name: region.name,
@@ -141,6 +143,24 @@ const localBusinessSchema = {
   contactPoint: {
     "@type": "ContactPoint",
     telephone: BUSINESS_PHONE,
+    contactType: "customer service",
+    areaServed: "PT",
+    availableLanguage: ["pt-PT"],
+  },
+};
+
+const organizationSchema = {
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  "@id": `${SITE_URL}/#organization`,
+  name: BUSINESS_NAME,
+  url: SITE_URL,
+  logo: `${SITE_URL}/logo-clyon-icon.webp`,
+  sameAs: [BUSINESS_INSTAGRAM],
+  contactPoint: {
+    "@type": "ContactPoint",
+    telephone: BUSINESS_PHONE,
+    email: BUSINESS_EMAIL,
     contactType: "customer service",
     areaServed: "PT",
     availableLanguage: ["pt-PT"],
@@ -175,6 +195,10 @@ export default function RootLayout({
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(localBusinessSchema) }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
         />
         <script
           type="application/ld+json"

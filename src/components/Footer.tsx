@@ -1,8 +1,8 @@
 import Link from "next/link";
-import { ArrowRight, Lock, MessageCircle, Square, Wallet } from "lucide-react";
+import { ArrowRight, Instagram, Lock, MessageCircle, Square, Wallet } from "lucide-react";
 
 import CookiePreferencesLink from "@/components/CookiePreferencesLink";
-import { BUSINESS_PHONE } from "@/lib/seo-data";
+import { BUSINESS_INSTAGRAM, BUSINESS_PHONE } from "@/lib/seo-data";
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();
@@ -90,6 +90,18 @@ export default function Footer() {
                   <Link href="/contactos" className="transition-colors hover:text-white">
                     Contactos
                   </Link>
+                </li>
+                <li>
+                  <a
+                    href={BUSINESS_INSTAGRAM}
+                    target="_blank"
+                    rel="noopener noreferrer me"
+                    className="inline-flex items-center gap-2 transition-colors hover:text-white"
+                    aria-label="Instagram da CLYON"
+                  >
+                    <Instagram className="h-4 w-4" />
+                    Instagram
+                  </a>
                 </li>
               </ul>
             </div>

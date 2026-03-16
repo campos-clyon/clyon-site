@@ -68,6 +68,12 @@ const categorias: Categoria[] = [
 
 const categoriaIds = new Set<CategoriaId>(["entulho", "moveis", "monos", "limpeza", "mudancas", "camiao"]);
 
+const simulatorPrimaryButtonClass =
+  "border-cyan-400 bg-[#18b3d1] text-white shadow-[0_20px_38px_-22px_rgba(24,179,209,0.78)] hover:-translate-y-0.5 hover:border-[#12a4c0] hover:bg-[#12a4c0]";
+
+const simulatorSecondaryButtonClass =
+  "border-cyan-100 bg-white text-[#0d7fa7] shadow-[0_12px_28px_-24px_rgba(14,116,144,0.45)] hover:-translate-y-0.5 hover:border-cyan-300 hover:bg-cyan-50 hover:text-[#0d7fa7]";
+
 type SimuladorClientProps = {
   initialCategoriaId?: CategoriaId | null;
 };
@@ -458,7 +464,12 @@ export default function SimuladorClient({ initialCategoriaId = null }: Simulador
                     <item.icon className="h-5 w-5" />
                   </div>
                 </div>
-                <div className="mt-4 inline-flex items-center rounded-full bg-cyan-500 px-4 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-white">
+                <div
+                  className={cn(
+                    "mt-4 inline-flex min-h-[54px] items-center rounded-[22px] border px-5 py-3 text-sm font-bold",
+                    simulatorPrimaryButtonClass,
+                  )}
+                >
                   Simular agora
                   <ArrowRight className="ml-2 h-3.5 w-3.5" />
                 </div>
@@ -480,7 +491,10 @@ export default function SimuladorClient({ initialCategoriaId = null }: Simulador
               resetFlow();
               setCategoriaId(null);
             }}
-            className="inline-flex items-center gap-2 text-sm font-semibold text-cyan-700 transition hover:text-cyan-600"
+            className={cn(
+              "inline-flex min-h-[54px] items-center gap-2 rounded-[22px] border px-5 py-3 text-sm font-bold transition",
+              simulatorSecondaryButtonClass,
+            )}
           >
             <ArrowLeft className="h-4 w-4" />
             Voltar aos serviços
@@ -1088,12 +1102,12 @@ function ChoiceGrid({
             onClick={() => onChange(option.value)}
             className={cn(
               compact
-                ? "min-h-11 rounded-[18px] px-3 py-2 text-center text-sm"
-                : "min-h-14 rounded-[18px] px-4 py-3 text-center text-sm",
+                ? "min-h-[54px] rounded-[22px] px-4 py-3 text-center text-sm"
+                : "min-h-[54px] rounded-[22px] px-4 py-3 text-center text-sm",
               "border font-bold transition",
               active
-                ? "border-cyan-500 bg-cyan-500 text-white shadow-[0_18px_38px_-20px_rgba(6,182,212,0.72)]"
-                : `${fieldToneClass(tone)} bg-white text-cyan-700 hover:-translate-y-0.5 hover:border-cyan-200 hover:bg-cyan-50 hover:text-cyan-700`,
+                ? simulatorPrimaryButtonClass
+                : `${simulatorSecondaryButtonClass} ${fieldToneClass(tone)}`,
             )}
           >
             {option.label}
@@ -1186,10 +1200,10 @@ function PeopleSelector({
                   onChange(String(num));
                 }}
                 className={cn(
-                  "flex h-10 w-10 items-center justify-center rounded-[18px] border text-sm font-bold transition",
+                  "flex h-11 w-11 items-center justify-center rounded-[18px] border text-sm font-bold transition",
                   active
-                    ? "border-cyan-500 bg-cyan-500 text-white shadow-[0_18px_38px_-20px_rgba(6,182,212,0.72)]"
-                    : `${fieldToneClass(tone)} bg-white text-cyan-700 hover:-translate-y-0.5 hover:border-cyan-200 hover:bg-cyan-50 hover:text-cyan-700`,
+                    ? simulatorPrimaryButtonClass
+                    : `${simulatorSecondaryButtonClass} ${fieldToneClass(tone)}`,
                 )}
               >
                 {num}
@@ -1203,8 +1217,8 @@ function PeopleSelector({
               onChange("");
             }}
             className={cn(
-              "flex h-10 w-12 items-center justify-center rounded-[18px] border text-sm font-bold transition",
-              `${fieldToneClass(tone)} bg-white text-cyan-700 hover:-translate-y-0.5 hover:border-cyan-200 hover:bg-cyan-50 hover:text-cyan-700`,
+              "flex h-11 min-w-12 items-center justify-center rounded-[18px] border px-3 text-sm font-bold transition",
+              `${simulatorSecondaryButtonClass} ${fieldToneClass(tone)}`,
             )}
           >
             8+

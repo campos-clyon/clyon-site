@@ -35,6 +35,8 @@ export const BUSINESS_PHONE = "+351931632622";
 export const BUSINESS_EMAIL = "geral@clyon.pt";
 export const BUSINESS_ADDRESS =
   "Rua dos Jasmins 3, Belverde, Amora, 2845-513, Portugal";
+export const BUSINESS_INSTAGRAM =
+  "https://www.instagram.com/clyonrecolha?igsh=MTgwYTIwMXU4ZGNyOQ==";
 export const CONTACT_PATH = "/contactos";
 
 export const REGIONS: RegionData[] = [
