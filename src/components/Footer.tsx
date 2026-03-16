@@ -2,23 +2,12 @@ import Link from "next/link";
 import { ArrowRight, Instagram, Lock, MessageCircle, Square, Wallet } from "lucide-react";
 
 import CookiePreferencesLink from "@/components/CookiePreferencesLink";
-import {
-  BUSINESS_INSTAGRAM,
-  BUSINESS_PHONE,
-  CITIES,
-  REGIONS,
-  getCityServiceSlug,
-} from "@/lib/seo-data";
+import { BUSINESS_INSTAGRAM, BUSINESS_PHONE } from "@/lib/seo-data";
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();
   const whatsappNumber = BUSINESS_PHONE.replace(/[^\d]/g, "");
   const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent("Olá! Gostava de pedir um orçamento à CLYON.")}`;
-
-  const footerRegions = REGIONS.map((region) => ({
-    ...region,
-    cities: CITIES.filter((city) => city.region === region.slug),
-  }));
 
   return (
     <>
