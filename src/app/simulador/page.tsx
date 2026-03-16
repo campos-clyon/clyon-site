@@ -2,7 +2,9 @@ import type { Metadata } from "next";
 
 import SimuladorClient from "./SimuladorClient";
 
-const categoriaIds = new Set(["entulho", "moveis", "monos", "limpeza", "mudancas", "camiao"]);
+type CategoriaId = "entulho" | "moveis" | "monos" | "limpeza" | "mudancas" | "camiao";
+
+const categoriaIds = new Set<CategoriaId>(["entulho", "moveis", "monos", "limpeza", "mudancas", "camiao"]);
 
 export const metadata: Metadata = {
   title: "Simulador de Orçamento para Recolha e Mudanças | CLYON",
@@ -28,7 +30,10 @@ type SimuladorPageProps = {
 export default async function SimuladorPage({ searchParams }: SimuladorPageProps) {
   const resolvedSearchParams = searchParams ? await searchParams : undefined;
   const categoriaParam = resolvedSearchParams?.categoria;
-  const initialCategoriaId = categoriaParam && categoriaIds.has(categoriaParam) ? categoriaParam : null;
+  const initialCategoriaId: CategoriaId | null =
+    categoriaParam && categoriaIds.has(categoriaParam as CategoriaId)
+      ? (categoriaParam as CategoriaId)
+      : null;
 
   return <SimuladorClient initialCategoriaId={initialCategoriaId} />;
 }
