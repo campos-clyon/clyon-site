@@ -18,7 +18,14 @@ export default function Header() {
   return (
     <header className="fixed left-0 right-0 top-0 z-50 border-b border-slate-200/40 bg-white/95 shadow-[0_10px_30px_-18px_rgba(15,23,42,0.28)] backdrop-blur-md">
       <div className="mx-auto flex w-full max-w-7xl items-center justify-between px-6 py-2.5 lg:px-8">
-        <Link href="/" className="flex-shrink-0 cursor-pointer">
+        <button
+          type="button"
+          onClick={() => {
+            window.location.href = "/";
+          }}
+          className="flex-shrink-0 cursor-pointer"
+          aria-label="Ir para a página inicial"
+        >
           <img
             src="/logo-clyon-icon.webp"
             alt="CLYON - Recolha de Móveis e Entulho"
@@ -26,7 +33,7 @@ export default function Header() {
             width="205"
             height="84"
           />
-        </Link>
+        </button>
 
         <nav className="hidden flex-1 items-center justify-center gap-8 text-[14.5px] font-medium text-slate-600 lg:flex">
           {navLinks.map((link) => (

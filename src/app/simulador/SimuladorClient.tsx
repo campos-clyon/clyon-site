@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import {
   ArrowLeft,
   ArrowRight,
@@ -67,6 +67,7 @@ const categorias: Categoria[] = [
 ];
 
 export default function SimuladorClient() {
+  const summaryValueRef = useRef<HTMLDivElement | null>(null);
   const [pricingMap, setPricingMap] = useState(() => createSimulatorSettingsMap());
   const [categoriaId, setCategoriaId] = useState<CategoriaId | null>(null);
   const [origem, setOrigem] = useState("");
@@ -91,6 +92,7 @@ export default function SimuladorClient() {
   const [orcamento, setOrcamento] = useState<number | null>(null);
   const [showValidation, setShowValidation] = useState(false);
   const [pessoasManual, setPessoasManual] = useState(false);
+  const [highlightBudget, setHighlightBudget] = useState(false);
 
   const categoria = categorias.find((item) => item.id === categoriaId) ?? null;
   const origemValida = categoria?.trajeto === "base" || origem.trim().length >= 3;
@@ -330,7 +332,23 @@ export default function SimuladorClient() {
     }
 
     setOrcamento(Math.round(total * 100) / 100);
+    setHighlightBudget(true);
   };
+
+  useEffect(() => {
+    if (!highlightBudget) return;
+
+    summaryValueRef.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "center",
+    });
+
+    const timeout = window.setTimeout(() => {
+      setHighlightBudget(false);
+    }, 2600);
+
+    return () => window.clearTimeout(timeout);
+  }, [highlightBudget]);
 
   const podeCalcularDistancia =
     destino.trim().length > 0 && (categoria?.trajeto === "base" || origem.trim().length > 0);
@@ -715,7 +733,11 @@ export default function SimuladorClient() {
                     type="button"
                     onClick={calcularOrcamento}
                     disabled={!podeCalcularOrcamento}
-                    className="w-full rounded-2xl bg-cyan-500 py-5 text-base font-bold text-white hover:bg-cyan-400"
+                    className={cn(
+                      "w-full rounded-2xl bg-cyan-500 py-5 text-base font-bold text-white hover:bg-cyan-400",
+                      podeCalcularOrcamento &&
+                        "border border-cyan-300 shadow-[0_0_0_0_rgba(34,211,238,0.55)] animate-[budget-button-pulse_1.8s_ease-in-out_infinite]",
+                    )}
                   >
                     <Calculator className="mr-2 h-5 w-5" />
                     Calcular orçamento
@@ -732,7 +754,24 @@ export default function SimuladorClient() {
                 <h2 className="text-[1.65rem] font-bold leading-tight">{categoria.nome}</h2>
                 <p className="mt-3 text-sm leading-7 text-slate-300">{categoria.descricao}</p>
               </div>
-              <div className="rounded-[24px] border border-cyan-300/20 bg-cyan-400/10 p-5">
+              <div
+                ref={summaryValueRef}
+                className={cn(
+                  "rounded-[24px] border border-cyan-300/20 bg-cyan-400/10 p-5 transition duration-300",
+                  highlightBudget &&
+                    "border-cyan-300 shadow-[0_0_0_0_rgba(34,211,238,0.55)] animate-[budget-card-pulse_1.2s_ease-in-out_3]",
+                )}
+              >
+                <style>{`
+                  @keyframes budget-button-pulse {
+                    0%, 100% { box-shadow: 0 0 0 0 rgba(34,211,238,0.18); }
+                    50% { box-shadow: 0 0 0 8px rgba(34,211,238,0.06); }
+                  }
+                  @keyframes budget-card-pulse {
+                    0%, 100% { box-shadow: 0 0 0 0 rgba(34,211,238,0.18); }
+                    50% { box-shadow: 0 0 0 12px rgba(34,211,238,0.08); }
+                  }
+                `}</style>
                 <p className="text-xs font-semibold uppercase tracking-[0.2em] text-cyan-200">
                   Valor simulado
                 </p>
