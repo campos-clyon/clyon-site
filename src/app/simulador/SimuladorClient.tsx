@@ -336,19 +336,13 @@ export default function SimuladorClient() {
   };
 
   useEffect(() => {
-    if (!highlightBudget) return;
+    if (!highlightBudget || orcamento === null) return;
 
     summaryValueRef.current?.scrollIntoView({
       behavior: "smooth",
       block: "center",
     });
-
-    const timeout = window.setTimeout(() => {
-      setHighlightBudget(false);
-    }, 2600);
-
-    return () => window.clearTimeout(timeout);
-  }, [highlightBudget]);
+  }, [highlightBudget, orcamento]);
 
   const podeCalcularDistancia =
     destino.trim().length > 0 && (categoria?.trajeto === "base" || origem.trim().length > 0);
@@ -369,6 +363,7 @@ export default function SimuladorClient() {
 
   const confirmarPedido = () => {
     if (!categoria || km === null) return;
+    setHighlightBudget(false);
     const linhas = [
       "Olá, quero solicitar este serviço com base no simulador.",
       "",
