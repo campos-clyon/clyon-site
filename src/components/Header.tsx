@@ -68,10 +68,10 @@ export default function Header() {
               <Link
                 key={link.href}
                 href={link.href}
-                className="rounded-2xl border border-cyan-100 bg-white px-4 py-3 text-base font-semibold text-slate-700 transition-colors hover:bg-cyan-50 hover:text-cyan-600"
+                className="flex items-center rounded-2xl border border-cyan-200 bg-white px-4 py-3 transition-colors hover:bg-cyan-50"
                 onClick={() => setMenuOpen(false)}
               >
-                {link.label}
+                <span className="!text-base !font-semibold !text-[#047faa]">{link.label}</span>
               </Link>
             ))}
 
