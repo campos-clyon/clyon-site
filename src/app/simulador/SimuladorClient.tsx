@@ -58,12 +58,12 @@ type SettingsResponse = {
 };
 
 const categorias: Categoria[] = [
-  { id: "entulho", nome: "Recolha de entulho", descricao: "Obras, res\u00edduos e limpezas pesadas.", icon: Wrench, calculo: "entulho", trajeto: "base" },
-  { id: "moveis", nome: "Recolha de m\u00f3veis", descricao: "M\u00f3veis antigos e recheios.", icon: Package, calculo: "moveis", trajeto: "base" },
+  { id: "entulho", nome: "Recolha de entulho", descricao: "Obras, resíduos e limpezas pesadas.", icon: Wrench, calculo: "entulho", trajeto: "base" },
+  { id: "moveis", nome: "Recolha de móveis", descricao: "Móveis antigos e recheios.", icon: Package, calculo: "moveis", trajeto: "base" },
   { id: "monos", nome: "Recolha de monos", descricao: "Volumes grandes, sucata e despejos.", icon: Package, calculo: "moveis", trajeto: "base" },
-  { id: "limpeza", nome: "Limpeza p\u00f3s-obra", descricao: "Acabamento final e recolha associada.", icon: Sparkles, calculo: "entulho", trajeto: "base" },
-  { id: "mudancas", nome: "Mudan\u00e7as", descricao: "Origem e destino reais com c\u00e1lculo autom\u00e1tico.", icon: Truck, calculo: "mudancas", trajeto: "custom" },
-  { id: "camiao", nome: "Cami\u00e3o com motorista", descricao: "Apoio log\u00edstico com base CLYON.", icon: Truck, calculo: "mudancas", trajeto: "base" },
+  { id: "limpeza", nome: "Limpeza pós-obra", descricao: "Acabamento final e recolha associada.", icon: Sparkles, calculo: "entulho", trajeto: "base" },
+  { id: "mudancas", nome: "Mudanças", descricao: "Origem e destino reais com cálculo automático.", icon: Truck, calculo: "mudancas", trajeto: "custom" },
+  { id: "camiao", nome: "Camião com motorista", descricao: "Apoio logístico com base CLYON.", icon: Truck, calculo: "mudancas", trajeto: "base" },
 ];
 
 const categoriaIds = new Set<CategoriaId>(["entulho", "moveis", "monos", "limpeza", "mudancas", "camiao"]);
@@ -240,7 +240,7 @@ export default function SimuladorClient({ initialCategoriaId = null }: Simulador
     const destination = destino.trim();
     if (!origin || !destination) {
       setShowValidation(true);
-      setKmErro("Preencha a morada antes de calcular a dist\u00e2ncia.");
+      setKmErro("Preencha a morada antes de calcular a distância.");
       return;
     }
 
@@ -259,8 +259,8 @@ export default function SimuladorClient({ initialCategoriaId = null }: Simulador
       if (!response.ok) {
         setKmErro(
           data?.error === "maps_unconfigured"
-            ? "A chave Google Maps ainda n\u00e3o est\u00e1 configurada no servidor."
-            : "N\u00e3o foi poss\u00edvel calcular a dist\u00e2ncia agora.",
+            ? "A chave Google Maps ainda não está configurada no servidor."
+            : "Não foi possível calcular a distância agora.",
         );
         return;
       }
@@ -271,7 +271,7 @@ export default function SimuladorClient({ initialCategoriaId = null }: Simulador
       }
       setDestino(String(data.destinationAddress ?? destination));
     } catch {
-      setKmErro("A dist\u00e2ncia n\u00e3o p\u00f4de ser calculada. Tente novamente.");
+      setKmErro("A distância não pôde ser calculada. Tente novamente.");
     } finally {
       setKmLoading(false);
     }
@@ -376,30 +376,30 @@ export default function SimuladorClient({ initialCategoriaId = null }: Simulador
     if (!categoria || km === null) return;
     setHighlightBudget(false);
     const linhas = [
-      "Ol\u00e1, quero solicitar este servi\u00e7o com base no simulador.",
+      "Olá, quero solicitar este serviço com base no simulador.",
       "",
-      `Servi\u00e7o: ${categoria.nome}`,
+      `Serviço: ${categoria.nome}`,
       categoria.trajeto === "custom" ? `Origem: ${origem}` : "Origem: Base CLYON",
       `Destino: ${destino}`,
-      `Dist\u00e2ncia: ${km.toFixed(1)} km`,
+      `Distância: ${km.toFixed(1)} km`,
       `Tipo de acesso: ${tipoAcesso || "-"}`,
       tipoAcesso === "apartamento" ? `Andares: ${numeroAndares || "0"}` : null,
       tipoAcesso === "apartamento" ? `Elevador: ${temElevador || "-"}` : null,
       `Pessoas: ${quantidadePessoas || "-"}`,
       `Tempo estimado: ${tempoEstimado || "-"} h`,
-      `Acesso dif\u00edcil: ${acessoDificil ? "Sim" : "N\u00e3o"}`,
+      `Acesso difícil: ${acessoDificil ? "Sim" : "Não"}`,
       categoria.calculo === "entulho"
-        ? `Condi\u00e7\u00e3o: ${entulhoModo || "-"} | Sacos: ${quantidadeSacos || "0"}`
+        ? `Condição: ${entulhoModo || "-"} | Sacos: ${quantidadeSacos || "0"}`
         : null,
       categoria.calculo === "moveis" && moveisModo === "carga"
-        ? `Condi\u00e7\u00e3o: por carga | Cargas: ${cargas || "1"}`
+        ? `Condição: por carga | Cargas: ${cargas || "1"}`
         : null,
       categoria.calculo === "moveis" && moveisModo === "item"
-        ? `Condi\u00e7\u00e3o: por item | Pequeno: ${peq || "0"} | M\u00e9dio: ${med || "0"} | Grande: ${gra || "0"}`
+        ? `Condição: por item | Pequeno: ${peq || "0"} | Médio: ${med || "0"} | Grande: ${gra || "0"}`
         : null,
       `Valor simulado: EUR ${orcamento?.toFixed(2) ?? "-"}`,
       "",
-      "Pe\u00e7o confirma\u00e7\u00e3o deste valor aproximado com um atendente.",
+      "Peço confirmação deste valor aproximado com um atendente.",
     ].filter(Boolean);
 
     const mensagem = encodeURIComponent(linhas.join("\n"));
@@ -418,11 +418,11 @@ export default function SimuladorClient({ initialCategoriaId = null }: Simulador
                   Simulador
                 </div>
                 <h1 className="mt-4 max-w-[18ch] text-[2.25rem] font-bold leading-[1.05] tracking-tight text-slate-950 sm:text-[3.35rem]">
-                  {"Calcule a dist\u00e2ncia antes do pre\u00e7o final."}
+                  Calcule a distância antes do preço final.
                 </h1>
                 <p className="mt-4 max-w-2xl text-[0.98rem] leading-7 text-slate-600">
-                  {"O cliente escreve a morada, recebe sugest\u00f5es autom\u00e1ticas do Google"}
-                  {"e s\u00f3 depois avan\u00e7a para o c\u00e1lculo do valor final."}
+                  O cliente escreve a morada, recebe sugestões automáticas do Google
+                  e só depois avança para o cálculo do valor final.
                 </p>
               </div>
               <Card className="rounded-[30px] border border-cyan-100 bg-white p-6 shadow-[0_24px_60px_-34px_rgba(14,116,144,0.2)]">
@@ -430,9 +430,9 @@ export default function SimuladorClient({ initialCategoriaId = null }: Simulador
                   Fluxo novo
                 </p>
                 <ol className="mt-4 space-y-2 text-sm leading-7 text-slate-600">
-                  <li>{"1. Escolher o servi\u00e7o"}</li>
-                  <li>{"2. Introduzir a morada com sugest\u00f5es"}</li>
-                  <li>{"3. Calcular dist\u00e2ncia"}</li>
+                  <li>1. Escolher o serviço</li>
+                  <li>2. Introduzir a morada com sugestões</li>
+                  <li>3. Calcular distância</li>
                   <li>4. Gerar o valor final</li>
                 </ol>
               </Card>
@@ -483,7 +483,7 @@ export default function SimuladorClient({ initialCategoriaId = null }: Simulador
             className="inline-flex items-center gap-2 text-sm font-semibold text-cyan-700 transition hover:text-cyan-600"
           >
             <ArrowLeft className="h-4 w-4" />
-            {"Voltar aos servi\u00e7os"}
+            Voltar aos serviços
           </button>
 
           <div className="mt-5 grid gap-8 lg:grid-cols-[1fr_0.9fr] lg:items-end">
@@ -492,14 +492,14 @@ export default function SimuladorClient({ initialCategoriaId = null }: Simulador
                 {categoria.nome}
               </div>
               <h1 className="mt-4 max-w-[16ch] text-[2.2rem] font-bold leading-[1.04] tracking-tight text-slate-950 sm:text-[3.15rem]">
-                {"Introduza a morada e calcule a dist\u00e2ncia."}
+                Introduza a morada e calcule a distância.
               </h1>
             </div>
             <Card className="rounded-[30px] border border-cyan-100 bg-white p-6 shadow-[0_24px_60px_-34px_rgba(14,116,144,0.2)]">
               <p className="text-sm leading-7 text-slate-600">
                 {categoria.trajeto === "custom"
-                  ? "Este servi\u00e7o usa origem e destino reais."
-                  : "Este servi\u00e7o usa a base CLYON como origem e calcula a dist\u00e2ncia at\u00e9 \u00e0 morada do cliente."}
+                  ? "Este serviço usa origem e destino reais."
+                  : "Este serviço usa a base CLYON como origem e calcula a distância até à morada do cliente."}
               </p>
             </Card>
           </div>
@@ -510,7 +510,7 @@ export default function SimuladorClient({ initialCategoriaId = null }: Simulador
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="grid gap-6 lg:grid-cols-2 lg:items-start">
             <Card className="rounded-[28px] border border-cyan-100 bg-white p-5 shadow-[0_20px_52px_-34px_rgba(14,116,144,0.18)]">
-              <StepTitle number="1" title="Morada e dist\u00e2ncia" />
+              <StepTitle number="1" title="Morada e distância" />
               <div className="mt-4 space-y-4">
                 {categoria.trajeto === "custom" ? (
                   <AddressField
@@ -527,13 +527,13 @@ export default function SimuladorClient({ initialCategoriaId = null }: Simulador
                   />
                 ) : (
                   <div className="rounded-[20px] border border-cyan-100 bg-cyan-50/80 p-3.5 text-sm leading-7 text-slate-700">
-                    {"A origem operacional \u00e9 a base CLYON e \u00e9 aplicada automaticamente."}
+                    A origem operacional é a base CLYON e é aplicada automaticamente.
                   </div>
                 )}
 
                 <AddressField
                   id="destino"
-                  label={categoria.trajeto === "custom" ? "Morada de destino *" : "Morada do servi\u00e7o *"}
+                  label={categoria.trajeto === "custom" ? "Morada de destino *" : "Morada do serviço *"}
                   value={destino}
                   onChange={atualizarDestino}
                   placeholder="Ex: Rua da Paz, 123, Lisboa"
@@ -547,13 +547,13 @@ export default function SimuladorClient({ initialCategoriaId = null }: Simulador
                 {categoria.calculo === "entulho" ? (
                   <>
                     <Field>
-                      <Label>{"O entulho est\u00e1 em sacos ou no ch\u00e3o? *"}</Label>
+                      <Label>O entulho está em sacos ou no chão? *</Label>
                       <ChoiceGrid
                         value={entulhoModo}
                         onChange={setEntulhoModo}
                         options={[
                           { value: "sacos", label: "Em sacos" },
-                          { value: "chao", label: "No ch\u00e3o" },
+                          { value: "chao", label: "No chão" },
                         ]}
                         tone={getFieldTone({
                           isNext: nextStep1Field === "entulhoModo",
@@ -583,7 +583,7 @@ export default function SimuladorClient({ initialCategoriaId = null }: Simulador
                   className="w-full rounded-2xl bg-cyan-500 py-5 text-base font-bold text-white hover:bg-cyan-400"
                 >
                   {kmLoading ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Route className="mr-2 h-5 w-5" />}
-                  {"Calcular dist\u00e2ncia"}
+                  Calcular distância
                 </Button>
 
                 {kmErro ? (
@@ -594,10 +594,10 @@ export default function SimuladorClient({ initialCategoriaId = null }: Simulador
 
                 {km !== null ? (
                   <div className="rounded-[22px] border border-cyan-100 bg-cyan-50/70 p-4">
-                    <p className="text-sm font-semibold uppercase tracking-[0.16em] text-cyan-700">{"Dist\u00e2ncia calculada"}</p>
+                    <p className="text-sm font-semibold uppercase tracking-[0.16em] text-cyan-700">Distância calculada</p>
                     <p className="mt-2 text-[2.5rem] font-bold leading-none text-slate-950">{km.toFixed(1)} km</p>
                     <p className="mt-2 text-sm leading-7 text-slate-600">
-                      {"Estes quil\u00f3metros ser\u00e3o usados no c\u00e1lculo final."}
+                      Estes quilómetros serão usados no cálculo final.
                     </p>
                   </div>
                 ) : null}
@@ -606,7 +606,7 @@ export default function SimuladorClient({ initialCategoriaId = null }: Simulador
 
             {km !== null ? (
               <Card className="rounded-[28px] border border-cyan-100 bg-white p-5 shadow-[0_20px_52px_-34px_rgba(14,116,144,0.18)]">
-                <StepTitle number="2" title="Detalhes do servi\u00e7o" />
+                <StepTitle number="2" title="Detalhes do serviço" />
                 <div className="mt-4 space-y-4">
                   {categoria.calculo === "moveis" ? (
                     <>
@@ -650,15 +650,15 @@ export default function SimuladorClient({ initialCategoriaId = null }: Simulador
                           ),
                         )}>
                           <Field>
-                            <Label htmlFor="peq">{"M\u00f3vel pequeno"}</Label>
+                            <Label htmlFor="peq">Móvel pequeno</Label>
                             <Input id="peq" type="number" min="0" value={peq} onChange={(event) => setPeq(event.target.value)} className="h-10 rounded-[14px] text-center" />
                           </Field>
                           <Field>
-                            <Label htmlFor="med">{"M\u00f3vel m\u00e9dio"}</Label>
+                            <Label htmlFor="med">Móvel médio</Label>
                             <Input id="med" type="number" min="0" value={med} onChange={(event) => setMed(event.target.value)} className="h-10 rounded-[14px] text-center" />
                           </Field>
                           <Field>
-                            <Label htmlFor="gra">{"M\u00f3vel grande"}</Label>
+                            <Label htmlFor="gra">Móvel grande</Label>
                             <Input id="gra" type="number" min="0" value={gra} onChange={(event) => setGra(event.target.value)} className="h-10 rounded-[14px] text-center" />
                           </Field>
                         </div>
@@ -685,7 +685,7 @@ export default function SimuladorClient({ initialCategoriaId = null }: Simulador
                   {tipoAcesso === "apartamento" ? (
                     <div className="grid gap-4 rounded-[22px] border border-cyan-100 bg-cyan-50/70 p-4 md:grid-cols-2">
                       <Field>
-                        <Label htmlFor="andares">{"N\u00famero de andares *"}</Label>
+                        <Label htmlFor="andares">Número de andares *</Label>
                         <Input id="andares" type="number" min="0" value={numeroAndares} onChange={(event) => setNumeroAndares(event.target.value)} className={cn("h-10 w-24 rounded-[14px] text-center", fieldToneClass(getFieldTone({
                           isNext: nextStep2Field === "numeroAndares",
                           isMissing: showValidation && tipoAcesso === "apartamento" && !numeroAndares,
@@ -693,7 +693,7 @@ export default function SimuladorClient({ initialCategoriaId = null }: Simulador
                       </Field>
                       <Field>
                         <Label>Tem elevador? *</Label>
-                        <ChoiceGrid value={temElevador} onChange={setTemElevador} options={[{ value: "sim", label: "Sim" }, { value: "nao", label: "N\u00e3o" }]} tone={getFieldTone({
+                        <ChoiceGrid value={temElevador} onChange={setTemElevador} options={[{ value: "sim", label: "Sim" }, { value: "nao", label: "Não" }]} tone={getFieldTone({
                           isNext: nextStep2Field === "temElevador",
                           isMissing: showValidation && tipoAcesso === "apartamento" && !temElevador,
                         })} compact />
@@ -731,7 +731,7 @@ export default function SimuladorClient({ initialCategoriaId = null }: Simulador
                   <div className="flex items-center gap-3 rounded-[20px] border border-cyan-100 bg-cyan-50/70 p-4">
                     <Checkbox id="dificil" checked={acessoDificil} onCheckedChange={(checked) => setAcessoDificil(Boolean(checked))} />
                     <Label htmlFor="dificil" className="cursor-pointer font-medium leading-6">
-                      {"O acesso \u00e9 considerado dif\u00edcil"}
+                      O acesso é considerado difícil
                     </Label>
                   </div>
 
@@ -746,7 +746,7 @@ export default function SimuladorClient({ initialCategoriaId = null }: Simulador
                     )}
                   >
                     <Calculator className="mr-2 h-5 w-5" />
-                    {"Calcular or\u00e7amento"}
+                    Calcular orçamento
                   </Button>
                 </div>
               </Card>
@@ -804,7 +804,7 @@ export default function SimuladorClient({ initialCategoriaId = null }: Simulador
                 {orcamento !== null ? (
                   <>
                     <div className="rounded-[22px] border border-amber-200/35 bg-amber-50/10 px-4 py-3 text-sm leading-7 text-cyan-50">
-                      {"Estes valores s\u00e3o aproximados e devem ser confirmados por um atendente."}
+                      Estes valores são aproximados e devem ser confirmados por um atendente.
                     </div>
                     <Button
                       type="button"
@@ -816,7 +816,7 @@ export default function SimuladorClient({ initialCategoriaId = null }: Simulador
                       )}
                     >
                       <Phone className="mr-2 h-5 w-5" />
-                      {"Solicitar este servi\u00e7o no WhatsApp"}
+                      Solicitar este serviço no WhatsApp
                     </Button>
                   </>
                 ) : null}
@@ -824,28 +824,28 @@ export default function SimuladorClient({ initialCategoriaId = null }: Simulador
             </div>
             <div className="mt-5 space-y-3 rounded-[22px] border border-white/10 bg-white/5 p-4">
               {categoria.trajeto === "custom" ? (
-                <SummaryRow icon={<MapPin className="h-4.5 w-4.5" />} label="Origem" value={origem || "Ainda n\u00e3o definida"} />
+                <SummaryRow icon={<MapPin className="h-4.5 w-4.5" />} label="Origem" value={origem || "Ainda não definida"} />
               ) : (
                 <SummaryRow icon={<MapPin className="h-4.5 w-4.5" />} label="Origem" value="Base CLYON" />
               )}
-              <SummaryRow icon={<MapPin className="h-4.5 w-4.5" />} label="Destino" value={destino || "Ainda n\u00e3o definido"} />
-              <SummaryRow icon={<Route className="h-4.5 w-4.5" />} label="Dist\u00e2ncia" value={km !== null ? `${km.toFixed(1)} km` : "Calcule a dist\u00e2ncia"} />
+              <SummaryRow icon={<MapPin className="h-4.5 w-4.5" />} label="Destino" value={destino || "Ainda não definido"} />
+              <SummaryRow icon={<Route className="h-4.5 w-4.5" />} label="Distância" value={km !== null ? `${km.toFixed(1)} km` : "Calcule a distância"} />
               <SummaryRow
                 icon={<Calculator className="h-4.5 w-4.5" />}
-                label="Condi\u00e7\u00f5es"
+                label="Condições"
                 value={[
                   tipoAcesso ? `Acesso: ${tipoAcesso}` : null,
                   quantidadePessoas ? `Pessoas: ${quantidadePessoas}` : null,
                   tempoEstimado ? `Tempo: ${tempoEstimado} h` : null,
-                  acessoDificil ? "Acesso dif\u00edcil" : null,
-                ].filter(Boolean).join(" | ") || "Preencha os detalhes do servi\u00e7o"}
+                  acessoDificil ? "Acesso difícil" : null,
+                ].filter(Boolean).join(" | ") || "Preencha os detalhes do serviço"}
               />
             </div>
 
             {orcamento !== null ? (
               <>
                 <div className="hidden mt-5 rounded-[22px] border border-amber-200/35 bg-amber-50/10 px-4 py-3 text-sm leading-7 text-cyan-50">
-                  {"Estes valores s\u00e3o aproximados e devem ser confirmados por um atendente."}
+                  Estes valores são aproximados e devem ser confirmados por um atendente.
                 </div>
                 <Button
                   type="button"
@@ -853,12 +853,12 @@ export default function SimuladorClient({ initialCategoriaId = null }: Simulador
                   className="hidden mt-4 w-full rounded-2xl bg-cyan-500 py-6 text-base font-bold text-white hover:bg-cyan-400"
                 >
                   <Phone className="mr-2 h-5 w-5" />
-                  {"Solicitar este servi\u00e7o no WhatsApp"}
+                  Solicitar este serviço no WhatsApp
                 </Button>
               </>
             ) : (
               <div className="mt-5 rounded-[22px] border border-dashed border-white/15 bg-white/5 p-4 text-sm leading-7 text-slate-300">
-                {"Calcule a dist\u00e2ncia e complete os detalhes para ver o valor final."}
+                Calcule a distância e complete os detalhes para ver o valor final.
               </div>
             )}
           </Card>
@@ -980,8 +980,8 @@ function AddressField({
         if (!response.ok) {
           setError(
             data?.error === "maps_unconfigured"
-              ? "A chave Google Maps ainda n\u00e3o est\u00e1 configurada."
-              : "N\u00e3o foi poss\u00edvel carregar sugest\u00f5es.",
+              ? "A chave Google Maps ainda não está configurada."
+              : "Não foi possível carregar sugestões.",
           );
           setPredictions([]);
           return;
@@ -989,7 +989,7 @@ function AddressField({
         setPredictions(Array.isArray(data.predictions) ? data.predictions : []);
       } catch (fetchError) {
         if (fetchError instanceof DOMException && fetchError.name === "AbortError") return;
-        setError("N\u00e3o foi poss\u00edvel carregar sugest\u00f5es.");
+        setError("Não foi possível carregar sugestões.");
         setPredictions([]);
       } finally {
         setLoading(false);
@@ -1049,7 +1049,7 @@ function AddressField({
       </div>
       {value.trim().length > 0 && value.trim().length < 3 ? (
         <p className="text-xs leading-6 text-slate-500">
-          {"Escreva pelo menos 3 caracteres para ver sugest\u00f5es do Google."}
+          Escreva pelo menos 3 caracteres para ver sugestões do Google.
         </p>
       ) : null}
       {error ? <p className="text-xs leading-6 text-amber-700">{error}</p> : null}

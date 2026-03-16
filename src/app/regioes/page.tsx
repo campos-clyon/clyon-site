@@ -40,9 +40,8 @@ export default function RegioesPage() {
               Regiões e cidades onde a CLYON já atua.
             </h1>
             <p className="mt-5 max-w-3xl text-lg leading-8 text-slate-600">
-              Esta página organiza a presença da CLYON em Lisboa, Margem Sul e
-              Setúbal, com hubs por região e páginas locais preparadas para captar
-              pesquisas por serviço e cidade.
+              Esta página organiza a presença da CLYON em Lisboa, Margem Sul e Setúbal, com hubs por região e páginas
+              locais preparadas para captar pesquisas por serviço e cidade.
             </p>
           </div>
         </div>
@@ -61,26 +60,18 @@ export default function RegioesPage() {
                 <p className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-700">
                   {region.shortLabel}
                 </p>
-                <h2 className="mt-3 text-3xl font-bold text-slate-950">
-                  {region.name}
-                </h2>
-                <p className="mt-4 text-base leading-8 text-slate-600">
-                  {region.intro}
-                </p>
+                <h2 className="mt-3 text-3xl font-bold text-slate-950">{region.name}</h2>
+                <p className="mt-4 text-base leading-8 text-slate-600">{region.intro}</p>
 
                 <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
                   <div className="rounded-[22px] border border-cyan-100 bg-cyan-50/80 p-4">
-                    <p className="text-sm font-semibold text-slate-950">
-                      Localidades mapeadas
-                    </p>
+                    <p className="text-sm font-semibold text-slate-950">Localidades mapeadas</p>
                     <p className="mt-2 text-sm leading-7 text-slate-600">
                       {cities.length} zonas prioritárias nesta região.
                     </p>
                   </div>
                   <div className="rounded-[22px] border border-cyan-100 bg-white p-4">
-                    <p className="text-sm font-semibold text-slate-950">
-                      Exemplos de cidades
-                    </p>
+                    <p className="text-sm font-semibold text-slate-950">Exemplos de cidades</p>
                     <p className="mt-2 text-sm leading-7 text-slate-600">
                       {cities.slice(0, 4).map((city) => city.name).join(", ")}
                     </p>
@@ -89,10 +80,10 @@ export default function RegioesPage() {
 
                 <Link
                   href={`/regioes/${region.slug}`}
-                  className="mt-6 inline-flex items-center rounded-2xl bg-cyan-500 px-5 py-3 text-sm font-semibold text-white shadow-[0_18px_40px_-22px_rgba(6,182,212,0.75)] transition hover:-translate-y-0.5 hover:bg-cyan-400 hover:text-white focus:text-white [&_*]:!text-white"
+                  className="mt-6 inline-flex items-center rounded-2xl bg-cyan-500 px-5 py-3 text-sm font-semibold text-white shadow-[0_18px_40px_-22px_rgba(6,182,212,0.75)] transition hover:-translate-y-0.5 hover:bg-cyan-400"
                 >
-                  Ver região
-                  <ArrowRight className="ml-2 h-4 w-4" />
+                  <span className="text-white">Ver região</span>
+                  <ArrowRight className="ml-2 h-4 w-4 text-white" />
                 </Link>
               </article>
             );
@@ -100,12 +91,8 @@ export default function RegioesPage() {
         </div>
 
         <div className="mt-8 rounded-[30px] border border-cyan-100 bg-slate-950 p-7 text-white shadow-[0_24px_60px_-34px_rgba(2,6,23,0.45)]">
-          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-200">
-            Serviços estratégicos
-          </p>
-          <h2 className="mt-3 text-3xl font-bold">
-            Base local preparada para captar intenção comercial
-          </h2>
+          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-200">Serviços estratégicos</p>
+          <h2 className="mt-3 text-3xl font-bold">Base local preparada para captar intenção comercial</h2>
           <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             {SERVICES.map((service) => (
               <Link
