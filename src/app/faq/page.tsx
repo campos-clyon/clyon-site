@@ -119,7 +119,7 @@ export default function FAQPage() {
               </div>
               <Link
                 href="/contactos"
-                className="inline-flex items-center justify-center rounded-2xl bg-cyan-400 px-7 py-4 text-base font-semibold text-slate-950 transition hover:-translate-y-0.5 hover:bg-cyan-300"
+                  className="inline-flex items-center justify-center rounded-2xl bg-cyan-400 px-7 py-4 text-base font-semibold text-white transition hover:-translate-y-0.5 hover:bg-cyan-300"
               >
                 Contactar agora
                 <ArrowRight className="ml-2 h-4 w-4" />

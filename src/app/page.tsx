@@ -427,7 +427,7 @@ export default async function HomePage() {
               </p>
               <Link
                 href="/contactos"
-                className="mt-5 inline-flex items-center justify-center rounded-2xl bg-cyan-400 px-6 py-3 text-sm font-semibold text-slate-950 transition hover:-translate-y-0.5 hover:bg-cyan-300"
+                className="mt-5 inline-flex items-center justify-center rounded-2xl bg-cyan-400 px-6 py-3 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-cyan-300"
               >
                 Falar connosco
                 <ArrowRight className="ml-2 h-4 w-4" />
@@ -519,7 +519,7 @@ export default async function HomePage() {
               </div>
               <Link
                 href="/simulador"
-                className="inline-flex items-center justify-center rounded-2xl bg-cyan-400 px-7 py-4 text-base font-semibold text-slate-950 transition hover:-translate-y-0.5 hover:bg-cyan-300"
+                  className="inline-flex items-center justify-center rounded-2xl bg-cyan-400 px-7 py-4 text-base font-semibold text-white transition hover:-translate-y-0.5 hover:bg-cyan-300"
               >
                 Simular orçamento
                 <ArrowRight className="ml-2 h-4 w-4" />
