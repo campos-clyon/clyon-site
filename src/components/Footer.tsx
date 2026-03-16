@@ -2,12 +2,23 @@ import Link from "next/link";
 import { ArrowRight, Instagram, Lock, MessageCircle, Square, Wallet } from "lucide-react";
 
 import CookiePreferencesLink from "@/components/CookiePreferencesLink";
-import { BUSINESS_INSTAGRAM, BUSINESS_PHONE } from "@/lib/seo-data";
+import {
+  BUSINESS_INSTAGRAM,
+  BUSINESS_PHONE,
+  CITIES,
+  REGIONS,
+  getCityServiceSlug,
+} from "@/lib/seo-data";
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();
   const whatsappNumber = BUSINESS_PHONE.replace(/[^\d]/g, "");
   const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent("Olá! Gostava de pedir um orçamento à CLYON.")}`;
+
+  const footerRegions = REGIONS.map((region) => ({
+    ...region,
+    cities: CITIES.filter((city) => city.region === region.slug),
+  }));
 
   return (
     <>
@@ -119,6 +130,46 @@ export default function Footer() {
                   <Lock className="h-4 w-4 text-cyan-300" /> Novo Banco
                 </li>
               </ul>
+            </div>
+          </div>
+
+          <div className="mt-10 rounded-[28px] border border-white/10 bg-white/5 p-6 shadow-[0_24px_60px_-34px_rgba(8,145,178,0.35)] backdrop-blur-sm">
+            <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+              <div>
+                <p className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-200">Zonas de atuaÃ§Ã£o</p>
+                <h3 className="mt-2 text-2xl font-semibold text-white">PÃ¡ginas locais com acesso direto</h3>
+                <p className="mt-3 max-w-3xl text-[0.98rem] leading-7 text-cyan-50/78">
+                  LigaÃ§Ãµes internas para as zonas com maior procura em Lisboa, Margem Sul e SetÃºbal, facilitando a
+                  navegaÃ§Ã£o e reforÃ§ando a descoberta das landing pages locais.
+                </p>
+              </div>
+              <Link href="/regioes" className="site-btn-secondary">
+                Ver cobertura completa
+              </Link>
+            </div>
+
+            <div className="mt-8 grid gap-6 lg:grid-cols-3">
+              {footerRegions.map((region) => (
+                <div key={region.slug} className="rounded-[24px] border border-white/10 bg-[#031a25]/35 p-5">
+                  <Link
+                    href={`/regioes/${region.slug}`}
+                    className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-200 transition-colors hover:text-white"
+                  >
+                    {region.shortLabel}
+                  </Link>
+                  <div className="mt-4 flex flex-wrap gap-3">
+                    {region.cities.map((city) => (
+                      <Link
+                        key={city.slug}
+                        href={`/${getCityServiceSlug("recolha-entulho", city.slug)}`}
+                        className="rounded-full border border-cyan-200/30 bg-white/5 px-4 py-2 text-sm font-medium text-cyan-50/82 transition duration-200 hover:border-cyan-300/50 hover:bg-white/10 hover:text-white"
+                      >
+                        Recolha de entulho em {city.name}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
 
