@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 
 import SimuladorClient from "./SimuladorClient";
 
+const categoriaIds = new Set(["entulho", "moveis", "monos", "limpeza", "mudancas", "camiao"]);
+
 export const metadata: Metadata = {
   title: "Simulador de Orçamento para Recolha e Mudanças | CLYON",
   description:
@@ -19,6 +21,14 @@ export const metadata: Metadata = {
 
 export const revalidate = 86400;
 
-export default function SimuladorPage() {
-  return <SimuladorClient />;
+type SimuladorPageProps = {
+  searchParams?: Promise<{ categoria?: string }> | { categoria?: string };
+};
+
+export default async function SimuladorPage({ searchParams }: SimuladorPageProps) {
+  const resolvedSearchParams = searchParams ? await searchParams : undefined;
+  const categoriaParam = resolvedSearchParams?.categoria;
+  const initialCategoriaId = categoriaParam && categoriaIds.has(categoriaParam) ? categoriaParam : null;
+
+  return <SimuladorClient initialCategoriaId={initialCategoriaId} />;
 }
