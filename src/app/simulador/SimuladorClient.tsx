@@ -69,10 +69,10 @@ const categorias: Categoria[] = [
 const categoriaIds = new Set<CategoriaId>(["entulho", "moveis", "monos", "limpeza", "mudancas", "camiao"]);
 
 const simulatorPrimaryButtonClass =
-  "border border-cyan-400 bg-[#18b3d1] text-white shadow-[0_20px_38px_-22px_rgba(24,179,209,0.78)] hover:-translate-y-0.5 hover:border-[#12a4c0] hover:bg-[#12a4c0]";
+  "site-btn-primary";
 
 const simulatorSecondaryButtonClass =
-  "border border-cyan-200 bg-white text-[#0d7fa7] shadow-none hover:-translate-y-0.5 hover:border-cyan-300 hover:bg-cyan-50 hover:text-[#0d7fa7]";
+  "site-btn-secondary";
 
 type SimuladorClientProps = {
   initialCategoriaId?: CategoriaId | null;
