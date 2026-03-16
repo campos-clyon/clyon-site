@@ -749,14 +749,7 @@ export default function SimuladorClient() {
                 <h2 className="text-[1.65rem] font-bold leading-tight">{categoria.nome}</h2>
                 <p className="mt-3 text-sm leading-7 text-slate-300">{categoria.descricao}</p>
               </div>
-              <div
-                ref={summaryValueRef}
-                className={cn(
-                  "rounded-[24px] border border-cyan-300/20 bg-cyan-400/10 p-5 transition duration-300",
-                  highlightBudget &&
-                    "border-cyan-300 shadow-[0_0_0_0_rgba(34,211,238,0.55)] animate-[budget-card-pulse_1.2s_ease-in-out_3]",
-                )}
-              >
+              <div className="space-y-4">
                 <style>{`
                   @keyframes budget-button-pulse {
                     0%, 100% { box-shadow: 0 0 0 0 rgba(34,211,238,0.18); }
@@ -766,18 +759,56 @@ export default function SimuladorClient() {
                     0%, 100% { box-shadow: 0 0 0 0 rgba(34,211,238,0.18); }
                     50% { box-shadow: 0 0 0 12px rgba(34,211,238,0.08); }
                   }
+                  @keyframes whatsapp-cta-pulse {
+                    0%, 100% {
+                      box-shadow: 0 0 0 0 rgba(34,211,238,0.24), 0 16px 38px -24px rgba(34,211,238,0.72);
+                      transform: translateY(0);
+                    }
+                    50% {
+                      box-shadow: 0 0 0 10px rgba(34,211,238,0.08), 0 22px 44px -22px rgba(34,211,238,0.8);
+                      transform: translateY(-1px);
+                    }
+                  }
                 `}</style>
-                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-cyan-200">
-                  Valor simulado
-                </p>
-                <p className="mt-2 text-[2.2rem] font-bold leading-none text-white">
-                  {orcamento !== null ? `EUR ${orcamento.toFixed(2)}` : "--"}
-                </p>
-                <p className="mt-2 text-sm leading-6 text-cyan-50/85">
-                  {orcamento !== null
-                    ? "Estimativa pronta para envio."
-                    : "Preencha os dados para ver o valor estimado."}
-                </p>
+                <div
+                  ref={summaryValueRef}
+                  className={cn(
+                    "rounded-[24px] border border-cyan-300/20 bg-cyan-400/10 p-5 transition duration-300",
+                    highlightBudget &&
+                      "border-cyan-300 shadow-[0_0_0_0_rgba(34,211,238,0.55)] animate-[budget-card-pulse_1.2s_ease-in-out_infinite]",
+                  )}
+                >
+                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-cyan-200">
+                    Valor simulado
+                  </p>
+                  <p className="mt-2 text-[2.2rem] font-bold leading-none text-white">
+                    {orcamento !== null ? `EUR ${orcamento.toFixed(2)}` : "--"}
+                  </p>
+                  <p className="mt-2 text-sm leading-6 text-cyan-50/85">
+                    {orcamento !== null
+                      ? "Estimativa pronta para envio."
+                      : "Preencha os dados para ver o valor estimado."}
+                  </p>
+                </div>
+                {orcamento !== null ? (
+                  <>
+                    <div className="rounded-[22px] border border-amber-200/35 bg-amber-50/10 px-4 py-3 text-sm leading-7 text-cyan-50">
+                      Estes valores sÃ£o aproximados e devem ser confirmados por um atendente.
+                    </div>
+                    <Button
+                      type="button"
+                      onClick={confirmarPedido}
+                      className={cn(
+                        "w-full rounded-2xl bg-cyan-500 py-6 text-base font-bold text-white hover:bg-cyan-400",
+                        highlightBudget &&
+                          "border border-cyan-200/70 animate-[whatsapp-cta-pulse_1.2s_ease-in-out_infinite]",
+                      )}
+                    >
+                      <Phone className="mr-2 h-5 w-5" />
+                      Solicitar este serviÃ§o no WhatsApp
+                    </Button>
+                  </>
+                ) : null}
               </div>
             </div>
             <div className="mt-5 space-y-3 rounded-[22px] border border-white/10 bg-white/5 p-4">
@@ -802,13 +833,13 @@ export default function SimuladorClient() {
 
             {orcamento !== null ? (
               <>
-                <div className="mt-5 rounded-[22px] border border-amber-200/35 bg-amber-50/10 px-4 py-3 text-sm leading-7 text-cyan-50">
+                <div className="hidden mt-5 rounded-[22px] border border-amber-200/35 bg-amber-50/10 px-4 py-3 text-sm leading-7 text-cyan-50">
                   Estes valores são aproximados e devem ser confirmados por um atendente.
                 </div>
                 <Button
                   type="button"
                   onClick={confirmarPedido}
-                  className="mt-4 w-full rounded-2xl bg-cyan-500 py-6 text-base font-bold text-white hover:bg-cyan-400"
+                  className="hidden mt-4 w-full rounded-2xl bg-cyan-500 py-6 text-base font-bold text-white hover:bg-cyan-400"
                 >
                   <Phone className="mr-2 h-5 w-5" />
                   Solicitar este serviço no WhatsApp
