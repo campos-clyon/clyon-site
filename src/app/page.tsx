@@ -5,6 +5,7 @@ import {
   ArrowRight,
   CheckCircle2,
   Home as HomeIcon,
+  MapPin,
   MessageSquareQuote,
   ShieldCheck,
   Sparkles,
@@ -14,6 +15,7 @@ import {
 } from "lucide-react";
 
 import ImageCarousel from "@/components/ImageCarousel";
+import { CITIES, REGIONS, getCityServiceSlug } from "@/lib/seo-data";
 import { getHeroCarouselImages } from "@/lib/work-gallery";
 
 export const metadata: Metadata = {
@@ -171,6 +173,10 @@ const differentiators = [
 export default async function HomePage() {
   noStore();
   const workImages = await getHeroCarouselImages();
+  const regionCoverage = REGIONS.map((region) => ({
+    ...region,
+    cities: CITIES.filter((city) => city.region === region.slug).slice(0, 5),
+  }));
 
   return (
     <div className="min-h-screen bg-white text-slate-900">
@@ -495,6 +501,54 @@ export default async function HomePage() {
                   </div>
                 ))}
               </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="bg-white py-16 lg:py-20">
+        <div className="mx-auto max-w-7xl px-6 lg:px-8">
+          <div className="rounded-[34px] bg-[linear-gradient(135deg,#062737_0%,#083344_100%)] p-8 text-white shadow-[0_26px_70px_-30px_rgba(2,6,23,0.45)] lg:p-10">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+              <div className="max-w-3xl">
+                <p className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-200">
+                  Zonas de atuação
+                </p>
+                <h2 className="mt-3 text-3xl font-bold leading-tight sm:text-4xl">
+                  Páginas locais com acesso direto
+                </h2>
+                <p className="mt-4 text-base leading-8 text-slate-300">
+                  Ligações internas para as zonas com maior procura em Lisboa, Margem Sul e Setúbal, facilitando a
+                  navegação e reforçando a descoberta das landing pages locais.
+                </p>
+              </div>
+              <Link href="/regioes" className="site-btn-secondary">
+                Ver cobertura completa
+              </Link>
+            </div>
+
+            <div className="mt-8 grid gap-6 lg:grid-cols-3">
+              {regionCoverage.map((region) => (
+                <div key={region.slug} className="rounded-[28px] border border-white/10 bg-white/5 p-5">
+                  <Link
+                    href={`/regioes/${region.slug}`}
+                    className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-200 transition hover:text-white"
+                  >
+                    {region.shortLabel}
+                  </Link>
+                  <div className="mt-4 flex flex-wrap gap-3">
+                    {region.cities.map((city) => (
+                      <Link
+                        key={city.slug}
+                        href={`/${getCityServiceSlug("recolha-entulho", city.slug)}`}
+                        className="rounded-full border border-cyan-200/30 bg-white/5 px-4 py-2 text-sm font-medium text-cyan-50/82 transition hover:border-cyan-300/50 hover:bg-white/10 hover:text-white"
+                      >
+                        Recolha de entulho em {city.name}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </div>
