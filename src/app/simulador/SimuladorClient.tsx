@@ -1088,12 +1088,12 @@ function ChoiceGrid({
             onClick={() => onChange(option.value)}
             className={cn(
               compact
-                ? "min-h-11 rounded-[16px] px-3 py-2 text-center text-sm"
-                : "min-h-14 rounded-[22px] px-4 py-3 text-left text-sm",
-              "border font-semibold transition",
+                ? "min-h-11 rounded-[18px] px-3 py-2 text-center text-sm"
+                : "min-h-14 rounded-[18px] px-4 py-3 text-center text-sm",
+              "border font-bold transition",
               active
-                ? "border-cyan-400 bg-cyan-500 text-white shadow-[0_16px_30px_-18px_rgba(6,182,212,0.7)]"
-                : `${fieldToneClass(tone)} bg-white text-slate-700 hover:border-cyan-300 hover:bg-cyan-50`,
+                ? "border-cyan-500 bg-cyan-500 text-white shadow-[0_18px_38px_-20px_rgba(6,182,212,0.72)]"
+                : `${fieldToneClass(tone)} bg-white text-cyan-700 hover:-translate-y-0.5 hover:border-cyan-200 hover:bg-cyan-50 hover:text-cyan-700`,
             )}
           >
             {option.label}
@@ -1168,7 +1168,7 @@ function PeopleSelector({
               onManualModeChange(false);
               onChange("");
             }}
-            className="h-10 rounded-[14px] border border-cyan-100 px-3 text-sm font-semibold text-slate-600 transition hover:border-cyan-300 hover:bg-cyan-50"
+            className="site-btn-secondary h-10 min-h-10 rounded-[18px] px-3 py-2 text-sm"
           >
             Voltar
           </button>
@@ -1186,10 +1186,10 @@ function PeopleSelector({
                   onChange(String(num));
                 }}
                 className={cn(
-                  "flex h-10 w-10 items-center justify-center rounded-[14px] border text-sm font-bold transition",
+                  "flex h-10 w-10 items-center justify-center rounded-[18px] border text-sm font-bold transition",
                   active
-                    ? "border-cyan-400 bg-cyan-500 text-white shadow-[0_16px_30px_-18px_rgba(6,182,212,0.7)]"
-                    : `${fieldToneClass(tone)} bg-white text-slate-700 hover:border-cyan-300 hover:bg-cyan-50`,
+                    ? "border-cyan-500 bg-cyan-500 text-white shadow-[0_18px_38px_-20px_rgba(6,182,212,0.72)]"
+                    : `${fieldToneClass(tone)} bg-white text-cyan-700 hover:-translate-y-0.5 hover:border-cyan-200 hover:bg-cyan-50 hover:text-cyan-700`,
                 )}
               >
                 {num}
@@ -1203,8 +1203,8 @@ function PeopleSelector({
               onChange("");
             }}
             className={cn(
-              "flex h-10 w-12 items-center justify-center rounded-[14px] border text-sm font-bold transition",
-              `${fieldToneClass(tone)} bg-white text-slate-700 hover:border-cyan-300 hover:bg-cyan-50`,
+              "flex h-10 w-12 items-center justify-center rounded-[18px] border text-sm font-bold transition",
+              `${fieldToneClass(tone)} bg-white text-cyan-700 hover:-translate-y-0.5 hover:border-cyan-200 hover:bg-cyan-50 hover:text-cyan-700`,
             )}
           >
             8+

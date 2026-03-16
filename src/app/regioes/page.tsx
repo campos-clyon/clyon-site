@@ -1,6 +1,6 @@
 ﻿import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight, MapPin } from "lucide-react";
+import { MapPin } from "lucide-react";
 
 import { REGIONS, SERVICES, SITE_URL, getRegionCities } from "@/lib/seo-data";
 
@@ -80,10 +80,9 @@ export default function RegioesPage() {
 
                 <Link
                   href={`/regioes/${region.slug}`}
-                  className="mt-6 inline-flex items-center rounded-2xl bg-cyan-500 px-5 py-3 text-sm font-semibold !text-white shadow-[0_18px_40px_-22px_rgba(6,182,212,0.75)] transition hover:-translate-y-0.5 hover:bg-cyan-400"
+                  className="site-btn-primary mt-6"
                 >
-                  <span className="text-white">Ver região</span>
-                  <ArrowRight className="ml-2 h-4 w-4 !text-white" />
+                  Ver região
                 </Link>
               </article>
             );
