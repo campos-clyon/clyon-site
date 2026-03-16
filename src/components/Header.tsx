@@ -18,12 +18,12 @@ export default function Header() {
 
   return (
     <header className="fixed left-0 right-0 top-0 z-50 border-b border-slate-200/40 bg-white/95 shadow-[0_10px_30px_-18px_rgba(15,23,42,0.28)] backdrop-blur-md">
-      <div className="mx-auto flex w-full max-w-7xl items-center justify-between px-6 py-2.5 lg:px-8">
+      <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-3 px-4 py-2.5 sm:px-6 lg:px-8">
         <Link href="/" className="flex-shrink-0 cursor-pointer">
           <Image
             src="/logo-clyon-icon.webp"
             alt="CLYON - Recolha de Móveis e Entulho"
-            className="h-[46px] w-auto scale-x-105"
+            className="h-[40px] w-auto scale-x-105 sm:h-[46px]"
             width={205}
             height={84}
             priority
@@ -33,41 +33,29 @@ export default function Header() {
 
         <nav className="hidden flex-1 items-center justify-center gap-8 text-[14.5px] font-medium text-slate-600 lg:flex">
           {navLinks.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className="transition hover:text-cyan-600"
-            >
+            <Link key={link.href} href={link.href} className="transition hover:text-cyan-600">
               {link.label}
             </Link>
           ))}
         </nav>
 
-        <div className="flex flex-shrink-0 items-center gap-3">
-          <Link
-            href="/trabalhos"
-            className="site-btn-secondary hidden px-4 py-2 md:inline-flex"
-          >
-            <span className="!text-sm !font-semibold !text-[#047faa]">
-              Ver Trabalhos
-            </span>
-          </Link>
-          <Link
-            href="/simulador"
-            className="site-btn-primary px-5 py-2.5"
-          >
-            <span className="!text-sm !font-semibold !text-white">
-              Pedir Orçamento
-            </span>
-            <ArrowRight className="h-4 w-4 text-white" />
-          </Link>
+        <div className="flex flex-shrink-0 items-center gap-2 sm:gap-3">
           <button
-            className="rounded-lg p-2 text-slate-600 transition-colors hover:text-cyan-600 lg:hidden"
+            className="inline-flex rounded-xl border border-cyan-200 bg-white p-2.5 text-slate-600 transition-colors hover:text-cyan-600 lg:hidden"
             onClick={() => setMenuOpen(!menuOpen)}
             aria-label="Abrir menu"
           >
-            {menuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+            {menuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
+
+          <Link href="/trabalhos" className="site-btn-secondary hidden px-4 py-2 lg:inline-flex">
+            <span className="!text-sm !font-semibold !text-[#047faa]">Ver Trabalhos</span>
+          </Link>
+
+          <Link href="/simulador" className="site-btn-primary px-4 py-2.5 sm:px-5">
+            <span className="!text-sm !font-semibold !text-white">Simular</span>
+            <ArrowRight className="hidden h-4 w-4 text-white sm:block" />
+          </Link>
         </div>
       </div>
 
@@ -85,13 +73,9 @@ export default function Header() {
               </Link>
             ))}
             <div className="space-y-2 pt-3">
-              <Link
-                href="/simulador"
-                className="site-btn-primary flex w-full py-3"
-                onClick={() => setMenuOpen(false)}
-              >
+              <Link href="/simulador" className="site-btn-primary flex w-full py-3" onClick={() => setMenuOpen(false)}>
                 <ArrowRight className="h-4 w-4" />
-                Pedir Orçamento
+                Simular
               </Link>
               <button
                 className="site-btn-secondary flex w-full py-3"
