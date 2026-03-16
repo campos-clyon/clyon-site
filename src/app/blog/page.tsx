@@ -28,7 +28,7 @@ export default function BlogPage() {
               <div className="inline-flex items-center rounded-full border border-cyan-200 bg-white/90 px-4 py-2 text-sm font-semibold uppercase tracking-[0.2em] text-cyan-700 shadow-sm">
                 Blog CLYON
               </div>
-              <h1 className="mt-5 max-w-[12ch] text-[2.7rem] font-bold leading-[1.02] tracking-tight text-slate-950 sm:text-[4.2rem]">
+              <h1 className="mt-5 max-w-[14.5ch] text-[2.45rem] font-bold leading-[1.04] tracking-tight text-slate-950 sm:text-[3.8rem]">
                 Conteúdo útil para quem precisa de libertar espaço sem complicações.
               </h1>
               <p className="mt-5 max-w-3xl text-base leading-8 text-slate-600">
@@ -86,10 +86,10 @@ export default function BlogPage() {
                 </div>
                 <Link
                   href={`/blog/${post.slug}`}
-                  className="mt-7 inline-flex items-center justify-center rounded-2xl bg-cyan-500 px-5 py-3 text-sm font-semibold text-white shadow-[0_16px_36px_-18px_rgba(6,182,212,0.7)] transition hover:-translate-y-0.5 hover:bg-cyan-400"
+                  className="mt-7 inline-flex items-center justify-center rounded-2xl bg-cyan-500 px-5 py-3 text-sm font-semibold shadow-[0_16px_36px_-18px_rgba(6,182,212,0.7)] transition hover:-translate-y-0.5 hover:bg-cyan-400"
                 >
-                  Ler artigo
-                  <ArrowRight className="ml-2 h-4 w-4" />
+                  <span className="text-white">Ler artigo</span>
+                  <ArrowRight className="ml-2 h-4 w-4 text-white" />
                 </Link>
               </article>
             ))}

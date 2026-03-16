@@ -24,39 +24,72 @@ export const BLOG_POSTS: BlogPost[] = [
     slug: "recolha-de-moveis-como-funciona",
     title: "Recolha de móveis: como funciona, quanto custa e quando pedir apoio",
     description:
-      "Guia sobre recolha de móveis usados, móveis velhos e despejo de sofás, camas, armários e recheios em Lisboa, Margem Sul e Setúbal.",
+      "Guia completo sobre recolha de móveis usados, móveis velhos, sofás, camas, armários, recheios e despejos em Lisboa, Margem Sul e Setúbal.",
     category: "Móveis",
-    keywords: ["recolha de móveis", "despejo de móveis", "retirar móveis velhos", "recolha de sofás"],
-    readingTime: "6 min",
+    keywords: [
+      "recolha de móveis",
+      "recolha de móveis usados",
+      "despejo de móveis",
+      "retirar móveis velhos",
+      "recolha de sofás",
+      "remoção de móveis",
+    ],
+    readingTime: "8 min",
     publishDate: "2026-03-16",
     heroLabel: "Guia prático",
     intro:
-      "A recolha de móveis é um dos pedidos mais comuns na operação da CLYON. Seja por mudança, renovação, herança, venda de casa ou despejo de recheios, o objectivo costuma ser sempre o mesmo: retirar volume depressa, com segurança e sem complicar o acesso ao imóvel.",
+      "A recolha de móveis é um dos pedidos mais frequentes na operação da CLYON. Seja por mudança, renovação, venda de casa, fim de arrendamento, herança ou despejo de recheios, o objectivo costuma ser sempre o mesmo: libertar espaço depressa, com segurança e sem complicar acessos, desmontagens ou transporte.",
     sections: [
       {
         title: "Quando faz sentido pedir recolha de móveis",
         paragraphs: [
-          "Este serviço é útil quando existem peças grandes, pesadas ou em quantidade suficiente para tornar inviável a remoção por meios próprios. Sofás, camas, roupeiros, cómodas, electrodomésticos e recheios mistos são casos típicos.",
-          "Também é frequente em apartamentos sem elevador, mudanças parciais, imóveis para arrendamento e casas que precisam de ser libertadas antes de obras ou entrega de chave.",
+          "Este serviço faz sentido quando existem peças grandes, pesadas ou em quantidade suficiente para tornar inviável a remoção por meios próprios. Sofás, camas, roupeiros, cómodas, mesas, electrodomésticos e recheios mistos são os casos mais comuns.",
+          "Também é muito frequente em apartamentos sem elevador, mudanças parciais, imóveis para arrendamento, escritórios em renovação e casas que precisam de ser libertadas antes de obras ou entrega de chave.",
         ],
-        bullets: ["Sofás, colchões, camas e estrados", "Armários, mesas, cómodas e aparadores", "Electrodomésticos e recheios antigos"],
+        bullets: [
+          "Sofás, colchões, camas e estrados",
+          "Roupeiros, aparadores, cómodas e mesas",
+          "Electrodomésticos e recheios antigos",
+          "Móveis desmontados ou por desmontar",
+        ],
       },
       {
-        title: "O que influencia o preço",
+        title: "O que influencia o preço da recolha de móveis",
         paragraphs: [
-          "O valor final depende do volume, distância, acessibilidade, número de andares, existência de elevador e necessidade de equipa extra. Em alguns casos, o tempo de desmontagem também entra no cálculo.",
-          "Por isso, o orçamento é mais rápido e mais preciso quando o cliente envia morada, lista básica do que vai sair e condições de acesso ao local.",
+          "O valor final depende do volume, distância, acessibilidade, número de andares, existência de elevador, necessidade de mais pessoas e tempo de desmontagem. Dois pedidos com o mesmo número de peças podem ter preços muito diferentes se um estiver num rés-do-chão e o outro num terceiro andar sem elevador.",
+          "Quanto mais claro for o pedido inicial, mais rápido o orçamento e menor a margem para imprevistos no local. É por isso que uma boa descrição do serviço faz diferença real na conversão e na satisfação do cliente.",
+        ],
+      },
+      {
+        title: "Como acelerar o pedido e evitar atrasos",
+        paragraphs: [
+          "O melhor ponto de partida é enviar morada, lista básica de peças, fotos quando possível, tipo de acesso ao imóvel e urgência do serviço. Se existir desmontagem prévia ou rua de acesso difícil, isso também deve ser referido.",
+          "No caso da CLYON, o simulador ajuda a criar uma primeira referência de valor. Depois, o contacto directo por WhatsApp ou telefone serve para confirmar condições, disponibilidade e hora de recolha.",
+        ],
+      },
+      {
+        title: "Quando doar e quando despejar",
+        paragraphs: [
+          "Nem todo o móvel precisa de ir para despejo. Peças em bom estado podem seguir para doação, reaproveitamento ou venda. Peças partidas, húmidas, sem ferragens ou sem viabilidade de uso tendem a justificar despejo directo.",
+          "Uma boa estratégia SEO para este tema não é falar apenas de recolha. É responder à dúvida real do utilizador: doar, vender, reaproveitar ou despejar? É aí que o conteúdo ganha intenção e relevância nas pesquisas.",
         ],
       },
     ],
     faq: [
       {
         question: "A CLYON recolhe apenas uma peça, como um sofá?",
-        answer: "Sim. A recolha pode ser para uma única peça ou para vários móveis, dependendo da disponibilidade e das condições do pedido.",
+        answer:
+          "Sim. A recolha pode ser para uma única peça ou para vários móveis, dependendo da disponibilidade, da localização e das condições de acesso.",
       },
       {
         question: "É possível recolher móveis no mesmo dia?",
-        answer: "Em muitos casos sim. A disponibilidade depende da zona, da carga operacional e da clareza do pedido enviado.",
+        answer:
+          "Em muitos casos sim. Isso depende da zona, da carga operacional do dia e da clareza da informação enviada no pedido.",
+      },
+      {
+        question: "Tenho de desmontar os móveis antes?",
+        answer:
+          "Nem sempre. Em alguns pedidos a desmontagem pode ser feita pela equipa, mas convém indicar isso logo no contacto para o orçamento reflectir o trabalho real.",
       },
     ],
   },
@@ -64,34 +97,134 @@ export const BLOG_POSTS: BlogPost[] = [
     slug: "doacao-de-moveis-ou-despejo",
     title: "Doação de móveis ou despejo: como decidir o melhor destino para cada peça",
     description:
-      "Artigo sobre doação de móveis usados, reaproveitamento, reciclagem e despejo responsável de peças sem utilidade.",
+      "Artigo completo sobre doação de móveis usados, reaproveitamento, reciclagem, venda e despejo responsável de peças sem utilidade.",
     category: "Doações",
-    keywords: ["doação de móveis", "onde doar móveis usados", "despejo de móveis", "reutilização de móveis"],
-    readingTime: "7 min",
+    keywords: [
+      "doação de móveis",
+      "onde doar móveis usados",
+      "despejo de móveis",
+      "reutilização de móveis",
+      "móveis para doação",
+      "dar móveis usados",
+    ],
+    readingTime: "9 min",
     publishDate: "2026-03-16",
     heroLabel: "Decisão útil",
     intro:
-      "Nem todos os móveis têm de seguir para despejo. Em muitos casos, ainda podem ser doados, reaproveitados ou encaminhados de forma mais responsável. A diferença está no estado da peça, na urgência do serviço e na logística necessária para retirar tudo do local.",
+      "Nem todos os móveis devem seguir para despejo. Em muitos casos, ainda podem ser doados, reaproveitados, vendidos ou encaminhados de forma mais responsável. A diferença está no estado da peça, na urgência do serviço, na logística disponível e no tempo que o cliente tem para resolver tudo.",
     sections: [
       {
         title: "Quando vale a pena doar",
         paragraphs: [
-          "Peças em bom estado, sem danos graves, com portas, gavetas e estofos utilizáveis, podem ainda ter valor social ou funcional. Nestes casos, a doação é uma alternativa forte.",
-          "É especialmente útil em mudanças, trocas de mobília e esvaziamentos onde o objectivo é reduzir desperdício sem atrasar a libertação do espaço.",
+          "Peças estruturais em bom estado, sem danos graves, com portas, gavetas e estofos utilizáveis, podem ainda ter valor social ou funcional. Nestes casos, a doação é uma alternativa forte e mais sustentável.",
+          "Isto acontece muito em mudanças, trocas de mobília, venda de casa e esvaziamentos parciais em que o objectivo é reduzir desperdício sem atrasar a libertação do espaço.",
         ],
       },
       {
-        title: "Quando o despejo é a opção mais realista",
+        title: "Quando o despejo é a solução mais realista",
         paragraphs: [
-          "Se o mobiliário está partido, degradado, com humidade, infestação, ferragens danificadas ou sem viabilidade de reutilização, o mais prático costuma ser o despejo.",
-          "Em operações urgentes, o cliente normalmente prefere uma solução directa: retirar tudo numa só visita, sem depender de terceiros para recolha selectiva.",
+          "Se o mobiliário está partido, com humidade, infestação, ferragens danificadas, mau cheiro, falta de estabilidade ou desgaste avançado, o mais prático costuma ser o despejo.",
+          "Em operações urgentes, o cliente geralmente prefere uma solução directa: retirar tudo numa só visita, sem depender de vários contactos, triagens demoradas ou recolhas selectivas incertas.",
+        ],
+        bullets: [
+          "Peças com danos estruturais",
+          "Móveis com bolor, humidade ou sujidade pesada",
+          "Itens sem valor de reutilização",
+          "Objectos que atrasam a libertação do espaço",
+        ],
+      },
+      {
+        title: "Doação, venda e plataformas digitais",
+        paragraphs: [
+          "Em pesquisas relacionadas com móveis usados, muitas pessoas procuram alternativas antes de avançar para a recolha. Plataformas como a OLX podem ser úteis para tentar venda local ou oferta directa a particulares. Isso faz sentido quando a peça ainda tem valor e existe tempo para gerir mensagens, marcações e levantamento.",
+          "Em alguns cenários, o utilizador também procura serviços, montagens ou apoio por plataformas como a Fixando. Ainda assim, quando o problema principal é tirar volume depressa, com equipa e transporte incluídos, a decisão costuma voltar para um operador de recolha.",
+        ],
+      },
+      {
+        title: "Doação com entidades e reaproveitamento",
+        paragraphs: [
+          "Outra pesquisa muito comum é por instituições ou organizações que possam receber peças em condições de uso. É por isso que referências como a REMAR aparecem frequentemente nas intenções de pesquisa ligadas a doação de móveis e reaproveitamento.",
+          "Do lado do conteúdo SEO, isto é importante porque o utilizador nem sempre quer ‘despejo’. Muitas vezes quer primeiro perceber se o móvel ainda pode ter utilidade social, ser reaproveitado ou encaminhado de forma responsável.",
         ],
       },
     ],
     faq: [
       {
         question: "A CLYON faz recolha para doação?",
-        answer: "Pode apoiar na retirada e organização do processo, dependendo do tipo de mobiliário, destino e condições do pedido.",
+        answer:
+          "Pode apoiar na retirada e na organização do processo, dependendo do tipo de mobiliário, do destino e das condições do pedido.",
+      },
+      {
+        question: "Posso misturar doação e despejo no mesmo serviço?",
+        answer:
+          "Sim. Muitos pedidos incluem peças para reaproveitamento e outras para remoção definitiva, no mesmo agendamento.",
+      },
+      {
+        question: "Vale a pena tentar OLX antes da recolha?",
+        answer:
+          "Vale quando o móvel está bom, tem procura e existe tempo para tratar do anúncio. Quando a prioridade é libertar o espaço depressa, a recolha profissional costuma ser mais eficaz.",
+      },
+    ],
+  },
+  {
+    slug: "onde-doar-vender-ou-anunciar-moveis-usados",
+    title: "Onde doar, vender ou anunciar móveis usados antes de pedir recolha",
+    description:
+      "Guia SEO sobre OLX, IKEA, REMAR, Fixando e outras alternativas para doar, vender, reaproveitar ou encaminhar móveis usados antes do despejo.",
+    category: "Alternativas",
+    keywords: [
+      "onde doar móveis usados",
+      "vender móveis usados",
+      "olx móveis usados",
+      "ikea móveis usados",
+      "remar móveis",
+      "fixando mudanças",
+    ],
+    readingTime: "9 min",
+    publishDate: "2026-03-16",
+    heroLabel: "Alternativas",
+    intro:
+      "Antes de pedir recolha, muita gente pesquisa soluções alternativas para móveis usados: doação, venda, reaproveitamento, entrega a instituições ou plataformas com procura local. Este artigo responde precisamente a essa intenção de pesquisa e ajuda a decidir quando vale a pena tentar essas vias e quando a recolha directa é o caminho mais eficaz.",
+    sections: [
+      {
+        title: "Quando vender em vez de despejar",
+        paragraphs: [
+          "Se a peça está moderna, funcional, sem danos e com procura no mercado local, anunciar pode ser a melhor primeira tentativa. A OLX continua a ser uma referência natural neste tipo de pesquisa porque liga vendedores e compradores de forma directa.",
+          "O problema é que vender demora. Exige criar anúncio, negociar, responder a mensagens e coordenar levantamento. Se a prioridade é libertar espaço no mesmo dia ou numa janela curta, a recolha profissional volta a ganhar vantagem.",
+        ],
+      },
+      {
+        title: "Quando a doação é mais útil",
+        paragraphs: [
+          "Se o objectivo não é recuperar dinheiro, mas sim dar um destino útil ao mobiliário, a doação pode ser a melhor saída. É aqui que pesquisas por entidades sociais e organizações de apoio, como a REMAR, fazem parte do caminho do utilizador.",
+          "Em SEO, este tipo de conteúdo ajuda a captar pesquisas informativas muito fortes: quem procura doar também pode vir a precisar de recolha para o que não for aproveitado.",
+        ],
+      },
+      {
+        title: "IKEA, retomas e reaproveitamento",
+        paragraphs: [
+          "Em muitos casos, o utilizador também associa a pesquisa a marcas fortes do sector mobiliário, como a IKEA, especialmente quando está a renovar a casa e precisa de retirar o antigo para instalar o novo.",
+          "Mesmo quando o cliente consulta programas, soluções ou referências de reaproveitamento, continua a existir uma necessidade operacional: alguém tem de retirar as peças velhas do local com rapidez e sem complicações.",
+        ],
+      },
+      {
+        title: "Quando plataformas de serviços entram na decisão",
+        paragraphs: [
+          "Há também quem procure profissionais por plataformas como a Fixando. Isso mostra que a pesquisa não é apenas sobre descarte, mas também sobre encontrar ajuda prática, comparar prestadores e perceber custos.",
+          "Para a CLYON, o melhor posicionamento é claro: enquanto o utilizador compara opções, o site deve mostrar autoridade, conteúdo útil e um caminho rápido para pedir orçamento.",
+        ],
+      },
+    ],
+    faq: [
+      {
+        question: "Vale a pena anunciar móveis usados antes da recolha?",
+        answer:
+          "Sim, se a peça estiver em bom estado e houver tempo para gerir o anúncio. Quando há urgência, a recolha directa costuma ser a solução mais prática.",
+      },
+      {
+        question: "Posso doar umas peças e pedir recolha do resto?",
+        answer:
+          "Sim. Essa combinação é muito comum e ajuda a reduzir desperdício sem atrasar a libertação do espaço.",
       },
     ],
   },
@@ -99,14 +232,20 @@ export const BLOG_POSTS: BlogPost[] = [
     slug: "recolha-de-entulho-legal-e-organizada",
     title: "Recolha de entulho: como fazer de forma legal, rápida e organizada",
     description:
-      "Guia sobre recolha de entulho, resíduos de obra, sacos, restos de remodelação e boas práticas para remoção segura.",
+      "Guia completo sobre recolha de entulho, resíduos de obra, sacos, restos de remodelação e boas práticas para remoção segura.",
     category: "Entulho",
-    keywords: ["recolha de entulho", "remoção de entulho", "entulho de obra", "sacos de entulho"],
-    readingTime: "6 min",
+    keywords: [
+      "recolha de entulho",
+      "remoção de entulho",
+      "entulho de obra",
+      "sacos de entulho",
+      "recolha de resíduos de obra",
+    ],
+    readingTime: "8 min",
     publishDate: "2026-03-16",
     heroLabel: "Entulho",
     intro:
-      "Depois de uma obra, remodelação ou limpeza pesada, o entulho torna-se rapidamente um problema de espaço, segurança e logística. A recolha profissional evita acumulação, atrasos na obra e risco desnecessário para quem tenta resolver tudo sem meios adequados.",
+      "Depois de uma obra, remodelação ou limpeza pesada, o entulho transforma-se num problema de espaço, segurança e logística. A recolha profissional evita acumulação, atrasos de obra e risco desnecessário para quem tenta resolver tudo sem meios adequados.",
     sections: [
       {
         title: "Que tipos de entulho aparecem com mais frequência",
@@ -119,13 +258,26 @@ export const BLOG_POSTS: BlogPost[] = [
         title: "Ensacado ou no chão: porque faz diferença",
         paragraphs: [
           "Entulho no chão exige mais tempo de carga, mais organização e, muitas vezes, mais mão de obra. Quando o material já está ensacado, a operação fica mais linear e previsível.",
+          "Essa distinção altera o esforço real da equipa e deve aparecer logo no pedido para o orçamento ficar mais próximo da execução final.",
+        ],
+      },
+      {
+        title: "Entulho, limpeza e libertação de espaço",
+        paragraphs: [
+          "Muitas pesquisas não são apenas por entulho. São por limpar o espaço, continuar a obra, entregar o apartamento ou preparar uma loja para abrir. Por isso, recolha de entulho e limpeza final aparecem muitas vezes juntas na mesma intenção de pesquisa.",
         ],
       },
     ],
     faq: [
       {
         question: "A CLYON recolhe entulho ensacado e também no chão?",
-        answer: "Sim. Os dois cenários são possíveis, mas devem ser indicados no pedido porque alteram o tempo e o esforço da operação.",
+        answer:
+          "Sim. Os dois cenários são possíveis, mas devem ser indicados no pedido porque alteram o tempo e o esforço da operação.",
+      },
+      {
+        question: "O acesso ao prédio altera o valor?",
+        answer:
+          "Sim. Andares, elevador, distância até ao ponto de carga e acesso difícil têm impacto directo no esforço e no custo.",
       },
     ],
   },
@@ -133,32 +285,57 @@ export const BLOG_POSTS: BlogPost[] = [
     slug: "recolha-de-monos-o-que-inclui",
     title: "Recolha de monos: o que inclui, quando pedir e como acelerar o serviço",
     description:
-      "Artigo sobre recolha de monos, volumosos, objectos sem uso, despejo rápido e libertação de espaço.",
+      "Artigo completo sobre recolha de monos, volumosos, objectos sem uso, despejo rápido e libertação de espaço em casas, lojas e arrecadações.",
     category: "Monos",
-    keywords: ["recolha de monos", "volumosos", "retirar monos", "despejo de monos"],
-    readingTime: "5 min",
+    keywords: [
+      "recolha de monos",
+      "volumosos",
+      "retirar monos",
+      "despejo de monos",
+      "recolha de tralha",
+    ],
+    readingTime: "7 min",
     publishDate: "2026-03-16",
     heroLabel: "Volumosos",
     intro:
-      "Monos é um termo muito usado para definir objectos grandes, velhos ou sem utilidade que ocupam espaço e são difíceis de remover. A diferença para um pedido simples está no volume, na mistura de materiais e na falta de organização prévia do que vai sair.",
+      "Monos é um termo usado para definir objectos grandes, velhos ou sem utilidade que ocupam espaço e são difíceis de remover. A diferença para um pedido simples está no volume, na mistura de materiais e na falta de organização prévia do que vai sair.",
     sections: [
       {
         title: "Exemplos de monos mais comuns",
         paragraphs: [
           "Sofás velhos, colchões, madeira solta, electrodomésticos fora de uso, cadeiras partidas, restos de arrumos, material acumulado em arrecadações e objectos sem valor de reaproveitamento entram frequentemente nesta categoria.",
         ],
+        bullets: [
+          "Sofás velhos e colchões",
+          "Electrodomésticos fora de uso",
+          "Madeira solta e restos de arrumos",
+          "Volumosos mistos em garagens e caves",
+        ],
       },
       {
-        title: "Como acelerar a recolha",
+        title: "Como acelerar a recolha de monos",
         paragraphs: [
-          "O mais eficaz é concentrar os itens, confirmar acesso e enviar uma lista ou fotos antes do agendamento. Isso reduz imprevistos e melhora o orçamento.",
+          "O mais eficaz é concentrar os itens, confirmar acesso e enviar uma lista ou fotos antes do agendamento. Isso reduz imprevistos, melhora o orçamento e facilita o planeamento da equipa.",
+          "Quando o cliente consegue separar o que vai sair do que vai ficar, o serviço torna-se mais rápido e limpo.",
+        ],
+      },
+      {
+        title: "Monos, lixo e limpeza do espaço",
+        paragraphs: [
+          "Em muitos pedidos, a recolha de monos aparece associada a acumulação, desorganização e lixo leve. Isso significa que a intenção de pesquisa não é só ‘levar objectos’, mas deixar a divisão utilizável de novo.",
         ],
       },
     ],
     faq: [
       {
         question: "Monos e móveis velhos são a mesma coisa?",
-        answer: "Nem sempre. Alguns pedidos são só mobiliário. Outros incluem uma mistura de peças, tralha acumulada e volumosos diversos, o que entra mais na lógica de monos.",
+        answer:
+          "Nem sempre. Alguns pedidos são só mobiliário. Outros incluem mistura de peças, tralha acumulada e volumosos diversos, o que entra mais na lógica de monos.",
+      },
+      {
+        question: "A CLYON faz recolha de monos em arrecadações e caves?",
+        answer:
+          "Sim, desde que as condições de acesso, volume e segurança sejam validadas no pedido.",
       },
     ],
   },
@@ -166,14 +343,20 @@ export const BLOG_POSTS: BlogPost[] = [
     slug: "limpeza-pos-obra-e-retirada-de-residuos",
     title: "Limpeza pós-obra e retirada de resíduos: como deixar o espaço pronto",
     description:
-      "Conteúdo sobre limpeza pós-obra, remoção de resíduos, restos de materiais e preparação do espaço para uso.",
+      "Conteúdo completo sobre limpeza pós-obra, remoção de resíduos, restos de materiais e preparação do espaço para uso, venda ou arrendamento.",
     category: "Pós-obra",
-    keywords: ["limpeza pós-obra", "retirada de resíduos de obra", "entulho pós-obra", "limpeza final obra"],
-    readingTime: "6 min",
+    keywords: [
+      "limpeza pós-obra",
+      "retirada de resíduos de obra",
+      "entulho pós-obra",
+      "limpeza final obra",
+      "limpeza depois da remodelação",
+    ],
+    readingTime: "7 min",
     publishDate: "2026-03-16",
     heroLabel: "Acabamento",
     intro:
-      "A limpeza pós-obra é a fase que transforma um espaço intervencionado num espaço pronto a usar. O problema é que essa fase costuma juntar pó, restos de material, embalagens, sobras de montagem e pontos de difícil acesso que atrasam a entrega.",
+      "A limpeza pós-obra é a fase que transforma um espaço intervencionado num espaço pronto a usar. O problema é que essa fase junta pó, restos de material, embalagens, sobras de montagem e pontos de difícil acesso que atrasam a entrega do imóvel.",
     sections: [
       {
         title: "O que costuma ficar por fazer depois da obra",
@@ -187,11 +370,18 @@ export const BLOG_POSTS: BlogPost[] = [
           "Quando a mesma operação resolve resíduos, entulho final e limpeza de acabamento, a entrega do espaço torna-se mais simples. Isso é útil em apartamentos, lojas, escritórios e imóveis para arrendamento.",
         ],
       },
+      {
+        title: "A importância da limpeza para venda, aluguer e entrega",
+        paragraphs: [
+          "Muitas pesquisas ligadas a limpeza pós-obra escondem uma intenção comercial por trás: vender, arrendar, reabrir um espaço ou concluir uma entrega. Não se trata apenas de limpar; trata-se de preparar o espaço para a próxima fase.",
+        ],
+      },
     ],
     faq: [
       {
         question: "A CLYON faz só limpeza pós-obra ou também retira resíduos?",
-        answer: "Pode fazer ambos, dependendo do pedido. Isso é precisamente o que torna o serviço mais prático para o cliente.",
+        answer:
+          "Pode fazer ambos, dependendo do pedido. Isso é precisamente o que torna o serviço mais prático para o cliente.",
       },
     ],
   },
@@ -199,14 +389,20 @@ export const BLOG_POSTS: BlogPost[] = [
     slug: "esvaziamento-de-casas-com-recheio",
     title: "Esvaziamento de casas com recheio: heranças, mudanças e imóveis para venda",
     description:
-      "Guia sobre esvaziamento de casas, recheios completos, heranças, imóveis para venda e retirada de móveis, monos e objectos acumulados.",
+      "Guia completo sobre esvaziamento de casas, recheios completos, heranças, imóveis para venda e retirada de móveis, monos e objectos acumulados.",
     category: "Esvaziamentos",
-    keywords: ["esvaziamento de casas", "retirar recheio de casa", "casa com móveis antigos", "desocupar casa herdada"],
-    readingTime: "7 min",
+    keywords: [
+      "esvaziamento de casas",
+      "retirar recheio de casa",
+      "casa com móveis antigos",
+      "desocupar casa herdada",
+      "esvaziar apartamento",
+    ],
+    readingTime: "8 min",
     publishDate: "2026-03-16",
     heroLabel: "Recheios",
     intro:
-      "O esvaziamento de casas é um serviço que junta várias necessidades ao mesmo tempo: avaliar o que fica, o que sai, o que pode ser doado e o que precisa mesmo de despejo. Isso acontece muito em heranças, mudanças longas, imóveis para venda e casas fechadas há anos.",
+      "O esvaziamento de casas junta várias necessidades ao mesmo tempo: avaliar o que fica, o que sai, o que pode ser doado e o que precisa mesmo de despejo. Isto acontece muito em heranças, mudanças longas, imóveis para venda e casas fechadas há anos.",
     sections: [
       {
         title: "Situações mais frequentes",
@@ -220,11 +416,66 @@ export const BLOG_POSTS: BlogPost[] = [
           "Separar doação, retenção, lixo e despejo antes do dia da recolha reduz erros e acelera a operação. Quando isso não é possível, a triagem no local deve ser pensada com critério para não atrasar a saída.",
         ],
       },
+      {
+        title: "Quando o esvaziamento tem valor comercial",
+        paragraphs: [
+          "Há muitos casos em que o imóvel precisa de ser preparado para venda, aluguer ou remodelação. Nesses cenários, o esvaziamento não é só remoção: é uma etapa crítica para libertar o activo e avançar com a próxima decisão.",
+        ],
+      },
     ],
     faq: [
       {
         question: "A CLYON faz esvaziamentos completos?",
-        answer: "Sim, desde pedidos parciais até recheios completos, conforme o volume, o tipo de objectos e as condições de acesso.",
+        answer:
+          "Sim, desde pedidos parciais até recheios completos, conforme o volume, o tipo de objectos e as condições de acesso.",
+      },
+    ],
+  },
+  {
+    slug: "amarsul-ecocentros-e-destino-de-residuos",
+    title: "Amarsul, ecocentros e destino de resíduos: quando usar solução pública e quando pedir recolha",
+    description:
+      "Artigo SEO sobre Amarsul, ecocentros, resíduos, reciclagem, monos, entulho leve e quando a recolha privada compensa mais.",
+    category: "Resíduos",
+    keywords: [
+      "amarsul monos",
+      "amarsul resíduos",
+      "ecocentro móveis",
+      "onde levar entulho",
+      "recolha de lixo volumoso",
+    ],
+    readingTime: "8 min",
+    publishDate: "2026-03-16",
+    heroLabel: "Resíduos",
+    intro:
+      "Uma parte importante das pesquisas nesta área não procura apenas empresas de recolha. Procura também ecocentros, operadores regionais de resíduos e soluções públicas para encaminhar materiais. Na Margem Sul, a Amarsul entra muitas vezes nessa jornada de pesquisa.",
+    sections: [
+      {
+        title: "Quando faz sentido procurar ecocentro ou solução pública",
+        paragraphs: [
+          "Se o volume é pequeno, se existe viatura própria, tempo e capacidade de carga, pode fazer sentido procurar um ecocentro ou uma solução pública para encaminhar materiais.",
+          "Isto é especialmente comum em pequenos despejos, restos leves de bricolage e objectos que o utilizador consegue transportar sozinho.",
+        ],
+      },
+      {
+        title: "Quando a recolha privada compensa mais",
+        paragraphs: [
+          "Quando o volume é grande, o acesso é difícil, existem vários pisos, faltam meios de transporte ou o espaço precisa de ficar livre rapidamente, a recolha privada passa a ser muito mais eficiente.",
+          "É aqui que a CLYON se posiciona bem nas pesquisas: o utilizador deixa de procurar apenas ‘onde levar’ e passa a procurar ‘quem resolve’.",
+        ],
+      },
+      {
+        title: "Reciclagem, limpeza e remoção de lixo",
+        paragraphs: [
+          "Conteúdo sobre remoção de lixo, monos, resíduos e triagem é importante para o Google porque responde a múltiplas intenções de pesquisa num só cluster temático: reciclar, descartar, encaminhar, limpar e libertar espaço.",
+        ],
+      },
+    ],
+    faq: [
+      {
+        question: "Vale a pena tentar solução pública antes da recolha privada?",
+        answer:
+          "Depende do volume, da urgência, do acesso e dos meios disponíveis. Para pequenas quantidades pode fazer sentido. Para operações maiores, a recolha privada tende a ser mais prática.",
       },
     ],
   },
