@@ -7,6 +7,7 @@ import {
   SITE_URL,
   getCityServiceSlug,
 } from "@/lib/seo-data";
+import { getAllBlogPosts } from "@/lib/blog-data";
 
 const staticPages = [
   { url: `${SITE_URL}`, priority: 1.0, changeFrequency: "weekly" as const },
@@ -40,9 +41,17 @@ export default function sitemap(): MetadataRoute.Sitemap {
     })),
   );
 
+  const blogPages = getAllBlogPosts().map((post) => ({
+    url: `${SITE_URL}/blog/${post.slug}`,
+    lastModified: new Date(post.publishDate),
+    changeFrequency: "monthly" as const,
+    priority: 0.72,
+  }));
+
   return [
     ...staticPages.map((page) => ({ ...page, lastModified: now })),
     ...regionPages,
+    ...blogPages,
     ...localPages,
   ];
 }
