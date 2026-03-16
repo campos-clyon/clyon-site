@@ -40,14 +40,6 @@ export default function Header() {
         </nav>
 
         <div className="flex flex-shrink-0 items-center gap-2 sm:gap-3">
-          <button
-            className="inline-flex rounded-xl border border-cyan-200 bg-white p-2.5 text-slate-600 transition-colors hover:text-cyan-600 lg:hidden"
-            onClick={() => setMenuOpen(!menuOpen)}
-            aria-label="Abrir menu"
-          >
-            {menuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-          </button>
-
           <Link href="/trabalhos" className="site-btn-secondary hidden px-4 py-2 lg:inline-flex">
             <span className="!text-sm !font-semibold !text-[#047faa]">Ver Trabalhos</span>
           </Link>
@@ -56,6 +48,14 @@ export default function Header() {
             <span className="!text-sm !font-semibold !text-white">Simular</span>
             <ArrowRight className="hidden h-4 w-4 text-white sm:block" />
           </Link>
+
+          <button
+            className="inline-flex rounded-xl border border-cyan-200 bg-white p-2.5 text-slate-600 transition-colors hover:text-cyan-600 lg:hidden"
+            onClick={() => setMenuOpen(!menuOpen)}
+            aria-label="Abrir menu"
+          >
+            {menuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </button>
         </div>
       </div>
 
