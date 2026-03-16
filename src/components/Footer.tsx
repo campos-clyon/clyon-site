@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowRight, Lock, MessageCircle, Square, Wallet } from "lucide-react";
 
+import CookiePreferencesLink from "@/components/CookiePreferencesLink";
 import { BUSINESS_PHONE } from "@/lib/seo-data";
 
 export default function Footer() {

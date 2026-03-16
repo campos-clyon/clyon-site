@@ -52,6 +52,22 @@ export default function CookieConsent() {
     setPreferences(consent.preferences);
   }, []);
 
+  useEffect(() => {
+    const handleOpenPreferences = () => {
+      const consent = readConsent();
+      if (consent) {
+        setPreferences(consent.preferences);
+      }
+      setVisible(true);
+      setShowPreferences(true);
+    };
+
+    window.addEventListener("clyon-open-cookie-preferences", handleOpenPreferences);
+    return () => {
+      window.removeEventListener("clyon-open-cookie-preferences", handleOpenPreferences);
+    };
+  }, []);
+
   const handleReject = () => {
     saveConsent("rejected", defaultCookiePreferences);
     setPreferences(defaultCookiePreferences);
