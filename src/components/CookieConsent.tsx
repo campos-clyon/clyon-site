@@ -184,17 +184,7 @@ export default function CookieConsent() {
             </div>
           </div>
         </div>
-      ) : (
-        <button
-          type="button"
-          onClick={() => setVisible(true)}
-          className="fixed bottom-28 left-4 z-[60] inline-flex items-center gap-2 rounded-full border border-cyan-200 bg-white/95 px-4 py-3 text-sm font-semibold text-slate-700 shadow-[0_16px_40px_-24px_rgba(15,23,42,0.32)] backdrop-blur transition hover:bg-cyan-50"
-          aria-label="Gerir cookies"
-        >
-          <Cookie className="h-4 w-4 text-cyan-700" />
-          Cookies
-        </button>
-      )}
+      ) : null}
     </>
   );
 }

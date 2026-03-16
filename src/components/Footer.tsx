@@ -25,8 +25,8 @@ export default function Footer() {
                 height="84"
               />
               <p className="max-w-sm text-[1.02rem] leading-8 text-cyan-50/88">
-                Recolha e limpeza profissional em Lisboa, Margem Sul e Setúbal com
-                resposta rápida e execução sem stress.
+                Recolha e limpeza profissional em Lisboa, Margem Sul e Setúbal com resposta rápida e execução sem
+                stress.
               </p>
 
               <div className="mt-6 flex flex-wrap gap-3">
@@ -47,9 +47,7 @@ export default function Footer() {
             </div>
 
             <div className="pt-2">
-              <h3 className="mb-4 text-sm font-semibold uppercase tracking-[0.18em] text-white">
-                Serviços
-              </h3>
+              <h3 className="mb-4 text-sm font-semibold uppercase tracking-[0.18em] text-white">Serviços</h3>
               <ul className="space-y-3 text-[0.98rem] text-cyan-50/82">
                 <li>
                   <Link href="/simulador" className="transition-colors hover:text-white">
@@ -70,9 +68,7 @@ export default function Footer() {
             </div>
 
             <div className="pt-2">
-              <h3 className="mb-4 text-sm font-semibold uppercase tracking-[0.18em] text-white">
-                Empresa
-              </h3>
+              <h3 className="mb-4 text-sm font-semibold uppercase tracking-[0.18em] text-white">Empresa</h3>
               <ul className="space-y-3 text-[0.98rem] text-cyan-50/82">
                 <li>
                   <Link href="/sobre-nos" className="transition-colors hover:text-white">
@@ -98,9 +94,7 @@ export default function Footer() {
             </div>
 
             <div className="pt-2">
-              <h3 className="mb-4 text-sm font-semibold uppercase tracking-[0.18em] text-white">
-                Pagamentos
-              </h3>
+              <h3 className="mb-4 text-sm font-semibold uppercase tracking-[0.18em] text-white">Pagamentos</h3>
               <ul className="space-y-3 text-[0.98rem] text-cyan-50/82">
                 <li className="flex items-center gap-3">
                   <Wallet className="h-4 w-4 text-cyan-300" /> Revolut
@@ -116,15 +110,22 @@ export default function Footer() {
           </div>
 
           <div className="mt-10 flex flex-col items-center justify-between gap-4 border-t border-white/10 pt-7 md:flex-row">
-            <p className="text-sm text-cyan-50/68">
-              © CLYON 2025 - Todos os direitos reservados
-            </p>
-            <Link
-              href="/privacidade"
-              className="text-sm text-cyan-50/68 transition-colors hover:text-white"
-            >
-              Política de Privacidade
-            </Link>
+            <p className="text-sm text-cyan-50/68">© CLYON 2025 - Todos os direitos reservados</p>
+            <div className="flex flex-wrap items-center justify-center gap-4">
+              <Link
+                href="/privacidade"
+                className="text-sm text-cyan-50/68 transition-colors hover:text-white"
+              >
+                Política de Privacidade
+              </Link>
+              <Link
+                href="/privacidade"
+                className="text-sm text-cyan-50/68 transition-colors hover:text-white"
+              >
+                Política de Cookies
+              </Link>
+              <CookiePreferencesLink />
+            </div>
           </div>
         </div>
       </footer>
