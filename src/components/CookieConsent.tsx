@@ -152,7 +152,7 @@ export default function CookieConsent() {
                   <button
                     type="button"
                     onClick={handleSavePreferences}
-                    className="inline-flex items-center justify-center rounded-2xl bg-cyan-500 px-5 py-3 text-sm font-semibold text-white transition hover:bg-cyan-400"
+                    className="site-btn-primary"
                   >
                     Guardar preferências
                   </button>
@@ -160,7 +160,7 @@ export default function CookieConsent() {
                   <button
                     type="button"
                     onClick={() => setShowPreferences(true)}
-                    className="inline-flex items-center justify-center rounded-2xl border border-white/20 bg-white/6 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
+                    className="site-btn-secondary"
                   >
                     <Settings2 className="mr-2 h-4 w-4" />
                     Gerir cookies
@@ -169,14 +169,14 @@ export default function CookieConsent() {
                 <button
                   type="button"
                   onClick={handleReject}
-                  className="inline-flex items-center justify-center rounded-2xl border border-white/20 bg-transparent px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/8"
+                  className="site-btn-secondary"
                 >
                   Recusar opcionais
                 </button>
                 <button
                   type="button"
                   onClick={handleAccept}
-                  className="inline-flex items-center justify-center rounded-2xl bg-cyan-500 px-5 py-3 text-sm font-semibold text-white shadow-[0_16px_34px_-18px_rgba(6,182,212,0.65)] transition hover:bg-cyan-400"
+                  className="site-btn-primary"
                 >
                   Aceitar cookies
                 </button>

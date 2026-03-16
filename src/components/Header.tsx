@@ -43,7 +43,7 @@ export default function Header() {
         <div className="flex flex-shrink-0 items-center gap-3">
           <Link
             href="/trabalhos"
-            className="hidden rounded-2xl border border-cyan-200 px-4 py-2 transition hover:bg-cyan-50 md:inline-flex"
+            className="site-btn-secondary hidden px-4 py-2 md:inline-flex"
           >
             <span className="!text-sm !font-semibold !text-[#047faa]">
               Ver Trabalhos
@@ -51,7 +51,7 @@ export default function Header() {
           </Link>
           <Link
             href="/simulador"
-            className="flex items-center gap-2 rounded-2xl bg-cyan-500 px-5 py-2.5 text-white shadow-lg shadow-cyan-200 transition hover:-translate-y-0.5 hover:bg-cyan-600"
+            className="site-btn-primary px-5 py-2.5"
           >
             <span className="!text-sm !font-semibold !text-white">
               Pedir Orçamento
@@ -84,14 +84,14 @@ export default function Header() {
             <div className="space-y-2 pt-3">
               <Link
                 href="/simulador"
-                className="flex w-full items-center justify-center gap-2 rounded-2xl bg-cyan-500 py-3 font-semibold text-white shadow-lg transition hover:bg-cyan-600"
+                className="site-btn-primary flex w-full py-3"
                 onClick={() => setMenuOpen(false)}
               >
                 <ArrowRight className="h-4 w-4" />
                 Pedir Orçamento
               </Link>
               <button
-                className="flex w-full items-center justify-center gap-2 rounded-2xl border border-cyan-200 py-3 font-semibold text-cyan-700 transition hover:bg-cyan-50"
+                className="site-btn-secondary flex w-full py-3"
                 onClick={() => {
                   window.location.href = "/contactos";
                   setMenuOpen(false);

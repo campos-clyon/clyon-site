@@ -580,7 +580,7 @@ export default function SimuladorClient({ initialCategoriaId = null }: Simulador
                   type="button"
                   onClick={calcularDistancia}
                   disabled={!podeCalcularDistancia || kmLoading}
-                  className="w-full rounded-2xl bg-cyan-500 py-5 text-base font-bold text-white hover:bg-cyan-400"
+                  className="site-btn-primary w-full py-5 text-base"
                 >
                   {kmLoading ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Route className="mr-2 h-5 w-5" />}
                   Calcular distância
@@ -740,7 +740,7 @@ export default function SimuladorClient({ initialCategoriaId = null }: Simulador
                     onClick={calcularOrcamento}
                     disabled={!podeCalcularOrcamento}
                     className={cn(
-                      "w-full rounded-2xl bg-cyan-500 py-5 text-base font-bold text-white hover:bg-cyan-400",
+                      "site-btn-primary w-full py-5 text-base",
                       podeCalcularOrcamento &&
                         "border border-cyan-300 shadow-[0_0_0_0_rgba(34,211,238,0.55)] animate-[budget-button-pulse_1.8s_ease-in-out_infinite]",
                     )}
@@ -810,7 +810,7 @@ export default function SimuladorClient({ initialCategoriaId = null }: Simulador
                       type="button"
                       onClick={confirmarPedido}
                       className={cn(
-                        "w-full rounded-2xl bg-cyan-500 py-6 text-base font-bold text-white hover:bg-cyan-400",
+                        "site-btn-primary w-full py-6 text-base",
                         highlightBudget &&
                           "border border-cyan-200/70 animate-[whatsapp-cta-pulse_1.2s_ease-in-out_infinite]",
                       )}
@@ -850,7 +850,7 @@ export default function SimuladorClient({ initialCategoriaId = null }: Simulador
                 <Button
                   type="button"
                   onClick={confirmarPedido}
-                  className="hidden mt-4 w-full rounded-2xl bg-cyan-500 py-6 text-base font-bold text-white hover:bg-cyan-400"
+                  className="site-btn-primary hidden mt-4 w-full py-6 text-base"
                 >
                   <Phone className="mr-2 h-5 w-5" />
                   Solicitar este serviço no WhatsApp

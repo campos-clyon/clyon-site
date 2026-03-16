@@ -199,7 +199,7 @@ export default async function HomePage() {
               <div className="mt-7 flex flex-col gap-3 sm:flex-row">
                 <Link
                   href="/simulador"
-                  className="inline-flex min-h-12 items-center justify-center rounded-2xl bg-cyan-500 px-8 py-3 text-white shadow-xl shadow-cyan-200 transition hover:-translate-y-0.5 hover:bg-cyan-600"
+                  className="site-btn-primary px-8"
                 >
                   <span className="text-[0.95rem] font-semibold text-white">
                     Simular Orçamento
@@ -207,7 +207,7 @@ export default async function HomePage() {
                 </Link>
                 <Link
                   href="/trabalhos"
-                  className="inline-flex min-h-12 items-center justify-center rounded-2xl border border-cyan-200 bg-white px-8 py-3 text-[0.95rem] font-semibold text-cyan-700 transition hover:-translate-y-0.5 hover:bg-cyan-50"
+                  className="site-btn-secondary px-8"
                 >
                   Ver Trabalhos Reais
                   <ArrowRight className="ml-2 h-4 w-4" />
@@ -227,7 +227,7 @@ export default async function HomePage() {
               </div>
             </div>
 
-            <div className="lg:pt-[52px]">
+            <div className="lg:self-start">
               <div className="w-full rounded-[32px] border border-cyan-100 bg-white p-4 shadow-[0_24px_60px_-34px_rgba(14,116,144,0.22)] lg:w-[102%] lg:-ml-[1%]">
                 <div className="h-[398px] overflow-hidden rounded-[26px]">
                   <ImageCarousel images={workImages} autoPlayInterval={5000} />
@@ -429,7 +429,7 @@ export default async function HomePage() {
               </p>
                 <Link
                   href="/contactos"
-                  className="mt-5 inline-flex items-center justify-center rounded-2xl bg-cyan-400 px-6 py-3 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-cyan-300"
+                    className="site-btn-primary mt-5"
                 >
                   Falar connosco
                   <ArrowRight className="ml-2 h-4 w-4 text-white" />
@@ -521,7 +521,7 @@ export default async function HomePage() {
               </div>
               <Link
                 href="/simulador"
-                className="inline-flex items-center justify-center rounded-2xl bg-cyan-400 px-7 py-4 text-base font-semibold text-white transition hover:-translate-y-0.5 hover:bg-cyan-300"
+                className="site-btn-primary px-7 py-4 text-base"
               >
                 Simular orçamento
                 <ArrowRight className="ml-2 h-4 w-4 text-white" />

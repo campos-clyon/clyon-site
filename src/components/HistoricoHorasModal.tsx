@@ -127,7 +127,7 @@ export function HistoricoHorasModal({
                 size="sm"
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={page === 1}
-                className="rounded-xl border-cyan-200 bg-white text-slate-700 hover:bg-cyan-50"
+                className="px-4"
               >
                 <ChevronLeft className="mr-1 h-4 w-4" />
                 Anterior
@@ -137,7 +137,7 @@ export function HistoricoHorasModal({
                 size="sm"
                 onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                 disabled={page === totalPages}
-                className="rounded-xl border-cyan-200 bg-white text-slate-700 hover:bg-cyan-50"
+                className="px-4"
               >
                 Próxima
                 <ChevronRight className="ml-1 h-4 w-4" />
