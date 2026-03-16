@@ -69,10 +69,10 @@ const categorias: Categoria[] = [
 const categoriaIds = new Set<CategoriaId>(["entulho", "moveis", "monos", "limpeza", "mudancas", "camiao"]);
 
 const simulatorPrimaryButtonClass =
-  "border-cyan-400 bg-[#18b3d1] text-white shadow-[0_20px_38px_-22px_rgba(24,179,209,0.78)] hover:-translate-y-0.5 hover:border-[#12a4c0] hover:bg-[#12a4c0]";
+  "border border-cyan-400 bg-[#18b3d1] text-white shadow-[0_20px_38px_-22px_rgba(24,179,209,0.78)] hover:-translate-y-0.5 hover:border-[#12a4c0] hover:bg-[#12a4c0]";
 
 const simulatorSecondaryButtonClass =
-  "border-cyan-100 bg-white text-[#0d7fa7] shadow-[0_12px_28px_-24px_rgba(14,116,144,0.45)] hover:-translate-y-0.5 hover:border-cyan-300 hover:bg-cyan-50 hover:text-[#0d7fa7]";
+  "border border-cyan-200 bg-white text-[#0d7fa7] shadow-none hover:-translate-y-0.5 hover:border-cyan-300 hover:bg-cyan-50 hover:text-[#0d7fa7]";
 
 type SimuladorClientProps = {
   initialCategoriaId?: CategoriaId | null;
@@ -916,6 +916,19 @@ function fieldToneClass(tone: FieldTone) {
   return "border-cyan-100";
 }
 
+function fieldToneRingClass(tone: FieldTone) {
+  if (tone === "error") {
+    return "ring-4 ring-red-100";
+  }
+  if (tone === "warning") {
+    return "ring-4 ring-amber-100";
+  }
+  if (tone === "next") {
+    return "ring-4 ring-cyan-100 shadow-[0_0_0_1px_rgba(34,211,238,0.15)]";
+  }
+  return "";
+}
+
 function StepTitle({ number, title }: { number: string; title: string }) {
   return (
     <div>
@@ -1104,10 +1117,10 @@ function ChoiceGrid({
               compact
                 ? "min-h-[54px] rounded-[22px] px-4 py-3 text-center text-sm"
                 : "min-h-[54px] rounded-[22px] px-4 py-3 text-center text-sm",
-              "border font-bold transition",
+              "inline-flex items-center justify-center font-bold transition",
               active
                 ? simulatorPrimaryButtonClass
-                : `${simulatorSecondaryButtonClass} ${fieldToneClass(tone)}`,
+                : `${simulatorSecondaryButtonClass} ${fieldToneRingClass(tone)}`,
             )}
           >
             {option.label}
@@ -1200,10 +1213,10 @@ function PeopleSelector({
                   onChange(String(num));
                 }}
                 className={cn(
-                  "flex h-11 w-11 items-center justify-center rounded-[18px] border text-sm font-bold transition",
+                  "flex h-11 w-11 items-center justify-center rounded-[18px] text-sm font-bold transition",
                   active
                     ? simulatorPrimaryButtonClass
-                    : `${simulatorSecondaryButtonClass} ${fieldToneClass(tone)}`,
+                    : `${simulatorSecondaryButtonClass} ${fieldToneRingClass(tone)}`,
                 )}
               >
                 {num}
@@ -1217,8 +1230,8 @@ function PeopleSelector({
               onChange("");
             }}
             className={cn(
-              "flex h-11 min-w-12 items-center justify-center rounded-[18px] border px-3 text-sm font-bold transition",
-              `${simulatorSecondaryButtonClass} ${fieldToneClass(tone)}`,
+              "flex h-11 min-w-12 items-center justify-center rounded-[18px] px-3 text-sm font-bold transition",
+              `${simulatorSecondaryButtonClass} ${fieldToneRingClass(tone)}`,
             )}
           >
             8+
