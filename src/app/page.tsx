@@ -227,7 +227,7 @@ export default async function HomePage() {
               </div>
             </div>
 
-            <div className="lg:pt-[72px]">
+            <div className="lg:pt-[52px]">
               <div className="w-full rounded-[32px] border border-cyan-100 bg-white p-4 shadow-[0_24px_60px_-34px_rgba(14,116,144,0.22)] lg:w-[102%] lg:-ml-[1%]">
                 <div className="h-[398px] overflow-hidden rounded-[26px]">
                   <ImageCarousel images={workImages} autoPlayInterval={5000} />

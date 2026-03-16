@@ -45,6 +45,18 @@ a {
   text-decoration: none;
 }
 
+button[class*="bg-cyan-"],
+a[class*="bg-cyan-"],
+[data-slot="button"][class*="bg-cyan-"] {
+  color: #ffffff !important;
+}
+
+button[class*="bg-cyan-"] svg,
+a[class*="bg-cyan-"] svg,
+[data-slot="button"][class*="bg-cyan-"] svg {
+  color: currentColor !important;
+}
+
 img {
   display: block;
   max-width: 100%;
