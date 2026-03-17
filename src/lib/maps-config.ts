@@ -1,5 +1,5 @@
 export const BASE_ADDRESS =
-  "Av. Q.ta das Laranjeiras, 2865-688 Fernão Ferro, Portugal";
+  "Centro Municipal de Higiene Urbana de Fernão Ferro, Av. Q.ta das Laranjeiras, 2865-688 Fernão Ferro, Portugal";
 
 export function getMapsApiKey() {
   return (
