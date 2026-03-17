@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
@@ -27,22 +27,85 @@ export default function ImageCarousel({
   showArrows = true,
 }: ImageCarouselProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [isPending, setIsPending] = useState(false);
+  const loadedUrlsRef = useRef<Set<string>>(new Set());
+  const loadingUrlsRef = useRef<Map<string, Promise<void>>>(new Map());
+
+  const ensureImageLoaded = useCallback((url: string) => {
+    if (typeof window === "undefined" || loadedUrlsRef.current.has(url)) {
+      return Promise.resolve();
+    }
+
+    const pending = loadingUrlsRef.current.get(url);
+
+    if (pending) {
+      return pending;
+    }
+
+    const nextPromise = new Promise<void>((resolve) => {
+      const image = new window.Image();
+
+      image.onload = () => {
+        loadedUrlsRef.current.add(url);
+        loadingUrlsRef.current.delete(url);
+        resolve();
+      };
+
+      image.onerror = () => {
+        loadingUrlsRef.current.delete(url);
+        resolve();
+      };
+
+      image.src = url;
+    });
+
+    loadingUrlsRef.current.set(url, nextPromise);
+    return nextPromise;
+  }, []);
+
+  const goToIndex = useCallback(
+    async (nextIndex: number) => {
+      const nextImage = images[nextIndex];
+
+      if (!nextImage || isPending || nextIndex === currentIndex) {
+        return;
+      }
+
+      setIsPending(true);
+      await ensureImageLoaded(nextImage.url);
+      setCurrentIndex(nextIndex);
+      setIsPending(false);
+    },
+    [currentIndex, ensureImageLoaded, images, isPending],
+  );
 
   useEffect(() => {
-    if (!autoPlay || images.length === 0) return;
+    loadedUrlsRef.current.clear();
+    loadingUrlsRef.current.clear();
+    setCurrentIndex(0);
+
+    if (images.length === 0) {
+      return;
+    }
+
+    void ensureImageLoaded(images[0].url);
+
+    for (const image of images.slice(1)) {
+      void ensureImageLoaded(image.url);
+    }
+  }, [ensureImageLoaded, images]);
+
+  useEffect(() => {
+    if (!autoPlay || images.length <= 1) {
+      return;
+    }
 
     const interval = setInterval(() => {
-      setCurrentIndex((prev) => (prev + 1) % images.length);
+      void goToIndex((currentIndex + 1) % images.length);
     }, autoPlayInterval);
 
     return () => clearInterval(interval);
-  }, [autoPlay, autoPlayInterval, images.length]);
-
-  const goToPrevious = () =>
-    setCurrentIndex((prev) => (prev - 1 + images.length) % images.length);
-
-  const goToNext = () =>
-    setCurrentIndex((prev) => (prev + 1) % images.length);
+  }, [autoPlay, autoPlayInterval, currentIndex, goToIndex, images.length]);
 
   if (images.length === 0) return null;
 
@@ -50,65 +113,70 @@ export default function ImageCarousel({
   const isApiImage = currentImage.url.startsWith("/api/");
 
   return (
-    <div className="group relative h-full w-full overflow-hidden rounded-[24px]">
+    <div className="group relative h-full w-full overflow-hidden rounded-[28px] bg-[linear-gradient(180deg,#d9faff_0%,#f4fdff_42%,#083344_100%)]">
       <Image
-        key={currentImage.url}
         src={currentImage.url}
         alt={currentImage.alt}
         fill
         priority={currentIndex === 0}
-        quality={74}
-        sizes="(min-width: 1280px) 560px, (min-width: 1024px) 46vw, 100vw"
+        quality={78}
+        sizes="(min-width: 1280px) 620px, (min-width: 1024px) 50vw, 100vw"
         unoptimized={isApiImage}
-        className="object-cover object-center transition-transform duration-500"
+        className="object-cover object-center"
+        onLoad={() => {
+          loadedUrlsRef.current.add(currentImage.url);
+        }}
       />
 
       {(currentImage.title || currentImage.subtitle) && (
         <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-6">
-          {currentImage.title && (
+          {currentImage.title ? (
             <h3 className="text-xl font-bold text-white">{currentImage.title}</h3>
-          )}
-          {currentImage.subtitle && (
+          ) : null}
+          {currentImage.subtitle ? (
             <p className="text-sm text-cyan-300">{currentImage.subtitle}</p>
-          )}
+          ) : null}
         </div>
       )}
 
-      {showArrows && (
+      {showArrows ? (
         <>
           <button
-            onClick={goToPrevious}
-            className="absolute left-4 top-1/2 z-10 -translate-y-1/2 rounded-full bg-cyan-500/80 p-2 text-white opacity-0 transition-opacity hover:bg-cyan-600 group-hover:opacity-100"
+            onClick={() => void goToIndex((currentIndex - 1 + images.length) % images.length)}
+            className="absolute left-4 top-1/2 z-10 -translate-y-1/2 rounded-full bg-cyan-500/80 p-2 text-white opacity-0 transition-opacity hover:bg-cyan-600 group-hover:opacity-100 disabled:cursor-not-allowed disabled:opacity-45"
             aria-label="Imagem anterior"
+            disabled={isPending}
           >
             <ChevronLeft size={24} />
           </button>
           <button
-            onClick={goToNext}
-            className="absolute right-4 top-1/2 z-10 -translate-y-1/2 rounded-full bg-cyan-500/80 p-2 text-white opacity-0 transition-opacity hover:bg-cyan-600 group-hover:opacity-100"
-            aria-label="Próxima imagem"
+            onClick={() => void goToIndex((currentIndex + 1) % images.length)}
+            className="absolute right-4 top-1/2 z-10 -translate-y-1/2 rounded-full bg-cyan-500/80 p-2 text-white opacity-0 transition-opacity hover:bg-cyan-600 group-hover:opacity-100 disabled:cursor-not-allowed disabled:opacity-45"
+            aria-label="Proxima imagem"
+            disabled={isPending}
           >
             <ChevronRight size={24} />
           </button>
         </>
-      )}
+      ) : null}
 
-      {showIndicators && images.length > 1 && (
+      {showIndicators && images.length > 1 ? (
         <div className="absolute bottom-4 left-1/2 z-10 flex -translate-x-1/2 gap-2">
           {images.map((_, index) => (
             <button
               key={index}
-              onClick={() => setCurrentIndex(index)}
+              onClick={() => void goToIndex(index)}
               className={`h-2 rounded-full transition-all ${
                 index === currentIndex
                   ? "w-6 bg-cyan-400"
                   : "w-2 bg-white/50 hover:bg-white/80"
               }`}
               aria-label={`Ir para slide ${index + 1}`}
+              disabled={isPending}
             />
           ))}
         </div>
-      )}
+      ) : null}
     </div>
   );
 }
