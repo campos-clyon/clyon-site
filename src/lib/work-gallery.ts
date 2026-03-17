@@ -25,10 +25,20 @@ export type GalleryItem = {
 
 function resolveGalleryImageUrl(item: GalleryItem) {
   if (item.imageUrl.startsWith("data:image/")) {
-    return `/api/media/gallery/render/${item.id}`;
+    return `/api/media/gallery/render/${item.id}?v=${galleryImageVersion(item.imageUrl)}`;
   }
 
   return item.imageUrl;
+}
+
+function galleryImageVersion(value: string) {
+  let hash = 0;
+
+  for (let index = 0; index < value.length; index += 1) {
+    hash = (hash * 31 + value.charCodeAt(index)) >>> 0;
+  }
+
+  return hash.toString(16);
 }
 
 type GalleryData = {

@@ -1,9 +1,12 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { ChangeEvent, FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   ImagePlus,
+  Images,
+  LayoutGrid,
   Loader2,
   LogOut,
   RefreshCcw,
@@ -12,10 +15,13 @@ import {
   UploadCloud,
 } from "lucide-react";
 
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Textarea } from "@/components/ui/textarea";
 
 type GallerySection = "hero" | "showcase";
 type GalleryPhase = "" | "before" | "during" | "after";
@@ -60,6 +66,24 @@ const defaultForm: GalleryFormState = {
   isActive: true,
 };
 
+const sectionMeta: Record<
+  GallerySection,
+  { label: string; description: string; accent: string; empty: string }
+> = {
+  hero: {
+    label: "Carrossel topo",
+    description: "Imagens do destaque principal da homepage.",
+    accent: "from-cyan-500/15 to-sky-500/5",
+    empty: "Ainda não existem imagens no carrossel topo.",
+  },
+  showcase: {
+    label: "Galeria de trabalhos",
+    description: "Casos reais da página de trabalhos, com grupos e fases.",
+    accent: "from-emerald-500/15 to-cyan-500/5",
+    empty: "Ainda não existem trabalhos reais nesta galeria.",
+  },
+};
+
 async function readResponsePayload(response: Response) {
   const text = await response.text();
 
@@ -74,7 +98,21 @@ async function readResponsePayload(response: Response) {
   }
 }
 
-export default function ColaboradorAdminClient() {
+function phaseLabel(phase?: GalleryPhase) {
+  if (phase === "before") return "Antes";
+  if (phase === "during") return "Durante";
+  if (phase === "after") return "Depois";
+  return "Sem fase";
+}
+
+function previewLabel(value: string) {
+  if (!value) return "Sem imagem definida";
+  if (value.startsWith("data:image/")) return "Imagem interna guardada no sistema";
+  if (value.length > 84) return `${value.slice(0, 81)}...`;
+  return value;
+}
+
+export default function ImageManagerClient() {
   const router = useRouter();
   const [items, setItems] = useState<GalleryItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -82,6 +120,7 @@ export default function ColaboradorAdminClient() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [activeSection, setActiveSection] = useState<GallerySection>("hero");
   const [newItem, setNewItem] = useState<GalleryFormState>(defaultForm);
   const [newFile, setNewFile] = useState<File | null>(null);
   const [replacementFiles, setReplacementFiles] = useState<Record<string, File | null>>({});
@@ -106,19 +145,18 @@ export default function ColaboradorAdminClient() {
         cache: "no-store",
         headers: { Authorization: `Bearer ${token}` },
       });
-
       const data = await readResponsePayload(response);
 
       if (!response.ok) {
-        throw new Error(data.error || "Não foi possível carregar a galeria.");
+        throw new Error(data.error || "Nao foi possivel carregar a galeria.");
       }
 
-      setItems(data.items);
+      setItems(data.items || []);
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Erro ao carregar a galeria.";
-      setError(message);
+      const nextError = err instanceof Error ? err.message : "Erro ao carregar a galeria.";
+      setError(nextError);
 
-      if (message.includes("Não autorizado") || message.includes("Acesso negado")) {
+      if (nextError.includes("Nao autorizado") || nextError.includes("Acesso negado")) {
         localStorage.removeItem("colaborador_token");
         localStorage.removeItem("colaborador_nome");
         localStorage.removeItem("colaborador_id");
@@ -128,6 +166,11 @@ export default function ColaboradorAdminClient() {
     } finally {
       setLoading(false);
     }
+  }
+
+  async function reloadAfterMutation(token: string) {
+    router.refresh();
+    await loadGallery(token);
   }
 
   async function handleRefresh() {
@@ -143,8 +186,7 @@ export default function ColaboradorAdminClient() {
     setError("");
 
     try {
-      router.refresh();
-      await loadGallery(token);
+      await reloadAfterMutation(token);
       setMessage("Galeria atualizada.");
     } finally {
       setRefreshing(false);
@@ -233,13 +275,14 @@ export default function ColaboradorAdminClient() {
       const data = await readResponsePayload(response);
 
       if (!response.ok) {
-        throw new Error(data.error || "Não foi possível guardar a imagem.");
+        throw new Error(data.error || "Nao foi possivel guardar a imagem.");
       }
 
       setMessage("Imagem adicionada com sucesso.");
       setNewItem(defaultForm);
       setNewFile(null);
-      await loadGallery(token);
+      setActiveSection(newItem.section);
+      await reloadAfterMutation(token);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao criar imagem.");
     } finally {
@@ -306,12 +349,12 @@ export default function ColaboradorAdminClient() {
       const data = await readResponsePayload(response);
 
       if (!response.ok) {
-        throw new Error(data.error || "Não foi possível guardar as alterações.");
+        throw new Error(data.error || "Nao foi possivel guardar as alteracoes.");
       }
 
       setReplacementFiles((current) => ({ ...current, [item.id]: null }));
       setMessage("Imagem atualizada com sucesso.");
-      await loadGallery(token);
+      await reloadAfterMutation(token);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao atualizar imagem.");
     } finally {
@@ -340,15 +383,14 @@ export default function ColaboradorAdminClient() {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },
       });
-
       const data = await readResponsePayload(response);
 
       if (!response.ok) {
-        throw new Error(data.error || "Não foi possível apagar a imagem.");
+        throw new Error(data.error || "Nao foi possivel apagar a imagem.");
       }
 
       setMessage("Imagem apagada com sucesso.");
-      await loadGallery(token);
+      await reloadAfterMutation(token);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao apagar imagem.");
     } finally {
@@ -363,150 +405,92 @@ export default function ColaboradorAdminClient() {
 
   const heroItems = items.filter((item) => item.section === "hero");
   const showcaseItems = items.filter((item) => item.section === "showcase");
+  const activeCount = items.filter((item) => item.isActive).length;
 
   return (
-    <div className="min-h-screen bg-[linear-gradient(135deg,#03131d_0%,#062737_55%,#083344_100%)] px-4 py-24">
+    <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,#d9fbff_0%,#f7fbfc_38%,#eef6f8_100%)] px-4 py-10 md:px-6 md:py-12">
       <div className="mx-auto max-w-7xl space-y-6">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-          <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.22em] text-cyan-200">
-              Painel de imagens
-            </p>
-            <h1 className="mt-3 text-4xl font-bold text-white">
-              Gestor de media do site
-            </h1>
-            <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-300">
-              O carrossel do topo e a página de trabalhos passam a ler esta galeria.
-              Pode carregar, substituir, ordenar, esconder e apagar imagens sem editar
-              o código. As imagens enviadas no chat precisam de ser carregadas aqui
-              pelo painel para entrarem no projeto.
-            </p>
-          </div>
+        <Card className="overflow-hidden border-cyan-100 bg-white shadow-[0_30px_90px_-55px_rgba(14,116,144,0.45)]">
+          <CardContent className="grid gap-6 p-6 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-start">
+            <div className="space-y-4">
+              <div className="inline-flex rounded-full border border-cyan-200 bg-cyan-50 px-4 py-1 text-xs font-semibold uppercase tracking-[0.28em] text-cyan-700">
+                Painel de imagens
+              </div>
+              <div className="space-y-2">
+                <h1 className="text-3xl font-bold tracking-tight text-slate-950 md:text-4xl">
+                  Gestor de media mais simples e rapido
+                </h1>
+                <p className="max-w-3xl text-sm leading-7 text-slate-600 md:text-base">
+                  O carrossel da homepage e a galeria de trabalhos leem esta lista.
+                  Pode carregar, substituir, ordenar, esconder e apagar imagens sem editar o codigo.
+                </p>
+              </div>
+            </div>
 
-          <div className="flex gap-3">
-            <Button
-              variant="outline"
-              onClick={() => void handleRefresh()}
-              disabled={loading || refreshing || saving}
-              className="border-white/20 bg-white/5 text-white hover:bg-white/10"
-            >
-              <RefreshCcw className={`mr-2 h-4 w-4 ${refreshing ? "animate-spin" : ""}`} />
-              {refreshing ? "A atualizar..." : "Atualizar"}
-            </Button>
-            <Button
-              variant="outline"
-              onClick={handleLogout}
-              className="border-white/20 bg-white/5 text-white hover:bg-white/10"
-            >
-              <LogOut className="mr-2 h-4 w-4" />
-              Sair
-            </Button>
-          </div>
+            <div className="flex flex-wrap gap-3 lg:justify-end">
+              <Button
+                variant="outline"
+                onClick={() => void handleRefresh()}
+                disabled={loading || refreshing || saving}
+              >
+                <RefreshCcw className={refreshing ? "animate-spin" : ""} />
+                {refreshing ? "A atualizar..." : "Atualizar"}
+              </Button>
+              <Button variant="outline" onClick={handleLogout}>
+                <LogOut />
+                Sair
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        <div className="grid gap-4 md:grid-cols-3">
+          <StatCard icon={LayoutGrid} label="Carrossel topo" value={heroItems.length} />
+          <StatCard icon={Images} label="Galeria de trabalhos" value={showcaseItems.length} />
+          <StatCard icon={UploadCloud} label="Imagens ativas" value={activeCount} />
         </div>
 
-        {error && (
-          <div className="rounded-2xl border border-red-400/30 bg-red-500/10 px-4 py-3 text-sm text-red-100">
-            {error}
-          </div>
-        )}
+        {error ? <Feedback tone="error">{error}</Feedback> : null}
+        {message ? <Feedback tone="success">{message}</Feedback> : null}
 
-        {message && (
-          <div className="rounded-2xl border border-emerald-400/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-100">
-            {message}
-          </div>
-        )}
+        <Feedback tone="warning">
+          Em producao no Vercel, ficheiros guardados apenas no disco local podem voltar ao estado anterior.
+          Para uma troca estavel no site publicado, use o upload do painel ou preencha tambem a URL publica da imagem.
+        </Feedback>
 
-        <div className="rounded-2xl border border-amber-300/30 bg-amber-400/10 px-4 py-3 text-sm text-amber-50">
-          Em producao no Vercel, ficheiros guardados no disco local podem voltar ao estado anterior. Para uma troca
-          estavel no site publicado, preencha tambem a URL publica da imagem.
-        </div>
-
-        <Card className="border-cyan-100/20 bg-white/95">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-slate-950">
-              <UploadCloud className="h-5 w-5 text-cyan-600" />
-              Nova imagem
-            </CardTitle>
-            <CardDescription>
-              Adicione uma nova imagem ao carrossel do topo ou à galeria de trabalhos.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form className="space-y-5" onSubmit={handleCreate}>
-              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+        <div className="grid gap-6 xl:grid-cols-[360px_minmax(0,1fr)]">
+          <Card className="border-cyan-100 bg-white xl:sticky xl:top-28">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-slate-950">
+                <ImagePlus className="h-5 w-5 text-cyan-600" />
+                Nova imagem
+              </CardTitle>
+              <CardDescription>
+                Adicione uma nova entrada ao carrossel do topo ou aos trabalhos.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form className="space-y-4" onSubmit={handleCreate}>
                 <div className="space-y-2">
-                  <Label htmlFor="section">Secção</Label>
+                  <Label htmlFor="section">Secao</Label>
                   <select
                     id="section"
                     value={newItem.section}
                     onChange={(event) => updateNewItem("section", event.target.value as GallerySection)}
-                    className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-950"
+                    className="flex h-12 w-full rounded-[18px] border border-slate-200 bg-white px-4 text-sm text-slate-950"
                   >
                     <option value="hero">Carrossel topo</option>
-                    <option value="showcase">Galeria trabalhos</option>
+                    <option value="showcase">Galeria de trabalhos</option>
                   </select>
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="title">Título</Label>
-                  <Input
-                    id="title"
-                    value={newItem.title}
-                    onChange={(event) => updateNewItem("title", event.target.value)}
-                    required
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="alt">Texto alternativo</Label>
-                  <Input
-                    id="alt"
-                    value={newItem.alt}
-                    onChange={(event) => updateNewItem("alt", event.target.value)}
-                    required
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="imageUrl">URL da imagem</Label>
-                  <Input
-                    id="imageUrl"
-                    value={newItem.imageUrl}
-                    onChange={(event) => updateNewItem("imageUrl", event.target.value)}
-                    placeholder="https://..."
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="order">Ordem</Label>
-                  <Input
-                    id="order"
-                    type="number"
-                    min="1"
-                    value={newItem.order}
-                    onChange={(event) => updateNewItem("order", event.target.value)}
-                  />
-                </div>
-              </div>
-
-              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-                <div className="space-y-2">
-                  <Label htmlFor="subtitle">Subtítulo</Label>
-                  <Input
-                    id="subtitle"
-                    value={newItem.subtitle}
-                    onChange={(event) => updateNewItem("subtitle", event.target.value)}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="projectKey">Grupo do trabalho</Label>
-                  <Input
-                    id="projectKey"
-                    value={newItem.projectKey}
-                    onChange={(event) => updateNewItem("projectKey", event.target.value)}
-                    placeholder="ex: apartamento-lisboa"
-                  />
+                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-1">
+                  <Field label="Titulo" value={newItem.title} onChange={(value) => updateNewItem("title", value)} required />
+                  <Field label="Subtitulo" value={newItem.subtitle} onChange={(value) => updateNewItem("subtitle", value)} />
+                  <Field label="Alt" value={newItem.alt} onChange={(value) => updateNewItem("alt", value)} required />
+                  <Field label="URL da imagem" value={newItem.imageUrl} onChange={(value) => updateNewItem("imageUrl", value)} placeholder="https://..." />
+                  <Field label="Ordem" value={newItem.order} onChange={(value) => updateNewItem("order", value)} type="number" min="1" />
+                  <Field label="Grupo do trabalho" value={newItem.projectKey} onChange={(value) => updateNewItem("projectKey", value)} placeholder="ex: recolha-monos" />
                 </div>
 
                 <div className="space-y-2">
@@ -515,7 +499,7 @@ export default function ColaboradorAdminClient() {
                     id="phase"
                     value={newItem.phase}
                     onChange={(event) => updateNewItem("phase", event.target.value as GalleryPhase)}
-                    className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-950"
+                    className="flex h-12 w-full rounded-[18px] border border-slate-200 bg-white px-4 text-sm text-slate-950"
                   >
                     <option value="">Sem fase</option>
                     <option value="before">Antes</option>
@@ -524,88 +508,162 @@ export default function ColaboradorAdminClient() {
                   </select>
                 </div>
 
-                <label className="flex items-end gap-3 rounded-xl border border-slate-200 px-4 py-3">
+                <div className="space-y-2">
+                  <Label htmlFor="description">Descricao</Label>
+                  <Textarea
+                    id="description"
+                    value={newItem.description}
+                    onChange={(event) => updateNewItem("description", event.target.value)}
+                    className="min-h-28 rounded-[18px] border-slate-200 bg-white"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="file">Imagem do computador</Label>
+                  <Input
+                    id="file"
+                    type="file"
+                    accept="image/*"
+                    onChange={(event) => setNewFile(event.target.files?.[0] || null)}
+                    className="h-12 rounded-[18px] border-slate-200 bg-white"
+                  />
+                  <p className="text-xs text-slate-500">
+                    Upload direto evita depender de cache antigo da imagem anterior.
+                  </p>
+                </div>
+
+                <label className="flex items-center gap-3 rounded-[18px] border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-700">
                   <input
                     type="checkbox"
                     checked={newItem.isActive}
                     onChange={(event) => updateNewItem("isActive", event.target.checked)}
                   />
-                  <span className="text-sm font-medium text-slate-700">Ativa no site</span>
+                  Ativa no site
                 </label>
-              </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="description">Descrição</Label>
-                <textarea
-                  id="description"
-                  value={newItem.description}
-                  onChange={(event) => updateNewItem("description", event.target.value)}
-                  className="min-h-24 w-full rounded-md border border-slate-200 px-3 py-2 text-sm text-slate-950"
-                />
-              </div>
+                <Button type="submit" disabled={saving || loading} className="w-full">
+                  {saving ? <Loader2 className="animate-spin" /> : <UploadCloud />}
+                  Guardar imagem
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
 
-              <div className="space-y-2">
-                <Label htmlFor="file">Imagem do computador</Label>
-                <Input
-                  id="file"
-                  type="file"
-                  accept="image/*"
-                  onChange={(event) => setNewFile(event.target.files?.[0] || null)}
-                />
-              </div>
+          <Tabs value={activeSection} onValueChange={(value) => setActiveSection(value as GallerySection)} className="gap-4">
+            <TabsList className="h-auto w-full justify-start rounded-[24px] border border-cyan-100 bg-white p-2">
+              <TabsTrigger value="hero" className="min-h-11 rounded-[18px] px-4">
+                Carrossel topo ({heroItems.length})
+              </TabsTrigger>
+              <TabsTrigger value="showcase" className="min-h-11 rounded-[18px] px-4">
+                Galeria de trabalhos ({showcaseItems.length})
+              </TabsTrigger>
+            </TabsList>
 
-              <Button
-                type="submit"
-                disabled={saving || loading}
-                className="bg-cyan-500 text-white hover:bg-cyan-600"
-              >
-                {saving ? (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                ) : (
-                  <ImagePlus className="mr-2 h-4 w-4" />
-                )}
-                Guardar imagem
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
+            <TabsContent value="hero">
+              <GallerySectionPanel
+                title={sectionMeta.hero.label}
+                description={sectionMeta.hero.description}
+                accent={sectionMeta.hero.accent}
+                empty={sectionMeta.hero.empty}
+                items={heroItems}
+                saving={saving}
+                onChange={updateItem}
+                onSave={handleSaveItem}
+                onDelete={handleDeleteItem}
+                onReplacementChange={onReplacementChange}
+              />
+            </TabsContent>
 
-        {loading ? (
-          <div className="flex items-center justify-center rounded-[30px] border border-white/10 bg-white/5 py-20">
-            <Loader2 className="h-8 w-8 animate-spin text-cyan-300" />
-          </div>
-        ) : (
-          <div className="grid gap-6">
-            <GallerySectionCard
-              title={`Carrossel topo (${heroItems.length})`}
-              description="Imagens que aparecem no carrossel do topo da homepage."
-              items={heroItems}
-              saving={saving}
-              onChange={updateItem}
-              onSave={handleSaveItem}
-              onDelete={handleDeleteItem}
-              onReplacementChange={onReplacementChange}
-            />
-            <GallerySectionCard
-              title={`Galeria trabalhos (${showcaseItems.length})`}
-              description="Casos reais mostrados na página de trabalhos. Use o mesmo grupo para montar antes/depois."
-              items={showcaseItems}
-              saving={saving}
-              onChange={updateItem}
-              onSave={handleSaveItem}
-              onDelete={handleDeleteItem}
-              onReplacementChange={onReplacementChange}
-            />
-          </div>
-        )}
+            <TabsContent value="showcase">
+              <GallerySectionPanel
+                title={sectionMeta.showcase.label}
+                description={sectionMeta.showcase.description}
+                accent={sectionMeta.showcase.accent}
+                empty={sectionMeta.showcase.empty}
+                items={showcaseItems}
+                saving={saving}
+                onChange={updateItem}
+                onSave={handleSaveItem}
+                onDelete={handleDeleteItem}
+                onReplacementChange={onReplacementChange}
+              />
+            </TabsContent>
+          </Tabs>
+        </div>
       </div>
     </div>
   );
 }
 
-type GallerySectionCardProps = {
+type StatCardProps = {
+  icon: typeof LayoutGrid;
+  label: string;
+  value: number;
+};
+
+function StatCard({ icon: Icon, label, value }: StatCardProps) {
+  return (
+    <Card className="border-cyan-100 bg-white">
+      <CardContent className="flex items-center gap-4 p-5">
+        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-cyan-50 text-cyan-600">
+          <Icon className="h-5 w-5" />
+        </div>
+        <div>
+          <p className="text-sm text-slate-500">{label}</p>
+          <p className="text-2xl font-bold text-slate-950">{value}</p>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+type FeedbackProps = {
+  tone: "success" | "error" | "warning";
+  children: ReactNode;
+};
+
+function Feedback({ tone, children }: FeedbackProps) {
+  const styles = {
+    success: "border-emerald-200 bg-emerald-50 text-emerald-800",
+    error: "border-red-200 bg-red-50 text-red-700",
+    warning: "border-amber-200 bg-amber-50 text-amber-800",
+  }[tone];
+
+  return <div className={`rounded-[22px] border px-4 py-3 text-sm ${styles}`}>{children}</div>;
+}
+
+type FieldProps = {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  placeholder?: string;
+  type?: string;
+  min?: string;
+  required?: boolean;
+};
+
+function Field({ label, value, onChange, placeholder, type = "text", min, required }: FieldProps) {
+  return (
+    <div className="space-y-2">
+      <Label>{label}</Label>
+      <Input
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        placeholder={placeholder}
+        type={type}
+        min={min}
+        required={required}
+        className="h-12 rounded-[18px] border-slate-200 bg-white"
+      />
+    </div>
+  );
+}
+
+type GallerySectionPanelProps = {
   title: string;
   description: string;
+  accent: string;
+  empty: string;
   items: GalleryItem[];
   saving: boolean;
   onChange: (id: string, field: keyof GalleryItem, value: string | boolean | number) => void;
@@ -614,135 +672,80 @@ type GallerySectionCardProps = {
   onReplacementChange: (id: string, event: ChangeEvent<HTMLInputElement>) => void;
 };
 
-function formatImageUrlLabel(value: string) {
-  if (!value) return "Sem imagem definida";
-  if (value.startsWith("data:image/")) {
-    return "Imagem interna guardada no sistema";
-  }
-  if (value.length > 72) {
-    return `${value.slice(0, 69)}...`;
-  }
-  return value;
-}
-
-function GallerySectionCard({
+function GallerySectionPanel({
   title,
   description,
+  accent,
+  empty,
   items,
   saving,
   onChange,
   onSave,
   onDelete,
   onReplacementChange,
-}: GallerySectionCardProps) {
+}: GallerySectionPanelProps) {
   return (
-    <Card className="border-cyan-100/20 bg-white/95">
-      <CardHeader>
-        <CardTitle className="text-slate-950">{title}</CardTitle>
-        <CardDescription>{description}</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-5">
+    <Card className="overflow-hidden border-cyan-100 bg-white">
+      <div className={`border-b border-cyan-100 bg-gradient-to-r ${accent} px-6 py-5`}>
+        <h2 className="text-2xl font-bold text-slate-950">{title}</h2>
+        <p className="mt-2 text-sm text-slate-600">{description}</p>
+      </div>
+      <CardContent className="space-y-5 p-6">
         {items.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-slate-300 px-4 py-6 text-sm text-slate-500">
-            Sem imagens nesta secção.
+          <div className="rounded-[24px] border border-dashed border-slate-200 bg-slate-50 px-6 py-10 text-center text-sm text-slate-500">
+            {empty}
           </div>
         ) : (
           items.map((item) => (
-            <article
-              key={item.id}
-              className="grid gap-5 rounded-[26px] border border-slate-200 p-4 lg:grid-cols-[260px_1fr]"
-            >
+            <article key={item.id} className="grid gap-5 rounded-[28px] border border-slate-200 p-5 lg:grid-cols-[260px_minmax(0,1fr)]">
               <div className="space-y-3">
-                <div className="overflow-hidden rounded-[20px] border border-slate-200 bg-slate-50">
-                  <img
-                    src={item.imageUrl}
-                    alt={item.alt}
-                    className="aspect-[4/3] h-full w-full object-cover"
-                  />
+                <div className="overflow-hidden rounded-[22px] border border-slate-200 bg-slate-50">
+                  <img src={item.imageUrl} alt={item.alt} className="aspect-[4/3] h-full w-full object-cover" />
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <Badge variant="outline" className="border-cyan-200 bg-cyan-50 text-cyan-700">{item.section === "hero" ? "Carrossel" : "Trabalho"}</Badge>
+                  <Badge variant="outline" className="border-slate-200 bg-slate-50 text-slate-600">{phaseLabel(item.phase)}</Badge>
+                  <Badge variant="outline" className={item.isActive ? "border-emerald-200 bg-emerald-50 text-emerald-700" : "border-slate-200 bg-slate-100 text-slate-500"}>
+                    {item.isActive ? "Ativa no site" : "Oculta"}
+                  </Badge>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor={`replace-${item.id}`}>Substituir imagem</Label>
-                  <Input
-                    id={`replace-${item.id}`}
-                    type="file"
-                    accept="image/*"
-                    onChange={(event) => onReplacementChange(item.id, event)}
-                  />
+                  <Input id={`replace-${item.id}`} type="file" accept="image/*" onChange={(event) => onReplacementChange(item.id, event)} className="h-12 rounded-[18px] border-slate-200 bg-white" />
                 </div>
-                <p
-                  className="max-w-full overflow-hidden text-ellipsis whitespace-nowrap text-xs text-slate-500"
-                  title={item.imageUrl.startsWith("data:image/") ? "Imagem interna guardada no sistema" : item.imageUrl}
-                >
-                  {formatImageUrlLabel(item.imageUrl)}
-                </p>
+                <p className="text-xs text-slate-500" title={item.imageUrl}>{previewLabel(item.imageUrl)}</p>
               </div>
 
-              <div className="grid gap-4">
-                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
-                  <div className="space-y-2">
-                    <Label>Título</Label>
-                    <Input
-                      value={item.title}
-                      onChange={(event) => onChange(item.id, "title", event.target.value)}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Subtítulo</Label>
-                    <Input
-                      value={item.subtitle || ""}
-                      onChange={(event) => onChange(item.id, "subtitle", event.target.value)}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Alt</Label>
-                    <Input
-                      value={item.alt}
-                      onChange={(event) => onChange(item.id, "alt", event.target.value)}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>URL da imagem</Label>
-                    <Input
-                      value={item.imageUrl}
-                      onChange={(event) => onChange(item.id, "imageUrl", event.target.value)}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Ordem</Label>
-                    <Input
-                      type="number"
-                      min="1"
-                      value={String(item.order)}
-                      onChange={(event) => onChange(item.id, "order", Number(event.target.value || 1))}
-                    />
-                  </div>
+              <div className="space-y-4">
+                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                  <Field label="Titulo" value={item.title} onChange={(value) => onChange(item.id, "title", value)} />
+                  <Field label="Subtitulo" value={item.subtitle || ""} onChange={(value) => onChange(item.id, "subtitle", value)} />
+                  <Field label="Alt" value={item.alt} onChange={(value) => onChange(item.id, "alt", value)} />
+                  <Field label="Ordem" value={String(item.order)} onChange={(value) => onChange(item.id, "order", Number(value || 1))} type="number" min="1" />
                 </div>
 
                 <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                  <Field label="URL da imagem" value={item.imageUrl} onChange={(value) => onChange(item.id, "imageUrl", value)} />
+                  <Field label="Grupo do trabalho" value={item.projectKey || ""} onChange={(value) => onChange(item.id, "projectKey", value)} />
+
                   <div className="space-y-2">
-                    <Label>Secção</Label>
+                    <Label>Secao</Label>
                     <select
                       value={item.section}
                       onChange={(event) => onChange(item.id, "section", event.target.value as GallerySection)}
-                      className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-950"
+                      className="flex h-12 w-full rounded-[18px] border border-slate-200 bg-white px-4 text-sm text-slate-950"
                     >
                       <option value="hero">Carrossel topo</option>
-                      <option value="showcase">Galeria trabalhos</option>
+                      <option value="showcase">Galeria de trabalhos</option>
                     </select>
                   </div>
-                  <div className="space-y-2">
-                    <Label>Grupo do trabalho</Label>
-                    <Input
-                      value={item.projectKey || ""}
-                      onChange={(event) => onChange(item.id, "projectKey", event.target.value)}
-                    />
-                  </div>
+
                   <div className="space-y-2">
                     <Label>Fase</Label>
                     <select
                       value={item.phase || ""}
                       onChange={(event) => onChange(item.id, "phase", event.target.value)}
-                      className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-950"
+                      className="flex h-12 w-full rounded-[18px] border border-slate-200 bg-white px-4 text-sm text-slate-950"
                     >
                       <option value="">Sem fase</option>
                       <option value="before">Antes</option>
@@ -750,46 +753,33 @@ function GallerySectionCard({
                       <option value="after">Depois</option>
                     </select>
                   </div>
-                  <label className="flex items-end gap-3 rounded-xl border border-slate-200 px-4 py-3">
-                    <input
-                      type="checkbox"
-                      checked={item.isActive}
-                      onChange={(event) => onChange(item.id, "isActive", event.target.checked)}
-                    />
-                    <span className="text-sm font-medium text-slate-700">Ativa no site</span>
-                  </label>
                 </div>
 
                 <div className="space-y-2">
-                  <Label>Descrição</Label>
-                  <textarea
+                  <Label>Descricao</Label>
+                  <Textarea
                     value={item.description || ""}
                     onChange={(event) => onChange(item.id, "description", event.target.value)}
-                    className="min-h-24 w-full rounded-md border border-slate-200 px-3 py-2 text-sm text-slate-950"
+                    className="min-h-28 rounded-[18px] border-slate-200 bg-white"
                   />
                 </div>
 
+                <label className="flex items-center gap-3 rounded-[18px] border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-700">
+                  <input
+                    type="checkbox"
+                    checked={item.isActive}
+                    onChange={(event) => onChange(item.id, "isActive", event.target.checked)}
+                  />
+                  Ativa no site
+                </label>
+
                 <div className="flex flex-wrap gap-3">
-                  <Button
-                    onClick={() => void onSave(item)}
-                    disabled={saving}
-                    className="bg-cyan-500 text-white hover:bg-cyan-600"
-                  >
-                    {saving ? (
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    ) : (
-                      <Save className="mr-2 h-4 w-4" />
-                    )}
-                    Guardar alterações
+                  <Button type="button" onClick={() => void onSave(item)} disabled={saving}>
+                    {saving ? <Loader2 className="animate-spin" /> : <Save />}
+                    Guardar alteracoes
                   </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => void onDelete(item.id)}
-                    disabled={saving}
-                    className="border-red-200 text-red-700 hover:bg-red-50"
-                  >
-                    <Trash2 className="mr-2 h-4 w-4" />
+                  <Button type="button" variant="outline" onClick={() => void onDelete(item.id)} disabled={saving} className="border-red-200 text-red-700 hover:bg-red-50 hover:text-red-700">
+                    <Trash2 />
                     Apagar
                   </Button>
                 </div>
