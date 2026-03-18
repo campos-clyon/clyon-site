@@ -45,15 +45,33 @@ a {
   text-decoration: none;
 }
 
-button[class*="bg-cyan-"],
-a[class*="bg-cyan-"],
-[data-slot="button"][class*="bg-cyan-"] {
+button[class*="bg-cyan-300"],
+button[class*="bg-cyan-400"],
+button[class*="bg-cyan-500"],
+button[class*="bg-cyan-600"],
+a[class*="bg-cyan-300"],
+a[class*="bg-cyan-400"],
+a[class*="bg-cyan-500"],
+a[class*="bg-cyan-600"],
+[data-slot="button"][class*="bg-cyan-300"],
+[data-slot="button"][class*="bg-cyan-400"],
+[data-slot="button"][class*="bg-cyan-500"],
+[data-slot="button"][class*="bg-cyan-600"] {
   color: #ffffff !important;
 }
 
-button[class*="bg-cyan-"] svg,
-a[class*="bg-cyan-"] svg,
-[data-slot="button"][class*="bg-cyan-"] svg {
+button[class*="bg-cyan-300"] svg,
+button[class*="bg-cyan-400"] svg,
+button[class*="bg-cyan-500"] svg,
+button[class*="bg-cyan-600"] svg,
+a[class*="bg-cyan-300"] svg,
+a[class*="bg-cyan-400"] svg,
+a[class*="bg-cyan-500"] svg,
+a[class*="bg-cyan-600"] svg,
+[data-slot="button"][class*="bg-cyan-300"] svg,
+[data-slot="button"][class*="bg-cyan-400"] svg,
+[data-slot="button"][class*="bg-cyan-500"] svg,
+[data-slot="button"][class*="bg-cyan-600"] svg {
   color: currentColor !important;
 }
 
