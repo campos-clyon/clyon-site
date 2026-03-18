@@ -367,16 +367,17 @@ export default async function ServiceCityPage({ params }: Props) {
               <div className="mt-7 flex flex-col gap-3 sm:flex-row">
                 <Link
                   href="/simulador"
-                  className="inline-flex items-center justify-center rounded-2xl bg-cyan-500 px-6 py-3.5 text-base font-semibold text-white shadow-[0_18px_40px_-22px_rgba(6,182,212,0.75)] transition hover:-translate-y-0.5 hover:bg-cyan-400"
+                  className="site-btn-primary min-w-[220px] px-6 py-3.5"
                 >
+                  <CheckCircle2 className="h-4 w-4" />
                   Pedir orçamento
                 </Link>
                 <Link
                   href={CONTACT_PATH}
-                  className="inline-flex items-center justify-center rounded-2xl border border-cyan-200 bg-white px-6 py-3.5 text-base font-semibold text-cyan-700 transition hover:bg-cyan-50"
+                  className="site-btn-secondary min-w-[220px] border-slate-300 text-slate-900 hover:bg-slate-50"
                 >
+                  <Phone className="h-4 w-4" />
                   Falar connosco
-                  <ArrowRight className="ml-2 h-4 w-4" />
                 </Link>
               </div>
             </div>
@@ -389,10 +390,11 @@ export default async function ServiceCityPage({ params }: Props) {
                 Resposta reforçada em {city.name}
               </h2>
               <p className="mt-4 text-base leading-8 text-slate-600">
-                Trabalhamos em {city.name} e zonas próximas com foco em rapidez,
-                comunicação clara e execução cuidada. Esta landing page foi
-                reforçada para responder melhor à intenção local e qualificar o
-                pedido logo no primeiro clique.
+                Trabalhamos em {city.name} e zonas próximas com resposta rápida,
+                orçamento claro e recolha cuidada. Retiramos os volumes validados,
+                protegemos os acessos e deixamos o espaço pronto para a etapa
+                seguinte, seja renovação, mudança, arrendamento ou simples libertação
+                de área.
               </p>
               <div className="mt-6 grid gap-3 sm:grid-cols-2">
                 <div className="rounded-[22px] border border-cyan-100 bg-cyan-50/80 p-4">
@@ -449,7 +451,7 @@ export default async function ServiceCityPage({ params }: Props) {
               O que está incluído
             </p>
             <h2 className="mt-3 text-3xl font-bold text-slate-950">
-              Serviço desenhado para resolver o pedido em {city.name}
+              Serviço completo para recolha em {city.name}
             </h2>
             <div className="mt-6 grid gap-3 sm:grid-cols-2">
               {includedItems.map((item) => (
@@ -503,7 +505,7 @@ export default async function ServiceCityPage({ params }: Props) {
               Como funciona
             </p>
             <h2 className="mt-3 text-3xl font-bold text-slate-950">
-              Processo simples do primeiro contacto até à recolha
+              Da marcação à retirada final, sem complicações
             </h2>
             <div className="mt-6 space-y-5">
               {[
@@ -529,13 +531,13 @@ export default async function ServiceCityPage({ params }: Props) {
               Porque a CLYON em {city.name}
             </p>
             <h2 className="mt-3 text-3xl font-bold text-slate-950">
-              Intenção local tratada com mais profundidade
+              Um serviço pensado para resolver de forma rápida e segura
             </h2>
             <p className="mt-4 text-base leading-8 text-slate-600">
-              Em vez de uma página genérica, esta versão responde melhor a quem
-              procura serviço real em {city.name}: explica o que recolhemos, quanto
-              pode custar, como funciona e para que zonas próximas também temos
-              cobertura. Isso aumenta a relevância local e melhora a conversão.
+              Se precisa de retirar volumes, libertar espaço e evitar o esforço de
+              carregar, desmontar e transportar sozinho, esta é a solução mais
+              simples. A nossa equipa organiza a recolha, trata do acesso e dá o
+              encaminhamento adequado ao que sai do imóvel.
             </p>
             {isFurnitureService(service.slug) && (
               <div className="mt-5 rounded-[22px] border border-cyan-100 bg-cyan-50/80 p-5">
@@ -553,10 +555,10 @@ export default async function ServiceCityPage({ params }: Props) {
 
           <div className="rounded-[30px] border border-cyan-100 bg-white p-7 shadow-[0_24px_60px_-34px_rgba(14,116,144,0.14)]">
             <p className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-700">
-              Links de apoio
+              Serviços relacionados
             </p>
             <h2 className="mt-3 text-3xl font-bold text-slate-950">
-              Mais páginas internas que reforçam esta procura
+              Apoio adicional para pedidos maiores ou mistos
             </h2>
             <div className="mt-6 space-y-3">
               {[...supportLinks, ...nearbyLinks].slice(0, 6).map((item) => (
@@ -600,24 +602,24 @@ export default async function ServiceCityPage({ params }: Props) {
             </div>
           </div>
           <p className="mt-4 max-w-3xl text-base leading-8 text-slate-600">
-            Use o simulador da {BUSINESS_NAME} para acelerar o pedido e depois valide
-            tudo connosco por telefone ou pela página de contactos. Quanto melhor
-            estiver descrito o volume e o acesso, mais rápido conseguimos confirmar
-            o serviço.
+            Diga-nos o que pretende retirar, quantos volumes tem e como é o acesso ao
+            imóvel. Com essa informação conseguimos responder mais depressa e marcar
+            a recolha com maior precisão.
           </p>
           <div className="mt-6 flex flex-col gap-3 sm:flex-row">
             <Link
               href="/simulador"
-              className="inline-flex items-center justify-center rounded-2xl bg-cyan-500 px-6 py-3.5 text-base font-semibold text-white shadow-[0_18px_40px_-22px_rgba(6,182,212,0.75)] transition hover:-translate-y-0.5 hover:bg-cyan-400"
+              className="site-btn-primary min-w-[220px] px-6 py-3.5"
             >
+              <CheckCircle2 className="h-4 w-4" />
               Simular agora
             </Link>
             <a
               href={`tel:${BUSINESS_PHONE}`}
-              className="inline-flex items-center justify-center rounded-2xl border border-cyan-200 bg-white px-6 py-3.5 text-base font-semibold text-cyan-700 transition hover:bg-cyan-50"
+              className="site-btn-secondary min-w-[220px] border-slate-300 text-slate-900 hover:bg-slate-50"
             >
-              <Phone className="mr-2 h-4 w-4" />
-              {BUSINESS_PHONE}
+              <Phone className="h-4 w-4" />
+              Ligar {BUSINESS_PHONE}
             </a>
           </div>
         </div>

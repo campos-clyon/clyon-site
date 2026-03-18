@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import {
   ArrowRight,
+  CheckCircle2,
   Clock3,
   MapPin,
   Phone,
@@ -68,12 +69,12 @@ const includedItems = [
 ];
 
 const differentiators = [
-  "Orçamento rápido por telefone ou WhatsApp",
-  "Desmontagem quando necessária e recolha porta a porta",
-  "Triagem para doação, reutilização e reciclagem",
-  "Atendimento em prédios sem elevador e acessos difíceis",
-  "Cobertura forte em Lisboa, Grande Lisboa, Margem Sul e Setúbal",
-  "Apoio complementar para monos, entulho e esvaziamento de casas",
+  "Desmontagem quando necessária e retirada porta a porta",
+  "Proteção de paredes, elevadores e zonas comuns sempre que o acesso exige cuidado",
+  "Triagem responsável para doação, reaproveitamento e reciclagem",
+  "Equipa preparada para prédios sem elevador, caves, arrecadações e acessos difíceis",
+  "Atendimento rápido em Lisboa, Grande Lisboa, Margem Sul e Setúbal",
+  "Orçamento claro antes da recolha, sem deixar dúvidas sobre o que será retirado",
 ];
 
 const pricingExamples = [
@@ -197,32 +198,34 @@ export default function RecolhaDeMoveisPage() {
               <div className="mt-7 flex flex-col gap-3 sm:flex-row">
                 <Link
                   href="/simulador"
-                  className="inline-flex items-center justify-center rounded-2xl bg-cyan-500 px-6 py-3.5 text-base font-semibold text-white shadow-[0_18px_40px_-22px_rgba(6,182,212,0.75)] transition hover:-translate-y-0.5 hover:bg-cyan-400"
+                  className="site-btn-primary min-w-[220px] px-6 py-3.5"
                 >
+                  <CheckCircle2 className="h-4 w-4" />
                   Pedir orçamento
                 </Link>
                 <a
                   href={`tel:${BUSINESS_PHONE}`}
-                  className="inline-flex items-center justify-center rounded-2xl border border-cyan-200 bg-white px-6 py-3.5 text-base font-semibold text-cyan-700 transition hover:bg-cyan-50"
+                  className="site-btn-secondary min-w-[220px] border-slate-300 text-slate-900 hover:bg-slate-50"
                 >
                   <Phone className="mr-2 h-4 w-4" />
-                  {BUSINESS_PHONE}
+                  Ligar {BUSINESS_PHONE}
                 </a>
               </div>
             </div>
 
             <div className="overflow-hidden rounded-[32px] border border-cyan-100 bg-white p-6 shadow-[0_24px_60px_-34px_rgba(14,116,144,0.18)]">
               <p className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-700">
-                Página-pilar da categoria
+                Recolha completa e responsável
               </p>
               <h2 className="mt-3 text-3xl font-bold text-slate-950">
-                Conteúdo para competir pela query principal
+                Retiramos os móveis, libertamos o espaço e tratamos do destino certo
               </h2>
               <p className="mt-4 text-base leading-8 text-slate-600">
-                Quem pesquisa por recolha de móveis normalmente quer uma solução
-                rápida, local e completa. Esta página centraliza preço, cobertura,
-                itens recolhidos, descarte legal e ligação direta para as páginas
-                locais com maior prioridade, incluindo Amadora.
+                Se tem sofás, camas, armários, colchões ou eletrodomésticos a ocupar
+                espaço, a nossa equipa trata da desmontagem, da retirada e do
+                transporte com rapidez e cuidado. Sempre que possível, os móveis em
+                bom estado seguem para reaproveitamento; o restante é encaminhado
+                para descarte responsável.
               </p>
               <div className="mt-6 grid gap-3 sm:grid-cols-2">
                 <div className="rounded-[22px] border border-cyan-100 bg-cyan-50/80 p-4">
@@ -299,11 +302,9 @@ export default function RecolhaDeMoveisPage() {
 
           <div className="rounded-[30px] border border-cyan-100 bg-slate-950 p-7 text-white shadow-[0_24px_60px_-34px_rgba(2,6,23,0.45)]">
             <p className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-200">
-              Sinais de confiança
+              Porque escolher a CLYON
             </p>
-            <h2 className="mt-3 text-3xl font-bold">
-              O que o Google precisa de ver melhor
-            </h2>
+            <h2 className="mt-3 text-3xl font-bold">Um serviço pensado para resolver sem complicações</h2>
             <div className="mt-6 space-y-3">
               {differentiators.map((item) => (
                 <div
@@ -343,14 +344,14 @@ export default function RecolhaDeMoveisPage() {
               Como funciona
             </p>
             <h2 className="mt-3 text-3xl font-bold text-slate-950">
-              Processo simples, pensado para converter rápido
+              Da primeira mensagem até ao espaço livre
             </h2>
             <div className="mt-6 space-y-5">
               {[
-                "Envie fotos, morada e indique se há elevador, escadas ou desmontagem.",
-                "Receba um orçamento rápido e a melhor janela de recolha disponível.",
-                "A equipa chega, protege acessos, carrega e retira tudo o que foi validado.",
-                "Os móveis seguem para triagem, doação ou descarte legal conforme o estado.",
+                "Envie fotos dos móveis, a morada e indique se há escadas, elevador ou necessidade de desmontagem.",
+                "Receba um orçamento claro com a melhor data de recolha para o seu caso.",
+                "No dia marcado, a equipa chega, protege os acessos, desmonta o que for preciso e retira tudo com cuidado.",
+                "No final, os móveis seguem para triagem, doação, reaproveitamento ou descarte responsável, conforme o estado.",
               ].map((step, index) => (
                 <div key={step} className="flex gap-4">
                   <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-cyan-500 text-sm font-bold text-white">
@@ -365,16 +366,16 @@ export default function RecolhaDeMoveisPage() {
 
         <div className="mt-8 rounded-[30px] border border-cyan-100 bg-white p-7 shadow-[0_24px_60px_-34px_rgba(14,116,144,0.14)]">
           <p className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-700">
-            Zonas prioritárias
+            Onde atuamos
           </p>
           <h2 className="mt-3 text-3xl font-bold text-slate-950">
-            Páginas locais para ganhar cobertura orgânica
+            Recolha de móveis nas principais zonas da Grande Lisboa e Margem Sul
           </h2>
           <p className="mt-3 max-w-3xl text-base leading-8 text-slate-600">
-            A query genérica precisa de uma página forte, mas o crescimento real vem
-            da combinação com páginas locais robustas. Amadora foi priorizada porque
-            está a aparecer longe no Google e precisa de receber mais links internos
-            e melhor conteúdo.
+            Atendemos pedidos em Lisboa, Amadora, Sintra, Oeiras, Cascais, Almada,
+            Seixal e Setúbal. Se precisa de retirar móveis de um apartamento, moradia,
+            escritório, arrecadação ou loja, pode abrir a página da sua zona e pedir
+            resposta rápida com mais detalhe local.
           </p>
 
           <div className="mt-6 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
@@ -394,7 +395,8 @@ export default function RecolhaDeMoveisPage() {
                   Recolha de móveis em {city.name}
                 </h3>
                 <p className="mt-3 text-sm leading-7 text-slate-600">
-                  Página local reforçada para captar pedidos qualificados em {city.name}.
+                  Veja a cobertura na sua zona, exemplos de recolha e a forma mais rápida
+                  de pedir orçamento em {city.name}.
                 </p>
               </Link>
             ))}
@@ -404,26 +406,25 @@ export default function RecolhaDeMoveisPage() {
         <div className="mt-8 grid gap-6 lg:grid-cols-[1fr_1fr]">
           <div className="rounded-[30px] border border-cyan-100 bg-white p-7 shadow-[0_24px_60px_-34px_rgba(14,116,144,0.14)]">
             <p className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-700">
-              Concorrência real
+              Quando faz sentido chamar a nossa equipa
             </p>
             <h2 className="mt-3 text-3xl font-bold text-slate-950">
-              Porque os primeiros lugares estão acima
+              Ideal para quem precisa de rapidez, força de trabalho e solução completa
             </h2>
             <p className="mt-4 text-base leading-8 text-slate-600">
-              Muitos resultados que ocupam o topo misturam três vantagens: páginas
-              muito focadas na query, cobertura geográfica ampla e sinais de
-              confiança acumulados com marca, backlinks e menções. Esta página fecha
-              a parte on-page e de arquitetura interna, que é a parte que depende
-              diretamente do site.
+              Este serviço é indicado para mudanças de casa, renovação de imóveis,
+              despejo de apartamentos, libertação de arrecadações e retirada de
+              móveis demasiado pesados para tratar sozinho. Em vez de perder tempo
+              com desmontagem, transporte e descarte, resolve tudo num único pedido.
             </p>
           </div>
 
           <div className="rounded-[30px] border border-cyan-100 bg-white p-7 shadow-[0_24px_60px_-34px_rgba(14,116,144,0.14)]">
             <p className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-700">
-              Serviços complementares
+              Serviços relacionados
             </p>
             <h2 className="mt-3 text-3xl font-bold text-slate-950">
-              Links internos para fechar mais intenções
+              Apoio adicional quando o pedido vai além dos móveis
             </h2>
             <div className="mt-6 grid gap-3 sm:grid-cols-2">
               {[
@@ -467,23 +468,24 @@ export default function RecolhaDeMoveisPage() {
             Precisa de recolha de móveis hoje?
           </h2>
           <p className="mt-4 max-w-3xl text-base leading-8 text-slate-600">
-            Use o simulador para acelerar o pedido ou ligue diretamente para validar
-            disponibilidade. Quanto mais claro estiver o volume e o acesso, mais
-            rápido conseguimos confirmar o serviço.
+            Se já sabe o que precisa de retirar, envie o pedido agora e receba uma
+            resposta rápida. Quanto mais informação nos der sobre quantidade,
+            localização e acessos, mais preciso será o orçamento.
           </p>
           <div className="mt-6 flex flex-col gap-3 sm:flex-row">
             <Link
               href="/simulador"
-              className="inline-flex items-center justify-center rounded-2xl bg-cyan-500 px-6 py-3.5 text-base font-semibold text-white shadow-[0_18px_40px_-22px_rgba(6,182,212,0.75)] transition hover:-translate-y-0.5 hover:bg-cyan-400"
+              className="site-btn-primary min-w-[220px] px-6 py-3.5"
             >
+              <CheckCircle2 className="h-4 w-4" />
               Simular agora
             </Link>
             <Link
               href="/contactos"
-              className="inline-flex items-center justify-center rounded-2xl border border-cyan-200 bg-white px-6 py-3.5 text-base font-semibold text-cyan-700 transition hover:bg-cyan-50"
+              className="site-btn-secondary min-w-[220px] border-slate-300 text-slate-900 hover:bg-slate-50"
             >
+              <Phone className="h-4 w-4" />
               Falar connosco
-              <ArrowRight className="ml-2 h-4 w-4" />
             </Link>
           </div>
         </div>
