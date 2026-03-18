@@ -1,8 +1,10 @@
 import Link from "next/link";
-import { ArrowRight, Instagram, Lock, MessageCircle, Square, Wallet } from "lucide-react";
+import { ArrowDownToLine, ArrowRight, Instagram, Lock, MessageCircle, Square, Wallet } from "lucide-react";
 
 import CookiePreferencesLink from "@/components/CookiePreferencesLink";
 import { BUSINESS_INSTAGRAM, BUSINESS_PHONE } from "@/lib/seo-data";
+
+const ANDROID_APP_URL = "https://expo.dev/artifacts/eas/91zzW2jq9WrtksvBVCCjWm.apk";
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();
@@ -38,6 +40,10 @@ export default function Footer() {
                 <Link href="/colaboradores" className="site-btn-secondary">
                   Área de Colaboradores
                 </Link>
+                <a href={ANDROID_APP_URL} target="_blank" rel="noreferrer" className="site-btn-secondary">
+                  Baixar App Android
+                  <ArrowDownToLine className="ml-2 h-4 w-4" />
+                </a>
               </div>
             </div>
 
