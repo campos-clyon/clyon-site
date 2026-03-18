@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { ArrowRight, ArrowUpRight, MessageSquareQuote, Sparkles } from "lucide-react";
 import { getShowcaseProjects, phaseLabel } from "@/lib/work-gallery";
 
@@ -138,11 +139,13 @@ export default async function TrabalhosPage() {
                       className="overflow-hidden rounded-[24px] border border-slate-200 bg-slate-50"
                     >
                       <div className="relative aspect-[4/3] overflow-hidden">
-                        <img
+                        <Image
                           src={item.imageUrl}
                           alt={item.alt}
-                          className="h-full w-full object-cover"
-                          loading="lazy"
+                          fill
+                          sizes="(min-width: 1280px) 420px, (min-width: 640px) 50vw, 100vw"
+                          quality={72}
+                          className="object-cover"
                         />
                         {item.phase && (
                           <span className="absolute left-4 top-4 rounded-full bg-slate-950/85 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-white">

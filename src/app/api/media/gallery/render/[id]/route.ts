@@ -7,6 +7,8 @@ type RouteContext = { params: Promise<{ id: string }> };
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
+const LONG_CACHE_HEADER = "public, max-age=31536000, immutable";
+
 function decodeDataUrl(value: string) {
   const match = value.match(/^data:(.+?);base64,(.+)$/);
 
@@ -42,7 +44,7 @@ export async function GET(request: Request, context: RouteContext) {
   return new NextResponse(decoded.buffer, {
     headers: {
       "Content-Type": decoded.contentType,
-      "Cache-Control": "no-store, max-age=0, must-revalidate",
+      "Cache-Control": LONG_CACHE_HEADER,
     },
   });
 }

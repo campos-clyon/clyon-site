@@ -84,6 +84,11 @@ const sectionMeta: Record<
   },
 };
 
+const uploadTargets: Record<GallerySection, { maxDimension: number; quality: number }> = {
+  hero: { maxDimension: 1800, quality: 0.8 },
+  showcase: { maxDimension: 1600, quality: 0.78 },
+};
+
 async function readResponsePayload(response: Response) {
   const text = await response.text();
 
@@ -112,6 +117,73 @@ function previewLabel(value: string) {
   return value;
 }
 
+function canOptimizeFile(file: File) {
+  return file.type.startsWith("image/") && file.type !== "image/gif" && file.type !== "image/svg+xml";
+}
+
+async function loadImageElement(file: File) {
+  const objectUrl = URL.createObjectURL(file);
+
+  try {
+    const image = await new Promise<HTMLImageElement>((resolve, reject) => {
+      const nextImage = new window.Image();
+
+      nextImage.onload = () => resolve(nextImage);
+      nextImage.onerror = () => reject(new Error("Nao foi possivel ler a imagem."));
+      nextImage.src = objectUrl;
+    });
+
+    return image;
+  } finally {
+    URL.revokeObjectURL(objectUrl);
+  }
+}
+
+async function optimizeImageFile(file: File, section: GallerySection) {
+  if (typeof window === "undefined" || !canOptimizeFile(file)) {
+    return file;
+  }
+
+  const { maxDimension, quality } = uploadTargets[section];
+  const image = await loadImageElement(file);
+  const largestSide = Math.max(image.naturalWidth, image.naturalHeight);
+  const scale = largestSide > maxDimension ? maxDimension / largestSide : 1;
+  const targetWidth = Math.max(1, Math.round(image.naturalWidth * scale));
+  const targetHeight = Math.max(1, Math.round(image.naturalHeight * scale));
+
+  const canvas = document.createElement("canvas");
+  canvas.width = targetWidth;
+  canvas.height = targetHeight;
+
+  const context = canvas.getContext("2d");
+
+  if (!context) {
+    return file;
+  }
+
+  context.drawImage(image, 0, 0, targetWidth, targetHeight);
+
+  const blob = await new Promise<Blob | null>((resolve) => {
+    canvas.toBlob(resolve, "image/webp", quality);
+  });
+
+  if (!blob) {
+    return file;
+  }
+
+  const shouldKeepOriginal = blob.size >= file.size * 0.95 && scale === 1;
+
+  if (shouldKeepOriginal) {
+    return file;
+  }
+
+  const baseName = file.name.replace(/\.[^.]+$/, "") || "imagem";
+  return new File([blob], `${baseName}.webp`, {
+    type: "image/webp",
+    lastModified: Date.now(),
+  });
+}
+
 export default function ImageManagerClient() {
   const router = useRouter();
   const [items, setItems] = useState<GalleryItem[]>([]);
@@ -120,6 +192,7 @@ export default function ImageManagerClient() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [optimizingUpload, setOptimizingUpload] = useState(false);
   const [activeSection, setActiveSection] = useState<GallerySection>("hero");
   const [newItem, setNewItem] = useState<GalleryFormState>(defaultForm);
   const [newFile, setNewFile] = useState<File | null>(null);
@@ -209,6 +282,34 @@ export default function ImageManagerClient() {
     setItems((current) =>
       current.map((item) => (item.id === id ? { ...item, [field]: value } : item)),
     );
+  }
+
+  async function handleNewFileChange(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0] || null;
+
+    if (!file) {
+      setNewFile(null);
+      return;
+    }
+
+    setOptimizingUpload(true);
+    setError("");
+
+    try {
+      const optimizedFile = await optimizeImageFile(file, newItem.section);
+      setNewFile(optimizedFile);
+      setMessage(
+        optimizedFile === file
+          ? "Imagem pronta para upload."
+          : "Imagem otimizada antes do upload para carregar mais rapido no site.",
+      );
+    } catch (err) {
+      setNewFile(file);
+      setError(err instanceof Error ? err.message : "Nao foi possivel otimizar a imagem.");
+    } finally {
+      setOptimizingUpload(false);
+      event.target.value = "";
+    }
   }
 
   async function handleCreate(event: FormEvent<HTMLFormElement>) {
@@ -398,9 +499,36 @@ export default function ImageManagerClient() {
     }
   }
 
-  function onReplacementChange(id: string, event: ChangeEvent<HTMLInputElement>) {
+  async function onReplacementChange(
+    id: string,
+    section: GallerySection,
+    event: ChangeEvent<HTMLInputElement>,
+  ) {
     const file = event.target.files?.[0] || null;
-    setReplacementFiles((current) => ({ ...current, [id]: file }));
+
+    if (!file) {
+      setReplacementFiles((current) => ({ ...current, [id]: null }));
+      return;
+    }
+
+    setOptimizingUpload(true);
+    setError("");
+
+    try {
+      const optimizedFile = await optimizeImageFile(file, section);
+      setReplacementFiles((current) => ({ ...current, [id]: optimizedFile }));
+      setMessage(
+        optimizedFile === file
+          ? "Nova imagem pronta para guardar."
+          : "Nova imagem otimizada antes da substituicao.",
+      );
+    } catch (err) {
+      setReplacementFiles((current) => ({ ...current, [id]: file }));
+      setError(err instanceof Error ? err.message : "Nao foi possivel otimizar a imagem.");
+    } finally {
+      setOptimizingUpload(false);
+      event.target.value = "";
+    }
   }
 
   const heroItems = items.filter((item) => item.section === "hero");
@@ -524,11 +652,11 @@ export default function ImageManagerClient() {
                     id="file"
                     type="file"
                     accept="image/*"
-                    onChange={(event) => setNewFile(event.target.files?.[0] || null)}
+                    onChange={(event) => void handleNewFileChange(event)}
                     className="h-12 rounded-[18px] border-slate-200 bg-white"
                   />
                   <p className="text-xs text-slate-500">
-                    Upload direto evita depender de cache antigo da imagem anterior.
+                    O upload comprime e redimensiona a imagem para o site abrir mais rapido.
                   </p>
                 </div>
 
@@ -541,8 +669,8 @@ export default function ImageManagerClient() {
                   Ativa no site
                 </label>
 
-                <Button type="submit" disabled={saving || loading} className="w-full">
-                  {saving ? <Loader2 className="animate-spin" /> : <UploadCloud />}
+                <Button type="submit" disabled={saving || loading || optimizingUpload} className="w-full">
+                  {saving || optimizingUpload ? <Loader2 className="animate-spin" /> : <UploadCloud />}
                   Guardar imagem
                 </Button>
               </form>
@@ -669,7 +797,11 @@ type GallerySectionPanelProps = {
   onChange: (id: string, field: keyof GalleryItem, value: string | boolean | number) => void;
   onSave: (item: GalleryItem) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
-  onReplacementChange: (id: string, event: ChangeEvent<HTMLInputElement>) => void;
+  onReplacementChange: (
+    id: string,
+    section: GallerySection,
+    event: ChangeEvent<HTMLInputElement>,
+  ) => Promise<void>;
 };
 
 function GallerySectionPanel({
@@ -711,7 +843,7 @@ function GallerySectionPanel({
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor={`replace-${item.id}`}>Substituir imagem</Label>
-                  <Input id={`replace-${item.id}`} type="file" accept="image/*" onChange={(event) => onReplacementChange(item.id, event)} className="h-12 rounded-[18px] border-slate-200 bg-white" />
+                  <Input id={`replace-${item.id}`} type="file" accept="image/*" onChange={(event) => void onReplacementChange(item.id, item.section, event)} className="h-12 rounded-[18px] border-slate-200 bg-white" />
                 </div>
                 <p className="text-xs text-slate-500" title={item.imageUrl}>{previewLabel(item.imageUrl)}</p>
               </div>

@@ -63,6 +63,21 @@ export default function ImageCarousel({
     return nextPromise;
   }, []);
 
+  const preloadNearbyImages = useCallback(
+    (index: number) => {
+      if (images.length <= 1) {
+        return;
+      }
+
+      const nextIndex = (index + 1) % images.length;
+      const previousIndex = (index - 1 + images.length) % images.length;
+
+      void ensureImageLoaded(images[nextIndex]?.url || "");
+      void ensureImageLoaded(images[previousIndex]?.url || "");
+    },
+    [ensureImageLoaded, images],
+  );
+
   const goToIndex = useCallback(
     async (nextIndex: number) => {
       const nextImage = images[nextIndex];
@@ -89,11 +104,16 @@ export default function ImageCarousel({
     }
 
     void ensureImageLoaded(images[0].url);
+    preloadNearbyImages(0);
+  }, [ensureImageLoaded, images, preloadNearbyImages]);
 
-    for (const image of images.slice(1)) {
-      void ensureImageLoaded(image.url);
+  useEffect(() => {
+    if (images.length === 0) {
+      return;
     }
-  }, [ensureImageLoaded, images]);
+
+    preloadNearbyImages(currentIndex);
+  }, [currentIndex, images.length, preloadNearbyImages]);
 
   useEffect(() => {
     if (!autoPlay || images.length <= 1) {
@@ -110,7 +130,6 @@ export default function ImageCarousel({
   if (images.length === 0) return null;
 
   const currentImage = images[currentIndex];
-  const isApiImage = currentImage.url.startsWith("/api/");
 
   return (
     <div className="group relative h-full w-full overflow-hidden rounded-[28px] bg-[linear-gradient(180deg,#d9faff_0%,#f4fdff_42%,#083344_100%)]">
@@ -119,9 +138,8 @@ export default function ImageCarousel({
         alt={currentImage.alt}
         fill
         priority={currentIndex === 0}
-        quality={78}
+        quality={72}
         sizes="(min-width: 1280px) 620px, (min-width: 1024px) 50vw, 100vw"
-        unoptimized={isApiImage}
         className="object-cover object-center"
         onLoad={() => {
           loadedUrlsRef.current.add(currentImage.url);

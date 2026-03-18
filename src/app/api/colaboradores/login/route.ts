@@ -1,28 +1,62 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getColaboradorByNome } from "@/lib/db";
 import * as bcrypt from "bcryptjs";
 import * as jose from "jose";
+
+import { getColaboradorByNome, getDb } from "@/lib/db";
 import { ENV } from "@/lib/env";
+
+const BCRYPT_HASH_REGEX = /^\$2[aby]\$\d{2}\$[./A-Za-z0-9]{53}$/;
 
 export async function POST(req: NextRequest) {
   try {
     const { nome, senha } = await req.json();
+    const nomeNormalizado = typeof nome === "string" ? nome.trim().toUpperCase() : "";
+    const senhaNormalizada = typeof senha === "string" ? senha : "";
 
-    if (!nome || !senha) {
-      return NextResponse.json({ error: "Nome e senha s�o obrigat�rios" }, { status: 400 });
+    if (!nomeNormalizado || !senhaNormalizada) {
+      return NextResponse.json({ error: "Nome e senha são obrigatórios" }, { status: 400 });
     }
 
-    const colaborador = await getColaboradorByNome(nome.toUpperCase());
+    const db = await getDb();
+    if (!db) {
+      console.error("[Colaborador Login] DATABASE_URL not configured");
+      return NextResponse.json(
+        { error: "Área interna indisponível. Verifique a configuração da base de dados." },
+        { status: 503 },
+      );
+    }
+
+    const colaborador = await getColaboradorByNome(nomeNormalizado);
     if (!colaborador) {
-      return NextResponse.json({ error: "Colaborador n�o encontrado" }, { status: 401 });
+      return NextResponse.json({ error: "Colaborador não encontrado" }, { status: 401 });
     }
 
-    const senhaValida = await bcrypt.compare(senha, colaborador.senha);
+    if (!colaborador.senha || !BCRYPT_HASH_REGEX.test(colaborador.senha)) {
+      console.error("[Colaborador Login] Invalid password hash", {
+        colaboradorId: colaborador.id,
+        nome: colaborador.nome,
+      });
+      return NextResponse.json(
+        { error: "As credenciais deste colaborador precisam de ser repostas." },
+        { status: 500 },
+      );
+    }
+
+    let senhaValida = false;
+    try {
+      senhaValida = await bcrypt.compare(senhaNormalizada, colaborador.senha);
+    } catch (error) {
+      console.error("[Colaborador Login] Password compare failed", error);
+      return NextResponse.json(
+        { error: "As credenciais deste colaborador precisam de ser repostas." },
+        { status: 500 },
+      );
+    }
+
     if (!senhaValida) {
       return NextResponse.json({ error: "Senha incorreta" }, { status: 401 });
     }
 
-    // Gerar token JWT para colaborador
     const secretKey = new TextEncoder().encode(ENV.cookieSecret || "colaborador_secret");
     const token = await new jose.SignJWT({
       id: colaborador.id,
