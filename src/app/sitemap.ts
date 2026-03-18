@@ -11,6 +11,11 @@ import { getAllBlogPosts } from "@/lib/blog-data";
 
 const staticPages = [
   { url: `${SITE_URL}`, priority: 1.0, changeFrequency: "weekly" as const },
+  {
+    url: `${SITE_URL}/recolha-de-moveis`,
+    priority: 0.98,
+    changeFrequency: "weekly" as const,
+  },
   { url: `${SITE_URL}/servicos`, priority: 0.95, changeFrequency: "weekly" as const },
   { url: `${SITE_URL}/simulador`, priority: 0.95, changeFrequency: "weekly" as const },
   { url: `${SITE_URL}/trabalhos`, priority: 0.85, changeFrequency: "weekly" as const },

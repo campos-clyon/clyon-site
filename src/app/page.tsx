@@ -46,34 +46,40 @@ const services = [
     description:
       "Remoção rápida e organizada para obras, remodelações e limpezas pesadas.",
     icon: Trash2,
+    href: "/servicos",
   },
   {
     name: "Recolha de Móveis",
     description:
       "Retiramos móveis antigos, eletrodomésticos e volumes grandes sem complicações.",
     icon: HomeIcon,
+    href: "/recolha-de-moveis",
   },
   {
     name: "Limpeza Pós-Obra",
     description:
       "Acabamentos impecáveis para deixar o espaço pronto a usar no mesmo dia.",
     icon: Zap,
+    href: "/servicos",
   },
   {
     name: "Mudanças e Apoio",
     description:
       "Equipa de apoio para transporte, desmontagem e organização da mudança.",
     icon: Truck,
+    href: "/servicos",
   },
   {
     name: "Recolha de Monos",
     description: "Limpeza de sótãos, caves e garagens com organização e eficiência.",
     icon: Trash2,
+    href: "/servicos",
   },
   {
     name: "Camião com Motorista",
     description: "Solução flexível para transporte de qualquer volume ou carga.",
     icon: Truck,
+    href: "/servicos",
   },
 ];
 
@@ -278,15 +284,79 @@ export default async function HomePage() {
                     {service.description}
                   </p>
                   <Link
-                    href="/simulador"
+                    href={service.href}
                     className="mt-4 inline-flex items-center rounded-full bg-slate-50 px-3.5 py-2 text-[0.92rem] font-semibold text-cyan-800 transition group-hover:bg-cyan-50 group-hover:text-cyan-700 hover:text-cyan-600"
                   >
-                    Pedir orçamento
+                    {service.href === "/recolha-de-moveis"
+                      ? "Ver página principal"
+                      : "Pedir orçamento"}
                     <ArrowRight className="ml-2 h-3.5 w-3.5" />
                   </Link>
                 </div>
               </article>
             ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="bg-slate-50 py-16 lg:py-20">
+        <div className="mx-auto max-w-7xl px-6 lg:px-8">
+          <div className="rounded-[34px] border border-cyan-100 bg-white p-8 shadow-[0_22px_60px_-34px_rgba(14,116,144,0.18)] lg:p-10">
+            <div className="grid gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
+              <div>
+                <p className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-700">
+                  Foco SEO
+                </p>
+                <h2 className="mt-4 text-4xl font-bold leading-tight text-slate-950">
+                  Reforço específico para recolha de móveis
+                </h2>
+                <p className="mt-4 text-base leading-8 text-slate-600">
+                  A categoria de recolha de móveis exige uma página mais profunda,
+                  com cobertura por cidade, faixas de preço, descarte legal e links
+                  internos fortes. Criámos esse ponto de entrada para competir pela
+                  query principal e empurrar Amadora para cima.
+                </p>
+              </div>
+
+              <div className="grid gap-3 sm:grid-cols-2">
+                {[
+                  {
+                    title: "Página-pilar",
+                    text: "Conteúdo dedicado para a keyword principal.",
+                  },
+                  {
+                    title: "Amadora reforçada",
+                    text: "Mais sinais internos para a localidade crítica.",
+                  },
+                  {
+                    title: "FAQ e schema",
+                    text: "Melhor alinhamento com a intenção de pesquisa.",
+                  },
+                  {
+                    title: "Links de apoio",
+                    text: "Fluxo interno para serviços e páginas locais.",
+                  },
+                ].map((item) => (
+                  <div
+                    key={item.title}
+                    className="rounded-[22px] border border-cyan-100 bg-cyan-50/70 p-5"
+                  >
+                    <h3 className="text-base font-semibold text-slate-950">{item.title}</h3>
+                    <p className="mt-3 text-sm leading-7 text-slate-600">{item.text}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="mt-8">
+              <Link
+                href="/recolha-de-moveis"
+                className="inline-flex items-center justify-center rounded-2xl bg-cyan-500 px-6 py-3.5 text-base font-semibold text-white shadow-[0_18px_40px_-22px_rgba(6,182,212,0.75)] transition hover:-translate-y-0.5 hover:bg-cyan-400"
+              >
+                Abrir página de recolha de móveis
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Link>
+            </div>
           </div>
         </div>
       </section>

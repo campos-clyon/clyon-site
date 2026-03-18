@@ -45,6 +45,11 @@ export default function Footer() {
               <h3 className="mb-4 text-sm font-semibold uppercase tracking-[0.18em] text-white">Serviços</h3>
               <ul className="space-y-3 text-[0.98rem] text-cyan-50/82">
                 <li>
+                  <Link href="/recolha-de-moveis" className="transition-colors hover:text-white">
+                    Recolha de móveis
+                  </Link>
+                </li>
+                <li>
                   <Link href="/simulador" className="transition-colors hover:text-white">
                     Solicitar serviço
                   </Link>

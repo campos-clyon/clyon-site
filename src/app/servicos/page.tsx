@@ -29,36 +29,48 @@ const services = [
     description:
       "Remoção organizada para obras, remodelações e limpezas pesadas com resposta rápida.",
     icon: Trash2,
+    href: "/simulador",
+    cta: "Pedir orçamento",
   },
   {
     title: "Recolha de Móveis",
     description:
       "Retiramos móveis antigos, recheios e volumes grandes com transporte profissional.",
     icon: Home,
+    href: "/recolha-de-moveis",
+    cta: "Ver página principal",
   },
   {
     title: "Recolha de Monos",
     description:
       "Recolha de objetos volumosos, sucata e resíduos diversos com destino responsável.",
     icon: Wrench,
+    href: "/simulador",
+    cta: "Pedir orçamento",
   },
   {
     title: "Limpeza Pós-Obra",
     description:
       "Limpeza final para deixar o espaço pronto a usar com bom acabamento e rapidez.",
     icon: Zap,
+    href: "/simulador",
+    cta: "Pedir orçamento",
   },
   {
     title: "Mudanças",
     description:
       "Apoio a mudanças residenciais e comerciais com equipas experientes e processo claro.",
     icon: Truck,
+    href: "/simulador",
+    cta: "Pedir orçamento",
   },
   {
     title: "Camião com Motorista",
     description:
       "Transporte profissional para cargas, despejos e apoio logístico pontual.",
     icon: Truck,
+    href: "/simulador",
+    cta: "Pedir orçamento",
   },
 ];
 
@@ -110,15 +122,44 @@ export default function ServicosPage() {
                     {service.description}
                   </p>
                   <Link
-                    href="/simulador"
+                    href={service.href}
                     className="mt-5 inline-flex items-center text-base font-semibold text-cyan-700 transition hover:text-cyan-500"
                   >
-                    Pedir orçamento
+                    {service.cta}
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </Link>
                 </div>
               </article>
             ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="bg-white py-16 lg:py-20">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+          <div className="rounded-[34px] border border-cyan-100 bg-cyan-50/70 px-8 py-10 shadow-[0_24px_60px_-34px_rgba(14,116,144,0.16)] lg:px-12">
+            <div className="grid gap-8 lg:grid-cols-[1fr_auto] lg:items-center">
+              <div>
+                <p className="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-700">
+                  Categoria crítica
+                </p>
+                <h2 className="mt-4 text-3xl font-bold text-slate-950 sm:text-4xl">
+                  Recolha de móveis merece uma página própria
+                </h2>
+                <p className="mt-4 max-w-2xl text-base leading-8 text-slate-600">
+                  Reforçámos a arquitetura interna com uma página-pilar focada na
+                  keyword principal e ligações diretas para Lisboa, Amadora, Sintra,
+                  Oeiras, Cascais, Almada e Setúbal.
+                </p>
+              </div>
+              <Link
+                href="/recolha-de-moveis"
+                className="inline-flex items-center justify-center rounded-2xl bg-cyan-500 px-7 py-4 text-base font-semibold text-white transition hover:-translate-y-0.5 hover:bg-cyan-400"
+              >
+                Abrir recolha de móveis
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Link>
+            </div>
           </div>
         </div>
       </section>

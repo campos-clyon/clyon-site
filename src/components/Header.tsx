@@ -9,6 +9,7 @@ export default function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
 
   const navLinks = [
+    { label: "Recolha de Móveis", href: "/recolha-de-moveis" },
     { label: "Serviços", href: "/servicos" },
     { label: "Trabalhos", href: "/trabalhos" },
     { label: "Avaliações", href: "/avaliacoes" },
@@ -41,8 +42,8 @@ export default function Header() {
 
         <div className="flex flex-shrink-0 items-center gap-2 sm:gap-3">
           <div className="hidden lg:block">
-            <Link href="/trabalhos" className="site-btn-secondary px-4 py-2">
-              <span className="!text-sm !font-semibold !text-[#047faa]">Ver Trabalhos</span>
+            <Link href="/recolha-de-moveis" className="site-btn-secondary px-4 py-2">
+              <span className="!text-sm !font-semibold !text-[#047faa]">Recolha de Móveis</span>
             </Link>
           </div>
 
