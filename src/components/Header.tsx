@@ -40,6 +40,12 @@ export default function Header() {
         </nav>
 
         <div className="flex flex-shrink-0 items-center gap-2 sm:gap-3">
+          <div className="hidden lg:block">
+            <Link href="/recolha-de-moveis" className="site-btn-secondary px-4 py-3">
+              <span className="!text-sm !font-semibold !text-[#047faa]">Recolha de Moveis</span>
+            </Link>
+          </div>
+
           <Link href="/simulador" className="site-btn-primary px-4 py-3 sm:px-5">
             <span className="!text-sm !font-semibold !text-white">Simular</span>
             <ArrowRight className="hidden h-4 w-4 text-white sm:block" />
