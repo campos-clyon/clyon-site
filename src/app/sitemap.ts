@@ -17,6 +17,7 @@ const staticPages = [
     changeFrequency: "weekly" as const,
   },
   { url: `${SITE_URL}/servicos`, priority: 0.95, changeFrequency: "weekly" as const },
+  { url: `${SITE_URL}/precos`, priority: 0.82, changeFrequency: "weekly" as const },
   { url: `${SITE_URL}/simulador`, priority: 0.95, changeFrequency: "weekly" as const },
   { url: `${SITE_URL}/trabalhos`, priority: 0.85, changeFrequency: "weekly" as const },
   { url: `${SITE_URL}/avaliacoes`, priority: 0.8, changeFrequency: "weekly" as const },

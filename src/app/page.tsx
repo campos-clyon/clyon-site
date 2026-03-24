@@ -5,7 +5,6 @@ import {
   ArrowRight,
   CheckCircle2,
   Home as HomeIcon,
-  MapPin,
   MessageSquareQuote,
   ShieldCheck,
   Sparkles,
@@ -19,23 +18,16 @@ import { CITIES, REGIONS, getCityServiceSlug } from "@/lib/seo-data";
 import { getHeroCarouselImages } from "@/lib/work-gallery";
 
 export const metadata: Metadata = {
-  title: "Recolha de Entulho, Móveis e Monos em Lisboa e Margem Sul | CLYON",
+  title: "Recolha de Monos, Entulho e Moveis em Lisboa e Margem Sul | CLYON",
   description:
-    "Recolha de entulho, móveis velhos, monos, limpeza pós-obra e mudanças em Lisboa, Margem Sul e Setúbal. Orçamento rápido em 11 minutos.",
-  keywords: [
-    "recolha de móveis lisboa",
-    "recolha de entulho lisboa",
-    "recolha de monos margem sul",
-    "limpeza pós-obra setúbal",
-    "mudanças margem sul",
-  ],
+    "Recolha de monos, moveis e entulho em Lisboa, Margem Sul e Setubal. Orcamento rapido, servico profissional e encaminhamento responsavel com resposta no mesmo dia quando disponivel.",
   alternates: {
     canonical: "https://clyon.pt",
   },
   openGraph: {
-    title: "Recolha de Entulho, Móveis e Monos em Lisboa e Margem Sul | CLYON",
+    title: "Recolha de Monos, Entulho e Moveis em Lisboa e Margem Sul | CLYON",
     description:
-      "Recolha de entulho, móveis, monos, limpeza pós-obra e mudanças em Lisboa, Margem Sul e Setúbal.",
+      "Recolha de monos, moveis, entulho, limpeza pos-obra e mudancas em Lisboa, Margem Sul e Setubal.",
     url: "https://clyon.pt",
   },
 };
@@ -43,145 +35,129 @@ export const metadata: Metadata = {
 const services = [
   {
     name: "Recolha de Entulho",
-    description:
-      "Remoção rápida e organizada para obras, remodelações e limpezas pesadas.",
+    description: "Retiramos restos de obra, sacos e materiais mistos com resposta rapida.",
     icon: Trash2,
     href: "/servicos",
   },
   {
-    name: "Recolha de Móveis",
-    description:
-      "Retiramos móveis antigos, eletrodomésticos e volumes grandes sem complicações.",
+    name: "Recolha de Moveis",
+    description: "Sofas, camas, armarios, eletrodomesticos e recheios com desmontagem e carga.",
     icon: HomeIcon,
     href: "/recolha-de-moveis",
   },
   {
-    name: "Limpeza Pós-Obra",
-    description:
-      "Acabamentos impecáveis para deixar o espaço pronto a usar no mesmo dia.",
+    name: "Limpeza Pos-Obra",
+    description: "Acabamento final para deixar casa, loja ou escritorio pronto a usar.",
     icon: Zap,
     href: "/servicos",
   },
   {
-    name: "Mudanças e Apoio",
-    description:
-      "Equipa de apoio para transporte, desmontagem e organização da mudança.",
+    name: "Mudancas e Apoio",
+    description: "Transporte, carga, descarga e apoio logistico com equipa organizada.",
     icon: Truck,
     href: "/servicos",
   },
-  {
-    name: "Recolha de Monos",
-    description: "Limpeza de sótãos, caves e garagens com organização e eficiência.",
-    icon: Trash2,
-    href: "/servicos",
-  },
-  {
-    name: "Camião com Motorista",
-    description: "Solução flexível para transporte de qualquer volume ou carga.",
-    icon: Truck,
-    href: "/servicos",
-  },
+];
+
+const priceHighlights = [
+  "Sofa ou cadeirao: desde 35 EUR",
+  "Cama, estrado e colchao: desde 45 EUR",
+  "Armario grande: desde 55 EUR",
+  "Varios moveis num pedido: desde 180 EUR",
+];
+
+const collectedItems = [
+  "Moveis velhos, recheios, sofas e colchoes",
+  "Eletrodomesticos e volumes grandes",
+  "Entulho de obra e restos de remodelacao",
+  "Monos, sucata e acumulacao em arrecadacoes",
+  "Limpeza pos-obra e apoio em mudancas",
+  "Pedidos de esvaziamento com recolha completa",
 ];
 
 const steps = [
+  "Envie fotos, morada e indique acessos, andar e elevador.",
+  "Receba uma resposta rapida com orcamento claro e janela disponivel.",
+  "A equipa chega ao local, carrega, transporta e encaminha o material.",
+];
+
+const homeFaqs = [
   {
-    title: "Descreva o serviço em menos de 1 minuto",
-    desc: "Conte-nos o que precisa: móveis, entulho, mudança completa ou limpeza pós-obra.",
-    duration: "< 1 minuto",
-    color: "bg-cyan-500",
-    durationColor: "text-cyan-600",
+    question: "Quanto custa a recolha de monos ou moveis?",
+    answer:
+      "O valor depende do volume, acessos, tipo de material, urgencia e necessidade de desmontagem. A forma mais rapida de receber um valor certo e enviar fotos e morada.",
   },
   {
-    title: "Receba uma resposta rápida com orçamento claro",
-    desc: "Em menos de 11 minutos recebe uma estimativa transparente, sem surpresas nem ruído.",
-    duration: "< 11 minutos",
-    color: "bg-cyan-600",
-    durationColor: "text-cyan-700",
+    question: "Recolhem no mesmo dia?",
+    answer:
+      "Quando existe disponibilidade operacional, sim. Muitos pedidos em Lisboa, Grande Lisboa, Margem Sul e Setubal conseguem resposta no proprio dia ou no dia seguinte.",
   },
   {
-    title: "Agende o melhor horário e deixe connosco",
-    desc: "Escolha a data e a hora. A nossa equipa vai até si e trata do resto com cuidado.",
-    duration: "Mesmo dia",
-    color: "bg-slate-900",
-    durationColor: "text-slate-700",
+    question: "Retiram sofas, colchoes e eletrodomesticos?",
+    answer:
+      "Sim. A CLYON retira sofas, camas, colchoes, armarios, eletrodomesticos e outros volumes grandes, desde que o pedido seja identificado no orcamento.",
+  },
+  {
+    question: "Fazem desmontagem?",
+    answer:
+      "Sim. Quando necessario, a equipa desmonta moveis e trata da retirada a partir do interior do imovel.",
+  },
+  {
+    question: "Atendem empresas e condominios?",
+    answer:
+      "Sim. A operacao atende particulares, senhorios, empresas, equipas de obra e condominios com necessidade de recolha, limpeza ou esvaziamento.",
+  },
+  {
+    question: "O destino dos residuos e legal?",
+    answer:
+      "Sempre que possivel, a equipa separa materiais para reaproveitamento ou encaminhamento adequado. O restante segue para destino responsavel.",
   },
 ];
 
-const stats = [
-  { value: "5.0★", label: "avaliação média" },
-  { value: "11 min", label: "tempo médio de resposta" },
-  { value: "Mesmo dia", label: "disponibilidade em muitos pedidos" },
-];
-
-const featuredTestimonials = [
+const testimonials = [
   {
     service: "Recolha de Entulho",
     name: "Carlos F.",
-    date: "20 Nov 2025",
-    rating: "5★",
-    text: "Excelente serviço, rápido e com ótima relação qualidade-preço. Trabalho impecável e equipa muito simpática do início ao fim.",
+    text: "Excelente servico, rapido e com otima relacao qualidade-preco. Trabalho impecavel e equipa simpatica.",
   },
   {
-    service: "Recolha de Móveis",
-    name: "Patrícia S.",
-    date: "6 Nov 2025",
-    rating: "5★",
-    text: "Muito satisfeita com a conclusão do serviço. Comunicação clara, recolha organizada e tudo resolvido com sucesso, sem complicações.",
+    service: "Recolha de Moveis",
+    name: "Patricia S.",
+    text: "Comunicacao clara, recolha organizada e tudo resolvido sem complicacoes.",
   },
   {
-    service: "Mudanças Completas",
+    service: "Mudancas Completas",
     name: "Maria T.",
-    date: "27 Nov 2025",
-    rating: "5★",
-    text: "Muito eficientes, com boa relação qualidade-preço e bastante cuidado em todo o processo. Fiquei extremamente satisfeita com o serviço.",
+    text: "Muito eficientes, cuidadosos e com boa relacao qualidade-preco.",
   },
 ];
 
-const cities = [
-  "Lisboa",
-  "Benfica",
-  "Lumiar",
-  "Olivais",
-  "Alvalade",
-  "Almada",
-  "Seixal",
-  "Barreiro",
-  "Moita",
-  "Setúbal",
-  "Palmela",
-  "Sesimbra",
-];
-
-const reviews = [
-  {
-    name: "C. Santos",
-    text: "Rápidos, educados e com orçamento claro desde o primeiro contacto.",
-  },
-  {
-    name: "P. Martins",
-    text: "Recolheram móveis antigos e deixaram tudo limpo. Processo simples.",
-  },
-  {
-    name: "R. Almeida",
-    text: "Serviço muito profissional, resposta rápida e marcação sem stress.",
-  },
-];
-
-const differentiators = [
-  "Resposta comercial rápida",
+const proofPoints = [
+  "Resposta comercial rapida",
   "Equipa profissional e organizada",
-  "Cobertura forte em Lisboa e Margem Sul",
-  "Explicação clara de acesso, volume e distância",
-  "Trabalhos reais e prova social visível",
-  "Fluxo simples do pedido até à recolha",
+  "Cobertura forte em Lisboa, Margem Sul e Setubal",
+  "Fluxo simples do pedido ate a recolha",
 ];
+
+const homeFaqSchema = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: homeFaqs.map((faq) => ({
+    "@type": "Question",
+    name: faq.question,
+    acceptedAnswer: {
+      "@type": "Answer",
+      text: faq.answer,
+    },
+  })),
+};
 
 export default async function HomePage() {
   noStore();
   const workImages = await getHeroCarouselImages();
   const regionCoverage = REGIONS.map((region) => ({
     ...region,
-    cities: CITIES.filter((city) => city.region === region.slug).slice(0, 5),
+    cities: CITIES.filter((city) => city.region === region.slug).slice(0, 4),
   }));
 
   return (
@@ -191,47 +167,38 @@ export default async function HomePage() {
         <div className="relative mx-auto max-w-7xl px-6 py-12 lg:px-8 lg:py-16">
           <div className="grid items-center gap-8 lg:grid-cols-[0.95fr_0.9fr] lg:gap-10">
             <div className="max-w-xl">
-              <div className="mb-5 inline-flex max-w-full items-center gap-3 rounded-full border border-cyan-200 bg-cyan-50 px-4 py-2 text-sm font-medium text-cyan-700 shadow-sm">
+              <div className="mb-5 inline-flex items-center gap-3 rounded-full border border-cyan-200 bg-cyan-50 px-4 py-2 text-sm font-medium text-cyan-700 shadow-sm">
                 <span className="h-2.5 w-2.5 rounded-full bg-cyan-500" />
-                Líderes em satisfação no Fixando, com avaliações 5 estrelas
+                Lideres em satisfacao no Fixando, com avaliacoes 5 estrelas
               </div>
 
-              <h1 className="max-w-none text-[3.15rem] font-bold leading-[1.02] tracking-tight text-slate-950 md:text-[3.7rem] xl:text-[3.9rem]">
+              <h1 className="text-[3.15rem] font-bold leading-[1.02] tracking-tight text-slate-950 md:text-[3.7rem] xl:text-[3.9rem]">
                 <span className="block">Recolha de entulho,</span>
-                <span className="mt-2 block text-cyan-500">móveis e monos</span>
-                <span className="block text-cyan-500">rápida e sem stress.</span>
+                <span className="mt-2 block text-cyan-500">moveis e monos</span>
+                <span className="block text-cyan-500">rapida e sem stress.</span>
               </h1>
 
-              <p className="mt-5 max-w-xl text-base leading-8 text-slate-600 md:text-[1.05rem]">
-                Entulho, móveis velhos, limpeza pós-obra e apoio em mudanças com
-                atendimento rápido, orçamento claro e execução profissional em Lisboa,
-                Margem Sul e Setúbal.
+              <p className="mt-5 text-base leading-8 text-slate-600 md:text-[1.05rem]">
+                Entulho, moveis velhos, limpeza pos-obra e apoio em mudancas com
+                atendimento rapido, orcamento claro e execucao profissional em Lisboa,
+                Margem Sul e Setubal.
               </p>
 
               <div className="mt-7 flex flex-col gap-3 sm:flex-row">
-                <Link
-                  href="/simulador"
-                  className="site-btn-primary px-8"
-                >
-                  <span className="text-[0.95rem] font-semibold text-white">
-                    Simular Orçamento
-                  </span>
-                </Link>
-                <Link
-                  href="/trabalhos"
-                  className="site-btn-secondary px-8"
-                >
+                <Link href="/simulador" className="site-btn-primary px-8">Simular Orcamento</Link>
+                <Link href="/trabalhos" className="site-btn-secondary px-8">
                   Ver Trabalhos Reais
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Link>
               </div>
 
               <div className="mt-8 grid gap-3 sm:grid-cols-3">
-                {stats.map((stat) => (
-                  <div
-                    key={stat.label}
-                    className="rounded-[22px] border border-cyan-100 bg-white/90 px-5 py-4 shadow-[0_16px_40px_-30px_rgba(14,116,144,0.24)]"
-                  >
+                {[
+                  { value: "5.0★", label: "avaliacao media" },
+                  { value: "11 min", label: "tempo medio de resposta" },
+                  { value: "Mesmo dia", label: "em muitos pedidos" },
+                ].map((stat) => (
+                  <div key={stat.label} className="rounded-[22px] border border-cyan-100 bg-white/90 px-5 py-4 shadow-[0_16px_40px_-30px_rgba(14,116,144,0.24)]">
                     <div className="text-2xl font-bold text-slate-950">{stat.value}</div>
                     <div className="mt-2 text-sm leading-6 text-slate-600">{stat.label}</div>
                   </div>
@@ -252,44 +219,19 @@ export default async function HomePage() {
 
       <section className="bg-white py-16 lg:py-20">
         <div className="mx-auto max-w-7xl px-6 lg:px-8">
-          <div className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr] lg:items-end">
-            <div>
-              <p className="text-sm font-semibold uppercase tracking-[0.24em] text-cyan-700">
-                Serviços principais
-              </p>
-              <h2 className="mt-3 max-w-[13ch] text-[2.7rem] font-bold leading-[1.04] text-slate-950 sm:text-[3.55rem]">
-                Menos ruído, mais clareza sobre o que a CLYON resolve.
-              </h2>
-            </div>
-            <p className="max-w-lg text-[0.95rem] leading-7 text-slate-600">
-              Soluções rápidas, profissionais e pensadas para simplificar o dia a dia
-              em Lisboa, Margem Sul e Setúbal.
-            </p>
-          </div>
-
-          <div className="mt-8 grid gap-3.5 md:grid-cols-2 xl:grid-cols-3">
+          <div className="grid gap-3.5 md:grid-cols-2 xl:grid-cols-4">
             {services.map((service) => (
-              <article
-                key={service.name}
-                className="group overflow-hidden rounded-[30px] border border-cyan-200/90 bg-white shadow-[0_24px_70px_-36px_rgba(8,145,178,0.26)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_32px_90px_-38px_rgba(8,145,178,0.32)]"
-              >
+              <article key={service.name} className="group overflow-hidden rounded-[30px] border border-cyan-200/90 bg-white shadow-[0_24px_70px_-36px_rgba(8,145,178,0.26)] transition duration-300 hover:-translate-y-1">
                 <div className="flex h-28 items-center justify-center border-b border-cyan-100/90 bg-gradient-to-br from-cyan-100 via-cyan-50 to-cyan-100/80">
-                  <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-cyan-200/90 bg-white/85 shadow-[0_14px_30px_-18px_rgba(8,145,178,0.35)]">
+                  <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-cyan-200/90 bg-white/85">
                     <service.icon className="h-8 w-8 text-cyan-700" />
                   </div>
                 </div>
-                <div className="bg-white p-5">
-                  <h3 className="text-[1.55rem] font-bold leading-tight text-slate-950">{service.name}</h3>
-                  <p className="mt-3 text-[0.96rem] leading-7 text-slate-600">
-                    {service.description}
-                  </p>
-                  <Link
-                    href={service.href}
-                    className="mt-4 inline-flex items-center rounded-full bg-slate-50 px-3.5 py-2 text-[0.92rem] font-semibold text-cyan-800 transition group-hover:bg-cyan-50 group-hover:text-cyan-700 hover:text-cyan-600"
-                  >
-                    {service.href === "/recolha-de-moveis"
-                      ? "Ver página principal"
-                      : "Pedir orçamento"}
+                <div className="p-5">
+                  <h2 className="text-[1.45rem] font-bold leading-tight text-slate-950">{service.name}</h2>
+                  <p className="mt-3 text-[0.95rem] leading-7 text-slate-600">{service.description}</p>
+                  <Link href={service.href} className="mt-4 inline-flex items-center rounded-full bg-slate-50 px-3.5 py-2 text-sm font-semibold text-cyan-800 transition hover:bg-cyan-50">
+                    {service.href === "/recolha-de-moveis" ? "Ver pagina principal" : "Pedir orcamento"}
                     <ArrowRight className="ml-2 h-3.5 w-3.5" />
                   </Link>
                 </div>
@@ -301,164 +243,41 @@ export default async function HomePage() {
 
       <section className="bg-slate-50 py-16 lg:py-20">
         <div className="mx-auto max-w-7xl px-6 lg:px-8">
-          <div className="rounded-[34px] border border-cyan-100 bg-white p-8 shadow-[0_22px_60px_-34px_rgba(14,116,144,0.18)] lg:p-10">
-            <div className="grid gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
-              <div>
-                <p className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-700">
-                  Foco SEO
-                </p>
-                <h2 className="mt-4 text-4xl font-bold leading-tight text-slate-950">
-                  Reforço específico para recolha de móveis
-                </h2>
-                <p className="mt-4 text-base leading-8 text-slate-600">
-                  A categoria de recolha de móveis exige uma página mais profunda,
-                  com cobertura por cidade, faixas de preço, descarte legal e links
-                  internos fortes. Criámos esse ponto de entrada para competir pela
-                  query principal e empurrar Amadora para cima.
-                </p>
+          <div className="grid gap-8 lg:grid-cols-[0.95fr_1.05fr]">
+            <div className="rounded-[34px] border border-cyan-100 bg-white p-8 shadow-[0_22px_60px_-34px_rgba(14,116,144,0.18)]">
+              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-700">Precos orientativos</p>
+              <h2 className="mt-4 text-4xl font-bold leading-tight text-slate-950">Valores de referencia sem esconder o jogo.</h2>
+              <div className="mt-6 grid gap-3 sm:grid-cols-2">
+                {priceHighlights.map((item) => (
+                  <div key={item} className="rounded-[22px] border border-cyan-100 bg-cyan-50/70 p-4 text-sm leading-7 text-slate-700">{item}</div>
+                ))}
               </div>
+              <div className="mt-6 flex flex-wrap gap-3">
+                <Link href="/precos" className="site-btn-primary px-6">Ver precos</Link>
+                <Link href="/recolha-de-moveis" className="site-btn-secondary px-6">Recolha de moveis</Link>
+              </div>
+            </div>
 
-              <div className="grid gap-3 sm:grid-cols-2">
-                {[
-                  {
-                    title: "Página-pilar",
-                    text: "Conteúdo dedicado para a keyword principal.",
-                  },
-                  {
-                    title: "Amadora reforçada",
-                    text: "Mais sinais internos para a localidade crítica.",
-                  },
-                  {
-                    title: "FAQ e schema",
-                    text: "Melhor alinhamento com a intenção de pesquisa.",
-                  },
-                  {
-                    title: "Links de apoio",
-                    text: "Fluxo interno para serviços e páginas locais.",
-                  },
-                ].map((item) => (
-                  <div
-                    key={item.title}
-                    className="rounded-[22px] border border-cyan-100 bg-cyan-50/70 p-5"
-                  >
-                    <h3 className="text-base font-semibold text-slate-950">{item.title}</h3>
-                    <p className="mt-3 text-sm leading-7 text-slate-600">{item.text}</p>
-                  </div>
+            <div className="rounded-[34px] border border-cyan-100 bg-white p-8 shadow-[0_22px_60px_-34px_rgba(14,116,144,0.18)]">
+              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-700">O que recolhemos</p>
+              <h2 className="mt-4 text-4xl font-bold leading-tight text-slate-950">Do sofa ao entulho, com carga e encaminhamento.</h2>
+              <div className="mt-6 grid gap-3 sm:grid-cols-2">
+                {collectedItems.map((item) => (
+                  <div key={item} className="rounded-[22px] border border-cyan-100 bg-cyan-50/70 p-4 text-sm leading-7 text-slate-700">{item}</div>
                 ))}
               </div>
             </div>
-
-            <div className="mt-8">
-              <Link
-                href="/recolha-de-moveis"
-                className="inline-flex items-center justify-center rounded-2xl bg-cyan-500 px-6 py-3.5 text-base font-semibold text-white shadow-[0_18px_40px_-22px_rgba(6,182,212,0.75)] transition hover:-translate-y-0.5 hover:bg-cyan-400"
-              >
-                Abrir página de recolha de móveis
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="relative overflow-hidden bg-slate-50 py-16 lg:py-20">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_center,rgba(34,211,238,0.12),transparent_28%)]" />
-        <div className="relative mx-auto max-w-7xl px-6 lg:px-8">
-          <div className="text-center">
-            <div className="inline-flex rounded-full border border-cyan-200 bg-cyan-50 px-5 py-2 text-sm font-semibold uppercase tracking-[0.22em] text-cyan-700">
-              Como funciona
-            </div>
-            <h2 className="mt-5 text-4xl font-bold tracking-tight text-slate-950 sm:text-5xl">
-              Simples. Rápido. <span className="text-cyan-500">Sem stress.</span>
-            </h2>
-            <p className="mx-auto mt-4 max-w-3xl text-base leading-8 text-slate-600">
-              Do primeiro contacto à recolha final, tudo resolvido em 3 passos.
-            </p>
-          </div>
-
-          <div className="mt-10 grid gap-6 lg:grid-cols-3">
-            {steps.map((step, index) => (
-              <article
-                key={step.title}
-                className="rounded-[30px] border border-cyan-100 bg-white p-7 shadow-[0_22px_55px_-34px_rgba(14,116,144,0.18)]"
-              >
-                <div className={`mb-6 flex h-14 w-14 items-center justify-center rounded-2xl text-xl font-bold text-white ${step.color}`}>
-                  {index + 1}
-                </div>
-                <p className={`text-sm font-semibold uppercase tracking-[0.16em] ${step.durationColor}`}>
-                  {step.duration}
-                </p>
-                <h3 className="mt-4 text-2xl font-bold leading-tight text-slate-950">
-                  {step.title}
-                </h3>
-                <p className="mt-4 text-base leading-8 text-slate-600">{step.desc}</p>
-              </article>
-            ))}
           </div>
         </div>
       </section>
 
       <section className="bg-white py-16 lg:py-20">
         <div className="mx-auto max-w-7xl px-6 lg:px-8">
-          <div className="grid gap-8 lg:grid-cols-[0.92fr_1.08fr] lg:items-end">
-            <div>
-              <p className="text-sm font-semibold uppercase tracking-[0.24em] text-cyan-700">
-                Trabalhos reais
-              </p>
-              <h2 className="mt-4 max-w-[12ch] text-4xl font-bold leading-tight text-slate-950 sm:text-5xl">
-                Veja o que fazemos no terreno.
-              </h2>
-              <p className="mt-5 max-w-xl text-base leading-8 text-slate-600">
-                Avaliações reais de clientes, com mensagens, datas e notas sobre
-                recolhas, limpezas e mudanças em Lisboa, Margem Sul e Setúbal.
-              </p>
-            </div>
-
-            <div className="grid gap-4 sm:grid-cols-3">
-              {[
-                { value: "163", label: "avaliações 5★" },
-                { value: "11 min", label: "tempo médio de resposta" },
-                { value: "Mesmo dia", label: "em muitos pedidos" },
-              ].map((item) => (
-                <div
-                  key={item.label}
-                  className="rounded-[24px] border border-cyan-100 bg-cyan-50/70 p-5"
-                >
-                  <div className="text-3xl font-bold text-slate-950">{item.value}</div>
-                  <div className="mt-2 text-sm leading-7 text-slate-600">{item.label}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="mt-10 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-            {featuredTestimonials.map((review) => (
-              <article
-                key={`${review.name}-${review.date}`}
-                className="rounded-[30px] border border-cyan-100 bg-white p-6 shadow-[0_22px_55px_-34px_rgba(14,116,144,0.18)]"
-              >
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <p className="text-sm font-semibold uppercase tracking-[0.16em] text-cyan-700">
-                      {review.rating}
-                    </p>
-                    <h3 className="mt-3 text-[1.55rem] font-bold leading-tight text-slate-950">
-                      {review.service}
-                    </h3>
-                  </div>
-                  <div className="rounded-full bg-cyan-50 px-3 py-1 text-xs font-semibold text-cyan-700">
-                    {review.date}
-                  </div>
-                </div>
-
-                <p className="mt-5 text-[0.98rem] leading-8 text-slate-600">
-                  {review.text}
-                </p>
-
-                <div className="mt-6 border-t border-cyan-100 pt-4">
-                  <p className="text-sm font-semibold text-slate-950">{review.name}</p>
-                  <p className="mt-1 text-sm text-slate-500">Avaliação verificada</p>
-                </div>
+          <div className="grid gap-6 lg:grid-cols-3">
+            {steps.map((step, index) => (
+              <article key={step} className="rounded-[30px] border border-cyan-100 bg-white p-7 shadow-[0_22px_55px_-34px_rgba(14,116,144,0.18)]">
+                <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-2xl bg-cyan-500 text-xl font-bold text-white">{index + 1}</div>
+                <p className="text-base leading-8 text-slate-600">{step}</p>
               </article>
             ))}
           </div>
@@ -466,50 +285,50 @@ export default async function HomePage() {
       </section>
 
       <section className="bg-slate-50 py-16 lg:py-20">
+        <div className="mx-auto max-w-7xl px-6 lg:px-8">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+            <div>
+              <p className="text-sm font-semibold uppercase tracking-[0.24em] text-cyan-700">Perguntas frequentes</p>
+              <h2 className="mt-4 text-4xl font-bold leading-tight text-slate-950 sm:text-5xl">Duvidas tipicas antes de pedir.</h2>
+            </div>
+            <div className="flex flex-wrap gap-3">
+              <Link href="/faq" className="site-btn-secondary px-6">Ver FAQ completa</Link>
+              <Link href="/regioes" className="site-btn-primary px-6">Ver zonas atendidas</Link>
+            </div>
+          </div>
+
+          <div className="mt-10 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+            {homeFaqs.map((faq) => (
+              <article key={faq.question} className="rounded-[28px] border border-cyan-100 bg-white p-6 shadow-[0_20px_50px_-34px_rgba(14,116,144,0.16)]">
+                <h3 className="text-lg font-bold leading-tight text-slate-950">{faq.question}</h3>
+                <p className="mt-4 text-sm leading-8 text-slate-600">{faq.answer}</p>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="bg-white py-16 lg:py-20">
         <div className="mx-auto grid max-w-7xl gap-8 px-6 lg:grid-cols-[0.92fr_1.08fr] lg:px-8">
           <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.24em] text-cyan-700">
-              Cobertura regional
-            </p>
-            <h2 className="mt-4 max-w-[12ch] text-4xl font-bold leading-tight text-slate-950 sm:text-5xl">
-              Presença local destacada como prova de confiança.
-            </h2>
-            <p className="mt-5 max-w-xl text-base leading-8 text-slate-600">
-              A nossa área de atuação cobre toda a Grande Lisboa, Margem Sul e
-              Setúbal, com equipas prontas a intervir no mesmo dia.
-            </p>
+            <p className="text-sm font-semibold uppercase tracking-[0.24em] text-cyan-700">Cobertura regional</p>
+            <h2 className="mt-4 text-4xl font-bold leading-tight text-slate-950 sm:text-5xl">Presenca local em Lisboa, Margem Sul e Setubal.</h2>
           </div>
 
           <div className="rounded-[30px] border border-cyan-100 bg-white p-7 shadow-[0_22px_55px_-34px_rgba(14,116,144,0.18)]">
-            <div className="flex flex-wrap gap-3">
-              {cities.map((city) => (
-                <span
-                  key={city}
-                  className="rounded-full border border-cyan-200 bg-cyan-50 px-4 py-2 text-sm font-semibold text-cyan-700"
-                >
-                  {city}
-                </span>
+            <div className="grid gap-6 lg:grid-cols-3">
+              {regionCoverage.map((region) => (
+                <div key={region.slug} className="rounded-[24px] border border-cyan-100 bg-cyan-50/70 p-5">
+                  <h3 className="text-lg font-bold text-slate-950">{region.shortLabel}</h3>
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    {region.cities.map((city) => (
+                      <Link key={city.slug} href={`/${getCityServiceSlug("recolha-entulho", city.slug)}`} className="rounded-full border border-cyan-200 bg-white px-3 py-1.5 text-sm font-medium text-cyan-700 transition hover:bg-cyan-50">
+                        {city.name}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
               ))}
-            </div>
-
-            <div className="mt-8 rounded-[28px] bg-[linear-gradient(135deg,#03131d_0%,#062737_100%)] p-6 text-white">
-              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-200">
-                Não encontrou a sua zona?
-              </p>
-              <h3 className="mt-3 text-3xl font-bold leading-tight">
-                Confirme disponibilidade por contacto direto.
-              </h3>
-              <p className="mt-3 text-sm leading-8 text-slate-300">
-                Diz-nos a zona e o tipo de serviço. Respondemos rapidamente com
-                disponibilidade e orientação.
-              </p>
-                <Link
-                  href="/contactos"
-                    className="site-btn-primary mt-5"
-                >
-                  Falar connosco
-                  <ArrowRight className="ml-2 h-4 w-4 text-white" />
-                </Link>
             </div>
           </div>
         </div>
@@ -517,32 +336,13 @@ export default async function HomePage() {
 
       <section className="bg-white py-16 lg:py-20">
         <div className="mx-auto max-w-7xl px-6 lg:px-8">
-          <div className="grid gap-8 lg:grid-cols-[0.95fr_1.05fr] lg:items-end">
-            <div>
-              <p className="text-sm font-semibold uppercase tracking-[0.24em] text-cyan-700">
-                Prova social
-              </p>
-              <h2 className="mt-4 text-4xl font-bold leading-tight text-slate-950 sm:text-5xl">
-                Avaliações que mostram confiança real.
-              </h2>
-            </div>
-            <p className="max-w-xl text-base leading-8 text-slate-600">
-              A confiança constrói-se com rapidez, execução cuidada e comunicação
-              clara antes, durante e depois do serviço.
-            </p>
-          </div>
-
-          <div className="mt-10 grid gap-5 md:grid-cols-3">
-            {reviews.map((review) => (
-              <article
-                key={review.name}
-                className="rounded-[28px] border border-cyan-100 bg-white p-6 shadow-[0_20px_50px_-34px_rgba(14,116,144,0.16)]"
-              >
+          <div className="grid gap-5 md:grid-cols-3">
+            {testimonials.map((review) => (
+              <article key={review.name} className="rounded-[28px] border border-cyan-100 bg-white p-6 shadow-[0_20px_50px_-34px_rgba(14,116,144,0.16)]">
                 <MessageSquareQuote className="h-7 w-7 text-cyan-600" />
-                <p className="mt-5 text-base leading-8 text-slate-600">{review.text}</p>
-                <p className="mt-5 text-sm font-semibold uppercase tracking-[0.16em] text-slate-950">
-                  {review.name}
-                </p>
+                <p className="mt-4 text-sm font-semibold uppercase tracking-[0.16em] text-cyan-700">{review.service}</p>
+                <p className="mt-4 text-base leading-8 text-slate-600">{review.text}</p>
+                <p className="mt-5 text-sm font-semibold text-slate-950">{review.name}</p>
               </article>
             ))}
           </div>
@@ -558,13 +358,11 @@ export default async function HomePage() {
                   <ShieldCheck className="h-4 w-4" />
                   Por que escolher a CLYON
                 </div>
-                <h2 className="mt-4 text-4xl font-bold leading-tight text-slate-950">
-                  Menos complicação, mais execução.
-                </h2>
+                <h2 className="mt-4 text-4xl font-bold leading-tight text-slate-950">Menos complicacao, mais execucao.</h2>
               </div>
 
-              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-                {differentiators.map((item) => (
+              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                {proofPoints.map((item) => (
                   <div key={item} className="rounded-[22px] border border-cyan-100 bg-cyan-50/80 p-5">
                     <CheckCircle2 className="h-5 w-5 text-cyan-600" />
                     <p className="mt-3 text-sm leading-7 text-slate-700">{item}</p>
@@ -572,88 +370,30 @@ export default async function HomePage() {
                 ))}
               </div>
             </div>
-          </div>
-        </div>
-      </section>
 
-      <section className="bg-white py-16 lg:py-20">
-        <div className="mx-auto max-w-7xl px-6 lg:px-8">
-          <div className="rounded-[34px] bg-[linear-gradient(135deg,#062737_0%,#083344_100%)] p-8 text-white shadow-[0_26px_70px_-30px_rgba(2,6,23,0.45)] lg:p-10">
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-              <div className="max-w-3xl">
-                <p className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-200">
-                  Zonas de atuação
-                </p>
-                <h2 className="mt-3 text-3xl font-bold leading-tight sm:text-4xl">
-                  Páginas locais com acesso direto
-                </h2>
-                <p className="mt-4 text-base leading-8 text-slate-300">
-                  Ligações internas para as zonas com maior procura em Lisboa, Margem Sul e Setúbal, facilitando a
-                  navegação e reforçando a descoberta das landing pages locais.
-                </p>
-              </div>
-              <Link href="/regioes" className="site-btn-secondary">
-                Ver cobertura completa
-              </Link>
-            </div>
-
-            <div className="mt-8 grid gap-6 lg:grid-cols-3">
-              {regionCoverage.map((region) => (
-                <div key={region.slug} className="rounded-[28px] border border-white/10 bg-white/5 p-5">
-                  <Link
-                    href={`/regioes/${region.slug}`}
-                    className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-200 transition hover:text-white"
-                  >
-                    {region.shortLabel}
-                  </Link>
-                  <div className="mt-4 flex flex-wrap gap-3">
-                    {region.cities.map((city) => (
-                      <Link
-                        key={city.slug}
-                        href={`/${getCityServiceSlug("recolha-entulho", city.slug)}`}
-                        className="rounded-full border border-cyan-200/30 bg-white/5 px-4 py-2 text-sm font-medium text-cyan-50/82 transition hover:border-cyan-300/50 hover:bg-white/10 hover:text-white"
-                      >
-                        Recolha de entulho em {city.name}
-                      </Link>
-                    ))}
+            <div className="mt-8 rounded-[28px] bg-[linear-gradient(135deg,#062737_0%,#083344_100%)] px-8 py-10 text-white">
+              <div className="grid gap-8 lg:grid-cols-[1fr_auto] lg:items-center">
+                <div>
+                  <div className="inline-flex items-center gap-2 text-cyan-200">
+                    <Sparkles className="h-4 w-4" />
+                    <span className="text-sm font-semibold uppercase tracking-[0.2em]">Pedido imediato</span>
                   </div>
+                  <h2 className="mt-4 text-3xl font-bold sm:text-4xl">Pronto para libertar espaco hoje?</h2>
+                  <p className="mt-4 max-w-2xl text-base leading-8 text-slate-300">
+                    Simule o pedido, confirme os detalhes connosco e receba uma resposta clara para recolha, limpeza ou mudanca.
+                  </p>
                 </div>
-              ))}
+                <Link href="/simulador" className="site-btn-primary px-7 py-4 text-base">
+                  Simular orcamento
+                  <ArrowRight className="ml-2 h-4 w-4 text-white" />
+                </Link>
+              </div>
             </div>
           </div>
         </div>
       </section>
 
-      <section className="bg-white pb-16 lg:pb-20">
-        <div className="mx-auto max-w-6xl px-6 lg:px-8">
-          <div className="rounded-[34px] bg-[linear-gradient(135deg,#062737_0%,#083344_100%)] px-8 py-10 text-white shadow-[0_26px_70px_-30px_rgba(2,6,23,0.45)] lg:px-12">
-            <div className="grid gap-8 lg:grid-cols-[1fr_auto] lg:items-center">
-              <div>
-                <div className="inline-flex items-center gap-2 text-cyan-200">
-                  <Sparkles className="h-4 w-4" />
-                  <span className="text-sm font-semibold uppercase tracking-[0.2em]">
-                    Pedido imediato
-                  </span>
-                </div>
-                <h2 className="mt-4 text-3xl font-bold sm:text-4xl">
-                  Pronto para libertar espaço hoje?
-                </h2>
-                <p className="mt-4 max-w-2xl text-base leading-8 text-slate-300">
-                  Simule o pedido, confirme os detalhes connosco e receba uma resposta
-                  clara para recolha, limpeza ou mudança.
-                </p>
-              </div>
-              <Link
-                href="/simulador"
-                className="site-btn-primary px-7 py-4 text-base"
-              >
-                Simular orçamento
-                <ArrowRight className="ml-2 h-4 w-4 text-white" />
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(homeFaqSchema) }} />
     </div>
   );
 }

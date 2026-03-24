@@ -1,5 +1,13 @@
 import Link from "next/link";
-import { ArrowDownToLine, ArrowRight, Instagram, Lock, MessageCircle, Square, Wallet } from "lucide-react";
+import {
+  ArrowDownToLine,
+  ArrowRight,
+  Instagram,
+  Lock,
+  MessageCircle,
+  Square,
+  Wallet,
+} from "lucide-react";
 
 import CookiePreferencesLink from "@/components/CookiePreferencesLink";
 import { BUSINESS_INSTAGRAM, BUSINESS_PHONE } from "@/lib/seo-data";
@@ -9,7 +17,9 @@ const ANDROID_APP_URL = "https://expo.dev/artifacts/eas/91zzW2jq9WrtksvBVCCjWm.a
 export default function Footer() {
   const currentYear = new Date().getFullYear();
   const whatsappNumber = BUSINESS_PHONE.replace(/[^\d]/g, "");
-  const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent("Olá! Gostava de pedir um orçamento à CLYON.")}`;
+  const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(
+    "Ola! Gostava de pedir um orcamento a CLYON.",
+  )}`;
 
   return (
     <>
@@ -28,8 +38,8 @@ export default function Footer() {
                 height="84"
               />
               <p className="max-w-sm text-[1.02rem] leading-8 text-cyan-50/88">
-                Recolha e limpeza profissional em Lisboa, Margem Sul e Setúbal com resposta rápida e execução sem
-                stress.
+                Recolha e limpeza profissional em Lisboa, Margem Sul e Setubal com
+                resposta rapida e execucao sem stress.
               </p>
 
               <div className="mt-6 flex flex-wrap gap-3">
@@ -38,7 +48,7 @@ export default function Footer() {
                   <ArrowRight className="ml-2 h-4 w-4 text-white" />
                 </Link>
                 <Link href="/colaboradores" className="site-btn-secondary">
-                  Área de Colaboradores
+                  Area de Colaboradores
                 </Link>
                 <a href={ANDROID_APP_URL} target="_blank" rel="noreferrer" className="site-btn-secondary">
                   Baixar App Android
@@ -48,21 +58,28 @@ export default function Footer() {
             </div>
 
             <div className="pt-2">
-              <h3 className="mb-4 text-sm font-semibold uppercase tracking-[0.18em] text-white">Serviços</h3>
+              <h3 className="mb-4 text-sm font-semibold uppercase tracking-[0.18em] text-white">
+                Servicos
+              </h3>
               <ul className="space-y-3 text-[0.98rem] text-cyan-50/82">
                 <li>
                   <Link href="/recolha-de-moveis" className="transition-colors hover:text-white">
-                    Recolha de móveis
+                    Recolha de moveis
                   </Link>
                 </li>
                 <li>
                   <Link href="/simulador" className="transition-colors hover:text-white">
-                    Solicitar serviço
+                    Solicitar servico
                   </Link>
                 </li>
                 <li>
                   <Link href="/servicos" className="transition-colors hover:text-white">
-                    Os nossos serviços
+                    Os nossos servicos
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/precos" className="transition-colors hover:text-white">
+                    Precos orientativos
                   </Link>
                 </li>
                 <li>
@@ -74,11 +91,13 @@ export default function Footer() {
             </div>
 
             <div className="pt-2">
-              <h3 className="mb-4 text-sm font-semibold uppercase tracking-[0.18em] text-white">Empresa</h3>
+              <h3 className="mb-4 text-sm font-semibold uppercase tracking-[0.18em] text-white">
+                Empresa
+              </h3>
               <ul className="space-y-3 text-[0.98rem] text-cyan-50/82">
                 <li>
                   <Link href="/sobre-nos" className="transition-colors hover:text-white">
-                    Sobre nós
+                    Sobre nos
                   </Link>
                 </li>
                 <li>
@@ -112,7 +131,9 @@ export default function Footer() {
             </div>
 
             <div className="pt-2">
-              <h3 className="mb-4 text-sm font-semibold uppercase tracking-[0.18em] text-white">Pagamentos</h3>
+              <h3 className="mb-4 text-sm font-semibold uppercase tracking-[0.18em] text-white">
+                Pagamentos
+              </h3>
               <ul className="space-y-3 text-[0.98rem] text-cyan-50/82">
                 <li className="flex items-center gap-3">
                   <Wallet className="h-4 w-4 text-cyan-300" /> Revolut
@@ -131,10 +152,10 @@ export default function Footer() {
             <p className="text-sm text-cyan-50/68">© CLYON {currentYear} - Todos os direitos reservados</p>
             <div className="flex flex-wrap items-center justify-center gap-4">
               <Link href="/privacidade" className="text-sm text-cyan-50/68 transition-colors hover:text-white">
-                Política de Privacidade
+                Politica de Privacidade
               </Link>
               <Link href="/privacidade" className="text-sm text-cyan-50/68 transition-colors hover:text-white">
-                Política de Cookies
+                Politica de Cookies
               </Link>
               <CookiePreferencesLink />
             </div>
