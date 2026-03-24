@@ -208,7 +208,7 @@ export default function RootLayout({
       <body className="min-h-screen bg-white text-slate-900 antialiased">
         <TrpcProvider>
           <Header />
-          <main className="pt-[64px]">{children}</main>
+          <main className="pt-[76px]">{children}</main>
           <Footer />
           <DeferredCookieConsent />
         </TrpcProvider>

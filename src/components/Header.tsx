@@ -18,12 +18,12 @@ export default function Header() {
 
   return (
     <header className="fixed left-0 right-0 top-0 z-50 border-b border-slate-200/40 bg-white/95 shadow-[0_10px_30px_-18px_rgba(15,23,42,0.28)] backdrop-blur-md">
-      <div className="mx-auto flex w-full max-w-[1470px] items-center justify-between gap-3 px-4 py-2.5 sm:px-6 lg:px-8">
+      <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-3 px-4 py-3.5 sm:px-6 lg:px-8">
         <Link href="/" className="flex-shrink-0 cursor-pointer">
           <Image
             src="/logo-clyon-icon.webp"
             alt="CLYON - Recolha de Moveis e Entulho"
-            className="h-[40px] w-auto scale-x-105 sm:h-[46px]"
+            className="h-[44px] w-auto scale-x-105 sm:h-[52px]"
             width={205}
             height={84}
             priority
@@ -40,13 +40,13 @@ export default function Header() {
         </nav>
 
         <div className="flex flex-shrink-0 items-center gap-2 sm:gap-3">
-          <Link href="/simulador" className="site-btn-primary px-4 py-2.5 sm:px-5">
+          <Link href="/simulador" className="site-btn-primary px-4 py-3 sm:px-5">
             <span className="!text-sm !font-semibold !text-white">Simular</span>
             <ArrowRight className="hidden h-4 w-4 text-white sm:block" />
           </Link>
 
           <button
-            className="inline-flex rounded-xl border border-cyan-200 bg-white p-2.5 text-slate-600 transition-colors hover:text-cyan-600 lg:hidden"
+            className="inline-flex rounded-xl border border-cyan-200 bg-white p-3 text-slate-600 transition-colors hover:text-cyan-600 lg:hidden"
             onClick={() => setMenuOpen((open) => !open)}
             aria-label="Abrir menu"
           >
