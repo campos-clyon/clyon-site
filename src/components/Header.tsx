@@ -16,14 +16,39 @@ export default function Header() {
     { label: "Contactos", href: "/contactos" },
   ];
 
+  const utilityLinks = [
+    { label: "Pedido rapido", href: "/simulador" },
+    { label: "Cobertura regional", href: "/regioes" },
+    { label: "Como funciona", href: "/faq" },
+  ];
+
   return (
     <header className="fixed left-0 right-0 top-0 z-50 border-b border-slate-200/40 bg-white/95 shadow-[0_10px_30px_-18px_rgba(15,23,42,0.28)] backdrop-blur-md">
-      <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-3 px-4 py-3.5 sm:px-6 lg:px-8">
+      <div className="hidden border-b border-slate-200/60 bg-slate-50/95 lg:block">
+        <div className="mx-auto flex w-full max-w-[1380px] items-center justify-between gap-6 px-6 py-3 xl:px-8">
+          <div className="flex items-center gap-3 text-sm text-slate-500">
+            <span className="rounded-full bg-cyan-100 px-3 py-1 font-semibold text-cyan-700">
+              Orçamento no mesmo dia
+            </span>
+            <span>Lisboa, Margem Sul e Setúbal com resposta rápida</span>
+          </div>
+
+          <div className="flex items-center gap-7 text-[14px] font-medium text-slate-600">
+            {utilityLinks.map((link) => (
+              <Link key={link.href} href={link.href} className="transition hover:text-cyan-600">
+                {link.label}
+              </Link>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="mx-auto flex w-full max-w-[1380px] items-center justify-between gap-3 px-4 py-4 sm:px-6 xl:px-8">
         <Link href="/" className="flex-shrink-0 cursor-pointer">
           <Image
             src="/logo-clyon-icon.webp"
             alt="CLYON - Recolha de Moveis e Entulho"
-            className="h-[44px] w-auto scale-x-105 sm:h-[52px]"
+            className="h-[46px] w-auto scale-x-105 sm:h-[58px]"
             width={205}
             height={84}
             priority
@@ -31,7 +56,7 @@ export default function Header() {
           />
         </Link>
 
-        <nav className="hidden flex-1 items-center justify-center gap-8 text-[14.5px] font-medium text-slate-600 lg:flex">
+        <nav className="hidden flex-1 items-center justify-center gap-9 text-[15px] font-medium text-slate-600 lg:flex">
           {navLinks.map((link) => (
             <Link key={link.href} href={link.href} className="transition hover:text-cyan-600">
               {link.label}
@@ -41,12 +66,12 @@ export default function Header() {
 
         <div className="flex flex-shrink-0 items-center gap-2 sm:gap-3">
           <div className="hidden lg:block">
-            <Link href="/recolha-de-moveis" className="site-btn-secondary px-4 py-3">
+            <Link href="/recolha-de-moveis" className="site-btn-secondary px-5 py-3.5">
               <span className="!text-sm !font-semibold !text-[#047faa]">Recolha de Moveis</span>
             </Link>
           </div>
 
-          <Link href="/simulador" className="site-btn-primary px-4 py-3 sm:px-5">
+          <Link href="/simulador" className="site-btn-primary px-5 py-3.5 sm:px-6">
             <span className="!text-sm !font-semibold !text-white">Simular</span>
             <ArrowRight className="hidden h-4 w-4 text-white sm:block" />
           </Link>
@@ -64,6 +89,16 @@ export default function Header() {
       {menuOpen && (
         <div className="border-t border-cyan-100/60 bg-white/95 backdrop-blur lg:hidden">
           <nav className="grid gap-2 px-4 py-4">
+            {utilityLinks.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className="flex items-center rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 transition-colors hover:bg-cyan-50"
+                onClick={() => setMenuOpen(false)}
+              >
+                <span className="!text-base !font-semibold !text-slate-700">{link.label}</span>
+              </Link>
+            ))}
             {navLinks.map((link) => (
               <Link
                 key={link.href}

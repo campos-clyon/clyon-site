@@ -20,15 +20,57 @@ export default function Footer() {
   const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(
     "Ola! Gostava de pedir um orcamento a CLYON.",
   )}`;
+  const serviceCities = [
+    "Lisboa",
+    "Almada",
+    "Amadora",
+    "Seixal",
+    "Barreiro",
+    "Oeiras",
+    "Cascais",
+    "Setubal",
+    "Loures",
+    "Sintra",
+    "Montijo",
+    "Odivelas",
+  ];
+  const extraServices = [
+    "Recolha de moveis",
+    "Esvaziamento de casas",
+    "Limpeza pos-obra",
+    "Recolha de entulho",
+  ];
 
   return (
     <>
+      <section className="border-t border-slate-200 bg-slate-100">
+        <div className="mx-auto grid w-full max-w-[1380px] gap-6 px-6 py-7 lg:grid-cols-[1.1fr_2fr] xl:px-8">
+          <div>
+            <p className="text-[1.05rem] font-semibold text-slate-800">Outras áreas de apoio da CLYON</p>
+            <p className="mt-2 max-w-xl text-sm leading-6 text-slate-500">
+              Estrutura operacional preparada para recolhas, limpezas, apoio rápido e cobertura regional em vários pontos da Grande Lisboa.
+            </p>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            {extraServices.map((item) => (
+              <div
+                key={item}
+                className="rounded-2xl border border-slate-200 bg-white px-4 py-4 text-sm font-medium text-slate-700 shadow-[0_10px_24px_-20px_rgba(15,23,42,0.5)]"
+              >
+                {item}
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       <footer className="relative overflow-hidden border-t border-cyan-200/20 bg-[#062737] text-white">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(34,211,238,0.18),transparent_20%),radial-gradient(circle_at_85%_15%,rgba(14,165,233,0.14),transparent_18%),linear-gradient(180deg,rgba(9,37,53,0.92)_0%,rgba(7,31,46,0.98)_100%)]" />
         <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-cyan-300/40 to-transparent" />
 
-        <div className="relative mx-auto max-w-7xl px-6 py-14 lg:px-8">
-          <div className="grid gap-8 lg:grid-cols-[1.25fr_0.8fr_0.8fr_0.9fr]">
+        <div className="relative mx-auto max-w-[1380px] px-6 py-16 xl:px-8">
+          <div className="grid gap-8 xl:grid-cols-[1.2fr_0.9fr_0.9fr_0.8fr_1.3fr]">
             <div className="rounded-[28px] border border-white/10 bg-white/5 p-6 shadow-[0_24px_60px_-34px_rgba(8,145,178,0.45)] backdrop-blur-sm">
               <img
                 src="/logo-clyon-icon.webp"
@@ -128,6 +170,48 @@ export default function Footer() {
                   </a>
                 </li>
               </ul>
+            </div>
+
+            <div className="pt-2">
+              <h3 className="mb-4 text-sm font-semibold uppercase tracking-[0.18em] text-white">
+                Cobertura
+              </h3>
+              <ul className="grid grid-cols-2 gap-x-4 gap-y-3 text-[0.98rem] text-cyan-50/82">
+                {serviceCities.map((city) => (
+                  <li key={city}>{city}</li>
+                ))}
+              </ul>
+            </div>
+
+            <div className="pt-2">
+              <h3 className="mb-4 text-sm font-semibold uppercase tracking-[0.18em] text-white">
+                Contacto rapido
+              </h3>
+              <div className="space-y-3 text-[0.98rem] text-cyan-50/82">
+                <a
+                  href={whatsappUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 transition hover:bg-white/[0.08]"
+                >
+                  <MessageCircle className="h-4 w-4 text-cyan-300" />
+                  WhatsApp direto
+                </a>
+                <Link
+                  href="/contactos"
+                  className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 transition hover:bg-white/[0.08]"
+                >
+                  <ArrowRight className="h-4 w-4 text-cyan-300" />
+                  Pedir orçamento
+                </Link>
+                <Link
+                  href="/colaboradores"
+                  className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 transition hover:bg-white/[0.08]"
+                >
+                  <Lock className="h-4 w-4 text-cyan-300" />
+                  Área de colaboradores
+                </Link>
+              </div>
             </div>
 
             <div className="pt-2">
