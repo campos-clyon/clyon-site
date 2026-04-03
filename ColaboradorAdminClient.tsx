@@ -7,6 +7,7 @@ import {
   ArrowRight,
   Briefcase,
   CalendarClock,
+  CalendarDays,
   CheckCircle2,
   Clock3,
   Euro,
@@ -16,12 +17,15 @@ import {
   LayoutDashboard,
   LogOut,
   Pencil,
+  ReceiptText,
   Settings2,
   ShieldCheck,
   Sparkles,
+  TimerReset,
   Trash2,
   UserPlus,
   Users,
+  Wallet,
   Wrench,
   X,
 } from "lucide-react";
@@ -43,6 +47,7 @@ type PeriodoStats = {
   horas: string;
   valor: string;
   trabalhos: number;
+  periodo?: string;
 };
 
 type Colaborador = {
@@ -207,6 +212,42 @@ const formatDateTime = (value?: string) => {
     hour: "2-digit",
     minute: "2-digit",
   })}`;
+};
+
+const formatDayName = (value?: string) => {
+  if (!value) return "Sem dia";
+  return new Intl.DateTimeFormat("pt-PT", { weekday: "long" }).format(new Date(value));
+};
+
+const getCurrentWeekRange = () => {
+  const today = new Date();
+  const start = new Date(today);
+  const day = start.getDay();
+  const diffToMonday = day === 0 ? -6 : 1 - day;
+  start.setDate(start.getDate() + diffToMonday);
+  start.setHours(0, 0, 0, 0);
+
+  const end = new Date(start);
+  end.setDate(end.getDate() + 6);
+  end.setHours(23, 59, 59, 999);
+
+  return { start, end };
+};
+
+const getCurrentMonthRange = () => {
+  const today = new Date();
+  const start = new Date(today.getFullYear(), today.getMonth(), 1);
+  start.setHours(0, 0, 0, 0);
+
+  const end = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+  end.setHours(23, 59, 59, 999);
+
+  return { start, end };
+};
+
+const isBetweenDates = (value: string, start: Date, end: Date) => {
+  const date = new Date(value);
+  return date >= start && date <= end;
 };
 
 const formatSimulatorUnit = (unit: SimulatorSetting["unit"]) =>
@@ -456,6 +497,65 @@ export default function ColaboradorAdminClient() {
   }, [simulatorSettings]);
 
   const latestRecords = useMemo(() => todosRegistros.slice(0, 5), [todosRegistros]);
+
+  const collaboratorHourReports = useMemo(() => {
+    const { start: weekStart, end: weekEnd } = getCurrentWeekRange();
+    const { start: monthStart, end: monthEnd } = getCurrentMonthRange();
+
+    const buildPeriod = (records: Registro[]) => {
+      const horas = records.reduce((sum, item) => sum + parseFloat(item.horasTrabalhadas || "0"), 0);
+      const valor = records.reduce((sum, item) => sum + parseFloat(item.valorTotal || "0"), 0);
+      const trabalhos = records.reduce((sum, item) => sum + (item.numeroTrabalhos || 0), 0);
+
+      return {
+        horas,
+        valor,
+        trabalhos,
+      };
+    };
+
+    return colaboradoresFiltrados.map((colaborador) => {
+      const registros = [...(colaborador.registros || [])].sort(
+        (a, b) => new Date(b.data).getTime() - new Date(a.data).getTime(),
+      );
+      const semanaRegistros = registros.filter((registro) => isBetweenDates(registro.data, weekStart, weekEnd));
+      const mesRegistros = registros.filter((registro) => isBetweenDates(registro.data, monthStart, monthEnd));
+
+      return {
+        ...colaborador,
+        relatorio: {
+          semana: {
+            ...buildPeriod(semanaRegistros),
+            periodo: `${formatDate(weekStart.toISOString())} - ${formatDate(weekEnd.toISOString())}`,
+            historico: semanaRegistros,
+          },
+          mes: {
+            ...buildPeriod(mesRegistros),
+            periodo: new Intl.DateTimeFormat("pt-PT", {
+              month: "long",
+              year: "numeric",
+            }).format(monthStart),
+            historico: mesRegistros,
+          },
+        },
+      };
+    });
+  }, [colaboradoresFiltrados]);
+
+  const reportTotals = useMemo(
+    () =>
+      collaboratorHourReports.reduce(
+        (acc, colaborador) => {
+          acc.semanaHoras += colaborador.relatorio.semana.horas;
+          acc.semanaValor += colaborador.relatorio.semana.valor;
+          acc.mesHoras += colaborador.relatorio.mes.horas;
+          acc.mesValor += colaborador.relatorio.mes.valor;
+          return acc;
+        },
+        { semanaHoras: 0, semanaValor: 0, mesHoras: 0, mesValor: 0 },
+      ),
+    [collaboratorHourReports],
+  );
 
   const overviewBars = useMemo(
     () => [
@@ -1203,6 +1303,101 @@ export default function ColaboradorAdminClient() {
                   />
                 ))}
               </div>
+
+              <Card className="rounded-[24px] border-white/10 bg-slate-950/35 text-white shadow-[0_18px_60px_rgba(15,23,42,0.25)]">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-white">
+                    <ReceiptText className="h-5 w-5 text-cyan-300" />
+                    Relatório profissional de horas
+                  </CardTitle>
+                  <CardDescription className="text-slate-400">
+                    Resumo por colaborador com total semanal, mensal e histórico detalhado. A semana é fechada de segunda a domingo.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-5">
+                  <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                    <SummaryCard
+                      icon={Users}
+                      title="Colaboradores"
+                      value={String(collaboratorHourReports.length)}
+                      subtitle="Incluídos no filtro"
+                    />
+                    <SummaryCard
+                      icon={TimerReset}
+                      title="Semana"
+                      value={`${decimal(reportTotals.semanaHoras)}h`}
+                      subtitle={money(reportTotals.semanaValor)}
+                    />
+                    <SummaryCard
+                      icon={CalendarDays}
+                      title="Mês"
+                      value={`${decimal(reportTotals.mesHoras)}h`}
+                      subtitle={money(reportTotals.mesValor)}
+                    />
+                    <SummaryCard
+                      icon={Wallet}
+                      title="A receber"
+                      value={money(reportTotals.mesValor)}
+                      subtitle="Total mensal atual"
+                    />
+                  </div>
+
+                  <div className="space-y-4">
+                    {collaboratorHourReports.length === 0 ? (
+                      <div className="rounded-[22px] border border-dashed border-white/10 px-4 py-8 text-sm text-slate-400">
+                        Ainda não existem colaboradores para o filtro selecionado.
+                      </div>
+                    ) : (
+                      collaboratorHourReports.map((colaborador) => (
+                        <div
+                          key={colaborador.id}
+                          className="rounded-[22px] border border-white/10 bg-white/[0.03] p-4"
+                        >
+                          <div className="flex flex-col gap-4 border-b border-white/10 pb-4 xl:flex-row xl:items-start xl:justify-between">
+                            <div>
+                              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-cyan-200">
+                                Colaborador
+                              </p>
+                              <h3 className="mt-2 text-xl font-semibold text-white">{colaborador.nome}</h3>
+                              <p className="mt-1 text-sm text-slate-400">
+                                {formatRoleLabel(colaborador.funcao)} • Valor/hora {money(parseFloat(colaborador.valorHora || "0"))}
+                              </p>
+                            </div>
+
+                            <div className="grid gap-3 sm:grid-cols-2 xl:min-w-[420px]">
+                              <MiniReportCard
+                                title="Semana"
+                                hours={`${decimal(colaborador.relatorio.semana.horas)}h`}
+                                amount={money(colaborador.relatorio.semana.valor)}
+                                jobs={`${colaborador.relatorio.semana.trabalhos} trabalho(s)`}
+                              />
+                              <MiniReportCard
+                                title="Mês"
+                                hours={`${decimal(colaborador.relatorio.mes.horas)}h`}
+                                amount={money(colaborador.relatorio.mes.valor)}
+                                jobs={`${colaborador.relatorio.mes.trabalhos} trabalho(s)`}
+                              />
+                            </div>
+                          </div>
+
+                          <div className="mt-4 grid gap-4 xl:grid-cols-2">
+                            <HistoryBlock
+                              title="Histórico da semana"
+                              period={colaborador.relatorio.semana.periodo}
+                              rows={colaborador.relatorio.semana.historico}
+                            />
+                            <HistoryBlock
+                              title="Histórico do mês"
+                              period={colaborador.relatorio.mes.periodo}
+                              rows={colaborador.relatorio.mes.historico}
+                            />
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
 
               <div className="grid gap-4 xl:grid-cols-2">
                 {todosRegistros.length === 0 && (
@@ -1961,6 +2156,109 @@ function RecordMeta({
         <span className="text-xs uppercase tracking-[0.2em]">{label}</span>
       </div>
       <p className="mt-2 text-base font-semibold text-white">{value}</p>
+    </div>
+  );
+}
+
+function SummaryCard({
+  icon: Icon,
+  title,
+  value,
+  subtitle,
+}: {
+  icon: ComponentType<{ className?: string }>;
+  title: string;
+  value: string;
+  subtitle: string;
+}) {
+  return (
+    <div className="rounded-[20px] border border-white/10 bg-white/[0.03] p-4">
+      <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-cyan-200">
+        <Icon className="h-4 w-4" />
+        {title}
+      </div>
+      <p className="mt-3 text-[1.8rem] font-semibold text-white">{value}</p>
+      <p className="mt-1 text-sm text-slate-400">{subtitle}</p>
+    </div>
+  );
+}
+
+function MiniReportCard({
+  title,
+  hours,
+  amount,
+  jobs,
+}: {
+  title: string;
+  hours: string;
+  amount: string;
+  jobs: string;
+}) {
+  return (
+    <div className="rounded-[20px] border border-cyan-300/10 bg-cyan-400/[0.06] p-4">
+      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-cyan-200">{title}</p>
+      <p className="mt-2 text-2xl font-semibold text-white">{hours}</p>
+      <p className="mt-1 text-sm font-medium text-cyan-100">{amount} a receber</p>
+      <p className="mt-1 text-xs text-slate-400">{jobs}</p>
+    </div>
+  );
+}
+
+function HistoryBlock({
+  title,
+  period,
+  rows,
+}: {
+  title: string;
+  period?: string;
+  rows: Registro[];
+}) {
+  return (
+    <div className="rounded-[20px] border border-white/10 bg-white/[0.03]">
+      <div className="border-b border-white/10 px-4 py-4">
+        <h4 className="text-base font-semibold text-white">{title}</h4>
+        {period ? <p className="mt-1 text-sm text-slate-400">{period}</p> : null}
+      </div>
+
+      {rows.length === 0 ? (
+        <div className="px-4 py-8 text-sm text-slate-400">Sem registros neste período.</div>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="min-w-full text-sm">
+            <thead>
+              <tr className="text-left text-slate-400">
+                <th className="px-4 py-3 font-medium">Data</th>
+                <th className="px-4 py-3 font-medium">Entrada</th>
+                <th className="px-4 py-3 font-medium">Pausa</th>
+                <th className="px-4 py-3 font-medium">Saída</th>
+                <th className="px-4 py-3 font-medium">Horas</th>
+                <th className="px-4 py-3 font-medium">Trabalhos</th>
+                <th className="px-4 py-3 font-medium">Valor</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((row) => (
+                <tr key={row.id} className="border-t border-white/10 text-slate-200">
+                  <td className="px-4 py-3">
+                    <div className="font-medium text-white">{formatDate(row.data)}</div>
+                    <div className="text-xs text-slate-500">{formatDayName(row.data)}</div>
+                  </td>
+                  <td className="px-4 py-3">{row.horaEntrada || "—"}</td>
+                  <td className="px-4 py-3">{row.horaPausa || "—"}</td>
+                  <td className="px-4 py-3">{row.horaSaida || "—"}</td>
+                  <td className="px-4 py-3 font-medium text-white">
+                    {`${decimal(parseFloat(row.horasTrabalhadas || "0"))}h`}
+                  </td>
+                  <td className="px-4 py-3">{row.numeroTrabalhos || 0}</td>
+                  <td className="px-4 py-3 font-medium text-cyan-200">
+                    {money(parseFloat(row.valorTotal || "0"))}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 }
