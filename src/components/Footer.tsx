@@ -18,7 +18,7 @@ export default function Footer() {
   const currentYear = new Date().getFullYear();
   const whatsappNumber = BUSINESS_PHONE.replace(/[^\d]/g, "");
   const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(
-    "Ola! Gostava de pedir um orcamento a CLYON.",
+    "Olá! Gostava de pedir um orçamento à CLYON.",
   )}`;
   const serviceCities = [
     "Lisboa",
@@ -28,16 +28,16 @@ export default function Footer() {
     "Barreiro",
     "Oeiras",
     "Cascais",
-    "Setubal",
+    "Setúbal",
     "Loures",
     "Sintra",
     "Montijo",
     "Odivelas",
   ];
   const extraServices = [
-    "Recolha de moveis",
+    "Recolha de móveis",
     "Esvaziamento de casas",
-    "Limpeza pos-obra",
+    "Limpeza pós-obra",
     "Recolha de entulho",
   ];
 
@@ -80,8 +80,7 @@ export default function Footer() {
                 height="84"
               />
               <p className="max-w-sm text-[1.02rem] leading-8 text-cyan-50/88">
-                Recolha e limpeza profissional em Lisboa, Margem Sul e Setubal com
-                resposta rapida e execucao sem stress.
+                Recolha e limpeza profissional em Lisboa, Margem Sul e Setúbal com resposta rápida e execução sem stress.
               </p>
 
               <div className="mt-6 flex flex-wrap gap-3">
@@ -90,10 +89,10 @@ export default function Footer() {
                   <ArrowRight className="ml-2 h-4 w-4 text-white" />
                 </Link>
                 <Link href="/colaboradores" className="site-btn-secondary">
-                  Area de Colaboradores
+                  Área de Colaboradores
                 </Link>
                 <a href={ANDROID_APP_URL} target="_blank" rel="noreferrer" className="site-btn-secondary">
-                  Baixar App Android
+                  Baixar app Android
                   <ArrowDownToLine className="ml-2 h-4 w-4" />
                 </a>
               </div>
@@ -101,27 +100,27 @@ export default function Footer() {
 
             <div className="pt-2">
               <h3 className="mb-4 text-sm font-semibold uppercase tracking-[0.18em] text-white">
-                Servicos
+                Serviços
               </h3>
               <ul className="space-y-3 text-[0.98rem] text-cyan-50/82">
                 <li>
                   <Link href="/recolha-de-moveis" className="transition-colors hover:text-white">
-                    Recolha de moveis
+                    Recolha de móveis
                   </Link>
                 </li>
                 <li>
                   <Link href="/simulador" className="transition-colors hover:text-white">
-                    Solicitar servico
+                    Solicitar serviço
                   </Link>
                 </li>
                 <li>
                   <Link href="/servicos" className="transition-colors hover:text-white">
-                    Os nossos servicos
+                    Os nossos serviços
                   </Link>
                 </li>
                 <li>
                   <Link href="/precos" className="transition-colors hover:text-white">
-                    Precos orientativos
+                    Preços orientativos
                   </Link>
                 </li>
                 <li>
@@ -139,7 +138,7 @@ export default function Footer() {
               <ul className="space-y-3 text-[0.98rem] text-cyan-50/82">
                 <li>
                   <Link href="/sobre-nos" className="transition-colors hover:text-white">
-                    Sobre nos
+                    Sobre nós
                   </Link>
                 </li>
                 <li>
@@ -185,7 +184,7 @@ export default function Footer() {
 
             <div className="pt-2">
               <h3 className="mb-4 text-sm font-semibold uppercase tracking-[0.18em] text-white">
-                Contacto rapido
+                Contacto rápido
               </h3>
               <div className="space-y-3 text-[0.98rem] text-cyan-50/82">
                 <a
@@ -236,10 +235,10 @@ export default function Footer() {
             <p className="text-sm text-cyan-50/68">© CLYON {currentYear} - Todos os direitos reservados</p>
             <div className="flex flex-wrap items-center justify-center gap-4">
               <Link href="/privacidade" className="text-sm text-cyan-50/68 transition-colors hover:text-white">
-                Politica de Privacidade
+                Política de Privacidade
               </Link>
               <Link href="/privacidade" className="text-sm text-cyan-50/68 transition-colors hover:text-white">
-                Politica de Cookies
+                Política de Cookies
               </Link>
               <CookiePreferencesLink />
             </div>

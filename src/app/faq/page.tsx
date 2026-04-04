@@ -7,7 +7,7 @@ import FAQClient from "./FAQClient";
 export const metadata: Metadata = {
   title: "Perguntas Frequentes | CLYON",
   description:
-    "Respostas rápidas sobre recolha de entulho, móveis, monos, limpeza pós-obra, mudanças, orçamentos e funcionamento dos serviços CLYON.",
+    "Respostas rápidas sobre recolha de entulho, móveis, monos, limpeza pós-obra, mudanças, orçamentos e funcionamento dos serviços da CLYON.",
   alternates: { canonical: "https://clyon.pt/faq" },
   openGraph: {
     title: "Perguntas Frequentes | CLYON",
@@ -31,7 +31,7 @@ const faqCategories = [
       },
       {
         q: "Como posso contratar um serviço?",
-        a: "Pode usar o simulador, falar connosco ou contactar-nos diretamente para triagem rápida.",
+        a: "Pode usar o simulador, falar connosco ou contactar-nos diretamente para uma triagem rápida.",
       },
     ],
   },
@@ -40,7 +40,7 @@ const faqCategories = [
     questions: [
       {
         q: "O valor do simulador é final?",
-        a: "O simulador dá uma estimativa inicial. O valor pode ajustar-se conforme volume, acessibilidade e complexidade real no local.",
+        a: "O simulador dá uma estimativa inicial. O valor pode ajustar-se conforme o volume, a acessibilidade e a complexidade real no local.",
       },
       {
         q: "Posso confirmar detalhes antes de avançar?",
@@ -57,7 +57,7 @@ const faqCategories = [
       },
       {
         q: "Fazem limpeza pós-obra?",
-        a: "Sim. Fazemos limpezas pós-obra e finais para deixar o espaço pronto a usar com bom acabamento.",
+        a: "Sim. Fazemos limpezas pós-obra e finais para deixar o espaço pronto a usar, com um bom acabamento.",
       },
     ],
   },
@@ -70,7 +70,7 @@ const faqCategories = [
       },
       {
         q: "Como calculam o preço de uma mudança?",
-        a: "Consideramos tempo, volume, distância, acessibilidade e recursos necessários para executar o serviço com segurança.",
+        a: "Consideramos o tempo, o volume, a distância, a acessibilidade e os recursos necessários para executar o serviço com segurança.",
       },
     ],
   },
@@ -119,7 +119,7 @@ export default function FAQPage() {
               </div>
               <Link
                 href="/contactos"
-                  className="inline-flex items-center justify-center rounded-2xl bg-cyan-400 px-7 py-4 text-base font-semibold text-white transition hover:-translate-y-0.5 hover:bg-cyan-300"
+                className="inline-flex items-center justify-center rounded-2xl bg-cyan-400 px-7 py-4 text-base font-semibold text-white transition hover:-translate-y-0.5 hover:bg-cyan-300"
               >
                 Contactar agora
                 <ArrowRight className="ml-2 h-4 w-4" />
