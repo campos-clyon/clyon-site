@@ -88,10 +88,13 @@ img {
 
 .site-btn-primary,
 .site-btn-secondary {
+  position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
+  overflow: hidden;
+  isolation: isolate;
   min-height: 3rem;
   border-radius: 18px;
   padding: 0.75rem 1.5rem;
@@ -132,6 +135,121 @@ img {
   transform: translateY(-2px);
   background: #ecfeff;
   color: #0e7490;
+}
+
+.site-btn-lively {
+  transition:
+    transform 220ms cubic-bezier(0.22, 1, 0.36, 1),
+    background-color 220ms ease,
+    border-color 220ms ease,
+    color 220ms ease,
+    box-shadow 220ms ease,
+    filter 220ms ease;
+}
+
+.site-btn-lively::before {
+  content: "";
+  position: absolute;
+  top: -130%;
+  left: -28%;
+  width: 34%;
+  height: 360%;
+  transform: translateX(-240%) rotate(18deg);
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.12) 22%,
+    rgba(255, 255, 255, 0.92) 46%,
+    rgba(255, 255, 255, 0.16) 62%,
+    transparent 100%
+  );
+  opacity: 0.95;
+  pointer-events: none;
+  z-index: 0;
+  animation: site-btn-sheen 5.2s ease-in-out infinite;
+}
+
+.site-btn-lively::after {
+  content: "";
+  position: absolute;
+  inset: 1px;
+  border-radius: 17px;
+  background: radial-gradient(circle at top, rgba(255, 255, 255, 0.22), transparent 58%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.site-btn-lively > span,
+.site-btn-lively > svg {
+  position: relative;
+  z-index: 1;
+}
+
+.site-btn-lively svg {
+  transition: transform 220ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.site-btn-primary.site-btn-lively {
+  border-color: rgba(34, 211, 238, 0.75);
+  background: linear-gradient(135deg, #06b6d4 0%, #0891b2 56%, #22d3ee 100%);
+  box-shadow:
+    0 20px 46px -24px rgba(6, 182, 212, 0.82),
+    0 0 0 1px rgba(255, 255, 255, 0.14) inset;
+}
+
+.site-btn-primary.site-btn-lively:hover {
+  transform: translateY(-4px) scale(1.02);
+  border-color: rgba(103, 232, 249, 0.95);
+  background: linear-gradient(135deg, #22d3ee 0%, #0891b2 54%, #67e8f9 100%);
+  box-shadow:
+    0 28px 64px -30px rgba(6, 182, 212, 0.88),
+    0 0 28px rgba(34, 211, 238, 0.28),
+    0 0 0 1px rgba(255, 255, 255, 0.22) inset;
+  filter: saturate(1.08);
+}
+
+.site-btn-secondary.site-btn-lively {
+  border-color: #7dd3fc;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(236, 254, 255, 0.94) 100%);
+  box-shadow:
+    0 18px 40px -28px rgba(14, 116, 144, 0.42),
+    0 0 0 1px rgba(255, 255, 255, 0.82) inset;
+}
+
+.site-btn-secondary.site-btn-lively:hover {
+  transform: translateY(-4px) scale(1.02);
+  border-color: #67e8f9;
+  background: linear-gradient(135deg, #ffffff 0%, #dffafe 100%);
+  box-shadow:
+    0 24px 54px -30px rgba(14, 116, 144, 0.42),
+    0 0 24px rgba(34, 211, 238, 0.16),
+    0 0 0 1px rgba(103, 232, 249, 0.46) inset;
+}
+
+.site-btn-lively:hover svg {
+  transform: translateX(4px) rotate(-8deg);
+}
+
+@keyframes site-btn-sheen {
+  0%,
+  12% {
+    transform: translateX(-240%) rotate(18deg);
+  }
+  28%,
+  100% {
+    transform: translateX(360%) rotate(18deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .site-btn-lively,
+  .site-btn-lively svg {
+    transition: none;
+  }
+
+  .site-btn-lively::before {
+    animation: none;
+  }
 }
 
 ::-webkit-scrollbar {

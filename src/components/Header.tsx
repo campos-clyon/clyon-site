@@ -44,12 +44,12 @@ export default function Header() {
 
         <div className="flex flex-shrink-0 items-center gap-2 sm:gap-3">
           <div className="hidden lg:block">
-            <Link href="/recolha-de-moveis" className="site-btn-secondary px-5 py-3.5">
+            <Link href="/recolha-de-moveis" className="site-btn-secondary site-btn-lively px-5 py-3.5">
               <span className="!text-sm !font-semibold !text-[#047faa]">Recolha de Móveis</span>
             </Link>
           </div>
 
-          <a href={phoneHref} className="site-btn-primary px-5 py-3.5 sm:px-6" aria-label={`Ligar para ${BUSINESS_PHONE}`}>
+          <a href={phoneHref} className="site-btn-primary site-btn-lively px-5 py-3.5 sm:px-6" aria-label={`Ligar para ${BUSINESS_PHONE}`}>
             <span className="!text-sm !font-semibold !text-white">Ligar</span>
             <Phone className="hidden h-4 w-4 text-white sm:block" />
           </a>
@@ -80,12 +80,12 @@ export default function Header() {
 
             <a
               href={phoneHref}
-              className="site-btn-primary mt-2 flex w-full py-3"
+              className="site-btn-primary site-btn-lively mt-2 flex w-full py-3"
               onClick={() => setMenuOpen(false)}
               aria-label={`Ligar para ${BUSINESS_PHONE}`}
             >
               <Phone className="h-4 w-4" />
-              Ligar
+              <span>Ligar</span>
             </a>
           </nav>
         </div>
