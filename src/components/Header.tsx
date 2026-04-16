@@ -3,10 +3,13 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
-import { ArrowRight, Menu, X } from "lucide-react";
+import { Menu, Phone, X } from "lucide-react";
+
+import { BUSINESS_PHONE } from "@/lib/seo-data";
 
 export default function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const phoneHref = `tel:${BUSINESS_PHONE.replace(/\s+/g, "")}`;
 
   const navLinks = [
     { label: "Serviços", href: "/servicos" },
@@ -46,10 +49,10 @@ export default function Header() {
             </Link>
           </div>
 
-          <Link href="/simulador" className="site-btn-primary px-5 py-3.5 sm:px-6">
-            <span className="!text-sm !font-semibold !text-white">Simular</span>
-            <ArrowRight className="hidden h-4 w-4 text-white sm:block" />
-          </Link>
+          <a href={phoneHref} className="site-btn-primary px-5 py-3.5 sm:px-6" aria-label={`Ligar para ${BUSINESS_PHONE}`}>
+            <span className="!text-sm !font-semibold !text-white">Ligar</span>
+            <Phone className="hidden h-4 w-4 text-white sm:block" />
+          </a>
 
           <button
             className="inline-flex rounded-xl border border-cyan-200 bg-white p-3 text-slate-600 transition-colors hover:text-cyan-600 lg:hidden"
@@ -75,14 +78,15 @@ export default function Header() {
               </Link>
             ))}
 
-            <Link
-              href="/simulador"
+            <a
+              href={phoneHref}
               className="site-btn-primary mt-2 flex w-full py-3"
               onClick={() => setMenuOpen(false)}
+              aria-label={`Ligar para ${BUSINESS_PHONE}`}
             >
-              <ArrowRight className="h-4 w-4" />
-              Simular
-            </Link>
+              <Phone className="h-4 w-4" />
+              Ligar
+            </a>
           </nav>
         </div>
       )}
