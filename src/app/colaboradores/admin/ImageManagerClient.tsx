@@ -129,7 +129,7 @@ async function loadImageElement(file: File) {
       const nextImage = new window.Image();
 
       nextImage.onload = () => resolve(nextImage);
-      nextImage.onerror = () => reject(new Error("Nao foi possivel ler a imagem."));
+      nextImage.onerror = () => reject(new Error("Não foi possível ler a imagem."));
       nextImage.src = objectUrl;
     });
 
@@ -221,7 +221,7 @@ export default function ImageManagerClient() {
       const data = await readResponsePayload(response);
 
       if (!response.ok) {
-        throw new Error(data.error || "Nao foi possivel carregar a galeria.");
+        throw new Error(data.error || "Não foi possível carregar a galeria.");
       }
 
       setItems(data.items || []);
@@ -229,7 +229,7 @@ export default function ImageManagerClient() {
       const nextError = err instanceof Error ? err.message : "Erro ao carregar a galeria.";
       setError(nextError);
 
-      if (nextError.includes("Nao autorizado") || nextError.includes("Acesso negado")) {
+      if (nextError.includes("Não autorizado") || nextError.includes("Acesso negado")) {
         localStorage.removeItem("colaborador_token");
         localStorage.removeItem("colaborador_nome");
         localStorage.removeItem("colaborador_id");
@@ -301,11 +301,11 @@ export default function ImageManagerClient() {
       setMessage(
         optimizedFile === file
           ? "Imagem pronta para upload."
-          : "Imagem otimizada antes do upload para carregar mais rapido no site.",
+          : "Imagem otimizada antes do upload para carregar mais rápido no site.",
       );
     } catch (err) {
       setNewFile(file);
-      setError(err instanceof Error ? err.message : "Nao foi possivel otimizar a imagem.");
+      setError(err instanceof Error ? err.message : "Não foi possível otimizar a imagem.");
     } finally {
       setOptimizingUpload(false);
       event.target.value = "";
@@ -376,7 +376,7 @@ export default function ImageManagerClient() {
       const data = await readResponsePayload(response);
 
       if (!response.ok) {
-        throw new Error(data.error || "Nao foi possivel guardar a imagem.");
+        throw new Error(data.error || "Não foi possível guardar a imagem.");
       }
 
       setMessage("Imagem adicionada com sucesso.");
@@ -450,7 +450,7 @@ export default function ImageManagerClient() {
       const data = await readResponsePayload(response);
 
       if (!response.ok) {
-        throw new Error(data.error || "Nao foi possivel guardar as alteracoes.");
+        throw new Error(data.error || "Não foi possível guardar as alteracoes.");
       }
 
       setReplacementFiles((current) => ({ ...current, [item.id]: null }));
@@ -487,7 +487,7 @@ export default function ImageManagerClient() {
       const data = await readResponsePayload(response);
 
       if (!response.ok) {
-        throw new Error(data.error || "Nao foi possivel apagar a imagem.");
+        throw new Error(data.error || "Não foi possível apagar a imagem.");
       }
 
       setMessage("Imagem apagada com sucesso.");
@@ -524,7 +524,7 @@ export default function ImageManagerClient() {
       );
     } catch (err) {
       setReplacementFiles((current) => ({ ...current, [id]: file }));
-      setError(err instanceof Error ? err.message : "Nao foi possivel otimizar a imagem.");
+      setError(err instanceof Error ? err.message : "Não foi possível otimizar a imagem.");
     } finally {
       setOptimizingUpload(false);
       event.target.value = "";
@@ -546,7 +546,7 @@ export default function ImageManagerClient() {
               </div>
               <div className="space-y-2">
                 <h1 className="text-3xl font-bold tracking-tight text-slate-950 md:text-4xl">
-                  Gestor de media mais simples e rapido
+                  Gestor de media mais simples e rápido
                 </h1>
                 <p className="max-w-3xl text-sm leading-7 text-slate-600 md:text-base">
                   O carrossel da homepage e a galeria de trabalhos leem esta lista.
@@ -656,7 +656,7 @@ export default function ImageManagerClient() {
                     className="h-12 rounded-[18px] border-slate-200 bg-white"
                   />
                   <p className="text-xs text-slate-500">
-                    O upload comprime e redimensiona a imagem para o site abrir mais rapido.
+                    O upload comprime e redimensiona a imagem para o site abrir mais rápido.
                   </p>
                 </div>
 

@@ -99,7 +99,7 @@ export const appRouter = router({
       .input(z.object({ nome: z.string(), senha: z.string() }))
       .mutation(async ({ input }) => {
         const colab = await getColaboradorByNome(input.nome);
-        if (!colab) throw new Error("Colaborador n�o encontrado");
+        if (!colab) throw new Error("Colaborador não encontrado");
         const valid = await bcrypt.compare(input.senha, colab.senha);
         if (!valid) throw new Error("Senha incorreta");
         return {
@@ -134,7 +134,7 @@ export const appRouter = router({
       .input(z.object({ colaboradorId: z.number(), horaPausa: z.string() }))
       .mutation(async ({ input }) => {
         const reg = await getTodayRegistroByColaborador(input.colaboradorId);
-        if (!reg) throw new Error("Registo de hoje n�o encontrado");
+        if (!reg) throw new Error("Registo de hoje não encontrado");
         await updateRegistroHoras(reg.id, { horaPausa: input.horaPausa });
         return { success: true };
       }),
@@ -151,7 +151,7 @@ export const appRouter = router({
       )
       .mutation(async ({ input }) => {
         const reg = await getTodayRegistroByColaborador(input.colaboradorId);
-        if (!reg) throw new Error("Registo de hoje n�o encontrado");
+        if (!reg) throw new Error("Registo de hoje não encontrado");
         await updateRegistroHoras(reg.id, {
           horaSaida: input.horaSaida,
           numeroTrabalhos: input.numeroTrabalhos,

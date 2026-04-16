@@ -14,73 +14,79 @@ export interface ServiceData {
 
 export const CITIES: CityData[] = [
   { slug: "lisboa", name: "Lisboa", region: "Lisboa" },
-  { slug: "setubal", name: "Set�bal", region: "Set�bal" },
-  { slug: "almada", name: "Almada", region: "Set�bal" },
+  { slug: "setubal", name: "Setúbal", region: "Setúbal" },
+  { slug: "almada", name: "Almada", region: "Setúbal" },
   { slug: "cascais", name: "Cascais", region: "Lisboa" },
   { slug: "sintra", name: "Sintra", region: "Lisboa" },
   { slug: "oeiras", name: "Oeiras", region: "Lisboa" },
   { slug: "amadora", name: "Amadora", region: "Lisboa" },
   { slug: "loures", name: "Loures", region: "Lisboa" },
   { slug: "odivelas", name: "Odivelas", region: "Lisboa" },
-  { slug: "seixal", name: "Seixal", region: "Set�bal" },
-  { slug: "barreiro", name: "Barreiro", region: "Set�bal" },
-  { slug: "moita", name: "Moita", region: "Set�bal" },
-  { slug: "montijo", name: "Montijo", region: "Set�bal" },
-  { slug: "palmela", name: "Palmela", region: "Set�bal" },
-  { slug: "sesimbra", name: "Sesimbra", region: "Set�bal" },
-  { slug: "alcochete", name: "Alcochete", region: "Set�bal" },
-  { slug: "amora", name: "Amora", region: "Set�bal" },
-  { slug: "corroios", name: "Corroios", region: "Set�bal" },
+  { slug: "seixal", name: "Seixal", region: "Setúbal" },
+  { slug: "barreiro", name: "Barreiro", region: "Setúbal" },
+  { slug: "moita", name: "Moita", region: "Setúbal" },
+  { slug: "montijo", name: "Montijo", region: "Setúbal" },
+  { slug: "palmela", name: "Palmela", region: "Setúbal" },
+  { slug: "sesimbra", name: "Sesimbra", region: "Setúbal" },
+  { slug: "alcochete", name: "Alcochete", region: "Setúbal" },
+  { slug: "amora", name: "Amora", region: "Setúbal" },
+  { slug: "corroios", name: "Corroios", region: "Setúbal" },
   { slug: "carnaxide", name: "Carnaxide", region: "Lisboa" },
-  { slug: "costa-da-caparica", name: "Costa da Caparica", region: "Set�bal" },
+  { slug: "costa-da-caparica", name: "Costa da Caparica", region: "Setúbal" },
 ];
 
 export const SERVICES: ServiceData[] = [
   {
     slug: "recolha-moveis",
-    name: "Recolha de M�veis",
-    description: "Recolha segura e r�pida de m�veis velhos, danificados ou indesejados.",
-    longDescription: "A CLYON oferece um servi�o profissional de recolha de m�veis em toda a regi�o de Lisboa e Set�bal. Retiramos sof�s, camas, arm�rios, mesas, cadeiras e qualquer outro tipo de mobili�rio. Transporte direto para reciclagem ou doa��o.",
-    keywords: ["recolha de m�veis", "remo��o de m�veis", "retirar m�veis velhos", "transporte de m�veis"],
+    name: "Recolha de Móveis",
+    description: "Recolha segura e rápida de móveis velhos, danificados ou indesejados.",
+    longDescription:
+      "A CLYON oferece um serviço profissional de recolha de móveis em toda a região de Lisboa e Setúbal. Retiramos sofás, camas, armários, mesas, cadeiras e qualquer outro tipo de mobiliário. Transporte direto para reciclagem ou doação.",
+    keywords: ["recolha de móveis", "remoção de móveis", "retirar móveis velhos", "transporte de móveis"],
   },
   {
     slug: "recolha-entulho",
     name: "Recolha de Entulho",
-    description: "Remo��o r�pida e organizada de entulho de obras, remodela��es e constru��es.",
-    longDescription: "Servi�o especializado em recolha de entulho de obras, remodela��es e demoli��es. A CLYON remove todo o tipo de res�duos de constru��o: tijolos, cimento, azulejos, madeiras e outros materiais. Transporte e disposi��o adequada em centros de reciclagem certificados.",
-    keywords: ["recolha de entulho", "remo��o de entulho", "limpeza de obra", "entulho de constru��o"],
+    description: "Remoção rápida e organizada de entulho de obras, remodelações e construções.",
+    longDescription:
+      "Serviço especializado em recolha de entulho de obras, remodelações e demolições. A CLYON remove todo o tipo de resíduos de construção: tijolos, cimento, azulejos, madeiras e outros materiais. Transporte e disposição adequada em centros de reciclagem certificados.",
+    keywords: ["recolha de entulho", "remoção de entulho", "limpeza de obra", "entulho de construção"],
   },
   {
     slug: "recolha-monos",
     name: "Recolha de Monos",
     description: "Recolha profissional de monos, sucata e materiais diversos.",
-    longDescription: "A CLYON realiza a recolha de monos e objetos volumosos que j� n�o s�o necess�rios. Eletrodom�sticos, equipamentos velhos, sucata e outros materiais s�o recolhidos de forma r�pida e respons�vel. Limpeza completa do espa�o ap�s a recolha.",
-    keywords: ["recolha de monos", "remo��o de monos", "retirar objetos velhos", "sucata"],
+    longDescription:
+      "A CLYON realiza a recolha de monos e objetos volumosos que já não são necessários. Eletrodomésticos, equipamentos velhos, sucata e outros materiais são recolhidos de forma rápida e responsável. Limpeza completa do espaço após a recolha.",
+    keywords: ["recolha de monos", "remoção de monos", "retirar objetos velhos", "sucata"],
   },
   {
     slug: "esvaziamento-casas",
     name: "Esvaziamento de Casas",
-    description: "Esvaziamento completo de casas, apartamentos e escrit�rios.",
-    longDescription: "Servi�o completo de esvaziamento de im�veis. A CLYON trata de tudo: m�veis, eletrodom�sticos, objetos pessoais e res�duos. Ideal para heran�as, mudan�as de casa, desocupa��o de im�veis para venda ou arrendamento.",
-    keywords: ["esvaziamento de casas", "esvaziar casa", "desocupa��o de im�vel", "limpeza de casa"],
+    description: "Esvaziamento completo de casas, apartamentos e escritórios.",
+    longDescription:
+      "Serviço completo de esvaziamento de imóveis. A CLYON trata de tudo: móveis, eletrodomésticos, objetos pessoais e resíduos. Ideal para heranças, mudanças de casa, desocupação de imóveis para venda ou arrendamento.",
+    keywords: ["esvaziamento de casas", "esvaziar casa", "desocupação de imóvel", "limpeza de casa"],
   },
   {
     slug: "limpeza-pos-obra",
-    name: "Limpeza P�s-Obra",
-    description: "Limpeza profissional ap�s obras e remodela��es.",
-    longDescription: "Ap�s a conclus�o de obras e remodela��es, a CLYON realiza uma limpeza profissional completa. Removemos p�, res�duos de constru��o e deixamos o espa�o pronto a habitar. Servi�o dispon�vel para casas, apartamentos e escrit�rios.",
-    keywords: ["limpeza p�s-obra", "limpeza ap�s obra", "limpeza de constru��o", "limpeza profissional"],
+    name: "Limpeza Pós-Obra",
+    description: "Limpeza profissional após obras e remodelações.",
+    longDescription:
+      "Após a conclusão de obras e remodelações, a CLYON realiza uma limpeza profissional completa. Removemos pó, resíduos de construção e deixamos o espaço pronto a habitar. Serviço disponível para casas, apartamentos e escritórios.",
+    keywords: ["limpeza pós-obra", "limpeza após obra", "limpeza de construção", "limpeza profissional"],
   },
   {
     slug: "mudancas",
-    name: "Mudan�as",
-    description: "Servi�o de mudan�as residenciais e comerciais.",
-    longDescription: "A CLYON oferece um servi�o completo de mudan�as para particulares e empresas. Tratamos do transporte de todos os seus bens com cuidado e profissionalismo. Dispon�vel em Lisboa, Set�bal e toda a Margem Sul.",
-    keywords: ["mudan�as", "servi�o de mudan�as", "transporte de mudan�as", "empresa de mudan�as"],
+    name: "Mudanças",
+    description: "Serviço de mudanças residenciais e comerciais.",
+    longDescription:
+      "A CLYON oferece um serviço completo de mudanças para particulares e empresas. Tratamos do transporte de todos os seus bens com cuidado e profissionalismo. Disponível em Lisboa, Setúbal e toda a Margem Sul.",
+    keywords: ["mudanças", "serviço de mudanças", "transporte de mudanças", "empresa de mudanças"],
   },
 ];
 
-// Gera todas as combina��es de cidade + servi�o
+// Gera todas as combinações de cidade + serviço
 export function getAllCityServiceCombinations() {
   const combinations: { city: CityData; service: ServiceData }[] = [];
   for (const city of CITIES) {
@@ -91,7 +97,7 @@ export function getAllCityServiceCombinations() {
   return combinations;
 }
 
-// Gera o slug para uma combina��o cidade + servi�o
+// Gera o slug para uma combinação cidade + serviço
 export function getCityServiceSlug(serviceSlug: string, citySlug: string): string {
   return `${serviceSlug}-${citySlug}`;
 }
@@ -101,7 +107,7 @@ export function findCity(slug: string): CityData | undefined {
   return CITIES.find((c) => c.slug === slug);
 }
 
-// Encontra servi�o pelo slug
+// Encontra serviço pelo slug
 export function findService(slug: string): ServiceData | undefined {
   return SERVICES.find((s) => s.slug === slug);
 }

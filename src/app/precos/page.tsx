@@ -10,40 +10,40 @@ import {
 import { BUSINESS_PHONE, SITE_URL } from "@/lib/seo-data";
 
 export const metadata: Metadata = {
-  title: "Precos de Recolha de Monos, Entulho e Moveis | CLYON",
+  title: "Preços de Recolha de Monos, Entulho e Móveis | CLYON",
   description:
-    "Veja precos orientativos para recolha de monos, entulho, moveis, esvaziamentos e limpeza pos-obra em Lisboa, Margem Sul e Setubal.",
+    "Veja preços orientativos para recolha de monos, entulho, móveis, esvaziamentos e limpeza pós-obra em Lisboa, Margem Sul e Setúbal.",
   alternates: {
     canonical: `${SITE_URL}/precos`,
   },
   openGraph: {
-    title: "Precos de Recolha de Monos, Entulho e Moveis | CLYON",
+    title: "Preços de Recolha de Monos, Entulho e Móveis | CLYON",
     description:
-      "Faixas de preco de referencia, fatores que influenciam o valor e a melhor forma de pedir orcamento com precisao.",
+      "Faixas de preço de referência, fatores que influenciam o valor e a melhor forma de pedir orçamento com precisão.",
     url: `${SITE_URL}/precos`,
   },
 };
 
 const priceExamples = [
   {
-    title: "Recolha de sofa",
+    title: "Recolha de sofá",
     price: "desde 35 EUR",
     includes: "Retirada, carregamento e transporte conforme acessos e volume.",
   },
   {
-    title: "Cama, estrado e colchao",
+    title: "Cama, estrado e colchão",
     price: "desde 45 EUR",
-    includes: "Ideal para trocas de quarto, mudancas ou libertacao de espaco.",
+    includes: "Ideal para trocas de quarto, mudanças ou libertação de espaço.",
   },
   {
-    title: "Armario ou roupeiro grande",
+    title: "Armário ou roupeiro grande",
     price: "desde 55 EUR",
-    includes: "Pode incluir desmontagem e retirada em predios sem elevador.",
+    includes: "Pode incluir desmontagem e retirada em prédios sem elevador.",
   },
   {
-    title: "Recolha de varios moveis",
+    title: "Recolha de vários móveis",
     price: "desde 180 EUR",
-    includes: "Pedidos com recheios, divisoes completas ou volumes acumulados.",
+    includes: "Pedidos com recheios, divisões completas ou volumes acumulados.",
   },
   {
     title: "Recolha de entulho",
@@ -51,66 +51,66 @@ const priceExamples = [
     includes: "Valor depende do tipo de residuo, peso, quantidade e facilidade de carga.",
   },
   {
-    title: "Limpeza pos-obra",
+    title: "Limpeza pós-obra",
     price: "desde 160 EUR",
-    includes: "Preco varia com area, nivel de sujidade, vidros, cozinha e casas de banho.",
+    includes: "Preco varia com área, nível de sujidade, vidros, cozinha e casas de banho.",
   },
 ];
 
 const pricingFactors = [
   "Quantidade total e peso do material",
   "Andar, elevador, escadas e distancia de carga",
-  "Necessidade de desmontagem ou protecao adicional",
-  "Mistura entre moveis, monos, entulho e eletrodomesticos",
+  "Necessidade de desmontagem ou proteção adicional",
+  "Mistura entre móveis, monos, entulho e eletrodomésticos",
   "Urgencia do pedido e janela horaria pretendida",
-  "Localizacao do servico em Lisboa, Margem Sul ou Setubal",
+  "Localização do serviço em Lisboa, Margem Sul ou Setúbal",
 ];
 
 const scenarios = [
   {
     title: "Pedido simples",
-    text: "Um sofa, uma cama ou alguns moveis pequenos costumam ser os pedidos mais rapidos de orcamentar e executar.",
+    text: "Um sofá, uma cama ou alguns móveis pequenos costumam ser os pedidos mais rápidos de orçamentar e executar.",
   },
   {
-    title: "Pedido medio",
-    text: "Varios moveis, acesso por escadas ou recolha de eletrodomesticos pedem mais tempo de carga e deslocacao.",
+    title: "Pedido médio",
+    text: "Vários móveis, acesso por escadas ou recolha de eletrodomésticos pedem mais tempo de carga e deslocação.",
   },
   {
     title: "Pedido completo",
-    text: "Esvaziamento de casa, mistura de residuos ou fim de obra exigem avaliacao mais detalhada e equipa ajustada.",
+    text: "Esvaziamento de casa, mistura de resíduos ou fim de obra exigem avaliação mais detalhada e equipa ajustada.",
   },
 ];
 
 const faqs = [
   {
-    question: "Os precos desta pagina sao fixos?",
+    question: "Os preços desta página são fixos?",
     answer:
-      "Nao. Sao valores orientativos para ajudar a enquadrar o pedido. O valor final depende sempre do volume, acessos, urgencia e localizacao.",
+      "Não. São valores orientativos para ajudar a enquadrar o pedido. O valor final depende sempre do volume, acessos, urgência e localização.",
   },
   {
-    question: "Como receber um orcamento mais preciso?",
+    question: "Como receber um orçamento mais preciso?",
     answer:
-      "Envie fotos, morada, piso, informacao sobre elevador e descreva o que precisa de retirar. Quanto mais claro for o pedido, mais preciso sera o orcamento.",
+      "Envie fotos, morada, piso, informação sobre elevador e descreva o que precisa de retirar. Quanto mais claro for o pedido, mais preciso será o orçamento.",
   },
   {
-    question: "A desmontagem esta incluida?",
+    question: "A desmontagem está incluída?",
     answer:
-      "Depende do caso. Em muitos pedidos a desmontagem faz parte do servico, mas o tempo necessario influencia o valor final.",
+      "Depende do caso. Em muitos pedidos a desmontagem faz parte do serviço, mas o tempo necessário influencia o valor final.",
   },
   {
     question: "Pedidos no mesmo dia custam mais?",
     answer:
-      "Em alguns casos sim, especialmente quando exigem reorganizacao de agenda, equipa extra ou janela horaria mais curta.",
+      "Em alguns casos sim, especialmente quando exigem reorganização de agenda, equipa extra ou janela horaria mais curta.",
   },
   {
-    question: "Posso pedir preco por WhatsApp?",
+    question: "Posso pedir preço por WhatsApp?",
     answer:
       "Sim. Pode usar o simulador, falar por WhatsApp ou ligar diretamente para validar disponibilidade e valor aproximado.",
   },
   {
-    question: "Fazem servicos para empresas e condominios?",
+    question: "Fazem serviços para empresas e condomínios?",
     answer:
-      "Sim. A CLYON atende particulares, empresas, senhorios, equipas de obra e condominios com pedidos pontuais ou recorrentes.",
+      "Sim. A CLYON atende particulares, empresas, senhorios, equipas de obra e condomínios com pedidos pontuais ou recorrentes.",
   },
 ];
 
@@ -119,7 +119,7 @@ export const revalidate = 86400;
 export default function PrecosPage() {
   const whatsappNumber = BUSINESS_PHONE.replace(/[^\d]/g, "");
   const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(
-    "Ola! Gostava de pedir um orcamento a CLYON.",
+    "Olá! Gostava de pedir um orçamento a CLYON.",
   )}`;
 
   return (
@@ -130,16 +130,16 @@ export default function PrecosPage() {
           <div className="grid gap-10 lg:grid-cols-[1fr_0.9fr] lg:items-end">
             <div>
               <div className="inline-flex items-center rounded-full border border-cyan-200 bg-cyan-50 px-4 py-2 text-sm font-semibold uppercase tracking-[0.22em] text-cyan-700 shadow-sm">
-                Precos orientativos
+                Preços orientativos
               </div>
               <h1 className="mt-5 max-w-[13ch] text-[2.65rem] font-bold leading-[1.02] tracking-tight text-slate-950 sm:text-[4.2rem]">
                 Quanto pode custar o seu pedido.
               </h1>
               <p className="mt-5 max-w-2xl text-base leading-8 text-slate-600">
-                Esta pagina ajuda a perceber faixas de valor para recolha de moveis,
-                monos, entulho, limpeza pos-obra e esvaziamentos. Nao substitui um
-                orcamento final, mas da contexto rapido sobre o que influencia o preco
-                e como reduzir atrasos na marcacao.
+                Esta página ajuda a perceber faixas de valor para recolha de móveis,
+                monos, entulho, limpeza pós-obra e esvaziamentos. Não substitui um
+                orçamento final, mas dá contexto rápido sobre o que influencia o preço
+                e como reduzir atrásos na marcação.
               </p>
             </div>
 
@@ -148,19 +148,19 @@ export default function PrecosPage() {
                 <Wallet className="mt-1 h-5 w-5 text-cyan-600" />
                 <div>
                   <p className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-700">
-                    Como acelerar o preco certo
+                    Como acelerar o preço certo
                   </p>
                   <p className="mt-3 text-sm leading-7 text-slate-600">
-                    Envie fotos, morada, piso, informacao sobre elevador e diga se ha
+                    Envie fotos, morada, piso, informação sobre elevador e diga se há
                     desmontagem. Esse conjunto reduz margem de erro e permite responder
-                    mais rapido.
+                    mais rápido.
                   </p>
                 </div>
               </div>
 
               <div className="mt-6 flex flex-col gap-3 sm:flex-row">
                 <Link href="/simulador" className="site-btn-primary px-6">
-                  Simular orcamento
+                  Simular orçamento
                 </Link>
                 <a href={whatsappUrl} className="site-btn-secondary px-6">
                   <MessageCircle className="mr-2 h-4 w-4" />
@@ -199,11 +199,11 @@ export default function PrecosPage() {
                 O que altera o valor
               </p>
               <h2 className="mt-4 text-4xl font-bold leading-tight text-slate-950 sm:text-5xl">
-                O preco nao depende so do volume.
+                O preço não depende só do volume.
               </h2>
               <p className="mt-4 max-w-xl text-base leading-8 text-slate-600">
                 Dois pedidos com o mesmo numero de pecas podem ter valores diferentes.
-                Acessos, peso, urgencia, desmontagem e mistura de materiais mudam o
+                Acessos, peso, urgência, desmontagem e mistura de materiais mudam o
                 tempo de carga, a equipa e a logistica necessaria.
               </p>
             </div>
@@ -268,10 +268,10 @@ export default function PrecosPage() {
 
             <div className="flex flex-wrap gap-3">
               <Link href="/servicos" className="site-btn-secondary px-6">
-                Ver servicos
+                Ver serviços
               </Link>
               <Link href="/recolha-de-moveis" className="site-btn-secondary px-6">
-                Ver recolha de moveis
+                Ver recolha de móveis
               </Link>
             </div>
           </div>
@@ -296,17 +296,17 @@ export default function PrecosPage() {
             <div className="grid gap-8 lg:grid-cols-[1fr_auto] lg:items-center">
               <div>
                 <h2 className="text-3xl font-bold sm:text-4xl">
-                  Quer fechar o valor com mais precisao?
+                  Quer fechar o valor com mais precisão?
                 </h2>
                 <p className="mt-4 max-w-2xl text-base leading-8 text-slate-300">
-                  Envie fotos, diga a morada e indique acessos. A partir dai a equipa
-                  consegue responder com mais seguranca sobre custo e disponibilidade.
+                  Envie fotos, diga a morada e indique acessos. A partir daí a equipa
+                  consegue responder com mais segurança sobre custo e disponibilidade.
                 </p>
               </div>
 
               <div className="flex flex-col gap-3 sm:flex-row">
                 <Link href="/simulador" className="site-btn-primary px-7 py-4 text-base">
-                  Simular orcamento
+                  Simular orçamento
                 </Link>
                 <a
                   href={`tel:${BUSINESS_PHONE}`}

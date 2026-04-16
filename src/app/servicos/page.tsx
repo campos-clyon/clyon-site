@@ -16,14 +16,14 @@ import {
 import { SITE_URL } from "@/lib/seo-data";
 
 export const metadata: Metadata = {
-  title: "Servicos de Recolha de Monos, Entulho, Moveis e Limpeza | CLYON",
+  title: "Serviços de Recolha de Monos, Entulho, Móveis e Limpeza | CLYON",
   description:
-    "Conheca os servicos da CLYON para recolha de entulho, moveis, monos, limpeza pos-obra, esvaziamentos e mudancas em Lisboa, Margem Sul e Setubal.",
+    "Conheça os serviços da CLYON para recolha de entulho, móveis, monos, limpeza pós-obra, esvaziamentos e mudanças em Lisboa, Margem Sul e Setúbal.",
   alternates: { canonical: `${SITE_URL}/servicos` },
   openGraph: {
-    title: "Servicos de Recolha de Monos, Entulho, Moveis e Limpeza | CLYON",
+    title: "Serviços de Recolha de Monos, Entulho, Móveis e Limpeza | CLYON",
     description:
-      "Solucoes rapidas e profissionais para recolha, limpeza, transporte e libertacao de espaco em Lisboa, Margem Sul e Setubal.",
+      "Soluções rápidas e profissionais para recolha, limpeza, transporte e libertação de espaço em Lisboa, Margem Sul e Setúbal.",
     url: `${SITE_URL}/servicos`,
   },
 };
@@ -35,36 +35,36 @@ const services = [
       "Retiramos restos de obra, sacos, materiais mistos e volumes pesados com triagem simples e transporte profissional.",
     icon: Trash2,
     href: "/simulador",
-    cta: "Pedir orcamento",
+    cta: "Pedir orçamento",
   },
   {
-    title: "Recolha de Moveis",
+    title: "Recolha de Móveis",
     description:
-      "Sofas, camas, armarios, recheios e eletrodomesticos com desmontagem, carregamento e encaminhamento responsavel.",
+      "Sofás, camas, armários, recheios e eletrodomésticos com desmontagem, carregamento e encaminhamento responsável.",
     icon: Home,
     href: "/recolha-de-moveis",
-    cta: "Ver pagina de moveis",
+    cta: "Ver página de móveis",
   },
   {
     title: "Recolha de Monos",
     description:
-      "Objetos volumosos, sucata, recheios soltos e espaco acumulado em garagens, arrecadacoes, lojas e apartamentos.",
+      "Objetos volumosos, sucata, recheios soltos e espaço acumulado em garagens, arrecadações, lojas e apartamentos.",
     icon: Wrench,
     href: "/simulador",
     cta: "Falar connosco",
   },
   {
-    title: "Limpeza Pos-Obra",
+    title: "Limpeza Pós-Obra",
     description:
-      "Limpeza final para deixar a casa, loja ou escritorio pronto a usar depois da obra, com ritmo e acabamento cuidado.",
+      "Limpeza final para deixar a casa, loja ou escritório pronto a usar depois da obra, com ritmo e acabamento cuidado.",
     icon: Zap,
     href: "/simulador",
     cta: "Pedir limpeza",
   },
   {
-    title: "Mudancas e Apoio",
+    title: "Mudanças e Apoio",
     description:
-      "Ajudamos em mudancas residenciais e comerciais com transporte, carga, descarga e organizacao do pedido.",
+      "Ajudamos em mudanças residenciais e comerciais com transporte, carga, descarga e organização do pedido.",
     icon: Truck,
     href: "/simulador",
     cta: "Pedir apoio",
@@ -72,7 +72,7 @@ const services = [
   {
     title: "Esvaziamentos",
     description:
-      "Libertacao completa de casas, apartamentos, lojas e imoveis com recolha de moveis, monos e residuos acumulados.",
+      "Libertacao completa de casas, apartamentos, lojas e imóveis com recolha de móveis, monos e resíduos acumulados.",
     icon: ShieldCheck,
     href: "/simulador",
     cta: "Resolver esvaziamento",
@@ -81,16 +81,16 @@ const services = [
 
 const selectionPoints = [
   {
-    title: "Para obras e remodelacoes",
-    text: "Quando o problema e po, restos, sacos e materiais mistos, o servico certo e recolha de entulho com triagem rapida.",
+    title: "Para obras e remodelações",
+    text: "Quando o problema é pó, restos, sacos e materiais mistos, o serviço certo e recolha de entulho com triagem rápida.",
   },
   {
-    title: "Para moveis, colchoes e recheios",
-    text: "Se precisa de retirar sofas, armarios, camas ou eletrodomesticos, a recolha de moveis evita desmontagem e transporte por conta propria.",
+    title: "Para móveis, colchões e recheios",
+    text: "Se precisa de retirar sofás, armários, camas ou eletrodomésticos, a recolha de móveis evita desmontagem e transporte por conta própria.",
   },
   {
-    title: "Para libertar um espaco por completo",
-    text: "Quando ha mistura de moveis, monos, lixo e acumulacao, o mais eficiente costuma ser esvaziamento com avaliacao direta.",
+    title: "Para libertar um espaço por completo",
+    text: "Quando há mistura de móveis, monos, lixo e acumulação, o mais eficiente costuma ser esvaziamento com avaliação direta.",
   },
 ];
 
@@ -98,55 +98,55 @@ const serviceFaqs = [
   {
     question: "Que tipo de pedidos a CLYON aceita?",
     answer:
-      "Atendemos recolha de entulho, moveis, monos, recheios, limpeza pos-obra, esvaziamento de casas e apoio em mudancas, tanto para particulares como para empresas.",
+      "Atendemos recolha de entulho, móveis, monos, recheios, limpeza pós-obra, esvaziamento de casas e apoio em mudanças, tanto para particulares como para empresas.",
   },
   {
-    question: "Como saber qual e o servico certo?",
+    question: "Como saber qual é o serviço certo?",
     answer:
-      "Basta enviar fotos e indicar a morada. A nossa equipa ajuda a enquadrar o pedido e diz-lhe qual o servico mais indicado para o volume, acesso e urgencia.",
+      "Basta enviar fotos e indicar a morada. A nossa equipa ajuda a enquadrar o pedido e diz-lhe qual o serviço mais indicado para o volume, acesso e urgência.",
   },
   {
     question: "A CLYON recolhe no mesmo dia?",
     answer:
-      "Sempre que existe disponibilidade operacional, sim. Em Lisboa, Grande Lisboa, Margem Sul e Setubal muitos pedidos conseguem resposta no proprio dia ou no dia seguinte.",
+      "Sempre que existe disponibilidade operacional, sim. Em Lisboa, Grande Lisboa, Margem Sul e Setúbal muitos pedidos conseguem resposta no próprio dia ou no dia seguinte.",
   },
   {
-    question: "Fazem desmontagem e retirada dentro do imovel?",
+    question: "Fazem desmontagem e retirada dentro do imóvel?",
     answer:
-      "Sim. Quando necessario, desmontamos moveis e tratamos do carregamento a partir do interior da casa, loja, escritorio ou arrecadacao.",
+      "Sim. Quando necessário, desmontamos móveis e tratamos do carregamento a partir do interior da casa, loja, escritório ou arrecadação.",
   },
   {
-    question: "Tambem atendem empresas e condominios?",
+    question: "Também atendem empresas e condomínios?",
     answer:
-      "Sim. Trabalhamos com particulares, senhorios, empresas, gestores de patrimonio, condominios e equipas de obra que precisam de resposta rapida e organizada.",
+      "Sim. Trabalhamos com particulares, senhorios, empresas, gestores de património, condomínios e equipas de obra que precisam de resposta rápida e organizada.",
   },
   {
-    question: "Onde posso ver precos orientativos?",
+    question: "Onde posso ver preços orientativos?",
     answer:
-      "Na pagina de precos encontra exemplos de valores de referencia, fatores que influenciam o valor final e o melhor caminho para pedir orcamento com mais precisao.",
+      "Na página de preços encontra exemplos de valores de referência, fatores que influenciam o valor final e o melhor caminho para pedir orçamento com mais precisão.",
   },
 ];
 
 const quickLinks = [
   {
     href: "/precos",
-    title: "Precos orientativos",
-    text: "Veja faixas de referencia e o que pode fazer o valor subir ou descer.",
+    title: "Preços orientativos",
+    text: "Veja faixas de referência e o que pode fazer o valor subir ou descer.",
   },
   {
     href: "/regioes",
     title: "Cobertura regional",
-    text: "Confirme as zonas atendidas em Lisboa, Margem Sul e Setubal.",
+    text: "Confirme as zonas atendidas em Lisboa, Margem Sul e Setúbal.",
   },
   {
     href: "/avaliacoes",
-    title: "Avaliacoes de clientes",
-    text: "Prova social real com servicos executados e feedback verificado.",
+    title: "Avaliações de clientes",
+    text: "Prova social real com serviços executados e feedback verificado.",
   },
   {
     href: "/sobre-nos",
     title: "Sobre a CLYON",
-    text: "Perceba como trabalhamos, quem atendemos e o compromisso com destino responsavel.",
+    text: "Perceba como trabalhamos, quem atendemos e o compromisso com destino responsável.",
   },
 ];
 
@@ -161,16 +161,16 @@ export default function ServicosPage() {
           <div className="grid gap-10 lg:grid-cols-[1fr_0.92fr] lg:items-end">
             <div>
               <div className="inline-flex items-center rounded-full border border-cyan-200 bg-cyan-50 px-4 py-2 text-sm font-semibold uppercase tracking-[0.22em] text-cyan-700 shadow-sm">
-                Servicos CLYON
+                Serviços CLYON
               </div>
               <h1 className="mt-5 max-w-[12ch] text-[2.65rem] font-bold leading-[1.02] tracking-tight text-slate-950 sm:text-[4.2rem]">
-                Recolha, limpeza e mudancas com resposta clara.
+                Recolha, limpeza e mudanças com resposta clara.
               </h1>
               <p className="mt-5 max-w-2xl text-base leading-8 text-slate-600">
-                A CLYON ajuda a libertar espaco, remover residuos e organizar pedidos
-                urgentes em Lisboa, Margem Sul e Setubal. Seja um sofa velho, entulho
+                A CLYON ajuda a libertar espaço, remover resíduos e organizar pedidos
+                urgentes em Lisboa, Margem Sul e Setúbal. Seja um sofá velho, entulho
                 de obra, recheio acumulado ou limpeza final, a equipa avalia o caso,
-                apresenta um orcamento claro e executa sem complicar.
+                apresenta um orçamento claro e executa sem complicar.
               </p>
             </div>
 
@@ -180,10 +180,10 @@ export default function ServicosPage() {
               </p>
               <div className="mt-4 space-y-3">
                 {[
-                  "Triagem rapida do pedido por fotos, volume e acessos",
-                  "Orcamento simples antes da marcacao",
-                  "Apoio dentro do imovel com carregamento e desmontagem",
-                  "Cobertura forte em Lisboa, Grande Lisboa, Margem Sul e Setubal",
+                  "Triagem rápida do pedido por fotos, volume e acessos",
+                  "Orçamento simples antes da marcação",
+                  "Apoio dentro do imóvel com carregamento e desmontagem",
+                  "Cobertura forte em Lisboa, Grande Lisboa, Margem Sul e Setúbal",
                 ].map((item) => (
                   <div key={item} className="flex items-start gap-3">
                     <CheckCircle2 className="mt-1 h-4 w-4 text-cyan-600" />
@@ -194,7 +194,7 @@ export default function ServicosPage() {
 
               <div className="mt-6 flex flex-col gap-3 sm:flex-row">
                 <Link href="/precos" className="site-btn-primary px-6">
-                  Ver precos
+                  Ver preços
                 </Link>
                 <Link href="/contactos" className="site-btn-secondary px-6">
                   <Phone className="mr-2 h-4 w-4" />
@@ -241,10 +241,10 @@ export default function ServicosPage() {
           <div className="grid gap-8 lg:grid-cols-[1.05fr_0.95fr]">
             <div className="rounded-[34px] border border-cyan-100 bg-cyan-50/70 p-8 shadow-[0_24px_60px_-34px_rgba(14,116,144,0.16)]">
               <p className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-700">
-                Como escolher o servico certo
+                Como escolher o serviço certo
               </p>
               <h2 className="mt-4 text-3xl font-bold text-slate-950 sm:text-4xl">
-                O pedido certo acelera orcamento e recolha.
+                O pedido certo acelera orçamento e recolha.
               </h2>
               <div className="mt-6 space-y-4">
                 {selectionPoints.map((point) => (
@@ -258,7 +258,7 @@ export default function ServicosPage() {
 
             <div className="rounded-[34px] border border-cyan-100 bg-white p-8 shadow-[0_24px_60px_-34px_rgba(14,116,144,0.16)]">
               <p className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-700">
-                Links uteis
+                Links úteis
               </p>
               <h2 className="mt-4 text-3xl font-bold text-slate-950 sm:text-4xl">
                 Aprofunde o pedido sem sair do site.
@@ -291,22 +291,22 @@ export default function ServicosPage() {
                 Perguntas frequentes
               </p>
               <h2 className="mt-4 text-4xl font-bold leading-tight text-slate-950 sm:text-5xl">
-                Respostas rapidas antes do pedido.
+                Respostas rápidas antes do pedido.
               </h2>
               <p className="mt-4 max-w-xl text-base leading-8 text-slate-600">
-                Esta pagina funciona como hub dos servicos principais. Aqui responde-se
+                Esta página funciona como hub dos serviços principais. Aqui responde-se
                 ao essencial e, quando o caso precisa de mais detalhe, o cliente segue
-                para precos, cobertura regional, avaliacoes ou para a pagina de recolha
-                de moveis.
+                para preços, cobertura regional, avaliações ou para a página de recolha
+                de móveis.
               </p>
             </div>
 
             <div className="flex flex-wrap gap-3">
               <Link href="/recolha-de-moveis" className="site-btn-primary px-6">
-                Abrir recolha de moveis
+                Abrir recolha de móveis
               </Link>
               <Link href="/precos" className="site-btn-secondary px-6">
-                Ver precos
+                Ver preços
               </Link>
             </div>
           </div>
@@ -333,15 +333,15 @@ export default function ServicosPage() {
                 <div className="inline-flex items-center gap-2 text-cyan-200">
                   <Sparkles className="h-4 w-4" />
                   <span className="text-sm font-semibold uppercase tracking-[0.2em]">
-                    Pedido rapido
+                    Pedido rápido
                   </span>
                 </div>
                 <h2 className="mt-4 text-3xl font-bold sm:text-4xl">
-                  Ja sabe o servico? Entao avance agora.
+                  Já sabe o serviço? Então avance agora.
                 </h2>
                 <p className="mt-4 max-w-2xl text-base leading-8 text-slate-300">
                   Envie o pedido pelo simulador ou fale diretamente com a equipa para
-                  validar volume, acessos, urgencia e disponibilidade.
+                  validar volume, acessos, urgência e disponibilidade.
                 </p>
               </div>
               <Link

@@ -24,7 +24,7 @@ export const metadata: Metadata = {
   description:
     "Recolha de móveis com desmontagem, carregamento, transporte e descarte legal em Lisboa, Amadora, Sintra, Oeiras, Cascais, Margem Sul e Setúbal. Orçamento rápido e recolha no mesmo dia quando disponível.",
   keywords: [
-    "recolha de moveis",
+    "recolha de móveis",
     "recolha de móveis",
     "recolha de móveis lisboa",
     "recolha de móveis amadora",

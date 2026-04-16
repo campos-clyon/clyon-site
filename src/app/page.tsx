@@ -18,16 +18,16 @@ import { CITIES, REGIONS, getCityServiceSlug } from "@/lib/seo-data";
 import { getHeroCarouselImages } from "@/lib/work-gallery";
 
 export const metadata: Metadata = {
-  title: "Recolha de Monos, Entulho e Moveis em Lisboa e Margem Sul | CLYON",
+  title: "Recolha de Monos, Entulho e Móveis em Lisboa e Margem Sul | CLYON",
   description:
-    "Recolha de monos, moveis e entulho em Lisboa, Margem Sul e Setubal. Orcamento rapido, servico profissional e encaminhamento responsavel com resposta no mesmo dia quando disponivel.",
+    "Recolha de monos, móveis e entulho em Lisboa, Margem Sul e Setúbal. Orçamento rápido, serviço profissional e encaminhamento responsável com resposta no mesmo dia quando disponível.",
   alternates: {
     canonical: "https://clyon.pt",
   },
   openGraph: {
-    title: "Recolha de Monos, Entulho e Moveis em Lisboa e Margem Sul | CLYON",
+    title: "Recolha de Monos, Entulho e Móveis em Lisboa e Margem Sul | CLYON",
     description:
-      "Recolha de monos, moveis, entulho, limpeza pos-obra e mudancas em Lisboa, Margem Sul e Setubal.",
+      "Recolha de monos, móveis, entulho, limpeza pós-obra e mudanças em Lisboa, Margem Sul e Setúbal.",
     url: "https://clyon.pt",
   },
 };
@@ -35,82 +35,82 @@ export const metadata: Metadata = {
 const services = [
   {
     name: "Recolha de Entulho",
-    description: "Retiramos restos de obra, sacos e materiais mistos com resposta rapida.",
+    description: "Retiramos restos de obra, sacos e materiais mistos com resposta rápida.",
     icon: Trash2,
     href: "/servicos",
   },
   {
-    name: "Recolha de Moveis",
-    description: "Sofas, camas, armarios, eletrodomesticos e recheios com desmontagem e carga.",
+    name: "Recolha de Móveis",
+    description: "Sofás, camas, armários, eletrodomésticos e recheios com desmontagem e carga.",
     icon: HomeIcon,
     href: "/recolha-de-moveis",
   },
   {
-    name: "Limpeza Pos-Obra",
-    description: "Acabamento final para deixar casa, loja ou escritorio pronto a usar.",
+    name: "Limpeza Pós-Obra",
+    description: "Acabamento final para deixar casa, loja ou escritório pronto a usar.",
     icon: Zap,
     href: "/servicos",
   },
   {
-    name: "Mudancas e Apoio",
-    description: "Transporte, carga, descarga e apoio logistico com equipa organizada.",
+    name: "Mudanças e Apoio",
+    description: "Transporte, carga, descarga e apoio logístico com equipa organizada.",
     icon: Truck,
     href: "/servicos",
   },
 ];
 
 const priceHighlights = [
-  "Sofa ou cadeirao: desde 35 EUR",
-  "Cama, estrado e colchao: desde 45 EUR",
-  "Armario grande: desde 55 EUR",
-  "Varios moveis num pedido: desde 180 EUR",
+  "Sofá ou cadeirão: desde 35 EUR",
+  "Cama, estrado e colchão: desde 45 EUR",
+  "Armário grande: desde 55 EUR",
+  "Vários móveis num pedido: desde 180 EUR",
 ];
 
 const collectedItems = [
-  "Moveis velhos, recheios, sofas e colchoes",
+  "Móveis velhos, recheios, sofás e colchões",
   "Eletrodomesticos e volumes grandes",
-  "Entulho de obra e restos de remodelacao",
-  "Monos, sucata e acumulacao em arrecadacoes",
-  "Limpeza pos-obra e apoio em mudancas",
+  "Entulho de obra e restos de remodelação",
+  "Monos, sucata e acumulação em arrecadações",
+  "Limpeza pós-obra e apoio em mudanças",
   "Pedidos de esvaziamento com recolha completa",
 ];
 
 const steps = [
   "Envie fotos, morada e indique acessos, andar e elevador.",
-  "Receba uma resposta rapida com orcamento claro e janela disponivel.",
+  "Receba uma resposta rápida com orçamento claro e janela disponível.",
   "A equipa chega ao local, carrega, transporta e encaminha o material.",
 ];
 
 const homeFaqs = [
   {
-    question: "Quanto custa a recolha de monos ou moveis?",
+    question: "Quanto custa a recolha de monos ou móveis?",
     answer:
-      "O valor depende do volume, acessos, tipo de material, urgencia e necessidade de desmontagem. A forma mais rapida de receber um valor certo e enviar fotos e morada.",
+      "O valor depende do volume, acessos, tipo de material, urgência e necessidade de desmontagem. A forma mais rápida de receber um valor certo e enviar fotos e morada.",
   },
   {
     question: "Recolhem no mesmo dia?",
     answer:
-      "Quando existe disponibilidade operacional, sim. Muitos pedidos em Lisboa, Grande Lisboa, Margem Sul e Setubal conseguem resposta no proprio dia ou no dia seguinte.",
+      "Quando existe disponibilidade operacional, sim. Muitos pedidos em Lisboa, Grande Lisboa, Margem Sul e Setúbal conseguem resposta no próprio dia ou no dia seguinte.",
   },
   {
-    question: "Retiram sofas, colchoes e eletrodomesticos?",
+    question: "Retiram sofás, colchões e eletrodomésticos?",
     answer:
-      "Sim. A CLYON retira sofas, camas, colchoes, armarios, eletrodomesticos e outros volumes grandes, desde que o pedido seja identificado no orcamento.",
+      "Sim. A CLYON retira sofás, camas, colchões, armários, eletrodomésticos e outros volumes grandes, desde que o pedido seja identificado no orçamento.",
   },
   {
     question: "Fazem desmontagem?",
     answer:
-      "Sim. Quando necessario, a equipa desmonta moveis e trata da retirada a partir do interior do imovel.",
+      "Sim. Quando necessário, a equipa desmonta móveis e trata da retirada a partir do interior do imóvel.",
   },
   {
-    question: "Atendem empresas e condominios?",
+    question: "Atendem empresas e condomínios?",
     answer:
-      "Sim. A operacao atende particulares, senhorios, empresas, equipas de obra e condominios com necessidade de recolha, limpeza ou esvaziamento.",
+      "Sim. A operação atende particulares, senhorios, empresas, equipas de obra e condomínios com necessidade de recolha, limpeza ou esvaziamento.",
   },
   {
-    question: "O destino dos residuos e legal?",
+    question: "O destino dos resíduos é legal?",
     answer:
-      "Sempre que possivel, a equipa separa materiais para reaproveitamento ou encaminhamento adequado. O restante segue para destino responsavel.",
+      "Sempre que possível, a equipa separa materiais para reaproveitamento ou encaminhamento adequado. O restante segue para destino responsável.",
   },
 ];
 
@@ -118,25 +118,25 @@ const testimonials = [
   {
     service: "Recolha de Entulho",
     name: "Carlos F.",
-    text: "Excelente servico, rapido e com otima relacao qualidade-preco. Trabalho impecavel e equipa simpatica.",
+    text: "Excelente serviço, rápido e com ótima relação qualidade-preço. Trabalho impecável e equipa simpática.",
   },
   {
-    service: "Recolha de Moveis",
+    service: "Recolha de Móveis",
     name: "Patricia S.",
-    text: "Comunicacao clara, recolha organizada e tudo resolvido sem complicacoes.",
+    text: "Comunicação clara, recolha organizada e tudo resolvido sem complicações.",
   },
   {
-    service: "Mudancas Completas",
+    service: "Mudanças Completas",
     name: "Maria T.",
-    text: "Muito eficientes, cuidadosos e com boa relacao qualidade-preco.",
+    text: "Muito eficientes, cuidadosos e com boa relação qualidade-preço.",
   },
 ];
 
 const proofPoints = [
-  "Resposta comercial rapida",
+  "Resposta comercial rápida",
   "Equipa profissional e organizada",
-  "Cobertura forte em Lisboa, Margem Sul e Setubal",
-  "Fluxo simples do pedido ate a recolha",
+  "Cobertura forte em Lisboa, Margem Sul e Setúbal",
+  "Fluxo simples do pedido até à recolha",
 ];
 
 const homeFaqSchema = {
@@ -169,23 +169,23 @@ export default async function HomePage() {
             <div className="max-w-xl">
               <div className="mb-5 inline-flex items-center gap-3 rounded-full border border-cyan-200 bg-cyan-50 px-4 py-2 text-sm font-medium text-cyan-700 shadow-sm">
                 <span className="h-2.5 w-2.5 rounded-full bg-cyan-500" />
-                Lideres em satisfacao no Fixando, com avaliacoes 5 estrelas
+                Líderes em satisfação no Fixando, com avaliações 5 estrelas
               </div>
 
               <h1 className="text-[3.15rem] font-bold leading-[1.02] tracking-tight text-slate-950 md:text-[3.7rem] xl:text-[3.9rem]">
                 <span className="block">Recolha de entulho,</span>
-                <span className="mt-2 block text-cyan-500">moveis e monos</span>
-                <span className="block text-cyan-500">rapida e sem stress.</span>
+                <span className="mt-2 block text-cyan-500">móveis e monos</span>
+                <span className="block text-cyan-500">rápida e sem stress.</span>
               </h1>
 
               <p className="mt-5 text-base leading-8 text-slate-600 md:text-[1.05rem]">
-                Entulho, moveis velhos, limpeza pos-obra e apoio em mudancas com
-                atendimento rapido, orcamento claro e execucao profissional em Lisboa,
-                Margem Sul e Setubal.
+                Entulho, móveis velhos, limpeza pós-obra e apoio em mudanças com
+                atendimento rápido, orçamento claro e execução profissional em Lisboa,
+                Margem Sul e Setúbal.
               </p>
 
               <div className="mt-7 flex flex-col gap-3 sm:flex-row">
-                <Link href="/simulador" className="site-btn-primary px-8">Simular Orcamento</Link>
+                <Link href="/simulador" className="site-btn-primary px-8">Simular Orçamento</Link>
                 <Link href="/trabalhos" className="site-btn-secondary px-8">
                   Ver Trabalhos Reais
                   <ArrowRight className="ml-2 h-4 w-4" />
@@ -194,8 +194,8 @@ export default async function HomePage() {
 
               <div className="mt-8 grid gap-3 sm:grid-cols-3">
                 {[
-                  { value: "5.0★", label: "avaliacao media" },
-                  { value: "11 min", label: "tempo medio de resposta" },
+                  { value: "5.0★", label: "avaliação média" },
+                  { value: "11 min", label: "tempo médio de resposta" },
                   { value: "Mesmo dia", label: "em muitos pedidos" },
                 ].map((stat) => (
                   <div key={stat.label} className="rounded-[22px] border border-cyan-100 bg-white/90 px-5 py-4 shadow-[0_16px_40px_-30px_rgba(14,116,144,0.24)]">
@@ -231,7 +231,7 @@ export default async function HomePage() {
                   <h2 className="text-[1.45rem] font-bold leading-tight text-slate-950">{service.name}</h2>
                   <p className="mt-3 text-[0.95rem] leading-7 text-slate-600">{service.description}</p>
                   <Link href={service.href} className="mt-4 inline-flex items-center rounded-full bg-slate-50 px-3.5 py-2 text-sm font-semibold text-cyan-800 transition hover:bg-cyan-50">
-                    {service.href === "/recolha-de-moveis" ? "Ver pagina principal" : "Pedir orcamento"}
+                    {service.href === "/recolha-de-moveis" ? "Ver página principal" : "Pedir orçamento"}
                     <ArrowRight className="ml-2 h-3.5 w-3.5" />
                   </Link>
                 </div>
@@ -245,22 +245,22 @@ export default async function HomePage() {
         <div className="mx-auto max-w-7xl px-6 lg:px-8">
           <div className="grid gap-8 lg:grid-cols-[0.95fr_1.05fr]">
             <div className="rounded-[34px] border border-cyan-100 bg-white p-8 shadow-[0_22px_60px_-34px_rgba(14,116,144,0.18)]">
-              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-700">Precos orientativos</p>
-              <h2 className="mt-4 text-4xl font-bold leading-tight text-slate-950">Valores de referencia sem esconder o jogo.</h2>
+              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-700">Preços orientativos</p>
+              <h2 className="mt-4 text-4xl font-bold leading-tight text-slate-950">Valores de referência sem esconder o jogo.</h2>
               <div className="mt-6 grid gap-3 sm:grid-cols-2">
                 {priceHighlights.map((item) => (
                   <div key={item} className="rounded-[22px] border border-cyan-100 bg-cyan-50/70 p-4 text-sm leading-7 text-slate-700">{item}</div>
                 ))}
               </div>
               <div className="mt-6 flex flex-wrap gap-3">
-                <Link href="/precos" className="site-btn-primary px-6">Ver precos</Link>
-                <Link href="/recolha-de-moveis" className="site-btn-secondary px-6">Recolha de moveis</Link>
+                <Link href="/precos" className="site-btn-primary px-6">Ver preços</Link>
+                <Link href="/recolha-de-moveis" className="site-btn-secondary px-6">Recolha de móveis</Link>
               </div>
             </div>
 
             <div className="rounded-[34px] border border-cyan-100 bg-white p-8 shadow-[0_22px_60px_-34px_rgba(14,116,144,0.18)]">
               <p className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-700">O que recolhemos</p>
-              <h2 className="mt-4 text-4xl font-bold leading-tight text-slate-950">Do sofa ao entulho, com carga e encaminhamento.</h2>
+              <h2 className="mt-4 text-4xl font-bold leading-tight text-slate-950">Do sofá ao entulho, com carga e encaminhamento.</h2>
               <div className="mt-6 grid gap-3 sm:grid-cols-2">
                 {collectedItems.map((item) => (
                   <div key={item} className="rounded-[22px] border border-cyan-100 bg-cyan-50/70 p-4 text-sm leading-7 text-slate-700">{item}</div>
@@ -289,7 +289,7 @@ export default async function HomePage() {
           <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
             <div>
               <p className="text-sm font-semibold uppercase tracking-[0.24em] text-cyan-700">Perguntas frequentes</p>
-              <h2 className="mt-4 text-4xl font-bold leading-tight text-slate-950 sm:text-5xl">Duvidas tipicas antes de pedir.</h2>
+              <h2 className="mt-4 text-4xl font-bold leading-tight text-slate-950 sm:text-5xl">Dúvidas típicas antes de pedir.</h2>
             </div>
             <div className="flex flex-wrap gap-3">
               <Link href="/faq" className="site-btn-secondary px-6">Ver FAQ completa</Link>
@@ -312,7 +312,7 @@ export default async function HomePage() {
         <div className="mx-auto grid max-w-7xl gap-8 px-6 lg:grid-cols-[0.92fr_1.08fr] lg:px-8">
           <div>
             <p className="text-sm font-semibold uppercase tracking-[0.24em] text-cyan-700">Cobertura regional</p>
-            <h2 className="mt-4 text-4xl font-bold leading-tight text-slate-950 sm:text-5xl">Presenca local em Lisboa, Margem Sul e Setubal.</h2>
+            <h2 className="mt-4 text-4xl font-bold leading-tight text-slate-950 sm:text-5xl">Presença local em Lisboa, Margem Sul e Setúbal.</h2>
           </div>
 
           <div className="rounded-[30px] border border-cyan-100 bg-white p-7 shadow-[0_22px_55px_-34px_rgba(14,116,144,0.18)]">
@@ -358,7 +358,7 @@ export default async function HomePage() {
                   <ShieldCheck className="h-4 w-4" />
                   Por que escolher a CLYON
                 </div>
-                <h2 className="mt-4 text-4xl font-bold leading-tight text-slate-950">Menos complicacao, mais execucao.</h2>
+                <h2 className="mt-4 text-4xl font-bold leading-tight text-slate-950">Menos complicação, mais execução.</h2>
               </div>
 
               <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -378,13 +378,13 @@ export default async function HomePage() {
                     <Sparkles className="h-4 w-4" />
                     <span className="text-sm font-semibold uppercase tracking-[0.2em]">Pedido imediato</span>
                   </div>
-                  <h2 className="mt-4 text-3xl font-bold sm:text-4xl">Pronto para libertar espaco hoje?</h2>
+                  <h2 className="mt-4 text-3xl font-bold sm:text-4xl">Pronto para libertar espaço hoje?</h2>
                   <p className="mt-4 max-w-2xl text-base leading-8 text-slate-300">
-                    Simule o pedido, confirme os detalhes connosco e receba uma resposta clara para recolha, limpeza ou mudanca.
+                    Simule o pedido, confirme os detalhes connosco e receba uma resposta clara para recolha, limpeza ou mudança.
                   </p>
                 </div>
                 <Link href="/simulador" className="site-btn-primary px-7 py-4 text-base">
-                  Simular orcamento
+                  Simular orçamento
                   <ArrowRight className="ml-2 h-4 w-4 text-white" />
                 </Link>
               </div>

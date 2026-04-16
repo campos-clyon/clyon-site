@@ -140,8 +140,8 @@ function getFaqs(serviceName: string, cityName: string, regionLabel: string, ser
         a: `Quando existe disponibilidade operacional, sim. Em ${cityName} conseguimos muitas vezes responder no próprio dia ou no dia seguinte.`,
       },
       {
-        q: `Que outras zonas próximas de ${cityName} também atendem?`,
-        a: `Além de ${cityName}, a CLYON trabalha regularmente em ${relatedCities.map((item) => item.name).join(", ")} e noutras zonas da ${regionLabel}.`,
+        q: `Que outrás zonas próximas de ${cityName} também atendem?`,
+        a: `Além de ${cityName}, a CLYON trabalha regularmente em ${relatedCities.map((item) => item.name).join(", ")} e noutrás zonas da ${regionLabel}.`,
       },
     ];
   }
@@ -157,7 +157,7 @@ function getFaqs(serviceName: string, cityName: string, regionLabel: string, ser
     },
     {
       q: `Que zonas próximas de ${cityName} também atendem?`,
-      a: `Além de ${cityName}, a CLYON trabalha regularmente em ${relatedCities.map((item) => item.name).join(", ")} e noutras zonas da ${regionLabel}.`,
+      a: `Além de ${cityName}, a CLYON trabalha regularmente em ${relatedCities.map((item) => item.name).join(", ")} e noutrás zonas da ${regionLabel}.`,
     },
     {
       q: `Como pedir ${serviceName.toLowerCase()} em ${cityName}?`,
@@ -196,8 +196,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       `${service.primaryKeyword} ${city.name.toLowerCase()}`,
       `${service.primaryKeyword} ${city.regionLabel.toLowerCase()}`,
       `${service.shortName} ${city.name.toLowerCase()}`,
-      isFurnitureService(service.slug) ? "recolha de moveis" : "orçamento recolha",
-      isFurnitureService(service.slug) ? "tirar moveis velhos" : "serviço no mesmo dia",
+      isFurnitureService(service.slug) ? "recolha de móveis" : "orçamento recolha",
+      isFurnitureService(service.slug) ? "tirar móveis velhos" : "serviço no mesmo dia",
       BUSINESS_NAME,
     ],
     alternates: {
