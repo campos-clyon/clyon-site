@@ -152,21 +152,46 @@ img {
 .site-btn-lively::before {
   content: "";
   position: absolute;
-  inset: -38%;
+  left: -12%;
+  right: -12%;
+  bottom: -72%;
+  height: 168%;
   border-radius: inherit;
   background: radial-gradient(
-    circle,
+    ellipse at center,
     rgba(255, 255, 255, 0.34) 0%,
-    rgba(255, 255, 255, 0.16) 24%,
-    rgba(255, 255, 255, 0.06) 42%,
-    transparent 68%
+    rgba(255, 255, 255, 0.16) 36%,
+    rgba(255, 255, 255, 0.08) 48%,
+    transparent 72%
   );
-  opacity: 0;
-  transform: scale(0.28);
+  opacity: 0.72;
+  transform: translate3d(-7%, 0, 0) scale(1);
+  transform-origin: 50% 38%;
+  pointer-events: none;
+  z-index: 0;
+  animation: site-btn-water-surge 4.8s ease-in-out infinite;
+}
+
+.site-btn-lively::after {
+  content: "";
+  position: absolute;
+  inset: -42%;
+  border-radius: 42%;
+  background:
+    linear-gradient(
+      118deg,
+      transparent 24%,
+      rgba(255, 255, 255, 0.28) 40%,
+      rgba(255, 255, 255, 0.08) 52%,
+      transparent 68%
+    ),
+    radial-gradient(circle at 50% 45%, rgba(255, 255, 255, 0.18), transparent 62%);
+  opacity: 0.68;
+  transform: translate3d(-24%, 16%, 0) rotate(7deg);
   transform-origin: center;
   pointer-events: none;
   z-index: 0;
-  animation: site-btn-wave 3.2s ease-out infinite;
+  animation: site-btn-water-glide 6.2s linear infinite;
 }
 
 .site-btn-lively > span,
@@ -197,12 +222,24 @@ img {
 
 .site-btn-secondary.site-btn-lively::before {
   background: radial-gradient(
-    circle,
-    rgba(34, 211, 238, 0.18) 0%,
-    rgba(34, 211, 238, 0.09) 28%,
-    rgba(34, 211, 238, 0.04) 46%,
-    transparent 70%
+    ellipse at center,
+    rgba(34, 211, 238, 0.28) 0%,
+    rgba(34, 211, 238, 0.12) 36%,
+    rgba(34, 211, 238, 0.06) 48%,
+    transparent 72%
   );
+}
+
+.site-btn-secondary.site-btn-lively::after {
+  background:
+    linear-gradient(
+      118deg,
+      transparent 20%,
+      rgba(34, 211, 238, 0.18) 38%,
+      rgba(34, 211, 238, 0.06) 52%,
+      transparent 72%
+    ),
+    radial-gradient(circle at 50% 45%, rgba(34, 211, 238, 0.14), transparent 62%);
 }
 
 @media (hover: hover) and (pointer: fine) {
@@ -229,21 +266,33 @@ img {
   }
 }
 
-@keyframes site-btn-wave {
+@keyframes site-btn-water-surge {
   0% {
-    opacity: 0;
-    transform: scale(0.28);
+    transform: translate3d(-8%, 2%, 0) scale(0.96) rotate(-4deg);
   }
-  18% {
-    opacity: 0.72;
+  25% {
+    transform: translate3d(-1%, -3%, 0) scale(1.04) rotate(2deg);
   }
-  72% {
-    opacity: 0.08;
-    transform: scale(1.08);
+  50% {
+    transform: translate3d(6%, 1%, 0) scale(0.98) rotate(5deg);
+  }
+  75% {
+    transform: translate3d(1%, -4%, 0) scale(1.05) rotate(-1deg);
   }
   100% {
-    opacity: 0;
-    transform: scale(1.18);
+    transform: translate3d(-8%, 2%, 0) scale(0.96) rotate(-4deg);
+  }
+}
+
+@keyframes site-btn-water-glide {
+  0% {
+    transform: translate3d(-24%, 16%, 0) rotate(7deg);
+  }
+  50% {
+    transform: translate3d(18%, -12%, 0) rotate(2deg);
+  }
+  100% {
+    transform: translate3d(-24%, 16%, 0) rotate(7deg);
   }
 }
 
@@ -264,7 +313,8 @@ img {
     will-change: auto;
   }
 
-  .site-btn-lively::before {
+  .site-btn-lively::before,
+  .site-btn-lively::after {
     animation: none;
   }
 }
