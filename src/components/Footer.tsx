@@ -12,7 +12,7 @@ import {
 import CookiePreferencesLink from "@/components/CookiePreferencesLink";
 import { BUSINESS_INSTAGRAM, BUSINESS_PHONE } from "@/lib/seo-data";
 
-const ANDROID_APP_URL = "https://expo.dev/artifacts/eas/91zzW2jq9WrtksvBVCCjWm.apk";
+const ANDROID_APP_URL = "/clyon1.apk";
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();
@@ -91,7 +91,7 @@ export default function Footer() {
                 <Link href="/colaboradores" className="site-btn-secondary">
                   Área de Colaboradores
                 </Link>
-                <a href={ANDROID_APP_URL} target="_blank" rel="noreferrer" className="site-btn-secondary">
+                <a href={ANDROID_APP_URL} download className="site-btn-secondary">
                   Baixar app Android
                   <ArrowDownToLine className="ml-2 h-4 w-4" />
                 </a>
