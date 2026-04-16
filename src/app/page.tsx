@@ -185,10 +185,10 @@ export default async function HomePage() {
               </p>
 
               <div className="mt-7 flex flex-col gap-3 sm:flex-row">
-                <Link href="/simulador" className="site-btn-primary site-btn-lively px-8">
+                <Link href="/simulador" className="site-btn-primary site-btn-lively min-h-[3.6rem] px-10 py-[0.95rem] text-[1.14rem]">
                   <span>Simular Orçamento</span>
                 </Link>
-                <Link href="/trabalhos" className="site-btn-secondary site-btn-lively px-8">
+                <Link href="/trabalhos" className="site-btn-secondary site-btn-lively min-h-[3.6rem] px-10 py-[0.95rem] text-[1.14rem]">
                   <span>Ver Trabalhos Reais</span>
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Link>
