@@ -348,7 +348,7 @@ export const SERVICES: ServiceData[] = [
     ],
   },
   {
-    slug: "mudanças",
+    slug: "mudancas",
     name: "Mudanças",
     shortName: "mudanças",
     category: "mudanças",

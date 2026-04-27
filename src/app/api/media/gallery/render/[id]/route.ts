@@ -8,6 +8,7 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 const LONG_CACHE_HEADER = "public, max-age=31536000, immutable";
+const NOINDEX_HEADER = "noindex, nofollow, noimageindex, noarchive";
 
 function decodeDataUrl(value: string) {
   const match = value.match(/^data:(.+?);base64,(.+)$/);
@@ -28,23 +29,39 @@ export async function GET(request: Request, context: RouteContext) {
   const item = (await listGalleryItems()).find((entry) => entry.id === id && entry.isActive);
 
   if (!item) {
-    return new NextResponse("Not found", { status: 404 });
+    return new NextResponse("Not found", {
+      status: 404,
+      headers: {
+        "X-Robots-Tag": NOINDEX_HEADER,
+      },
+    });
   }
 
   if (!item.imageUrl.startsWith("data:image/")) {
-    return NextResponse.redirect(new URL(item.imageUrl, request.url), 307);
+    return NextResponse.redirect(new URL(item.imageUrl, request.url), {
+      status: 307,
+      headers: {
+        "X-Robots-Tag": NOINDEX_HEADER,
+      },
+    });
   }
 
   const decoded = decodeDataUrl(item.imageUrl);
 
   if (!decoded) {
-    return new NextResponse("Invalid image", { status: 400 });
+    return new NextResponse("Invalid image", {
+      status: 400,
+      headers: {
+        "X-Robots-Tag": NOINDEX_HEADER,
+      },
+    });
   }
 
   return new NextResponse(decoded.buffer, {
     headers: {
       "Content-Type": decoded.contentType,
       "Cache-Control": LONG_CACHE_HEADER,
+      "X-Robots-Tag": NOINDEX_HEADER,
     },
   });
 }

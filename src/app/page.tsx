@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { unstable_noStore as noStore } from "next/cache";
 import Link from "next/link";
 import {
   ArrowRight,
@@ -172,8 +171,9 @@ const homeFaqSchema = {
   })),
 };
 
+export const revalidate = 3600;
+
 export default async function HomePage() {
-  noStore();
   const workImages = await getHeroCarouselImages();
   const regionCoverage = REGIONS.map((region) => ({
     ...region,

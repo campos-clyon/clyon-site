@@ -70,10 +70,22 @@ export default function ImageCarousel({
       }
 
       const nextIndex = (index + 1) % images.length;
-      const previousIndex = (index - 1 + images.length) % images.length;
+      const nextUrl = images[nextIndex]?.url;
 
-      void ensureImageLoaded(images[nextIndex]?.url || "");
-      void ensureImageLoaded(images[previousIndex]?.url || "");
+      if (!nextUrl) {
+        return;
+      }
+
+      const preloadNext = () => {
+        void ensureImageLoaded(nextUrl);
+      };
+
+      if (typeof window.requestIdleCallback === "function") {
+        window.requestIdleCallback(preloadNext, { timeout: 1500 });
+        return;
+      }
+
+      window.setTimeout(preloadNext, 350);
     },
     [ensureImageLoaded, images],
   );
@@ -138,8 +150,9 @@ export default function ImageCarousel({
         alt={currentImage.alt}
         fill
         priority={currentIndex === 0}
-        quality={72}
-        sizes="(min-width: 1280px) 620px, (min-width: 1024px) 50vw, 100vw"
+        fetchPriority={currentIndex === 0 ? "high" : "auto"}
+        quality={60}
+        sizes="(max-width: 767px) calc(100vw - 3rem), (max-width: 1279px) 50vw, 620px"
         className="object-cover object-center"
         onLoad={() => {
           loadedUrlsRef.current.add(currentImage.url);
@@ -161,7 +174,7 @@ export default function ImageCarousel({
         <>
           <button
             onClick={() => void goToIndex((currentIndex - 1 + images.length) % images.length)}
-            className="absolute left-4 top-1/2 z-10 -translate-y-1/2 rounded-full bg-cyan-500/80 p-2 text-white opacity-0 transition-opacity hover:bg-cyan-600 group-hover:opacity-100 disabled:cursor-not-allowed disabled:opacity-45"
+            className="absolute left-3 top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-cyan-500/80 text-white opacity-0 transition-opacity hover:bg-cyan-600 group-hover:opacity-100 disabled:cursor-not-allowed disabled:opacity-45 md:left-4"
             aria-label="Imagem anterior"
             disabled={isPending}
           >
@@ -169,7 +182,7 @@ export default function ImageCarousel({
           </button>
           <button
             onClick={() => void goToIndex((currentIndex + 1) % images.length)}
-            className="absolute right-4 top-1/2 z-10 -translate-y-1/2 rounded-full bg-cyan-500/80 p-2 text-white opacity-0 transition-opacity hover:bg-cyan-600 group-hover:opacity-100 disabled:cursor-not-allowed disabled:opacity-45"
+            className="absolute right-3 top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-cyan-500/80 text-white opacity-0 transition-opacity hover:bg-cyan-600 group-hover:opacity-100 disabled:cursor-not-allowed disabled:opacity-45 md:right-4"
             aria-label="Proxima imagem"
             disabled={isPending}
           >
@@ -179,15 +192,15 @@ export default function ImageCarousel({
       ) : null}
 
       {showIndicators && images.length > 1 ? (
-        <div className="absolute bottom-4 left-1/2 z-10 flex -translate-x-1/2 gap-2">
+        <div className="absolute bottom-4 left-1/2 z-10 flex -translate-x-1/2 gap-2.5 rounded-full bg-slate-950/18 px-3 py-2 backdrop-blur-sm">
           {images.map((_, index) => (
             <button
               key={index}
               onClick={() => void goToIndex(index)}
-              className={`h-2 rounded-full transition-all ${
+              className={`min-h-3 min-w-3 rounded-full transition-all ${
                 index === currentIndex
-                  ? "w-6 bg-cyan-400"
-                  : "w-2 bg-white/50 hover:bg-white/80"
+                  ? "h-3 w-7 bg-cyan-400"
+                  : "h-3 w-3 bg-white/65 hover:bg-white/85"
               }`}
               aria-label={`Ir para slide ${index + 1}`}
               disabled={isPending}

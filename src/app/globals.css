@@ -672,8 +672,29 @@ img {
     will-change: auto;
   }
 
+  .site-btn-lively::before,
+  .site-btn-lively::after {
+    animation: none;
+    opacity: 0;
+  }
+
   .site-btn-lively:active {
     transform: scale(0.985);
+  }
+
+  .process-demo__line,
+  .process-status-pill__item,
+  .process-card,
+  .process-card__icon,
+  .process-card__bar,
+  .process-card__done,
+  .process-clean-message {
+    animation: none;
+  }
+
+  .process-clean-message {
+    opacity: 1;
+    transform: none;
   }
 }
 

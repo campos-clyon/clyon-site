@@ -9,6 +9,7 @@ import {
   REGIONS,
   SERVICES,
   SITE_URL,
+  getCityServiceSlug,
   getRegion,
   getRegionCities,
 } from "@/lib/seo-data";
@@ -159,12 +160,13 @@ export default async function RegionPage({ params }: Props) {
             </h2>
             <div className="mt-6 flex flex-wrap gap-2.5">
               {cities.map((city) => (
-                <span
+                <Link
                   key={city.slug}
+                  href={`/${getCityServiceSlug("recolha-entulho", city.slug)}`}
                   className="rounded-full border border-cyan-200 bg-cyan-50 px-4 py-2 text-sm font-semibold text-cyan-700"
                 >
                   {city.name}
-                </span>
+                </Link>
               ))}
             </div>
           </div>
