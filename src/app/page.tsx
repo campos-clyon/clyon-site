@@ -162,17 +162,17 @@ const lisbonSearchLinks = [
   {
     href: "/recolha-moveis-lisboa",
     title: "Recolha de móveis em Lisboa",
-    text: "Landing local principal para pedidos de sofás, camas, armários e eletrodomésticos na cidade.",
+    text: "Retirada de sofás, camas, armários e eletrodomésticos com apoio completo dentro da cidade.",
   },
   {
     href: "/recolha-moveis-benfica",
     title: "Recolha de móveis em Benfica",
-    text: "Liga a procura local de Benfica à página certa, sem obrigar o Google a escolher a home.",
+    text: "Serviço local para pedidos em Benfica com recolha rápida, carga e encaminhamento responsável.",
   },
   {
     href: "/recolha-moveis-lumiar",
     title: "Recolha de móveis no Lumiar",
-    text: "Reforça a malha interna para Lisboa com uma das zonas mais procuradas dentro da cidade.",
+    text: "Apoio no Lumiar para retirar móveis usados, colchões e volumes grandes sem complicações.",
   },
 ];
 
@@ -180,17 +180,17 @@ const coastalSearchLinks = [
   {
     href: "/recolha-moveis-cascais",
     title: "Recolha de móveis em Cascais",
-    text: "Página local para quem procura recolha privada de móveis em Cascais com resposta comercial rápida.",
+    text: "Retiramos móveis, recheios e eletrodomésticos em Cascais com rapidez e cuidado no acesso.",
   },
   {
     href: "/recolha-moveis-oeiras",
     title: "Recolha de móveis em Oeiras",
-    text: "Ajuda a consolidar a procura da linha entre Oeiras e Cascais com uma página específica por cidade.",
+    text: "Cobertura em Oeiras para recolha de sofás, camas, armários e outros volumes pesados.",
   },
   {
     href: "/recolha-moveis-sintra",
     title: "Recolha de móveis em Sintra",
-    text: "Reforça o cluster local da Grande Lisboa Oeste, que costuma aparecer nas mesmas pesquisas comparativas.",
+    text: "Equipa preparada para recolhas em Sintra com desmontagem, carregamento e transporte incluídos.",
   },
 ];
 
@@ -284,12 +284,12 @@ export default async function HomePage() {
                   Mais procurado em Lisboa
                 </p>
                 <h2 className="mt-3 text-3xl font-bold text-slate-950">
-                  Quando a pesquisa é "recolha de móveis Lisboa", esta é a página certa.
+                  Recolha de móveis em Lisboa com resposta rápida e apoio completo.
                 </h2>
                 <p className="mt-3 text-base leading-8 text-slate-600">
-                  A home ajuda a apresentar a marca, mas a URL que deve responder a esta
-                  intenção local é a landing de Lisboa. Por isso reforçamos aqui as
-                  ligações internas mais relevantes para essa pesquisa.
+                  Retiramos sofás, camas, armários, colchões e eletrodomésticos em Lisboa
+                  com desmontagem, carregamento e encaminhamento responsável. Se precisa
+                  de libertar espaço sem complicações, a equipa trata do pedido do início ao fim.
                 </p>
               </div>
               <Link href="/recolha-moveis-lisboa" className="site-btn-primary px-6">
@@ -321,12 +321,12 @@ export default async function HomePage() {
                   Linha de Cascais
                 </p>
                 <h2 className="mt-3 text-3xl font-bold text-slate-950">
-                  Cascais também precisa de uma URL local forte para recolha de móveis.
+                  Recolha de móveis na linha de Cascais com apoio local e execução cuidada.
                 </h2>
                 <p className="mt-3 text-base leading-8 text-slate-600">
-                  Nesta zona o Google mistura serviços municipais, doação e recolha privada.
-                  Por isso damos mais destaque às páginas locais de Cascais, Oeiras e Sintra
-                  para sinalizar melhor a intenção comercial.
+                  Atuamos em Cascais, Oeiras e Sintra para retirar móveis usados, recheios,
+                  colchões e volumes grandes com resposta rápida, transporte organizado e
+                  solução completa no local.
                 </p>
               </div>
               <Link href="/recolha-moveis-cascais" className="site-btn-primary px-6">
