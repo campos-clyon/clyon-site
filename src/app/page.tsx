@@ -312,9 +312,6 @@ export default async function HomePage() {
           </div>
 
           <div className="process-demo relative mt-10">
-            <div className="absolute left-[3.2rem] right-[3.2rem] top-[2.15rem] hidden h-[6px] rounded-full bg-gradient-to-r from-cyan-100 via-cyan-300 to-cyan-500 shadow-[0_10px_24px_-16px_rgba(6,182,212,0.55)] lg:block" />
-            <div className="process-demo__line absolute left-[3.2rem] top-[2.15rem] hidden h-[6px] rounded-full bg-gradient-to-r from-cyan-400 via-cyan-500 to-cyan-600 shadow-[0_12px_26px_-16px_rgba(8,145,178,0.7)] lg:block" />
-
             <div className="grid gap-6 lg:grid-cols-3">
               {steps.map((step, index) => (
                 <article
@@ -322,7 +319,6 @@ export default async function HomePage() {
                   className="process-card relative overflow-hidden rounded-[32px] border border-cyan-100/90 bg-white/92 p-7 shadow-[0_24px_70px_-38px_rgba(14,116,144,0.22)] backdrop-blur-[2px]"
                   style={{ animationDelay: `${index * 2.4}s` }}
                 >
-                  <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-cyan-300 via-cyan-400 to-cyan-500" />
                   <div className="flex items-start justify-between gap-4">
                     <div className="process-card__icon flex h-16 w-16 items-center justify-center rounded-[22px] bg-gradient-to-br from-cyan-400 via-cyan-500 to-cyan-600 text-white shadow-[0_18px_36px_-22px_rgba(8,145,178,0.72)]">
                       <step.icon className="h-7 w-7" />
