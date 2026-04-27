@@ -122,7 +122,7 @@ function getPricingCopy(serviceName: string, cityName: string, serviceSlug: stri
 
 function getFaqs(serviceName: string, cityName: string, regionLabel: string, serviceSlug: string, relatedCities: { name: string }[]) {
   if (isFurnitureService(serviceSlug)) {
-    return [
+    const baseFaqs = [
       {
         q: `Quanto custa a recolha de móveis em ${cityName}?`,
         a: `O preço depende da quantidade de móveis, acessos, desmontagem e distância. Em ${cityName}, o mais rápido é enviar fotos e morada para receber um orçamento imediato e ajustado ao pedido.`,
@@ -144,6 +144,15 @@ function getFaqs(serviceName: string, cityName: string, regionLabel: string, ser
         a: `Além de ${cityName}, a CLYON trabalha regularmente em ${relatedCities.map((item) => item.name).join(", ")} e noutrás zonas da ${regionLabel}.`,
       },
     ];
+
+    if (cityName === "Costa da Caparica") {
+      baseFaqs.splice(1, 0, {
+        q: "Existe recolha gratuita de móveis na Costa da Caparica?",
+        a: "Existem cenários em que doação, reaproveitamento ou recolha municipal podem fazer sentido para móveis usados em bom estado. A CLYON opera como serviço privado: entra quando o cliente precisa de rapidez, desmontagem, carregamento no local e solução completa para o que não consegue resolver por vias gratuitas.",
+      });
+    }
+
+    return baseFaqs;
   }
 
   return [
@@ -334,6 +343,8 @@ export default async function ServiceCityPage({ params }: Props) {
   }));
   const isLisbonFurniturePage = isFurnitureService(service.slug) && city.slug === "lisboa";
   const isCascaisFurniturePage = isFurnitureService(service.slug) && city.slug === "cascais";
+  const isCostaFurniturePage =
+    isFurnitureService(service.slug) && city.slug === "costa-da-caparica";
 
   const supportLinks = isFurnitureService(service.slug)
     ? [
@@ -341,6 +352,14 @@ export default async function ServiceCityPage({ params }: Props) {
         { href: `/${getCityServiceSlug("recolha-monos", city.slug)}`, label: `Recolha de monos em ${city.name}` },
         { href: `/${getCityServiceSlug("esvaziamento-casas", city.slug)}`, label: `Esvaziamento de casas em ${city.name}` },
         { href: `/${getCityServiceSlug("recolha-entulho", city.slug)}`, label: `Recolha de entulho em ${city.name}` },
+        ...(city.slug === "costa-da-caparica"
+          ? [
+              {
+                href: "/blog/recolha-gratuita-de-moveis-usados-costa-da-caparica",
+                label: "Guia: recolha gratuita de móveis usados na Costa da Caparica",
+              },
+            ]
+          : []),
       ]
     : [
         { href: "/servicos", label: "Todos os serviços" },
@@ -639,6 +658,38 @@ export default async function ServiceCityPage({ params }: Props) {
                   {item.label}
                 </Link>
               ))}
+            </div>
+          </div>
+        )}
+
+        {isCostaFurniturePage && (
+          <div className="mt-8 rounded-[30px] border border-cyan-100 bg-cyan-50/70 p-7">
+            <p className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-700">
+              Intenção informativa e comercial
+            </p>
+            <h2 className="mt-3 text-3xl font-bold text-slate-950">
+              Na Costa da Caparica, a pesquisa por "recolha gratuita de móveis" mistura doação, câmara e serviço privado
+            </h2>
+            <p className="mt-4 max-w-4xl text-base leading-8 text-slate-600">
+              Quando o utilizador escreve "gratuita", muitas vezes ainda está a tentar perceber
+              se os móveis usados podem ser doados, reaproveitados ou recolhidos por via municipal.
+              A CLYON não se posiciona como recolha gratuita: posiciona-se como solução privada para
+              os casos em que é preciso desmontar, carregar, retirar de dentro do imóvel e libertar
+              o espaço com rapidez.
+            </p>
+            <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+              <Link
+                href="/blog/recolha-gratuita-de-moveis-usados-costa-da-caparica"
+                className="site-btn-secondary min-w-[260px] border-slate-300 text-slate-900 hover:bg-white"
+              >
+                Ler guia sobre recolha gratuita
+              </Link>
+              <Link
+                href="/simulador"
+                className="site-btn-primary min-w-[220px] px-6 py-3.5"
+              >
+                Pedir orçamento privado
+              </Link>
             </div>
           </div>
         )}

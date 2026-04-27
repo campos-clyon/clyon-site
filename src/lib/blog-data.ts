@@ -21,6 +21,80 @@ export type BlogPost = {
 
 export const BLOG_POSTS: BlogPost[] = [
   {
+    slug: "recolha-gratuita-de-moveis-usados-costa-da-caparica",
+    title:
+      "Recolha gratuita de móveis usados na Costa da Caparica: quando faz sentido e quando pedir recolha privada",
+    description:
+      "Guia local sobre recolha gratuita de móveis usados na Costa da Caparica, doação, reaproveitamento, recolha municipal e quando a recolha privada compensa mais.",
+    category: "Costa da Caparica",
+    keywords: [
+      "recolha gratuita de móveis costa da caparica",
+      "recolha gratuita de móveis usados costa da caparica",
+      "doar móveis costa da caparica",
+      "recolha de móveis costa da caparica",
+      "móveis usados costa da caparica",
+      "recolha municipal de móveis costa da caparica",
+    ],
+    readingTime: "7 min",
+    publishDate: "2026-04-27",
+    heroLabel: "Guia local",
+    intro:
+      "Na Costa da Caparica, a pesquisa por recolha gratuita de móveis costuma misturar várias intenções: doação, reaproveitamento, recolha municipal e necessidade de retirar móveis usados de forma rápida. Este guia ajuda a separar esses cenários e a perceber quando faz sentido tentar uma via gratuita e quando a recolha privada é a opção mais eficaz.",
+    sections: [
+      {
+        title: "Quando a palavra gratuita aparece na pesquisa",
+        paragraphs: [
+          "Quem procura recolha gratuita de móveis na Costa da Caparica nem sempre está pronto para contratar um serviço. Muitas vezes está primeiro a perceber se os móveis usados ainda podem ser doados, reaproveitados ou recolhidos por uma solução pública.",
+          "Isso explica porque o Google mostra juntas, câmara, monos, ecopontos, doação e algumas páginas privadas na mesma pesquisa.",
+        ],
+      },
+      {
+        title: "Quando faz sentido tentar doação ou reaproveitamento",
+        paragraphs: [
+          "Se os móveis usados estão em bom estado, limpos, completos e com utilidade real, pode fazer sentido tentar doação, oferta a particulares ou reaproveitamento antes da remoção definitiva.",
+          "Isto aplica-se sobretudo a sofás em condições aceitáveis, camas completas, mesas, cadeiras e armários que ainda possam ser utilizados por outra pessoa.",
+        ],
+        bullets: [
+          "Peças em bom estado e prontas a usar",
+          "Móveis usados com valor social ou funcional",
+          "Casos em que existe tempo para esperar resposta",
+          "Pedidos em que a prioridade não é libertar o espaço no mesmo dia",
+        ],
+      },
+      {
+        title: "Quando a recolha privada compensa mais",
+        paragraphs: [
+          "Se o objectivo é tirar os móveis rapidamente, desmontar no local, descer escadas, carregar volumes pesados e libertar o espaço sem depender de várias entidades, a recolha privada passa a ser muito mais eficaz.",
+          "É aqui que a CLYON entra na Costa da Caparica: como serviço privado para recolha de sofás, camas, armários, colchões, electrodomésticos e recheios quando a via gratuita não resolve o problema prático.",
+        ],
+      },
+      {
+        title: "Como usar este guia sem perder a pesquisa que já funciona",
+        paragraphs: [
+          "A versão da pesquisa com 'móveis usados' já está a levar tráfego para o ecossistema da CLYON, por isso o objetivo não é mudar essa rota. É expandi-la para a variante sem 'usados', mantendo o conteúdo alinhado com a intenção informativa que o Google está a detectar.",
+          "Por isso este artigo funciona como ponte: responde à dúvida sobre gratuitidade, mas conduz o utilizador para a página local de recolha quando precisa de uma solução privada.",
+        ],
+      },
+    ],
+    faq: [
+      {
+        question: "Existe recolha gratuita de móveis usados na Costa da Caparica?",
+        answer:
+          "Pode existir em alguns cenários de doação, reaproveitamento ou recolha municipal, dependendo do tipo de peça e da logística disponível. Nem todos os pedidos entram nessa lógica.",
+      },
+      {
+        question: "A CLYON faz recolha gratuita de móveis?",
+        answer:
+          "A CLYON opera como serviço privado. O foco é resolver pedidos com desmontagem, carregamento, transporte e retirada completa quando a via gratuita não é suficiente.",
+      },
+      {
+        question: "Quando devo pedir recolha privada na Costa da Caparica?",
+        answer:
+          "Quando há urgência, peças pesadas, escadas, falta de transporte próprio, mistura de móveis e recheios ou necessidade de libertar o espaço sem depender de várias tentativas de doação.",
+      },
+    ],
+  },
+  {
     slug: "recolha-de-moveis-como-funciona",
     title: "Recolha de móveis: como funciona, quanto custa e quando pedir apoio",
     description:
