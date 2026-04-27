@@ -34,9 +34,9 @@ body {
 .site-aqua-shell {
   position: relative;
   background:
-    radial-gradient(circle at top left, rgba(103, 232, 249, 0.3), transparent 26%),
-    radial-gradient(circle at top right, rgba(6, 182, 212, 0.16), transparent 24%),
-    radial-gradient(circle at 50% 120%, rgba(186, 230, 253, 0.34), transparent 42%),
+    radial-gradient(circle at top left, rgba(103, 232, 249, 0.18), transparent 24%),
+    radial-gradient(circle at top right, rgba(6, 182, 212, 0.1), transparent 22%),
+    radial-gradient(circle at 50% 120%, rgba(186, 230, 253, 0.18), transparent 38%),
     linear-gradient(180deg, #eefaff 0%, #eaf8ff 24%, #f4fbff 54%, #edf8ff 100%);
 }
 
@@ -52,23 +52,24 @@ body {
 .site-aqua-shell::before {
   opacity: 1;
   background:
-    radial-gradient(circle at 7% 12%, rgba(186, 230, 253, 0.64) 0, rgba(186, 230, 253, 0.64) 22px, rgba(255, 255, 255, 0.65) 23px, transparent 28px),
-    radial-gradient(circle at 18% 29%, rgba(103, 232, 249, 0.4) 0, rgba(103, 232, 249, 0.4) 10px, transparent 12px),
-    radial-gradient(circle at 33% 18%, rgba(224, 242, 254, 0.74) 0, rgba(224, 242, 254, 0.74) 18px, transparent 22px),
-    radial-gradient(circle at 84% 14%, rgba(125, 211, 252, 0.58) 0, rgba(125, 211, 252, 0.58) 18px, rgba(255, 255, 255, 0.58) 19px, transparent 24px),
-    radial-gradient(circle at 72% 34%, rgba(34, 211, 238, 0.34) 0, rgba(34, 211, 238, 0.34) 9px, transparent 11px),
-    radial-gradient(circle at 13% 67%, rgba(165, 243, 252, 0.48) 0, rgba(165, 243, 252, 0.48) 24px, rgba(255, 255, 255, 0.54) 25px, transparent 31px),
-    radial-gradient(circle at 29% 81%, rgba(186, 230, 253, 0.42) 0, rgba(186, 230, 253, 0.42) 12px, transparent 14px),
-    radial-gradient(circle at 88% 74%, rgba(103, 232, 249, 0.34) 0, rgba(103, 232, 249, 0.34) 16px, transparent 19px),
-    radial-gradient(circle at 64% 90%, rgba(34, 211, 238, 0.26) 0, rgba(34, 211, 238, 0.26) 10px, transparent 12px);
+    radial-gradient(circle at 7% 12%, rgba(186, 230, 253, 0.95) 0 4px, rgba(255, 255, 255, 0.92) 4.6px 6px, rgba(14, 165, 233, 0.18) 6.2px 8px, transparent 8.4px),
+    radial-gradient(circle at 18% 29%, rgba(103, 232, 249, 0.9) 0 4px, rgba(255, 255, 255, 0.86) 4.5px 5.8px, rgba(8, 145, 178, 0.16) 6px 7.8px, transparent 8px),
+    radial-gradient(circle at 33% 18%, rgba(224, 242, 254, 0.98) 0 4px, rgba(255, 255, 255, 0.9) 4.6px 6px, rgba(56, 189, 248, 0.16) 6.2px 8px, transparent 8.2px),
+    radial-gradient(circle at 84% 14%, rgba(125, 211, 252, 0.88) 0 4px, rgba(255, 255, 255, 0.9) 4.5px 5.8px, rgba(14, 165, 233, 0.16) 6px 7.8px, transparent 8px),
+    radial-gradient(circle at 72% 34%, rgba(34, 211, 238, 0.82) 0 4px, rgba(255, 255, 255, 0.82) 4.5px 5.8px, rgba(8, 145, 178, 0.16) 6px 7.8px, transparent 8px),
+    radial-gradient(circle at 13% 67%, rgba(165, 243, 252, 0.9) 0 4px, rgba(255, 255, 255, 0.9) 4.6px 6px, rgba(34, 211, 238, 0.14) 6.2px 8px, transparent 8.2px),
+    radial-gradient(circle at 29% 81%, rgba(186, 230, 253, 0.86) 0 4px, rgba(255, 255, 255, 0.84) 4.5px 5.8px, rgba(56, 189, 248, 0.14) 6px 7.8px, transparent 8px),
+    radial-gradient(circle at 88% 74%, rgba(103, 232, 249, 0.84) 0 4px, rgba(255, 255, 255, 0.84) 4.6px 6px, rgba(8, 145, 178, 0.16) 6.2px 8px, transparent 8.2px),
+    radial-gradient(circle at 64% 90%, rgba(34, 211, 238, 0.8) 0 4px, rgba(255, 255, 255, 0.8) 4.5px 5.8px, rgba(14, 165, 233, 0.14) 6px 7.8px, transparent 8px);
+  background-repeat: repeat;
+  background-size: 320px 320px;
+  filter: saturate(1.04);
 }
 
 .site-aqua-shell::after {
   z-index: -1;
   background:
-    radial-gradient(circle at 50% 10%, rgba(255, 255, 255, 0.98), transparent 26%),
-    radial-gradient(circle at 50% 46%, rgba(255, 255, 255, 0.44), transparent 58%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0.02) 100%);
+    linear-gradient(180deg, rgba(255, 255, 255, 0.18) 0%, rgba(255, 255, 255, 0.02) 100%);
 }
 
 .site-page-shell {
@@ -77,31 +78,21 @@ body {
 }
 
 .site-page-shell::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  pointer-events: none;
-  background:
-    radial-gradient(circle at 12% 18%, rgba(255, 255, 255, 0.94), transparent 18%),
-    radial-gradient(circle at 88% 24%, rgba(207, 250, 254, 0.62), transparent 18%),
-    radial-gradient(circle at 18% 76%, rgba(186, 230, 253, 0.46), transparent 20%),
-    radial-gradient(circle at 82% 84%, rgba(224, 242, 254, 0.58), transparent 18%);
+  content: none;
 }
 
 .site-page-shell section[class*="bg-white"] {
   position: relative;
-  background-color: rgba(255, 255, 255, 0.76) !important;
+  background-color: rgba(255, 255, 255, 0.92) !important;
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.96),
     inset 0 -1px 0 rgba(186, 230, 253, 0.36);
-  backdrop-filter: blur(2px);
 }
 
 .site-page-shell section[class*="bg-slate-50"] {
   position: relative;
   background:
-    linear-gradient(180deg, rgba(240, 249, 255, 0.94) 0%, rgba(236, 254, 255, 0.9) 100%) !important;
+    linear-gradient(180deg, rgba(240, 249, 255, 0.97) 0%, rgba(236, 254, 255, 0.95) 100%) !important;
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.98),
     inset 0 -1px 0 rgba(125, 211, 252, 0.28);
@@ -109,46 +100,40 @@ body {
 
 .site-page-shell section[class*="bg-white"]::after,
 .site-page-shell section[class*="bg-slate-50"]::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background:
-    radial-gradient(circle at 12% 50%, rgba(255, 255, 255, 0.72), transparent 18%),
-    radial-gradient(circle at 88% 52%, rgba(207, 250, 254, 0.4), transparent 18%);
-  opacity: 0.8;
+  content: none;
 }
 
 @media (min-width: 1024px) {
   .site-aqua-shell {
     background:
-      radial-gradient(circle at 8% 10%, rgba(103, 232, 249, 0.42), transparent 24%),
-      radial-gradient(circle at 92% 12%, rgba(6, 182, 212, 0.24), transparent 22%),
-      radial-gradient(circle at 18% 78%, rgba(186, 230, 253, 0.34), transparent 20%),
-      radial-gradient(circle at 82% 84%, rgba(125, 211, 252, 0.3), transparent 22%),
+      radial-gradient(circle at 8% 10%, rgba(103, 232, 249, 0.22), transparent 22%),
+      radial-gradient(circle at 92% 12%, rgba(6, 182, 212, 0.14), transparent 20%),
+      radial-gradient(circle at 18% 78%, rgba(186, 230, 253, 0.18), transparent 18%),
+      radial-gradient(circle at 82% 84%, rgba(125, 211, 252, 0.14), transparent 20%),
       linear-gradient(180deg, #e8f8ff 0%, #ecf9ff 26%, #f3fbff 54%, #eaf8ff 100%);
   }
 
   .site-aqua-shell::before {
     background:
-      radial-gradient(circle at 6% 11%, rgba(186, 230, 253, 0.68) 0, rgba(186, 230, 253, 0.68) 34px, rgba(255, 255, 255, 0.72) 35px, transparent 42px),
-      radial-gradient(circle at 16% 28%, rgba(103, 232, 249, 0.46) 0, rgba(103, 232, 249, 0.46) 15px, transparent 18px),
-      radial-gradient(circle at 31% 16%, rgba(224, 242, 254, 0.82) 0, rgba(224, 242, 254, 0.82) 26px, transparent 32px),
-      radial-gradient(circle at 86% 13%, rgba(125, 211, 252, 0.64) 0, rgba(125, 211, 252, 0.64) 30px, rgba(255, 255, 255, 0.62) 31px, transparent 38px),
-      radial-gradient(circle at 74% 35%, rgba(34, 211, 238, 0.38) 0, rgba(34, 211, 238, 0.38) 14px, transparent 17px),
-      radial-gradient(circle at 12% 66%, rgba(165, 243, 252, 0.52) 0, rgba(165, 243, 252, 0.52) 36px, rgba(255, 255, 255, 0.56) 37px, transparent 45px),
-      radial-gradient(circle at 28% 82%, rgba(186, 230, 253, 0.46) 0, rgba(186, 230, 253, 0.46) 18px, transparent 22px),
-      radial-gradient(circle at 89% 73%, rgba(103, 232, 249, 0.4) 0, rgba(103, 232, 249, 0.4) 24px, transparent 29px),
-      radial-gradient(circle at 63% 90%, rgba(34, 211, 238, 0.3) 0, rgba(34, 211, 238, 0.3) 16px, transparent 20px);
+      radial-gradient(circle at 6% 11%, rgba(186, 230, 253, 0.95) 0 4px, rgba(255, 255, 255, 0.92) 4.6px 6px, rgba(14, 165, 233, 0.18) 6.2px 8px, transparent 8.4px),
+      radial-gradient(circle at 16% 28%, rgba(103, 232, 249, 0.9) 0 4px, rgba(255, 255, 255, 0.86) 4.5px 5.8px, rgba(8, 145, 178, 0.16) 6px 7.8px, transparent 8px),
+      radial-gradient(circle at 31% 16%, rgba(224, 242, 254, 0.98) 0 4px, rgba(255, 255, 255, 0.9) 4.6px 6px, rgba(56, 189, 248, 0.16) 6.2px 8px, transparent 8.2px),
+      radial-gradient(circle at 86% 13%, rgba(125, 211, 252, 0.88) 0 4px, rgba(255, 255, 255, 0.9) 4.5px 5.8px, rgba(14, 165, 233, 0.16) 6px 7.8px, transparent 8px),
+      radial-gradient(circle at 74% 35%, rgba(34, 211, 238, 0.82) 0 4px, rgba(255, 255, 255, 0.82) 4.5px 5.8px, rgba(8, 145, 178, 0.16) 6px 7.8px, transparent 8px),
+      radial-gradient(circle at 12% 66%, rgba(165, 243, 252, 0.9) 0 4px, rgba(255, 255, 255, 0.9) 4.6px 6px, rgba(34, 211, 238, 0.14) 6.2px 8px, transparent 8.2px),
+      radial-gradient(circle at 28% 82%, rgba(186, 230, 253, 0.86) 0 4px, rgba(255, 255, 255, 0.84) 4.5px 5.8px, rgba(56, 189, 248, 0.14) 6px 7.8px, transparent 8px),
+      radial-gradient(circle at 89% 73%, rgba(103, 232, 249, 0.84) 0 4px, rgba(255, 255, 255, 0.84) 4.6px 6px, rgba(8, 145, 178, 0.16) 6.2px 8px, transparent 8.2px),
+      radial-gradient(circle at 63% 90%, rgba(34, 211, 238, 0.8) 0 4px, rgba(255, 255, 255, 0.8) 4.5px 5.8px, rgba(14, 165, 233, 0.14) 6px 7.8px, transparent 8px);
+    background-repeat: repeat;
+    background-size: 360px 360px;
   }
 
   .site-page-shell section[class*="bg-white"] {
-    background-color: rgba(255, 255, 255, 0.6) !important;
+    background-color: rgba(255, 255, 255, 0.94) !important;
     box-shadow:
       inset 0 1px 0 rgba(255, 255, 255, 0.98),
       inset 0 -1px 0 rgba(186, 230, 253, 0.46),
       0 18px 60px -52px rgba(8, 145, 178, 0.18);
-    backdrop-filter: blur(4px);
   }
 
   .site-page-shell section[class*="bg-slate-50"] {
@@ -162,10 +147,7 @@ body {
 
   .site-page-shell section[class*="bg-white"]::after,
   .site-page-shell section[class*="bg-slate-50"]::after {
-    background:
-      radial-gradient(circle at 8% 50%, rgba(255, 255, 255, 0.84), transparent 20%),
-      radial-gradient(circle at 92% 50%, rgba(207, 250, 254, 0.54), transparent 20%);
-    opacity: 0.95;
+    content: none;
   }
 }
 
