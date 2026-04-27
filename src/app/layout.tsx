@@ -205,10 +205,10 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteSchema) }}
         />
       </head>
-      <body className="min-h-screen bg-white text-slate-900 antialiased">
+      <body className="site-aqua-shell min-h-screen bg-white text-slate-900 antialiased">
         <TrpcProvider>
           <Header />
-          <main className="pt-[76px]">{children}</main>
+          <main className="site-page-shell pt-[76px]">{children}</main>
           <Footer />
           <DeferredCookieConsent />
         </TrpcProvider>
