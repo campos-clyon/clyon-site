@@ -302,28 +302,29 @@ export default async function HomePage() {
                 Do primeiro contacto até à recolha, com evolução clara em 3 etapas.
               </h2>
             </div>
-            <div className="rounded-full border border-cyan-200 bg-white/85 px-5 py-3 text-sm font-semibold text-cyan-800 shadow-[0_14px_30px_-24px_rgba(8,145,178,0.35)]">
-              Pedido enviado
+            <div className="process-status-pill rounded-full border border-cyan-200 bg-white/85 px-5 py-3 text-sm font-semibold text-cyan-800 shadow-[0_14px_30px_-24px_rgba(8,145,178,0.35)]">
+              <span className="process-status-pill__item">Pedido enviado</span>
               <span className="mx-2 text-cyan-300">•</span>
-              Orçamento confirmado
+              <span className="process-status-pill__item">Orçamento confirmado</span>
               <span className="mx-2 text-cyan-300">•</span>
-              Recolha concluída
+              <span className="process-status-pill__item">Recolha concluída</span>
             </div>
           </div>
 
-          <div className="relative mt-10">
+          <div className="process-demo relative mt-10">
             <div className="absolute left-[3.2rem] right-[3.2rem] top-[2.15rem] hidden h-[6px] rounded-full bg-gradient-to-r from-cyan-100 via-cyan-300 to-cyan-500 shadow-[0_10px_24px_-16px_rgba(6,182,212,0.55)] lg:block" />
-            <div className="absolute left-[3.2rem] top-[2.15rem] hidden h-[6px] w-[66%] rounded-full bg-gradient-to-r from-cyan-400 via-cyan-500 to-cyan-600 shadow-[0_12px_26px_-16px_rgba(8,145,178,0.7)] lg:block" />
+            <div className="process-demo__line absolute left-[3.2rem] top-[2.15rem] hidden h-[6px] rounded-full bg-gradient-to-r from-cyan-400 via-cyan-500 to-cyan-600 shadow-[0_12px_26px_-16px_rgba(8,145,178,0.7)] lg:block" />
 
             <div className="grid gap-6 lg:grid-cols-3">
-              {steps.map((step) => (
+              {steps.map((step, index) => (
                 <article
                   key={step.step}
-                  className="relative overflow-hidden rounded-[32px] border border-cyan-100/90 bg-white/92 p-7 shadow-[0_24px_70px_-38px_rgba(14,116,144,0.22)] backdrop-blur-[2px]"
+                  className="process-card relative overflow-hidden rounded-[32px] border border-cyan-100/90 bg-white/92 p-7 shadow-[0_24px_70px_-38px_rgba(14,116,144,0.22)] backdrop-blur-[2px]"
+                  style={{ animationDelay: `${index * 2.4}s` }}
                 >
                   <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-cyan-300 via-cyan-400 to-cyan-500" />
                   <div className="flex items-start justify-between gap-4">
-                    <div className="flex h-16 w-16 items-center justify-center rounded-[22px] bg-gradient-to-br from-cyan-400 via-cyan-500 to-cyan-600 text-white shadow-[0_18px_36px_-22px_rgba(8,145,178,0.72)]">
+                    <div className="process-card__icon flex h-16 w-16 items-center justify-center rounded-[22px] bg-gradient-to-br from-cyan-400 via-cyan-500 to-cyan-600 text-white shadow-[0_18px_36px_-22px_rgba(8,145,178,0.72)]">
                       <step.icon className="h-7 w-7" />
                     </div>
                     <div className="rounded-full border border-cyan-100 bg-cyan-50/90 px-3 py-1 text-xs font-bold tracking-[0.24em] text-cyan-700">
@@ -340,17 +341,29 @@ export default async function HomePage() {
                   <div className="mt-6 flex items-center gap-3">
                     <div className="h-2 flex-1 rounded-full bg-cyan-100">
                       <div
-                        className={`h-2 rounded-full bg-gradient-to-r from-cyan-400 to-cyan-600 ${
-                          step.step === "01" ? "w-[34%]" : step.step === "02" ? "w-[68%]" : "w-full"
-                        }`}
+                        className="process-card__bar h-2 rounded-full bg-gradient-to-r from-cyan-400 to-cyan-600"
+                        style={{
+                          ["--target-width" as never]:
+                            step.step === "01" ? "34%" : step.step === "02" ? "68%" : "100%",
+                        }}
                       />
                     </div>
-                    <span className="text-xs font-bold tracking-[0.18em] text-cyan-700">
+                    <span className="process-card__percent text-xs font-bold tracking-[0.18em] text-cyan-700">
                       {step.step === "01" ? "33%" : step.step === "02" ? "66%" : "100%"}
                     </span>
                   </div>
+
+                  <div className="process-card__done mt-5 inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-bold uppercase tracking-[0.2em] text-emerald-700">
+                    <CheckCircle2 className="h-4 w-4" />
+                    Etapa concluída
+                  </div>
                 </article>
               ))}
+            </div>
+
+            <div className="process-clean-message pointer-events-none mx-auto mt-8 flex max-w-max items-center gap-3 rounded-full border border-emerald-200 bg-white/95 px-5 py-3 text-sm font-bold uppercase tracking-[0.18em] text-emerald-700 shadow-[0_24px_54px_-30px_rgba(16,185,129,0.4)]">
+              <Sparkles className="h-4 w-4" />
+              Espaço limpo
             </div>
           </div>
         </div>

@@ -188,6 +188,94 @@ h6 {
     0 8px 18px rgba(8, 145, 178, 0.05);
 }
 
+.process-demo__line {
+  width: 0%;
+  animation: process-line-flow 7.2s ease-in-out infinite;
+}
+
+.process-status-pill__item {
+  opacity: 0.45;
+  animation: process-pill-pulse 7.2s infinite;
+}
+
+.process-status-pill__item:nth-of-type(1) {
+  animation-delay: 0s;
+}
+
+.process-status-pill__item:nth-of-type(2) {
+  animation-delay: 2.4s;
+}
+
+.process-status-pill__item:nth-of-type(3) {
+  animation-delay: 4.8s;
+}
+
+.process-card {
+  animation: process-card-glow 7.2s ease-in-out infinite;
+}
+
+.process-card__icon {
+  animation: process-icon-pop 7.2s ease-in-out infinite;
+}
+
+.process-card__bar {
+  width: 0%;
+  animation: process-bar-fill 7.2s ease-in-out infinite;
+}
+
+.process-card__percent,
+.process-card__done {
+  opacity: 0.42;
+  transition: opacity 180ms ease;
+}
+
+.process-card__done {
+  transform: translateY(10px);
+  animation: process-done-pop 7.2s ease-in-out infinite;
+}
+
+.process-clean-message {
+  opacity: 0;
+  transform: translateY(18px) scale(0.96);
+  animation: process-clean-appear 7.2s ease-in-out infinite;
+}
+
+.process-card:nth-of-type(1),
+.process-card:nth-of-type(1) .process-card__icon,
+.process-card:nth-of-type(1) .process-card__bar,
+.process-card:nth-of-type(1) .process-card__done {
+  animation-delay: 0s;
+}
+
+.process-card:nth-of-type(2),
+.process-card:nth-of-type(2) .process-card__icon,
+.process-card:nth-of-type(2) .process-card__bar,
+.process-card:nth-of-type(2) .process-card__done {
+  animation-delay: 2.4s;
+}
+
+.process-card:nth-of-type(3),
+.process-card:nth-of-type(3) .process-card__icon,
+.process-card:nth-of-type(3) .process-card__bar,
+.process-card:nth-of-type(3) .process-card__done {
+  animation-delay: 4.8s;
+}
+
+.process-card:nth-of-type(1) .process-card__percent {
+  animation: process-percent-reveal 7.2s ease-in-out infinite;
+  animation-delay: 0s;
+}
+
+.process-card:nth-of-type(2) .process-card__percent {
+  animation: process-percent-reveal 7.2s ease-in-out infinite;
+  animation-delay: 2.4s;
+}
+
+.process-card:nth-of-type(3) .process-card__percent {
+  animation: process-percent-reveal 7.2s ease-in-out infinite;
+  animation-delay: 4.8s;
+}
+
 a {
   color: inherit;
   text-decoration: none;
@@ -453,6 +541,132 @@ img {
   }
 }
 
+@keyframes process-line-flow {
+  0%,
+  8% {
+    width: 0%;
+    opacity: 0.55;
+  }
+  30% {
+    width: 34%;
+    opacity: 0.9;
+  }
+  62% {
+    width: 68%;
+    opacity: 1;
+  }
+  82%,
+  92% {
+    width: 100%;
+    opacity: 1;
+  }
+  100% {
+    width: 0%;
+    opacity: 0.55;
+  }
+}
+
+@keyframes process-card-glow {
+  0%,
+  12%,
+  100% {
+    border-color: rgba(165, 243, 252, 0.9);
+    box-shadow: 0 24px 70px -38px rgba(14, 116, 144, 0.22);
+    transform: translateY(0);
+  }
+  18%,
+  28% {
+    border-color: rgba(34, 211, 238, 0.9);
+    box-shadow:
+      0 28px 80px -36px rgba(6, 182, 212, 0.34),
+      0 0 0 1px rgba(34, 211, 238, 0.18) inset;
+    transform: translateY(-4px);
+  }
+}
+
+@keyframes process-icon-pop {
+  0%,
+  12%,
+  100% {
+    transform: scale(1);
+    filter: saturate(1);
+  }
+  18%,
+  28% {
+    transform: scale(1.08);
+    filter: saturate(1.15);
+  }
+}
+
+@keyframes process-bar-fill {
+  0%,
+  10% {
+    width: 0%;
+  }
+  22%,
+  30% {
+    width: var(--target-width);
+  }
+  100% {
+    width: var(--target-width);
+  }
+}
+
+@keyframes process-done-pop {
+  0%,
+  24%,
+  100% {
+    opacity: 0;
+    transform: translateY(10px) scale(0.96);
+  }
+  30%,
+  92% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes process-percent-reveal {
+  0%,
+  20%,
+  100% {
+    opacity: 0.42;
+  }
+  24%,
+  92% {
+    opacity: 1;
+  }
+}
+
+@keyframes process-pill-pulse {
+  0%,
+  12%,
+  100% {
+    opacity: 0.45;
+    color: #0f766e;
+  }
+  18%,
+  30% {
+    opacity: 1;
+    color: #0891b2;
+    text-shadow: 0 0 18px rgba(34, 211, 238, 0.24);
+  }
+}
+
+@keyframes process-clean-appear {
+  0%,
+  80%,
+  100% {
+    opacity: 0;
+    transform: translateY(18px) scale(0.96);
+  }
+  86%,
+  94% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
 @media (hover: none), (pointer: coarse) {
   .site-btn-lively {
     will-change: auto;
@@ -472,6 +686,16 @@ img {
 
   .site-btn-lively::before,
   .site-btn-lively::after {
+    animation: none;
+  }
+
+  .process-demo__line,
+  .process-status-pill__item,
+  .process-card,
+  .process-card__icon,
+  .process-card__bar,
+  .process-card__done,
+  .process-clean-message {
     animation: none;
   }
 
