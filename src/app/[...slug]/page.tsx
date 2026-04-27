@@ -332,6 +332,8 @@ export default async function ServiceCityPage({ params }: Props) {
     href: `/${getCityServiceSlug(service.slug, relatedCity.slug)}`,
     label: `${service.name} em ${relatedCity.name}`,
   }));
+  const isLisbonFurniturePage = isFurnitureService(service.slug) && city.slug === "lisboa";
+  const isCascaisFurniturePage = isFurnitureService(service.slug) && city.slug === "cascais";
 
   const supportLinks = isFurnitureService(service.slug)
     ? [
@@ -574,6 +576,72 @@ export default async function ServiceCityPage({ params }: Props) {
             </div>
           </div>
         </div>
+
+        {isLisbonFurniturePage && (
+          <div className="mt-8 rounded-[30px] border border-cyan-100 bg-cyan-50/70 p-7">
+            <p className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-700">
+              Intenção local em Lisboa
+            </p>
+            <h2 className="mt-3 text-3xl font-bold text-slate-950">
+              Recolha de móveis em Lisboa para quem precisa de uma solução privada, rápida e completa
+            </h2>
+            <p className="mt-4 max-w-4xl text-base leading-8 text-slate-600">
+              Em Lisboa, esta pesquisa mistura recolha municipal, doação e serviços privados.
+              A CLYON responde à parte comercial da intenção: desmontagem, carregamento dentro do
+              imóvel, retirada de sofás, camas, colchões, armários e eletrodomésticos, com
+              agendamento rápido e execução completa no local.
+            </p>
+            <div className="mt-6 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+              {[
+                { slug: "benfica", label: "Recolha de móveis em Benfica" },
+                { slug: "lumiar", label: "Recolha de móveis no Lumiar" },
+                { slug: "alvalade", label: "Recolha de móveis em Alvalade" },
+                { slug: "olivais", label: "Recolha de móveis nos Olivais" },
+              ].map((item) => (
+                <Link
+                  key={item.slug}
+                  href={`/${getCityServiceSlug("recolha-moveis", item.slug)}`}
+                  className="rounded-[22px] border border-cyan-100 bg-white px-4 py-4 text-sm font-medium text-slate-800 transition hover:bg-cyan-50"
+                >
+                  {item.label}
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {isCascaisFurniturePage && (
+          <div className="mt-8 rounded-[30px] border border-cyan-100 bg-cyan-50/70 p-7">
+            <p className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-700">
+              Intenção local em Cascais
+            </p>
+            <h2 className="mt-3 text-3xl font-bold text-slate-950">
+              Recolha de móveis em Cascais para quem procura uma recolha privada e completa
+            </h2>
+            <p className="mt-4 max-w-4xl text-base leading-8 text-slate-600">
+              Em Cascais, o Google mostra muitos resultados informativos, municipais e de doação.
+              Esta página precisa de deixar clara a intenção comercial: recolha privada de sofás,
+              camas, colchões, armários, eletrodomésticos e recheios, com carregamento no local,
+              transporte e resposta rápida.
+            </p>
+            <div className="mt-6 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+              {[
+                { slug: "oeiras", label: "Recolha de móveis em Oeiras" },
+                { slug: "sintra", label: "Recolha de móveis em Sintra" },
+                { slug: "carnaxide", label: "Recolha de móveis em Carnaxide" },
+                { slug: "amadora", label: "Recolha de móveis na Amadora" },
+              ].map((item) => (
+                <Link
+                  key={item.slug}
+                  href={`/${getCityServiceSlug("recolha-moveis", item.slug)}`}
+                  className="rounded-[22px] border border-cyan-100 bg-white px-4 py-4 text-sm font-medium text-slate-800 transition hover:bg-cyan-50"
+                >
+                  {item.label}
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
 
         <div className="mt-8 rounded-[30px] border border-cyan-100 bg-cyan-50/70 p-7">
           <p className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-700">

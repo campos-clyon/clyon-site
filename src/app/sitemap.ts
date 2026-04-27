@@ -43,7 +43,14 @@ export default function sitemap(): MetadataRoute.Sitemap {
       url: `${SITE_URL}/${getCityServiceSlug(service.slug, city.slug)}`,
       lastModified: now,
       changeFrequency: "monthly" as const,
-      priority: 0.85,
+      priority:
+        service.slug === "recolha-moveis" && city.slug === "lisboa"
+          ? 0.97
+          : service.slug === "recolha-moveis" && city.slug === "cascais"
+            ? 0.94
+          : service.slug === "recolha-moveis"
+            ? 0.9
+            : 0.85,
     })),
   );
 

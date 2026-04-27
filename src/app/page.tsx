@@ -158,6 +158,42 @@ const proofPoints = [
   "Fluxo simples do pedido até à recolha",
 ];
 
+const lisbonSearchLinks = [
+  {
+    href: "/recolha-moveis-lisboa",
+    title: "Recolha de móveis em Lisboa",
+    text: "Landing local principal para pedidos de sofás, camas, armários e eletrodomésticos na cidade.",
+  },
+  {
+    href: "/recolha-moveis-benfica",
+    title: "Recolha de móveis em Benfica",
+    text: "Liga a procura local de Benfica à página certa, sem obrigar o Google a escolher a home.",
+  },
+  {
+    href: "/recolha-moveis-lumiar",
+    title: "Recolha de móveis no Lumiar",
+    text: "Reforça a malha interna para Lisboa com uma das zonas mais procuradas dentro da cidade.",
+  },
+];
+
+const coastalSearchLinks = [
+  {
+    href: "/recolha-moveis-cascais",
+    title: "Recolha de móveis em Cascais",
+    text: "Página local para quem procura recolha privada de móveis em Cascais com resposta comercial rápida.",
+  },
+  {
+    href: "/recolha-moveis-oeiras",
+    title: "Recolha de móveis em Oeiras",
+    text: "Ajuda a consolidar a procura da linha entre Oeiras e Cascais com uma página específica por cidade.",
+  },
+  {
+    href: "/recolha-moveis-sintra",
+    title: "Recolha de móveis em Sintra",
+    text: "Reforça o cluster local da Grande Lisboa Oeste, que costuma aparecer nas mesmas pesquisas comparativas.",
+  },
+];
+
 const homeFaqSchema = {
   "@context": "https://schema.org",
   "@type": "FAQPage",
@@ -241,6 +277,80 @@ export default async function HomePage() {
 
       <section className="bg-white py-16 lg:py-20">
         <div className="mx-auto max-w-7xl px-6 lg:px-8">
+          <div className="mb-10 rounded-[32px] border border-cyan-100 bg-cyan-50/80 p-7 shadow-[0_18px_50px_-34px_rgba(14,116,144,0.22)]">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+              <div className="max-w-3xl">
+                <p className="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-700">
+                  Mais procurado em Lisboa
+                </p>
+                <h2 className="mt-3 text-3xl font-bold text-slate-950">
+                  Quando a pesquisa é "recolha de móveis Lisboa", esta é a página certa.
+                </h2>
+                <p className="mt-3 text-base leading-8 text-slate-600">
+                  A home ajuda a apresentar a marca, mas a URL que deve responder a esta
+                  intenção local é a landing de Lisboa. Por isso reforçamos aqui as
+                  ligações internas mais relevantes para essa pesquisa.
+                </p>
+              </div>
+              <Link href="/recolha-moveis-lisboa" className="site-btn-primary px-6">
+                Abrir Lisboa
+              </Link>
+            </div>
+
+            <div className="mt-6 grid gap-4 md:grid-cols-3">
+              {lisbonSearchLinks.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className="rounded-[24px] border border-cyan-100 bg-white p-5 transition hover:-translate-y-0.5 hover:bg-cyan-50"
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <h3 className="text-lg font-bold text-slate-950">{item.title}</h3>
+                    <ArrowRight className="h-4 w-4 text-cyan-700" />
+                  </div>
+                  <p className="mt-3 text-sm leading-7 text-slate-600">{item.text}</p>
+                </Link>
+              ))}
+            </div>
+          </div>
+
+          <div className="mb-10 rounded-[32px] border border-cyan-100 bg-white p-7 shadow-[0_18px_50px_-34px_rgba(14,116,144,0.16)]">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+              <div className="max-w-3xl">
+                <p className="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-700">
+                  Linha de Cascais
+                </p>
+                <h2 className="mt-3 text-3xl font-bold text-slate-950">
+                  Cascais também precisa de uma URL local forte para recolha de móveis.
+                </h2>
+                <p className="mt-3 text-base leading-8 text-slate-600">
+                  Nesta zona o Google mistura serviços municipais, doação e recolha privada.
+                  Por isso damos mais destaque às páginas locais de Cascais, Oeiras e Sintra
+                  para sinalizar melhor a intenção comercial.
+                </p>
+              </div>
+              <Link href="/recolha-moveis-cascais" className="site-btn-primary px-6">
+                Abrir Cascais
+              </Link>
+            </div>
+
+            <div className="mt-6 grid gap-4 md:grid-cols-3">
+              {coastalSearchLinks.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className="rounded-[24px] border border-cyan-100 bg-cyan-50/60 p-5 transition hover:-translate-y-0.5 hover:bg-cyan-50"
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <h3 className="text-lg font-bold text-slate-950">{item.title}</h3>
+                    <ArrowRight className="h-4 w-4 text-cyan-700" />
+                  </div>
+                  <p className="mt-3 text-sm leading-7 text-slate-600">{item.text}</p>
+                </Link>
+              ))}
+            </div>
+          </div>
+
           <div className="grid gap-3.5 md:grid-cols-2 xl:grid-cols-4">
             {services.map((service) => (
               <article key={service.name} className="group overflow-hidden rounded-[30px] border border-cyan-200/90 bg-white shadow-[0_24px_70px_-36px_rgba(8,145,178,0.26)] transition duration-300 hover:-translate-y-1">
@@ -403,7 +513,7 @@ export default async function HomePage() {
                   <h3 className="text-lg font-bold text-slate-950">{region.shortLabel}</h3>
                   <div className="mt-4 flex flex-wrap gap-2">
                     {region.cities.map((city) => (
-                      <Link key={city.slug} href={`/${getCityServiceSlug("recolha-entulho", city.slug)}`} className="rounded-full border border-cyan-200 bg-white px-3 py-1.5 text-sm font-medium text-cyan-700 transition hover:bg-cyan-50">
+                      <Link key={city.slug} href={`/${getCityServiceSlug("recolha-moveis", city.slug)}`} className="rounded-full border border-cyan-200 bg-white px-3 py-1.5 text-sm font-medium text-cyan-700 transition hover:bg-cyan-50">
                         {city.name}
                       </Link>
                     ))}

@@ -85,6 +85,44 @@ const pricingExamples = [
   "Recolha de vários móveis num apartamento: 180 EUR a 350 EUR",
 ];
 
+const lisbonFocusLinks = [
+  {
+    href: "/recolha-moveis-lisboa",
+    label: "Recolha de móveis em Lisboa",
+  },
+  {
+    href: "/recolha-moveis-benfica",
+    label: "Recolha de móveis em Benfica",
+  },
+  {
+    href: "/recolha-moveis-lumiar",
+    label: "Recolha de móveis no Lumiar",
+  },
+  {
+    href: "/recolha-moveis-alvalade",
+    label: "Recolha de móveis em Alvalade",
+  },
+];
+
+const cascaisFocusLinks = [
+  {
+    href: "/recolha-moveis-cascais",
+    label: "Recolha de móveis em Cascais",
+  },
+  {
+    href: "/recolha-moveis-oeiras",
+    label: "Recolha de móveis em Oeiras",
+  },
+  {
+    href: "/recolha-moveis-sintra",
+    label: "Recolha de móveis em Sintra",
+  },
+  {
+    href: "/recolha-moveis-carnaxide",
+    label: "Recolha de móveis em Carnaxide",
+  },
+];
+
 const faqs = [
   {
     q: "Quanto custa a recolha de móveis?",
@@ -400,6 +438,72 @@ export default function RecolhaDeMoveisPage() {
                 </p>
               </Link>
             ))}
+          </div>
+
+          <div className="mt-8 rounded-[26px] border border-cyan-100 bg-cyan-50/80 p-6">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+              <div className="max-w-3xl">
+                <p className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-700">
+                  Foco local em Lisboa
+                </p>
+                <h3 className="mt-3 text-2xl font-bold text-slate-950">
+                  A página mais importante para a pesquisa "recolha de móveis Lisboa"
+                </h3>
+                <p className="mt-3 text-sm leading-7 text-slate-600">
+                  Esta página é o hub do serviço, mas a procura mais forte acontece em Lisboa.
+                  Por isso ligamos daqui para a landing local principal e para alguns bairros
+                  estratégicos da cidade.
+                </p>
+              </div>
+              <Link href="/recolha-moveis-lisboa" className="site-btn-primary px-6">
+                Ver Lisboa
+              </Link>
+            </div>
+
+            <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+              {lisbonFocusLinks.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className="rounded-[20px] border border-cyan-100 bg-white px-4 py-4 text-sm font-medium text-slate-800 transition hover:bg-cyan-50"
+                >
+                  {item.label}
+                </Link>
+              ))}
+            </div>
+          </div>
+
+          <div className="mt-6 rounded-[26px] border border-cyan-100 bg-white p-6">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+              <div className="max-w-3xl">
+                <p className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-700">
+                  Cluster Cascais
+                </p>
+                <h3 className="mt-3 text-2xl font-bold text-slate-950">
+                  Cascais, Oeiras e Sintra precisam de mais reforço interno
+                </h3>
+                <p className="mt-3 text-sm leading-7 text-slate-600">
+                  Como esta pesquisa costuma trazer câmaras, ecocentros e doação de móveis usados,
+                  empurramos também as páginas locais da linha de Cascais para aumentar relevância
+                  comercial nesse grupo de cidades.
+                </p>
+              </div>
+              <Link href="/recolha-moveis-cascais" className="site-btn-primary px-6">
+                Ver Cascais
+              </Link>
+            </div>
+
+            <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+              {cascaisFocusLinks.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className="rounded-[20px] border border-cyan-100 bg-cyan-50/60 px-4 py-4 text-sm font-medium text-slate-800 transition hover:bg-cyan-50"
+                >
+                  {item.label}
+                </Link>
+              ))}
+            </div>
           </div>
         </div>
 

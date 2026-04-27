@@ -156,13 +156,13 @@ export default async function RegionPage({ params }: Props) {
               Localidades chave
             </p>
             <h2 className="mt-3 text-3xl font-bold text-slate-950">
-              Cidades com procura forte em {regionData.name}
+              Cidades com procura forte para recolha de móveis em {regionData.name}
             </h2>
             <div className="mt-6 flex flex-wrap gap-2.5">
               {cities.map((city) => (
                 <Link
                   key={city.slug}
-                  href={`/${getCityServiceSlug("recolha-entulho", city.slug)}`}
+                  href={`/${getCityServiceSlug("recolha-moveis", city.slug)}`}
                   className="rounded-full border border-cyan-200 bg-cyan-50 px-4 py-2 text-sm font-semibold text-cyan-700"
                 >
                   {city.name}
@@ -199,7 +199,7 @@ export default async function RegionPage({ params }: Props) {
           <div className="mt-5 grid gap-4 md:grid-cols-3">
             {[
               "Páginas por cidade e serviço com H1 forte e intenção comercial.",
-              "Links internos entre regiões, localidades e serviços principais.",
+              "Links internos a apontar as cidades para recolha de móveis quando essa procura é dominante.",
               "Dados locais e contacto direto para reforçar confiança e relevância.",
             ].map((item) => (
               <div key={item} className="rounded-[22px] bg-white p-5 shadow-sm">
