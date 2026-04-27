@@ -3,7 +3,9 @@ import { unstable_noStore as noStore } from "next/cache";
 import Link from "next/link";
 import {
   ArrowRight,
+  Camera,
   CheckCircle2,
+  ClipboardCheck,
   Home as HomeIcon,
   MessageSquareQuote,
   ShieldCheck,
@@ -76,9 +78,27 @@ const collectedItems = [
 ];
 
 const steps = [
-  "Envie fotos, morada e indique acessos, andar e elevador.",
-  "Receba uma resposta rápida com orçamento claro e janela disponível.",
-  "A equipa chega ao local, carrega, transporta e encaminha o material.",
+  {
+    step: "01",
+    title: "Enviar o pedido",
+    cue: "Começo simples",
+    description: "Envie fotos, morada e indique acessos, andar e elevador.",
+    icon: Camera,
+  },
+  {
+    step: "02",
+    title: "Receber a resposta",
+    cue: "Validação rápida",
+    description: "Receba uma resposta rápida com orçamento claro e janela disponível.",
+    icon: ClipboardCheck,
+  },
+  {
+    step: "03",
+    title: "Executar a recolha",
+    cue: "Fecho no local",
+    description: "A equipa chega ao local, carrega, transporta e encaminha o material.",
+    icon: Truck,
+  },
 ];
 
 const homeFaqs = [
@@ -275,13 +295,63 @@ export default async function HomePage() {
 
       <section className="bg-white py-16 lg:py-20">
         <div className="mx-auto max-w-7xl px-6 lg:px-8">
-          <div className="grid gap-6 lg:grid-cols-3">
-            {steps.map((step, index) => (
-              <article key={step} className="rounded-[30px] border border-cyan-100 bg-white p-7 shadow-[0_22px_55px_-34px_rgba(14,116,144,0.18)]">
-                <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-2xl bg-cyan-500 text-xl font-bold text-white">{index + 1}</div>
-                <p className="text-base leading-8 text-slate-600">{step}</p>
-              </article>
-            ))}
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+            <div>
+              <p className="text-sm font-semibold uppercase tracking-[0.24em] text-cyan-700">Como funciona</p>
+              <h2 className="mt-4 max-w-3xl text-4xl font-bold leading-tight text-slate-950 sm:text-5xl">
+                Do primeiro contacto até à recolha, com evolução clara em 3 etapas.
+              </h2>
+            </div>
+            <div className="rounded-full border border-cyan-200 bg-white/85 px-5 py-3 text-sm font-semibold text-cyan-800 shadow-[0_14px_30px_-24px_rgba(8,145,178,0.35)]">
+              Pedido enviado
+              <span className="mx-2 text-cyan-300">•</span>
+              Orçamento confirmado
+              <span className="mx-2 text-cyan-300">•</span>
+              Recolha concluída
+            </div>
+          </div>
+
+          <div className="relative mt-10">
+            <div className="absolute left-[3.2rem] right-[3.2rem] top-[2.15rem] hidden h-[6px] rounded-full bg-gradient-to-r from-cyan-100 via-cyan-300 to-cyan-500 shadow-[0_10px_24px_-16px_rgba(6,182,212,0.55)] lg:block" />
+            <div className="absolute left-[3.2rem] top-[2.15rem] hidden h-[6px] w-[66%] rounded-full bg-gradient-to-r from-cyan-400 via-cyan-500 to-cyan-600 shadow-[0_12px_26px_-16px_rgba(8,145,178,0.7)] lg:block" />
+
+            <div className="grid gap-6 lg:grid-cols-3">
+              {steps.map((step) => (
+                <article
+                  key={step.step}
+                  className="relative overflow-hidden rounded-[32px] border border-cyan-100/90 bg-white/92 p-7 shadow-[0_24px_70px_-38px_rgba(14,116,144,0.22)] backdrop-blur-[2px]"
+                >
+                  <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-cyan-300 via-cyan-400 to-cyan-500" />
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex h-16 w-16 items-center justify-center rounded-[22px] bg-gradient-to-br from-cyan-400 via-cyan-500 to-cyan-600 text-white shadow-[0_18px_36px_-22px_rgba(8,145,178,0.72)]">
+                      <step.icon className="h-7 w-7" />
+                    </div>
+                    <div className="rounded-full border border-cyan-100 bg-cyan-50/90 px-3 py-1 text-xs font-bold tracking-[0.24em] text-cyan-700">
+                      {step.step}
+                    </div>
+                  </div>
+
+                  <div className="mt-6">
+                    <p className="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-700">{step.cue}</p>
+                    <h3 className="mt-3 text-[1.6rem] font-bold leading-tight text-slate-950">{step.title}</h3>
+                    <p className="mt-4 text-base leading-8 text-slate-600">{step.description}</p>
+                  </div>
+
+                  <div className="mt-6 flex items-center gap-3">
+                    <div className="h-2 flex-1 rounded-full bg-cyan-100">
+                      <div
+                        className={`h-2 rounded-full bg-gradient-to-r from-cyan-400 to-cyan-600 ${
+                          step.step === "01" ? "w-[34%]" : step.step === "02" ? "w-[68%]" : "w-full"
+                        }`}
+                      />
+                    </div>
+                    <span className="text-xs font-bold tracking-[0.18em] text-cyan-700">
+                      {step.step === "01" ? "33%" : step.step === "02" ? "66%" : "100%"}
+                    </span>
+                  </div>
+                </article>
+              ))}
+            </div>
           </div>
         </div>
       </section>
