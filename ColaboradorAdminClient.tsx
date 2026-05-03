@@ -851,7 +851,7 @@ export default function ColaboradorAdminClient() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#081423] px-5 py-16 text-white">
+      <div className="min-h-screen bg-[linear-gradient(180deg,#07111d_0%,#0b1727_52%,#101d31_100%)] px-5 py-16 text-white">
         <div className="mx-auto max-w-6xl animate-pulse space-y-5 [zoom:0.8]">
           <div className="h-10 w-72 rounded-full bg-white/10" />
           <div className="grid gap-4 lg:grid-cols-4">
@@ -866,9 +866,9 @@ export default function ColaboradorAdminClient() {
   }
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(34,211,238,0.18),_transparent_22%),linear-gradient(180deg,#07111d_0%,#0b1727_52%,#101d31_100%)] text-white">
+    <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(34,211,238,0.14),_transparent_18%),radial-gradient(circle_at_bottom_right,_rgba(103,232,249,0.08),_transparent_20%),linear-gradient(180deg,#07111d_0%,#0b1727_52%,#101d31_100%)] text-white">
       <div className="mx-auto max-w-[1500px] px-3 py-5 [zoom:0.8] lg:px-6">
-        <header className="rounded-[28px] border border-cyan-400/15 bg-slate-950/65 px-5 py-4 shadow-[0_24px_80px_rgba(4,11,20,0.34)] backdrop-blur">
+        <header className="rounded-[28px] border border-cyan-300/20 bg-[linear-gradient(135deg,rgba(7,24,39,0.96)_0%,rgba(10,32,49,0.94)_100%)] px-5 py-4 shadow-[0_24px_80px_rgba(4,11,20,0.34)]">
           <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
             <div className="flex items-center gap-4">
               <div className="flex h-14 w-14 items-center justify-center rounded-[20px] bg-cyan-400 text-slate-950">
@@ -895,7 +895,7 @@ export default function ColaboradorAdminClient() {
                     className={`flex items-center gap-2 rounded-[18px] px-4 py-3 text-sm font-semibold transition ${
                       active
                         ? "bg-cyan-400 text-slate-950 shadow-[0_18px_40px_rgba(34,211,238,0.22)]"
-                        : "bg-white/[0.03] text-slate-200 hover:bg-white/[0.07]"
+                        : "border border-white/10 bg-white/[0.04] text-slate-100 hover:bg-white/[0.08]"
                     }`}
                   >
                     <Icon className="h-4 w-4" />
@@ -1267,7 +1267,7 @@ export default function ColaboradorAdminClient() {
           )}
 
           {activeSection === "hours" && (
-            <section className="space-y-4 rounded-[28px] border border-white/10 bg-white/[0.035] p-5 backdrop-blur">
+            <section className="space-y-4 rounded-[28px] border border-cyan-300/16 bg-[linear-gradient(180deg,rgba(9,25,40,0.94)_0%,rgba(11,30,47,0.92)_100%)] p-5 shadow-[0_20px_70px_rgba(3,10,18,0.22)]">
               <div className="flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-[0.24em] text-cyan-200">
@@ -1304,7 +1304,7 @@ export default function ColaboradorAdminClient() {
                 ))}
               </div>
 
-              <Card className="rounded-[24px] border-white/10 bg-slate-950/35 text-white shadow-[0_18px_60px_rgba(15,23,42,0.25)]">
+              <Card className="rounded-[24px] border-cyan-300/14 bg-[linear-gradient(180deg,rgba(12,34,52,0.96)_0%,rgba(9,27,43,0.94)_100%)] text-white shadow-[0_18px_60px_rgba(15,23,42,0.25)]">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-white">
                     <ReceiptText className="h-5 w-5 text-cyan-300" />
@@ -1411,7 +1411,7 @@ export default function ColaboradorAdminClient() {
                   return (
                     <Card
                       key={registro.id}
-                      className="rounded-[24px] border-white/10 bg-slate-950/35 text-white shadow-[0_18px_60px_rgba(15,23,42,0.25)]"
+                      className="rounded-[24px] border-cyan-300/14 bg-[linear-gradient(180deg,rgba(12,34,52,0.96)_0%,rgba(9,27,43,0.94)_100%)] text-white shadow-[0_18px_60px_rgba(15,23,42,0.25)]"
                     >
                       <CardHeader className="pb-3">
                         <div className="flex items-start justify-between gap-4">
@@ -1596,7 +1596,7 @@ export default function ColaboradorAdminClient() {
           )}
 
           {activeSection === "team" && (
-            <section className="space-y-4 rounded-[28px] border border-white/10 bg-white/[0.035] p-5 backdrop-blur">
+            <section className="space-y-4 rounded-[28px] border border-cyan-300/16 bg-[linear-gradient(180deg,rgba(9,25,40,0.94)_0%,rgba(11,30,47,0.92)_100%)] p-5 shadow-[0_20px_70px_rgba(3,10,18,0.22)]">
               <div className="flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-[0.24em] text-cyan-200">
@@ -1618,7 +1618,7 @@ export default function ColaboradorAdminClient() {
               </div>
 
               {criarNovoVisivel && (
-                <Card className="rounded-[30px] border-white/10 bg-slate-950/35 text-white">
+                <Card className="rounded-[30px] border-cyan-300/14 bg-[linear-gradient(180deg,rgba(12,34,52,0.96)_0%,rgba(9,27,43,0.94)_100%)] text-white">
                   <CardHeader>
                     <CardTitle className="text-2xl text-white">Criar colaborador</CardTitle>
                     <CardDescription className="text-slate-400">
@@ -1720,7 +1720,7 @@ export default function ColaboradorAdminClient() {
                   return (
                     <Card
                       key={colaborador.id}
-                      className="rounded-[30px] border-white/10 bg-slate-950/35 text-white shadow-[0_18px_60px_rgba(15,23,42,0.25)]"
+                      className="rounded-[30px] border-cyan-300/14 bg-[linear-gradient(180deg,rgba(12,34,52,0.96)_0%,rgba(9,27,43,0.94)_100%)] text-white shadow-[0_18px_60px_rgba(15,23,42,0.25)]"
                     >
                       <CardHeader className="pb-4">
                         <div className="flex items-start justify-between gap-4">
@@ -1870,7 +1870,7 @@ export default function ColaboradorAdminClient() {
           )}
 
           {activeSection === "site" && (
-            <section className="space-y-4 rounded-[28px] border border-white/10 bg-white/[0.035] p-5 backdrop-blur">
+            <section className="space-y-4 rounded-[28px] border border-cyan-300/16 bg-[linear-gradient(180deg,rgba(9,25,40,0.94)_0%,rgba(11,30,47,0.92)_100%)] p-5 shadow-[0_20px_70px_rgba(3,10,18,0.22)]">
               <div className="flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-[0.24em] text-cyan-200">
@@ -2027,21 +2027,21 @@ function QuickStat({
 }) {
   const toneClass =
     {
-      cyan: "from-cyan-400/25 via-cyan-400/10 to-white/[0.03] border-cyan-300/20",
-      blue: "from-blue-500/25 via-blue-500/10 to-white/[0.03] border-blue-300/20",
-      violet: "from-violet-500/25 via-violet-500/10 to-white/[0.03] border-violet-300/20",
-      emerald: "from-emerald-500/25 via-emerald-500/10 to-white/[0.03] border-emerald-300/20",
+      cyan: "from-cyan-400/28 via-cyan-400/10 to-transparent border-cyan-300/18",
+      blue: "from-blue-500/26 via-blue-500/10 to-transparent border-blue-300/18",
+      violet: "from-violet-500/24 via-violet-500/10 to-transparent border-violet-300/18",
+      emerald: "from-emerald-500/24 via-emerald-500/10 to-transparent border-emerald-300/18",
     }[tone];
 
   return (
     <Card
-      className={`rounded-[24px] border bg-[linear-gradient(180deg,_rgba(255,255,255,0.08),_rgba(255,255,255,0.02))] p-1 text-white shadow-[0_18px_60px_rgba(15,23,42,0.25)] ${toneClass}`}
+      className={`rounded-[24px] border bg-[linear-gradient(180deg,_rgba(255,255,255,0.05),_rgba(255,255,255,0.01))] p-1 text-white shadow-[0_18px_60px_rgba(15,23,42,0.25)] ${toneClass}`}
     >
-      <CardContent className="rounded-[20px] bg-slate-950/45 p-4">
-        <p className="text-xs uppercase tracking-[0.22em] text-slate-300">{title}</p>
+      <CardContent className="rounded-[20px] bg-[linear-gradient(180deg,rgba(12,34,52,0.96)_0%,rgba(9,27,43,0.94)_100%)] p-4">
+        <p className="text-xs uppercase tracking-[0.22em] text-cyan-100/90">{title}</p>
         <p className="mt-3 text-[2rem] font-semibold text-white">{hours}</p>
-        <p className="mt-1 text-sm text-slate-400">{value}</p>
-        <p className="mt-4 text-sm text-slate-300">{helper}</p>
+        <p className="mt-1 text-sm text-slate-300">{value}</p>
+        <p className="mt-4 text-sm text-slate-200">{helper}</p>
       </CardContent>
     </Card>
   );
@@ -2059,10 +2059,10 @@ function ActionCard({
   compact?: boolean;
 }) {
   return (
-    <Card className="rounded-[26px] border-white/10 bg-slate-950/35 text-white shadow-[0_18px_60px_rgba(15,23,42,0.2)]">
+    <Card className="rounded-[26px] border-cyan-300/14 bg-[linear-gradient(180deg,rgba(12,34,52,0.96)_0%,rgba(9,27,43,0.94)_100%)] text-white shadow-[0_18px_60px_rgba(15,23,42,0.2)]">
       <CardHeader className={compact ? "pb-3" : "pb-4"}>
         <CardTitle className="text-[1.35rem] text-white">{title}</CardTitle>
-        <CardDescription className="text-slate-400">{description}</CardDescription>
+        <CardDescription className="text-slate-300">{description}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">{children}</CardContent>
     </Card>
@@ -2079,12 +2079,12 @@ function StatSurface({
   body: string;
 }) {
   return (
-    <div className="rounded-[22px] border border-white/10 bg-white/[0.03] p-4">
+    <div className="rounded-[22px] border border-cyan-300/14 bg-white/[0.04] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
       <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-cyan-400 text-slate-950">
         <Icon className="h-5 w-5" />
       </div>
       <h3 className="mt-3 text-base font-semibold text-white">{title}</h3>
-      <p className="mt-2 text-sm leading-6 text-slate-300">{body}</p>
+      <p className="mt-2 text-sm leading-6 text-slate-200">{body}</p>
     </div>
   );
 }
@@ -2132,7 +2132,7 @@ function FilterPill({
       className={`rounded-full border px-4 py-2 text-sm font-medium transition ${
         active
           ? "border-cyan-300 bg-cyan-400 text-slate-950"
-          : "border-white/10 bg-white/[0.03] text-white hover:bg-white/[0.06]"
+          : "border-cyan-300/14 bg-white/[0.04] text-white hover:bg-white/[0.08]"
       }`}
     >
       {label}
@@ -2150,10 +2150,10 @@ function RecordMeta({
   icon: ComponentType<{ className?: string }>;
 }) {
   return (
-    <div className="rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3">
+    <div className="rounded-2xl border border-cyan-300/14 bg-white/[0.04] px-4 py-3">
       <div className="flex items-center gap-2 text-slate-400">
         <Icon className="h-4 w-4" />
-        <span className="text-xs uppercase tracking-[0.2em]">{label}</span>
+        <span className="text-xs uppercase tracking-[0.2em] text-cyan-100/90">{label}</span>
       </div>
       <p className="mt-2 text-base font-semibold text-white">{value}</p>
     </div>
@@ -2172,7 +2172,7 @@ function SummaryCard({
   subtitle: string;
 }) {
   return (
-    <div className="rounded-[20px] border border-white/10 bg-white/[0.03] p-4">
+    <div className="rounded-[20px] border border-cyan-300/14 bg-white/[0.04] p-4">
       <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-cyan-200">
         <Icon className="h-4 w-4" />
         {title}
@@ -2195,7 +2195,7 @@ function MiniReportCard({
   jobs: string;
 }) {
   return (
-    <div className="rounded-[20px] border border-cyan-300/10 bg-cyan-400/[0.06] p-4">
+    <div className="rounded-[20px] border border-cyan-300/18 bg-[linear-gradient(180deg,rgba(34,211,238,0.1)_0%,rgba(8,145,178,0.08)_100%)] p-4">
       <p className="text-xs font-semibold uppercase tracking-[0.18em] text-cyan-200">{title}</p>
       <p className="mt-2 text-2xl font-semibold text-white">{hours}</p>
       <p className="mt-1 text-sm font-medium text-cyan-100">{amount} a receber</p>
@@ -2214,10 +2214,10 @@ function HistoryBlock({
   rows: Registro[];
 }) {
   return (
-    <div className="rounded-[20px] border border-white/10 bg-white/[0.03]">
+    <div className="rounded-[20px] border border-cyan-300/14 bg-white/[0.04]">
       <div className="border-b border-white/10 px-4 py-4">
         <h4 className="text-base font-semibold text-white">{title}</h4>
-        {period ? <p className="mt-1 text-sm text-slate-400">{period}</p> : null}
+        {period ? <p className="mt-1 text-sm text-slate-300">{period}</p> : null}
       </div>
 
       {rows.length === 0 ? (
