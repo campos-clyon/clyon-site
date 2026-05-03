@@ -498,6 +498,52 @@ export default function ColaboradorAdminClient() {
 
   const latestRecords = useMemo(() => todosRegistros.slice(0, 5), [todosRegistros]);
 
+  const sortCollaboratorsByHoursReport = <
+    T extends {
+      nome: string;
+      relatorio: {
+        semana: { horas: number; valor: number; trabalhos: number };
+        mes: { horas: number; valor: number; trabalhos: number };
+      };
+    },
+  >(
+    reports: T[],
+  ) =>
+    [...reports].sort((a, b) => {
+      const aWorked =
+        a.relatorio.mes.trabalhos > 0 ||
+        a.relatorio.mes.horas > 0 ||
+        a.relatorio.semana.trabalhos > 0 ||
+        a.relatorio.semana.horas > 0;
+      const bWorked =
+        b.relatorio.mes.trabalhos > 0 ||
+        b.relatorio.mes.horas > 0 ||
+        b.relatorio.semana.trabalhos > 0 ||
+        b.relatorio.semana.horas > 0;
+
+      if (aWorked !== bWorked) {
+        return Number(bWorked) - Number(aWorked);
+      }
+
+      if (b.relatorio.mes.valor !== a.relatorio.mes.valor) {
+        return b.relatorio.mes.valor - a.relatorio.mes.valor;
+      }
+
+      if (b.relatorio.semana.valor !== a.relatorio.semana.valor) {
+        return b.relatorio.semana.valor - a.relatorio.semana.valor;
+      }
+
+      if (b.relatorio.mes.horas !== a.relatorio.mes.horas) {
+        return b.relatorio.mes.horas - a.relatorio.mes.horas;
+      }
+
+      if (b.relatorio.semana.horas !== a.relatorio.semana.horas) {
+        return b.relatorio.semana.horas - a.relatorio.semana.horas;
+      }
+
+      return a.nome.localeCompare(b.nome, "pt-PT");
+    });
+
   const collaboratorHourReports = useMemo(() => {
     const { start: weekStart, end: weekEnd } = getCurrentWeekRange();
     const { start: monthStart, end: monthEnd } = getCurrentMonthRange();
@@ -514,7 +560,7 @@ export default function ColaboradorAdminClient() {
       };
     };
 
-    return colaboradoresFiltrados.map((colaborador) => {
+    const reports = colaboradoresFiltrados.map((colaborador) => {
       const registros = [...(colaborador.registros || [])].sort(
         (a, b) => new Date(b.data).getTime() - new Date(a.data).getTime(),
       );
@@ -540,7 +586,40 @@ export default function ColaboradorAdminClient() {
         },
       };
     });
+
+    return sortCollaboratorsByHoursReport(reports);
   }, [colaboradoresFiltrados]);
+
+  const collaboratorHoursFilters = useMemo(() => {
+    const { start: weekStart, end: weekEnd } = getCurrentWeekRange();
+    const { start: monthStart, end: monthEnd } = getCurrentMonthRange();
+
+    const reports = colaboradores.map((colaborador) => {
+      const registros = colaborador.registros || [];
+      const semanaRegistros = registros.filter((registro) => isBetweenDates(registro.data, weekStart, weekEnd));
+      const mesRegistros = registros.filter((registro) => isBetweenDates(registro.data, monthStart, monthEnd));
+
+      const semanaHoras = semanaRegistros.reduce(
+        (sum, item) => sum + parseFloat(item.horasTrabalhadas || "0"),
+        0,
+      );
+      const semanaValor = semanaRegistros.reduce((sum, item) => sum + parseFloat(item.valorTotal || "0"), 0);
+      const semanaTrabalhos = semanaRegistros.reduce((sum, item) => sum + (item.numeroTrabalhos || 0), 0);
+      const mesHoras = mesRegistros.reduce((sum, item) => sum + parseFloat(item.horasTrabalhadas || "0"), 0);
+      const mesValor = mesRegistros.reduce((sum, item) => sum + parseFloat(item.valorTotal || "0"), 0);
+      const mesTrabalhos = mesRegistros.reduce((sum, item) => sum + (item.numeroTrabalhos || 0), 0);
+
+      return {
+        ...colaborador,
+        relatorio: {
+          semana: { horas: semanaHoras, valor: semanaValor, trabalhos: semanaTrabalhos },
+          mes: { horas: mesHoras, valor: mesValor, trabalhos: mesTrabalhos },
+        },
+      };
+    });
+
+    return sortCollaboratorsByHoursReport(reports);
+  }, [colaboradores]);
 
   const reportTotals = useMemo(
     () =>
@@ -1294,7 +1373,7 @@ export default function ColaboradorAdminClient() {
                   onClick={() => setFiltroColaborador("todos")}
                   label="Toda a equipa"
                 />
-                {colaboradores.map((colaborador) => (
+                {collaboratorHoursFilters.map((colaborador) => (
                   <FilterPill
                     key={colaborador.id}
                     active={filtroColaborador === String(colaborador.id)}
