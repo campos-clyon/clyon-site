@@ -33,11 +33,11 @@ const poppins = Poppins({
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: "Recolha de Entulho, Móveis e Monos em Lisboa e Margem Sul | CLYON",
+    default: "CLYON - Recolha de Entulho e Aluguer de Contentores em Lisboa e Setúbal",
     template: "%s | CLYON",
   },
   description:
-    "Recolha de entulho, móveis velhos, monos, esvaziamentos, limpeza pós-obra e mudanças em Lisboa, Margem Sul e Setúbal. Orçamento rápido e resposta no mesmo dia.",
+    "Recolha de entulho, móveis, monos, limpeza pós-obra e mudanças em Lisboa e Setúbal. Entrega em 24h, preços desde 120EUR e 163 avaliações 5 estrelas. Orçamento grátis!",
   keywords: [
     "recolha de entulho lisboa",
     "recolha de móveis lisboa",
@@ -121,10 +121,31 @@ const localBusinessSchema = {
     addressCountry: "PT",
   },
   sameAs: [BUSINESS_INSTAGRAM],
-  areaServed: REGIONS.map((region) => ({
-    "@type": "AdministrativeArea",
-    name: region.name,
-  })),
+  areaServed: [
+    { "@type": "City", name: "Lisboa" },
+    { "@type": "City", name: "Almada" },
+    { "@type": "City", name: "Seixal" },
+    { "@type": "City", name: "Barreiro" },
+    { "@type": "City", name: "Setúbal" },
+    { "@type": "City", name: "Cascais" },
+    { "@type": "City", name: "Oeiras" },
+    { "@type": "City", name: "Sintra" },
+    { "@type": "City", name: "Amadora" },
+    { "@type": "City", name: "Loures" },
+    { "@type": "City", name: "Odivelas" },
+    { "@type": "City", name: "Montijo" },
+    { "@type": "City", name: "Moita" },
+    { "@type": "City", name: "Palmela" },
+    { "@type": "City", name: "Sesimbra" },
+  ],
+  aggregateRating: {
+    "@type": "AggregateRating",
+    ratingValue: "4.9",
+    reviewCount: "163",
+    bestRating: "5",
+    worstRating: "1",
+  },
+  priceRange: "120EUR - 500EUR",
   openingHoursSpecification: [
     {
       "@type": "OpeningHoursSpecification",

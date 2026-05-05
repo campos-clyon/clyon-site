@@ -1,6 +1,5 @@
 import Link from "next/link";
 import {
-  ArrowDownToLine,
   ArrowRight,
   Instagram,
   Lock,
@@ -10,9 +9,8 @@ import {
 } from "lucide-react";
 
 import CookiePreferencesLink from "@/components/CookiePreferencesLink";
+import { trackWhatsAppClick } from "@/lib/analytics";
 import { BUSINESS_INSTAGRAM, BUSINESS_PHONE } from "@/lib/seo-data";
-
-const ANDROID_APP_URL = "/clyon1.apk";
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();
@@ -84,17 +82,23 @@ export default function Footer() {
               </p>
 
               <div className="mt-6 flex flex-wrap gap-3">
+                <a
+                  href={whatsappUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  onClick={() => trackWhatsAppClick("footer_cta")}
+                  className="inline-flex items-center justify-center gap-2 rounded-2xl bg-emerald-500 px-5 py-3 text-sm font-semibold text-white shadow-[0_18px_40px_-22px_rgba(37,211,102,0.75)] transition hover:-translate-y-0.5 hover:bg-emerald-400"
+                >
+                  <MessageCircle className="h-4 w-4" />
+                  WhatsApp
+                </a>
                 <Link href="/contactos" className="site-btn-primary">
-                  Falar connosco
+                  Pedir orçamento
                   <ArrowRight className="ml-2 h-4 w-4 text-white" />
                 </Link>
                 <Link href="/colaboradores" className="site-btn-secondary">
                   Área de Colaboradores
                 </Link>
-                <a href={ANDROID_APP_URL} download className="site-btn-secondary">
-                  Baixar app Android
-                  <ArrowDownToLine className="ml-2 h-4 w-4" />
-                </a>
               </div>
             </div>
 
@@ -104,28 +108,28 @@ export default function Footer() {
               </h3>
               <ul className="space-y-3 text-[0.98rem] text-cyan-50/82">
                 <li>
-                  <Link href="/recolha-de-moveis" className="transition-colors hover:text-white">
-                    Recolha de móveis
+                  <Link href="/recolha-entulho-lisboa" className="transition-colors hover:text-white">
+                    Recolha de Entulho Lisboa
                   </Link>
                 </li>
                 <li>
-                  <Link href="/simulador" className="transition-colors hover:text-white">
-                    Solicitar serviço
+                  <Link href="/recolha-moveis-lisboa" className="transition-colors hover:text-white">
+                    Recolha de Móveis Lisboa
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/limpeza-pos-obra-lisboa" className="transition-colors hover:text-white">
+                    Limpeza Pós-Obra Lisboa
                   </Link>
                 </li>
                 <li>
                   <Link href="/servicos" className="transition-colors hover:text-white">
-                    Os nossos serviços
+                    Todos os serviços
                   </Link>
                 </li>
                 <li>
                   <Link href="/precos" className="transition-colors hover:text-white">
                     Preços orientativos
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/regioes" className="transition-colors hover:text-white">
-                    Cobertura regional
                   </Link>
                 </li>
               </ul>

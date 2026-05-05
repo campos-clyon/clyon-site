@@ -5,6 +5,7 @@ import {
   CheckCircle2,
   Clock3,
   MapPin,
+  MessageCircle,
   Phone,
   Recycle,
   ShieldCheck,
@@ -35,10 +36,18 @@ function isFurnitureService(serviceSlug: string) {
 
 function buildTitle(serviceName: string, cityName: string, serviceSlug: string) {
   if (isFurnitureService(serviceSlug)) {
-    return `Recolha de Móveis em ${cityName} | Sofás, Armários e Recheios | CLYON`;
+    return `Recolha de Móveis em ${cityName} - Preços desde 35EUR | CLYON`;
   }
 
-  return `${serviceName} em ${cityName} | Orçamento Rápido | CLYON`;
+  if (serviceSlug === "recolha-entulho") {
+    return `Recolha de Entulho em ${cityName} - Preços desde 120EUR | CLYON`;
+  }
+
+  if (serviceSlug === "limpeza-pos-obra") {
+    return `Limpeza Pós-Obra em ${cityName} - Orçamento Grátis | CLYON`;
+  }
+
+  return `${serviceName} em ${cityName} - Preços e Orçamento | CLYON`;
 }
 
 function buildDescription(
@@ -48,10 +57,18 @@ function buildDescription(
   serviceSlug: string,
 ) {
   if (isFurnitureService(serviceSlug)) {
-    return `Recolha de móveis em ${cityName}, ${regionLabel}, com desmontagem, carregamento, transporte e descarte legal. Retiramos sofás, camas, armários, eletrodomésticos e recheios com resposta rápida.`;
+    return `Recolha de móveis em ${cityName}, ${regionLabel}. Preços desde 35EUR, desmontagem incluída, 163 avaliações 5 estrelas. Pedir orçamento grátis!`;
   }
 
-  return `${serviceName} em ${cityName}, ${regionLabel}. Resposta rápida, orçamento em 11 minutos, serviço profissional e agendamento no mesmo dia quando disponível.`;
+  if (serviceSlug === "recolha-entulho") {
+    return `Recolha de entulho em ${cityName}, ${regionLabel}. Preços desde 120EUR, entrega em 24h, 163 avaliações 5 estrelas. Orçamento grátis!`;
+  }
+
+  if (serviceSlug === "limpeza-pos-obra") {
+    return `Limpeza pós-obra em ${cityName}, ${regionLabel}. Equipa profissional, resposta em 24h, 163 avaliações 5 estrelas. Pedir orçamento grátis!`;
+  }
+
+  return `${serviceName} em ${cityName}, ${regionLabel}. Resposta em 24h, orçamento grátis, 163 avaliações 5 estrelas. Pedir orçamento agora!`;
 }
 
 function getServiceIntro(serviceName: string, cityName: string, regionLabel: string, serviceSlug: string) {
@@ -727,18 +744,20 @@ export default async function ServiceCityPage({ params }: Props) {
           </p>
           <div className="mt-6 flex flex-col gap-3 sm:flex-row">
             <Link
-              href="/simulador"
+              href="/contactos"
               className="site-btn-primary min-w-[220px] px-6 py-3.5"
             >
               <CheckCircle2 className="h-4 w-4" />
-              Simular agora
+              Pedir Orçamento Grátis
             </Link>
             <a
-              href={`tel:${BUSINESS_PHONE}`}
-              className="site-btn-secondary min-w-[220px] border-slate-300 text-slate-900 hover:bg-slate-50"
+              href={`https://wa.me/${BUSINESS_PHONE.replace(/[^\d]/g, "")}?text=${encodeURIComponent(`Olá! Preciso de ${service.shortName} em ${city.name}. Podem dar-me um orçamento?`)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex min-w-[220px] items-center justify-center gap-2 rounded-2xl bg-emerald-500 px-6 py-3.5 text-base font-semibold text-white shadow-[0_18px_40px_-22px_rgba(37,211,102,0.75)] transition hover:-translate-y-0.5 hover:bg-emerald-400"
             >
-              <Phone className="h-4 w-4" />
-              Ligar {BUSINESS_PHONE}
+              <MessageCircle className="h-4 w-4" />
+              Falar no WhatsApp
             </a>
           </div>
         </div>
