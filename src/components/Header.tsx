@@ -46,17 +46,23 @@ export default function Header() {
         </nav>
 
         <div className="flex flex-shrink-0 items-center gap-2 sm:gap-3">
-          <a
-            href={whatsappUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={() => trackWhatsAppClick("header")}
-            className="inline-flex items-center justify-center gap-2 rounded-2xl bg-emerald-500 px-4 py-3 text-sm font-semibold text-white shadow-[0_14px_32px_-18px_rgba(37,211,102,0.7)] transition hover:-translate-y-0.5 hover:bg-emerald-400 sm:px-5"
-            aria-label="Falar no WhatsApp"
-          >
-            <MessageCircle className="h-4 w-4" />
-            <span className="hidden sm:inline">WhatsApp</span>
-          </a>
+            <a
+              href={whatsappUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-2 flex w-full items-center justify-center gap-2 rounded-2xl bg-emerald-500 px-4 py-3 text-base font-semibold text-white transition hover:bg-emerald-400"
+            >
+              <MessageCircle className="h-4 w-4" />
+              <span>WhatsApp</span>
+            </a>
+            <a
+              href={phoneHref}
+              className="site-btn-primary site-btn-lively flex w-full py-3"
+              aria-label={`Ligar para ${BUSINESS_PHONE}`}
+            >
+              <Phone className="h-4 w-4" />
+              <span>Ligar</span>
+            </a>
 
           <a
             href={phoneHref}
@@ -86,7 +92,6 @@ export default function Header() {
                 key={link.href}
                 href={link.href}
                 className="flex items-center rounded-2xl border border-cyan-200 bg-white px-4 py-3 transition-colors hover:bg-cyan-50"
-                onClick={() => setMenuOpen(false)}
               >
                 <span className="!text-base !font-semibold !text-[#047faa]">{link.label}</span>
               </Link>

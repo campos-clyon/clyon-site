@@ -86,7 +86,6 @@ export default function Footer() {
                   href={whatsappUrl}
                   target="_blank"
                   rel="noreferrer"
-                  onClick={() => trackWhatsAppClick("footer_cta")}
                   className="inline-flex items-center justify-center gap-2 rounded-2xl bg-emerald-500 px-5 py-3 text-sm font-semibold text-white shadow-[0_18px_40px_-22px_rgba(37,211,102,0.75)] transition hover:-translate-y-0.5 hover:bg-emerald-400"
                 >
                   <MessageCircle className="h-4 w-4" />

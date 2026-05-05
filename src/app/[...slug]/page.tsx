@@ -278,6 +278,9 @@ export default async function ServiceCityPage({ params }: Props) {
     service.slug,
     relatedCities,
   );
+  const whatsappNumber = BUSINESS_PHONE.replace(/[^\d]/g, "");
+  const whatsappMessage = `Olá! Preciso de ${service.shortName} em ${city.name}. Podem dar-me um orçamento?`;
+  const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(whatsappMessage)}`;
 
   const faqSchema = {
     "@context": "https://schema.org",
@@ -751,7 +754,7 @@ export default async function ServiceCityPage({ params }: Props) {
               Pedir Orçamento Grátis
             </Link>
             <a
-              href={`https://wa.me/${BUSINESS_PHONE.replace(/[^\d]/g, "")}?text=${encodeURIComponent(`Olá! Preciso de ${service.shortName} em ${city.name}. Podem dar-me um orçamento?`)}`}
+              href={whatsappUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex min-w-[220px] items-center justify-center gap-2 rounded-2xl bg-emerald-500 px-6 py-3.5 text-base font-semibold text-white shadow-[0_18px_40px_-22px_rgba(37,211,102,0.75)] transition hover:-translate-y-0.5 hover:bg-emerald-400"
