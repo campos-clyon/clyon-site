@@ -46,7 +46,7 @@ export const REGIONS: RegionData[] = [
     shortLabel: "Lisboa",
     intro:
       "Cobertura local para pedidos de recolha, limpeza e mudanças na cidade de Lisboa e nas zonas com maior procura.",
-    metaTitle: "Recolha de Entulho, Móveis e Monos em Lisboa | CLYON",
+    metaTitle: "Recolha de Entulho, Móveis e Monos em Lisboa",
     metaDescription:
       "Recolha de entulho, móveis, monos, limpeza pós-obra e mudanças em Lisboa. Orçamento rápido, equipas locais e resposta no mesmo dia.",
     keywords: [
@@ -62,7 +62,7 @@ export const REGIONS: RegionData[] = [
     shortLabel: "Margem Sul",
     intro:
       "Serviços rápidos na Margem Sul para entulho, móveis, monos, limpezas pós-obra e mudanças com apoio local.",
-    metaTitle: "Recolha de Entulho, Móveis e Monos na Margem Sul | CLYON",
+    metaTitle: "Recolha de Entulho, Móveis e Monos na Margem Sul",
     metaDescription:
       "Recolha de entulho, móveis, monos e mudanças na Margem Sul. Atendimento rápido em Almada, Seixal, Barreiro, Moita, Montijo e arredores.",
     keywords: [
@@ -78,7 +78,7 @@ export const REGIONS: RegionData[] = [
     shortLabel: "Setúbal",
     intro:
       "Intervenção rápida em Setúbal, Palmela e Sesimbra para recolha, limpeza pós-obra, esvaziamentos e mudanças.",
-    metaTitle: "Recolha de Entulho, Móveis e Monos em Setúbal | CLYON",
+    metaTitle: "Recolha de Entulho, Móveis e Monos em Setúbal",
     metaDescription:
       "Recolha de entulho, móveis, monos, mudanças e limpeza pós-obra em Setúbal. Equipa profissional, orçamento rápido e apoio local.",
     keywords: [

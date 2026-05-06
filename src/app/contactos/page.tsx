@@ -5,7 +5,7 @@ import { ArrowRight, Clock3, MapPin, MessageCircle, Phone, Star } from "lucide-r
 import ContactForm from "@/components/ContactForm";
 
 export const metadata: Metadata = {
-  title: "Contacte a CLYON - Orçamento Grátis em 24h",
+  title: "Contactos — Orçamento Grátis em 24h",
   description:
     "Peça orçamento grátis para recolha de entulho, móveis, limpeza pós-obra ou mudanças em Lisboa e Setúbal. Resposta em 24h, 163 avaliações 5 estrelas!",
   alternates: { canonical: "https://clyon.pt/contactos" },

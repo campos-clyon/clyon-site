@@ -42,31 +42,32 @@ function isFurnitureService(serviceSlug: string) {
 
 function buildTitle(serviceName: string, cityName: string, serviceSlug: string, citySlug: string) {
   // Páginas de high-priority com titles mais comerciais e específicas
+  // NOTA: Não incluir "| CLYON" aqui - o template do layout já adiciona
   if (isFurnitureService(serviceSlug)) {
     if (citySlug === "lisboa") {
-      return `Recolha de Móveis em Lisboa — Sofás, Camas, Eletrodomésticos | CLYON`;
+      return `Recolha de Móveis em Lisboa — Sofás, Camas, Eletrodomésticos`;
     }
     if (citySlug === "setubal") {
-      return `Recolha de Móveis em Setúbal — Preços Competitivos | CLYON`;
+      return `Recolha de Móveis em Setúbal — Preços Competitivos`;
     }
     if (citySlug === "almada") {
-      return `Recolha de Móveis em Almada — Resposta Rápida | CLYON`;
+      return `Recolha de Móveis em Almada — Resposta Rápida`;
     }
-    return `Recolha de Móveis em ${cityName} — Preço desde 35€ | CLYON`;
+    return `Recolha de Móveis em ${cityName} — Preço desde 35€`;
   }
 
   if (serviceSlug === "recolha-entulho") {
     if (citySlug === "setubal") {
-      return `Recolha de Entulho em Setúbal — Contentores e Resposta 24h | CLYON`;
+      return `Recolha de Entulho em Setúbal — Contentores e Resposta 24h`;
     }
-    return `Recolha de Entulho em ${cityName} — Preço desde 120€ | CLYON`;
+    return `Recolha de Entulho em ${cityName} — Preço desde 120€`;
   }
 
   if (serviceSlug === "limpeza-pos-obra") {
-    return `Limpeza Pós-Obra em ${cityName} — Resposta em 24h | CLYON`;
+    return `Limpeza Pós-Obra em ${cityName} — Resposta em 24h`;
   }
 
-  return `${serviceName} em ${cityName} — Orçamento Grátis | CLYON`;
+  return `${serviceName} em ${cityName} — Orçamento Grátis`;
 }
 
 function buildDescription(
