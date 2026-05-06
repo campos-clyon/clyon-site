@@ -45,34 +45,28 @@ export default function Header() {
           ))}
         </nav>
 
-        <div className="flex flex-shrink-0 items-center gap-2 sm:gap-3">
-            <a
-              href={whatsappUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mt-2 flex w-full items-center justify-center gap-2 rounded-2xl bg-emerald-500 px-4 py-3 text-base font-semibold text-white transition hover:bg-emerald-400"
-            >
-              <MessageCircle className="h-4 w-4" />
-              <span>WhatsApp</span>
-            </a>
-            <a
-              href={phoneHref}
-              className="site-btn-primary site-btn-lively flex w-full py-3"
-              aria-label={`Ligar para ${BUSINESS_PHONE}`}
-            >
-              <Phone className="h-4 w-4" />
-              <span>Ligar</span>
-            </a>
-
+        <div className="hidden items-center gap-2 sm:flex">
+          <a
+            href={whatsappUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={() => trackWhatsAppClick("header")}
+            className="inline-flex items-center gap-2 rounded-xl bg-emerald-500 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-400"
+          >
+            <MessageCircle className="h-4 w-4" />
+            <span>WhatsApp</span>
+          </a>
           <a
             href={phoneHref}
             onClick={() => trackPhoneCall("header")}
-            className="site-btn-primary site-btn-lively px-4 py-3 sm:px-5"
+            className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-cyan-300 hover:text-cyan-600"
             aria-label={`Ligar para ${BUSINESS_PHONE}`}
           >
-            <Phone className="h-4 w-4 text-white" />
-            <span className="hidden !text-sm !font-semibold !text-white sm:inline">Ligar</span>
+            <Phone className="h-4 w-4" />
+            <span>Ligar</span>
           </a>
+        </div>
+        <div className="flex items-center gap-2 sm:hidden">
 
           <button
             className="inline-flex rounded-xl border border-cyan-200 bg-white p-3 text-slate-600 transition-colors hover:text-cyan-600 lg:hidden"
