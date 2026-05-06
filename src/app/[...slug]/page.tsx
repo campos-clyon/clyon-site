@@ -450,6 +450,31 @@ export default async function ServiceCityPage({ params }: Props) {
   };
   const currentServiceHub = serviceHubMap[service.slug];
 
+  // Definir links de clusters por região
+  const clusterLinks: Record<string, Array<{ href: string; label: string }>> = {
+    "lisboa": [
+      { href: "/recolha-monos-lisboa", label: "Recolha de monos em Lisboa" },
+      { href: "/recolha-moveis-lisboa", label: "Recolha de móveis em Lisboa" },
+      { href: "/recolha-entulho-lisboa", label: "Recolha de entulho em Lisboa" },
+      { href: "/blog/recolha-de-moveis-como-funciona", label: "Guia: como funciona a recolha de móveis" },
+      { href: "/contactos", label: "Contactos" },
+    ],
+    "margem-sul": [
+      { href: "/recolha-moveis-almada", label: "Recolha de móveis em Almada" },
+      { href: "/recolha-moveis-seixal", label: "Recolha de móveis no Seixal" },
+      { href: "/recolha-moveis-setubal", label: "Recolha de móveis em Setúbal" },
+      { href: "/recolha-de-moveis", label: "Hub: Recolha de móveis" },
+      { href: "/recolha-de-entulho", label: "Hub: Recolha de entulho" },
+    ],
+    "setubal": [
+      { href: "/recolha-moveis-setubal", label: "Recolha de móveis em Setúbal" },
+      { href: "/recolha-entulho-setubal", label: "Recolha de entulho em Setúbal" },
+      { href: "/recolha-moveis-almada", label: "Recolha de móveis em Almada" },
+      { href: "/recolha-de-moveis", label: "Hub: Recolha de móveis" },
+      { href: "/blog/recolha-de-entulho-legal-e-organizada", label: "Guia: recolha de entulho" },
+    ],
+  };
+
   const supportLinks = isFurnitureService(service.slug)
     ? [
         ...(currentServiceHub ? [currentServiceHub] : []),
@@ -464,12 +489,33 @@ export default async function ServiceCityPage({ params }: Props) {
               },
             ]
           : []),
+        // Links do cluster regional
+        ...(clusterLinks[city.region] || []).filter(link => !link.href.includes(city.slug)).slice(0, 2),
+      ]
+    : service.slug === "recolha-monos"
+    ? [
+        ...(currentServiceHub ? [currentServiceHub] : []),
+        { href: `/${getCityServiceSlug("recolha-moveis", city.slug)}`, label: `Recolha de móveis em ${city.name}` },
+        { href: `/${getCityServiceSlug("esvaziamento-casas", city.slug)}`, label: `Esvaziamento de casas em ${city.name}` },
+        { href: "/blog/recolha-de-monos-o-que-inclui", label: "Guia: o que inclui a recolha de monos" },
+        { href: "/contactos", label: "Contactos" },
+        ...(clusterLinks[city.region] || []).filter(link => !link.href.includes(city.slug)).slice(0, 2),
+      ]
+    : service.slug === "recolha-entulho"
+    ? [
+        ...(currentServiceHub ? [currentServiceHub] : []),
+        { href: `/${getCityServiceSlug("limpeza-pos-obra", city.slug)}`, label: `Limpeza pós-obra em ${city.name}` },
+        { href: `/${getCityServiceSlug("recolha-moveis", city.slug)}`, label: `Recolha de móveis em ${city.name}` },
+        { href: "/blog/recolha-de-entulho-legal-e-organizada", label: "Guia: recolha de entulho" },
+        { href: "/contactos", label: "Contactos" },
+        ...(clusterLinks[city.region] || []).filter(link => !link.href.includes(city.slug)).slice(0, 2),
       ]
     : [
         ...(currentServiceHub ? [currentServiceHub] : []),
         { href: "/servicos", label: "Todos os serviços" },
         { href: "/simulador", label: "Pedir orçamento" },
         { href: `/${getCityServiceSlug("recolha-moveis", city.slug)}`, label: `Recolha de móveis em ${city.name}` },
+        ...(clusterLinks[city.region] || []).filter(link => !link.href.includes(city.slug)).slice(0, 2),
       ];
 
   return (

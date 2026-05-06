@@ -40,6 +40,16 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: 0.9,
   }));
 
+  // Páginas prioritárias com dados reais do Search Console (maior oportunidade)
+  const priorityPages = [
+    "recolha-monos-lisboa",
+    "recolha-moveis-lisboa",
+    "recolha-moveis-setubal",
+    "recolha-moveis-almada",
+    "recolha-entulho-setubal",
+    "recolha-entulho-lisboa",
+  ];
+
   const localPages = CITIES.flatMap((city) =>
     SERVICES.filter((service) => {
       // Excluir mudanças para todas as cidades EXCETO Lisboa
@@ -48,21 +58,31 @@ export default function sitemap(): MetadataRoute.Sitemap {
       }
       // Incluir todas as outras combinações
       return true;
-    }).map((service) => ({
-      url: `${SITE_URL}/${getCityServiceSlug(service.slug, city.slug)}`,
-      lastModified: now,
-      changeFrequency: "monthly" as const,
-      priority:
-        service.slug === "recolha-moveis" && city.slug === "lisboa"
-          ? 0.97
-          : service.slug === "recolha-moveis" && city.slug === "cascais"
-            ? 0.94
-          : service.slug === "recolha-moveis"
-            ? 0.9
-            : service.slug === "mudancas" && city.slug === "lisboa"
-              ? 0.92
-              : 0.85,
-    })),
+    }).map((service) => {
+      const slug = getCityServiceSlug(service.slug, city.slug);
+      const isPriority = priorityPages.includes(slug);
+      
+      return {
+        url: `${SITE_URL}/${slug}`,
+        lastModified: now,
+        changeFrequency: isPriority ? "weekly" as const : "monthly" as const,
+        priority:
+          // Páginas prioritárias do Search Console
+          slug === "recolha-monos-lisboa" ? 0.98
+          : slug === "recolha-moveis-lisboa" ? 0.97
+          : slug === "recolha-moveis-setubal" ? 0.95
+          : slug === "recolha-moveis-almada" ? 0.95
+          : slug === "recolha-entulho-setubal" ? 0.94
+          : slug === "recolha-entulho-lisboa" ? 0.94
+          // Outras páginas de recolha de móveis
+          : service.slug === "recolha-moveis" && city.slug === "cascais" ? 0.92
+          : service.slug === "recolha-moveis" ? 0.9
+          // Mudanças Lisboa
+          : service.slug === "mudancas" && city.slug === "lisboa" ? 0.92
+          // Default
+          : 0.85,
+      };
+    }),
   );
 
   const blogPages = getAllBlogPosts().map((post) => ({

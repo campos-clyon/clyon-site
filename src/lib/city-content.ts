@@ -40,47 +40,57 @@ export const CITY_SERVICE_CONTENT: Record<string, CityServiceContent> = {
   "recolha-moveis-lisboa": {
     citySlug: "lisboa",
     serviceSlug: "recolha-moveis",
-    metaTitle: "Recolha de Móveis em Lisboa - Sofás, Camas e Armários | CLYON",
+    metaTitle: "Recolha de Móveis em Lisboa — Sofás, Camas, Colchões e Recheios | CLYON",
     metaDescription:
-      "Recolha de móveis usados em Lisboa com desmontagem incluída. Retiramos sofás, camas, armários e eletrodomésticos em Alfama, Benfica, Lumiar e toda Lisboa. Preço justo, resposta rápida.",
-    h1: "Recolha de Móveis Usados em Lisboa",
+      "Recolha de móveis usados em Lisboa: sofás, camas, colchões, armários e electrodomésticos. 163 avaliações 5 estrelas, resposta em 11 min. Desmontagem incluída. Orçamento grátis!",
+    h1: "Recolha de Móveis Usados em Lisboa — Sofás, Camas e Recheios Completos",
     localIntro:
-      "Em Lisboa, a recolha de móveis velhos tem desafios próprios: prédios antigos sem elevador em Alfama e na Mouraria, estacionamento difícil na Baixa, apartamentos pequenos no Parque das Nações. A CLYON conhece bem estas situações e adapta a equipa ao tipo de acesso. Se o sofá não passa na porta, desmontamos. Se há escadas estreitas, planificamos a descida com cuidado. Se o estacionamento é complicado, coordenamos horário para evitar multas.",
+      "Precisa de retirar móveis em Lisboa? A CLYON retira sofás velhos, camas com colchão, armários, mesas, cadeiras, electrodomésticos e recheios completos de apartamentos. Trabalhamos em toda Lisboa: desde os prédios antigos sem elevador em Alfama e Mouraria até aos condomínios do Parque das Nações. Se o sofá não passa na porta, desmontamos. Se há escadas estreitas, descemos peça a peça. Se o estacionamento é complicado, coordenamos horário para evitar problemas.",
     accessNotes:
-      "Nos bairros históricos (Alfama, Mouraria, Graça), os acessos são frequentemente por escadas em caracol ou ruas onde o camião não entra. Avaliamos sempre o local antes de fechar preço para evitar surpresas.",
+      "Nos bairros históricos (Alfama, Mouraria, Graça, Bairro Alto), os acessos são por escadas em caracol ou ruas empedradas onde a carrinha não entra. Avaliamos sempre antes de dar preço. Nas zonas mais modernas (Parque das Nações, Telheiras, Benfica), os acessos são normalmente fáceis.",
     neighborhoodHighlight:
-      "As zonas com mais pedidos em Lisboa são Benfica, Lumiar, Alvalade e Olivais. São bairros residenciais com muitas mudanças e renovações de apartamentos.",
+      "As zonas de Lisboa com mais pedidos de recolha de móveis são Benfica, Lumiar, Alvalade, Olivais e Telheiras. São bairros residenciais com muitas mudanças, renovações e esvaziamentos de apartamentos arrendados.",
     nearbyAreas: ["Amadora", "Odivelas", "Loures", "Oeiras"],
     faqs: [
       {
         q: "Quanto custa recolher um sofá em Lisboa?",
-        a: "Um sofá de 2-3 lugares em Lisboa custa entre 35EUR e 55EUR, dependendo do piso e do acesso. Se for num 5º andar sem elevador em Alfama, o preço será diferente de um rés-do-chão em Telheiras.",
+        a: "Um sofá de 2-3 lugares em Lisboa custa entre 35EUR e 55EUR, dependendo do piso e do acesso. Num 5º andar sem elevador em Alfama, o preço será maior do que num rés-do-chão em Telheiras. Enviamos orçamento exacto após ver fotos.",
       },
       {
-        q: "A CLYON retira móveis em prédios sem elevador em Lisboa?",
-        a: "Sim, retiramos. Temos experiência em prédios antigos de Lisboa. Avaliamos as escadas, medimos os móveis e, se necessário, desmontamos armários e camas para conseguir descer.",
+        q: "A CLYON retira camas e colchões em Lisboa?",
+        a: "Sim. Retiramos camas de casal, camas de solteiro, beliches, colchões de todas as medidas, sommiers e estrados. Desmontamos a cama se necessário. O preço de uma cama com colchão começa nos 30EUR.",
       },
       {
-        q: "Fazem recolha de móveis ao fim de semana em Lisboa?",
-        a: "Aos sábados conseguimos atender pedidos em Lisboa, mediante disponibilidade. É melhor contactar durante a semana para garantir vaga.",
+        q: "Recolhem armários e roupeiros em Lisboa?",
+        a: "Sim. Retiramos armários de 2, 3 ou mais portas, roupeiros embutidos (quando removíveis), estantes e móveis de quarto. Desmontamos no local se não couber nas escadas.",
       },
       {
-        q: "Recolhem eletrodomésticos junto com os móveis em Lisboa?",
-        a: "Sim. Frigoríficos, máquinas de lavar, fogões e micro-ondas podem ser recolhidos no mesmo serviço. O preço é ajustado ao volume total.",
+        q: "A CLYON faz esvaziamento de recheio completo em Lisboa?",
+        a: "Sim. Esvaziamos apartamentos e moradias completas em Lisboa: móveis, electrodomésticos, roupa, tralha, decoração — levamos tudo. Ideal para heranças, mudanças e entrega de imóveis arrendados.",
+      },
+      {
+        q: "Recolhem electrodomésticos junto com os móveis em Lisboa?",
+        a: "Sim. Frigoríficos, máquinas de lavar roupa e loiça, fogões, fornos, micro-ondas, arcas e TVs. Podemos recolher no mesmo serviço que os móveis.",
       },
       {
         q: "Qual a diferença entre a CLYON e a recolha da Câmara de Lisboa?",
-        a: "A recolha municipal em Lisboa é gratuita mas tem lista de espera, não entra no imóvel e não desmonta móveis. A CLYON entra, desmonta, carrega e retira no dia combinado.",
+        a: "A Câmara de Lisboa faz recolha gratuita mas tem lista de espera de semanas, não entra em casa, não sobe escadas e não desmonta móveis. A CLYON entra no imóvel, desmonta, carrega e leva no dia combinado. É mais rápido e resolve tudo de uma vez.",
+      },
+      {
+        q: "Fazem recolha de móveis ao sábado em Lisboa?",
+        a: "Sim, aos sábados trabalhamos em Lisboa mediante disponibilidade. É melhor contactar durante a semana para garantir vaga no dia pretendido.",
       },
     ],
     pricingNotes: [
       "Sofá de 2-3 lugares: 35EUR a 55EUR",
-      "Cama de casal com estrado: 25EUR a 45EUR",
-      "Armário de 2 portas: 35EUR a 55EUR",
-      "Frigorífico combinado: 25EUR a 40EUR",
+      "Cama de casal com colchão: 30EUR a 50EUR",
+      "Colchão de casal (sozinho): 20EUR a 35EUR",
+      "Armário de 2-3 portas: 35EUR a 60EUR",
+      "Frigorífico combinado: 25EUR a 45EUR",
       "Apartamento T2 completo: 280EUR a 450EUR",
+      "Apartamento T3 completo: 380EUR a 600EUR",
     ],
-    ctaText: "Precisa de retirar móveis em Lisboa? Envie fotos e morada para orçamento em 15 minutos.",
+    ctaText: "Móveis para retirar em Lisboa? Envie fotos pelo WhatsApp e receba orçamento em 15 minutos.",
   },
 
   // ---------------------------------------------------------------------------
@@ -129,48 +139,120 @@ export const CITY_SERVICE_CONTENT: Record<string, CityServiceContent> = {
   },
 
   // ---------------------------------------------------------------------------
+  // 2.5. RECOLHA DE MONOS EM LISBOA (PÁGINA PRIORITÁRIA)
+  // ---------------------------------------------------------------------------
+  "recolha-monos-lisboa": {
+    citySlug: "lisboa",
+    serviceSlug: "recolha-monos",
+    metaTitle: "Recolha de Monos em Lisboa - Retiramos Móveis Usados em 24h | CLYON",
+    metaDescription:
+      "Recolha de monos em Lisboa: retiramos móveis usados, electrodomésticos e objectos volumosos. Empresa com 163 avaliações 5 estrelas. Resposta em 11 min. Orçamento grátis!",
+    h1: "Recolha de Monos em Lisboa — Retiramos Tudo o Que a Câmara Não Leva",
+    localIntro:
+      "Tem monos em casa que precisa de retirar? A CLYON é a alternativa rápida à recolha municipal em Lisboa. Enquanto a Câmara de Lisboa tem lista de espera de semanas e não entra no imóvel, nós vamos buscar os monos onde estiverem — seja num 5º andar sem elevador em Alfama, numa cave na Graça ou numa garagem no Parque das Nações. A diferença é simples: ligamos, combinamos, aparecemos no dia marcado e levamos tudo.",
+    accessNotes:
+      "Em Lisboa, os acessos mais complicados são nos bairros históricos: Alfama, Mouraria, Graça e Castelo têm escadas estreitas, ruas empedradas e estacionamento impossível. Mesmo assim, trabalhamos lá todos os dias. Avaliamos sempre o acesso antes de dar preço para não haver surpresas.",
+    neighborhoodHighlight:
+      "As zonas de Lisboa onde fazemos mais recolhas de monos são Benfica, Lumiar, Alvalade, Olivais e Telheiras. São bairros residenciais com muitas mudanças, renovações e esvaziamentos de casa.",
+    nearbyAreas: ["Amadora", "Odivelas", "Loures", "Oeiras"],
+    faqs: [
+      {
+        q: "Qual a diferença entre a recolha de monos da CLYON e a da Câmara de Lisboa?",
+        a: "A Câmara de Lisboa faz recolha gratuita mas tem lista de espera de 2-4 semanas, não entra no imóvel, não sobe escadas, não desmonta móveis e só recolhe o que estiver na rua. A CLYON entra em casa, desmonta se necessário, carrega, transporta e faz no dia combinado. É mais rápido e resolve o problema de uma vez.",
+      },
+      {
+        q: "Quanto custa recolher monos em Lisboa?",
+        a: "Depende do volume e do acesso. Um sofá custa entre 35EUR e 55EUR. Uma carga de carrinha com vários monos custa entre 150EUR e 250EUR. Um apartamento completo com muitos monos custa entre 300EUR e 600EUR. Enviamos orçamento exacto após ver fotos.",
+      },
+      {
+        q: "A CLYON retira monos em prédios sem elevador em Lisboa?",
+        a: "Sim, é uma das situações mais comuns. Temos experiência em prédios antigos de Alfama, Mouraria e Graça. O preço é ajustado ao número de pisos e ao tipo de escada, mas fazemos sempre.",
+      },
+      {
+        q: "Podem retirar monos no mesmo dia em Lisboa?",
+        a: "Se tivermos disponibilidade, sim. Fazemos recolhas urgentes em Lisboa com frequência. Contacte-nos de manhã e tentamos encaixar no próprio dia.",
+      },
+      {
+        q: "Que tipo de monos a CLYON retira em Lisboa?",
+        a: "Retiramos todo o tipo de monos: sofás, camas, colchões, armários, mesas, cadeiras, electrodomésticos, equipamento de ginásio, móveis de jardim, bicicletas velhas, tralha de garagem e cave. Basicamente, tudo o que precisa de sair e não cabe no lixo normal.",
+      },
+      {
+        q: "Onde deixam os monos que recolhem em Lisboa?",
+        a: "Fazemos triagem responsável. O que pode ser reciclado vai para centros de reciclagem licenciados. Electrodomésticos vão para pontos de recolha específicos. Móveis em bom estado podem ir para reutilização. Temos parcerias com operadores de resíduos certificados.",
+      },
+      {
+        q: "Quando compensa contratar a CLYON em vez de esperar pela Câmara?",
+        a: "Compensa sempre que: precisa dos monos fora rapidamente (mudança, venda de casa, obras), não consegue levar os monos para a rua sozinho, tem escadas sem elevador, ou simplesmente não quer esperar semanas. O preço compensa pela rapidez e conveniência.",
+      },
+    ],
+    pricingNotes: [
+      "Sofá de 2-3 lugares: 35EUR a 55EUR",
+      "Cama de casal com colchão: 30EUR a 50EUR",
+      "Armário grande de 2-3 portas: 40EUR a 60EUR",
+      "Electrodoméstico (frigorífico, máquina): 25EUR a 45EUR",
+      "Carga de carrinha (mista): 150EUR a 250EUR",
+      "Apartamento T2 com muitos monos: 300EUR a 500EUR",
+    ],
+    ctaText: "Monos para retirar em Lisboa? Envie fotos pelo WhatsApp e receba orçamento em 15 minutos.",
+  },
+
+  // ---------------------------------------------------------------------------
   // 3. RECOLHA DE MÓVEIS EM ALMADA
   // ---------------------------------------------------------------------------
   "recolha-moveis-almada": {
     citySlug: "almada",
     serviceSlug: "recolha-moveis",
-    metaTitle: "Recolha de Móveis em Almada - Costa da Caparica e Cacilhas | CLYON",
+    metaTitle: "Recolha de Móveis em Almada — Cacilhas, Pragal, Laranjeiro e Costa | CLYON",
     metaDescription:
-      "Recolha de móveis usados em Almada, Costa da Caparica, Pragal e Cacilhas. Empresa local com resposta rápida. Retiramos sofás, camas e armários. Preços desde 35EUR.",
-    h1: "Recolha de Móveis em Almada e Costa da Caparica",
+      "Recolha de móveis em Almada: Cacilhas, Pragal, Laranjeiro, Feijó e Costa da Caparica. Empresa local com 163 avaliações. Resposta rápida, preços desde 35EUR. Orçamento grátis!",
+    h1: "Recolha de Móveis em Almada — Cacilhas, Pragal, Laranjeiro e Costa da Caparica",
     localIntro:
-      "Almada é o nosso território. Estamos sediados no Seixal, a 10 minutos de qualquer ponto de Almada. Conhecemos bem as diferenças entre a Costa da Caparica (muitos apartamentos de férias que precisam de esvaziamento sazonal), Cacilhas (prédios mais antigos com escadas), e o Pragal (urbanizações mais recentes com elevador). Esta proximidade permite-nos responder mais depressa e com melhor preço do que empresas de Lisboa.",
+      "Precisa de retirar móveis em Almada? A CLYON é a empresa local para recolha de móveis usados em todo o concelho: Cacilhas, Pragal, Laranjeiro, Feijó, Cova da Piedade, Almada Velha e Costa da Caparica. Estamos sediados no Seixal, a 10 minutos de qualquer ponto de Almada. Conhecemos bem as diferenças entre Cacilhas (prédios antigos com escadas), Pragal e Laranjeiro (urbanizações mais recentes com elevador), e a Costa da Caparica (apartamentos de férias). Por sermos locais, respondemos mais depressa e com melhor preço do que empresas de Lisboa.",
     accessNotes:
-      "Na Costa da Caparica, os acessos são geralmente bons, mas em época balnear o estacionamento complica. Em Cacilhas e Almada Velha, há prédios antigos onde é preciso desmontar móveis para descer.",
+      "Em Cacilhas e Almada Velha, há prédios antigos sem elevador onde é preciso desmontar móveis para descer. No Pragal, Laranjeiro e Feijó, a maioria dos prédios tem elevador e bons acessos. Na Costa da Caparica, os acessos são fáceis mas em época balnear o estacionamento complica.",
     neighborhoodHighlight:
-      "A Costa da Caparica tem muitos apartamentos de férias que são esvaziados no final do verão. É uma das zonas onde fazemos mais recolhas de móveis em Almada.",
-    nearbyAreas: ["Costa da Caparica", "Seixal", "Lisboa", "Setúbal"],
+      "As zonas de Almada com mais pedidos de recolha são Cacilhas (esvaziamentos de apartamentos antigos), Pragal e Laranjeiro (mudanças e renovações), e a Costa da Caparica (apartamentos de férias esvaziados no final do verão).",
+    nearbyAreas: ["Seixal", "Lisboa", "Setúbal", "Barreiro"],
     faqs: [
       {
-        q: "A CLYON é de Almada?",
-        a: "Somos do Seixal, mesmo ao lado. Almada é uma das zonas onde mais trabalhamos. Conhecemos bem as ruas, os acessos e conseguimos chegar em minutos.",
-      },
-      {
-        q: "Fazem recolha de móveis na Costa da Caparica?",
-        a: "Sim, frequentemente. Muitos apartamentos de férias na Costa precisam de esvaziamento no final da época. Retiramos sofás-cama, colchões, móveis de jardim e eletrodomésticos.",
+        q: "A CLYON faz recolha de móveis em Almada?",
+        a: "Sim. Almada é uma das zonas onde mais trabalhamos. Estamos no Seixal, mesmo ao lado. Cobrimos Cacilhas, Pragal, Laranjeiro, Feijó, Cova da Piedade, Almada Velha e Costa da Caparica.",
       },
       {
         q: "Quanto custa recolher móveis em Almada?",
-        a: "Um sofá em Almada custa entre 35EUR e 50EUR. Por sermos locais, conseguimos preços mais competitivos do que empresas que vêm de Lisboa.",
+        a: "Um sofá em Almada custa entre 35EUR e 50EUR. Uma cama com colchão custa entre 30EUR e 45EUR. Por sermos locais, conseguimos preços mais competitivos do que empresas que vêm de Lisboa.",
       },
       {
         q: "Recolhem móveis em Cacilhas com escadas?",
-        a: "Sim. Cacilhas tem muitos prédios antigos sem elevador. Temos experiência nesses acessos e ajustamos o preço ao esforço real.",
+        a: "Sim. Cacilhas tem muitos prédios antigos sem elevador. Temos experiência nesses acessos, desmontamos móveis se necessário e ajustamos o preço ao esforço real.",
+      },
+      {
+        q: "Fazem recolha de móveis no Pragal e Laranjeiro?",
+        a: "Sim. Pragal e Laranjeiro são zonas com urbanizações recentes e bons acessos. A maioria dos prédios tem elevador, o que facilita o trabalho e baixa o preço.",
+      },
+      {
+        q: "Fazem recolha de móveis na Costa da Caparica?",
+        a: "Sim, frequentemente. Muitos apartamentos de férias na Costa precisam de esvaziamento no final da época. Retiramos sofás-cama, colchões, móveis de jardim e electrodomésticos.",
+      },
+      {
+        q: "A CLYON faz esvaziamento completo de casas em Almada?",
+        a: "Sim. Esvaziamos apartamentos e moradias completas em Almada: móveis, electrodomésticos, roupa, tralha — levamos tudo. Ideal para heranças, mudanças e entrega de imóveis arrendados.",
+      },
+      {
+        q: "Recolhem electrodomésticos em Almada?",
+        a: "Sim. Frigoríficos, máquinas de lavar, fogões, fornos, micro-ondas e TVs. Podemos recolher junto com os móveis no mesmo serviço.",
       },
     ],
     pricingNotes: [
       "Sofá de 2-3 lugares: 35EUR a 50EUR",
-      "Cama de casal com estrado: 25EUR a 40EUR",
-      "Armário grande: 40EUR a 60EUR",
+      "Cama de casal com colchão: 30EUR a 45EUR",
+      "Armário de 2-3 portas: 40EUR a 60EUR",
+      "Frigorífico ou máquina: 25EUR a 40EUR",
       "Apartamento T1 na Costa: 180EUR a 280EUR",
-      "Moradia com garagem: 350EUR a 500EUR",
+      "Apartamento T2 em Almada: 250EUR a 380EUR",
+      "Moradia com garagem: 350EUR a 550EUR",
     ],
-    ctaText: "Precisa de recolha de móveis em Almada? Somos locais - resposta em minutos.",
+    ctaText: "Móveis para retirar em Almada? Somos locais — envie fotos e receba orçamento em minutos.",
   },
 
   // ---------------------------------------------------------------------------
@@ -408,43 +490,107 @@ export const CITY_SERVICE_CONTENT: Record<string, CityServiceContent> = {
   "recolha-moveis-setubal": {
     citySlug: "setubal",
     serviceSlug: "recolha-moveis",
-    metaTitle: "Recolha de Móveis em Setúbal - Centro, Azeitão e Arrábida | CLYON",
+    metaTitle: "Recolha de Móveis em Setúbal — Apartamentos, Moradias e Quintas | CLYON",
     metaDescription:
-      "Recolha de móveis usados em Setúbal, Azeitão e zona da Arrábida. Retiramos sofás, camas e armários de apartamentos e quintas. Preços desde 40EUR.",
-    h1: "Recolha de Móveis em Setúbal e Azeitão",
+      "Recolha de móveis usados em Setúbal, Azeitão e Arrábida. Retiramos sofás, camas, armários de apartamentos, moradias e quintas. Empresa com 163 avaliações. Orçamento grátis!",
+    h1: "Recolha de Móveis em Setúbal — Apartamentos, Moradias e Quintas",
     localIntro:
-      "Setúbal é a cidade maior da região e tem características próprias: um centro histórico com prédios antigos, bairros residenciais como o Bairro Azul e Manteigadas, e a zona de Azeitão com quintas e moradias. A CLYON cobre toda a área de Setúbal com tempos de resposta bons, apesar de ser mais longe da nossa base no Seixal. Conhecemos bem os acessos e adaptamos a equipa ao tipo de imóvel.",
+      "Precisa de retirar móveis em Setúbal? A CLYON faz recolha de móveis usados em todo o concelho: centro histórico de Setúbal, Bairro Azul, Manteigadas, Avenida Luísa Todi, Azeitão e zona da Arrábida. Retiramos sofás, camas, armários, mesas, cadeiras e electrodomésticos de apartamentos, moradias, lojas e escritórios. Em Azeitão, temos experiência no esvaziamento de quintas com móveis antigos e volumes grandes.",
     accessNotes:
-      "O centro de Setúbal tem estacionamento limitado em algumas ruas. Azeitão tem quintas com acessos de terra batida que avaliamos antes de dar preço.",
+      "O centro de Setúbal tem estacionamento limitado em algumas ruas da zona histórica. Azeitão tem quintas com acessos de terra batida — avaliamos sempre antes de dar preço. Nas urbanizações novas, os acessos são normalmente fáceis.",
     neighborhoodHighlight:
-      "O Bairro Azul e Manteigadas são zonas residenciais com muita procura. Azeitão tem quintas que precisam de esvaziamento completo.",
+      "As zonas de Setúbal com mais pedidos de recolha são o Bairro Azul, Manteigadas e o centro. Azeitão destaca-se pelo esvaziamento de quintas e casas de família com muito recheio.",
     nearbyAreas: ["Palmela", "Sesimbra", "Seixal", "Barreiro"],
     faqs: [
       {
         q: "A CLYON faz recolha de móveis em Setúbal?",
-        a: "Sim. Setúbal faz parte da nossa área de cobertura. Os preços são ligeiramente mais altos do que na Margem Sul por causa da distância, mas continuamos competitivos.",
+        a: "Sim. Cobrimos todo o concelho de Setúbal, incluindo centro, Bairro Azul, Manteigadas e Azeitão. Os preços são ligeiramente mais altos do que na Margem Sul por causa da distância, mas continuamos competitivos.",
+      },
+      {
+        q: "Quanto custa recolher móveis em Setúbal?",
+        a: "Um sofá em Setúbal custa entre 40EUR e 60EUR. Uma cama com colchão custa entre 35EUR e 55EUR. Um apartamento T2 completo custa entre 280EUR e 450EUR. Enviamos orçamento exacto após ver fotos.",
       },
       {
         q: "Recolhem móveis em quintas de Azeitão?",
-        a: "Sim. Azeitão tem muitas quintas com móveis antigos. Avaliamos o acesso antes de dar preço porque pode ser necessário equipamento especial.",
+        a: "Sim. Azeitão tem muitas quintas com móveis antigos e volumes grandes. Avaliamos o acesso antes de dar preço — algumas quintas têm caminhos de terra ou escadas. Temos experiência neste tipo de trabalho.",
       },
       {
-        q: "Quanto custa recolher um sofá em Setúbal?",
-        a: "Um sofá em Setúbal custa entre 40EUR e 60EUR, dependendo do piso e acesso. É ligeiramente mais caro do que no Seixal por causa da deslocação.",
+        q: "A CLYON retira móveis de lojas e escritórios em Setúbal?",
+        a: "Sim. Retiramos mobiliário de lojas, escritórios, consultórios e espaços comerciais em Setúbal. Podemos trabalhar fora do horário laboral se necessário.",
       },
       {
-        q: "Fazem esvaziamento de casas em Setúbal?",
-        a: "Sim. Esvaziamos apartamentos e moradias em Setúbal. É um serviço frequente, especialmente em heranças e arrendamentos.",
+        q: "Fazem esvaziamento completo de casas em Setúbal?",
+        a: "Sim. Esvaziamos apartamentos e moradias completas em Setúbal: móveis, electrodomésticos, roupa, tralha — levamos tudo. Ideal para heranças, mudanças e entrega de imóveis arrendados.",
+      },
+      {
+        q: "Recolhem electrodomésticos em Setúbal?",
+        a: "Sim. Frigoríficos, máquinas de lavar, fogões, fornos, micro-ondas, arcas e TVs. Podemos recolher junto com os móveis no mesmo serviço.",
       },
     ],
     pricingNotes: [
       "Sofá de 2-3 lugares: 40EUR a 60EUR",
-      "Cama de casal com estrado: 30EUR a 50EUR",
-      "Armário de 2 portas: 40EUR a 60EUR",
-      "Apartamento T2 em Setúbal: 250EUR a 400EUR",
-      "Quinta com móveis antigos: 500EUR a 900EUR",
+      "Cama de casal com colchão: 35EUR a 55EUR",
+      "Armário de 2-3 portas: 45EUR a 70EUR",
+      "Frigorífico ou máquina: 30EUR a 50EUR",
+      "Apartamento T2 em Setúbal: 280EUR a 450EUR",
+      "Moradia T3 em Setúbal: 400EUR a 650EUR",
+      "Quinta com móveis antigos: 600EUR a 1200EUR",
     ],
-    ctaText: "Móveis para retirar em Setúbal? Cobrimos toda a zona - peça orçamento.",
+    ctaText: "Móveis para retirar em Setúbal? Envie fotos pelo WhatsApp e receba orçamento hoje.",
+  },
+
+  // ---------------------------------------------------------------------------
+  // 9.5. RECOLHA DE ENTULHO EM SETÚBAL (PÁGINA PRIORITÁRIA)
+  // ---------------------------------------------------------------------------
+  "recolha-entulho-setubal": {
+    citySlug: "setubal",
+    serviceSlug: "recolha-entulho",
+    metaTitle: "Recolha de Entulho em Setúbal - Contentores e Sacos | CLYON",
+    metaDescription:
+      "Recolha de entulho em Setúbal: contentores de 3m³, 5m³ e 8m³. Entrega em 24h, recolha rápida. Ideal para obras, remodelações e limpezas. Preço desde 120EUR.",
+    h1: "Recolha de Entulho em Setúbal — Contentores e Recolha Rápida",
+    localIntro:
+      "Tem entulho de obra em Setúbal? A CLYON fornece contentores e faz recolha de entulho em sacos para obras de qualquer dimensão. Cobrimos todo o concelho de Setúbal, desde o centro histórico até Azeitão e Arrábida. Para pequenas remodelações, retiramos sacos de entulho directamente. Para obras maiores, colocamos contentor no local pelo tempo necessário e depois vamos buscar.",
+    accessNotes:
+      "No centro de Setúbal, o estacionamento de contentores pode ser limitado em algumas ruas. Avaliamos sempre o local antes de colocar contentor. Em Azeitão e quintas, o acesso é normalmente mais fácil.",
+    neighborhoodHighlight:
+      "As zonas com mais obras em Setúbal são o centro histórico (renovações de edifícios antigos), a Avenida Luísa Todi e as novas urbanizações. Azeitão tem muitas quintas em remodelação.",
+    nearbyAreas: ["Palmela", "Sesimbra", "Seixal", "Barreiro"],
+    faqs: [
+      {
+        q: "Quanto custa recolher entulho em Setúbal?",
+        a: "Depende do volume. Até 10 sacos de entulho custa entre 130EUR e 170EUR. Um contentor de 3m³ custa entre 200EUR e 260EUR. Contentores maiores de 5m³ ou 8m³ têm preços proporcionais. Enviamos orçamento exacto após saber o volume e local.",
+      },
+      {
+        q: "A CLYON fornece contentores para entulho em Setúbal?",
+        a: "Sim. Fornecemos contentores de 3m³, 5m³ e 8m³. Entregamos no local, o contentor fica pelo tempo combinado (normalmente 3-7 dias) e depois vamos buscar. O preço inclui entrega, aluguer e recolha.",
+      },
+      {
+        q: "Em quanto tempo entregam contentor de entulho em Setúbal?",
+        a: "Normalmente entregamos em 24 a 48 horas. Se for urgente e tivermos disponibilidade, conseguimos no próprio dia. Contacte-nos para verificar.",
+      },
+      {
+        q: "Recolhem entulho de obras pequenas em Setúbal?",
+        a: "Sim. Remodelações de casas de banho, cozinhas, substituição de pavimentos. Não é preciso contentor - retiramos os sacos directamente. É mais económico para obras pequenas.",
+      },
+      {
+        q: "Que tipo de entulho a CLYON recolhe em Setúbal?",
+        a: "Recolhemos: restos de construção (tijolos, cimento, azulejos), sacos de obra, resíduos de remodelação, madeiras de demolição, gessos e materiais mistos. Não recolhemos amianto nem resíduos perigosos.",
+      },
+      {
+        q: "A CLYON trata do encaminhamento do entulho em Setúbal?",
+        a: "Sim. Todo o entulho é encaminhado para operadores de resíduos licenciados. Fazemos triagem e separação quando necessário. Emitimos guia de transporte se o cliente precisar.",
+      },
+    ],
+    pricingNotes: [
+      "Até 10 sacos de entulho: 130EUR a 170EUR",
+      "Contentor 3m³ (pequeno): 200EUR a 260EUR",
+      "Contentor 5m³ (médio): 300EUR a 380EUR",
+      "Contentor 8m³ (grande): 420EUR a 520EUR",
+      "Remodelação de WC completa: 160EUR a 220EUR",
+      "Obra de cozinha: 220EUR a 320EUR",
+    ],
+    ctaText: "Entulho para retirar em Setúbal? Diga-nos o volume e enviamos orçamento hoje.",
   },
 
   // ---------------------------------------------------------------------------
