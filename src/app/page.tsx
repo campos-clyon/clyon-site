@@ -250,7 +250,7 @@ export default async function HomePage() {
                 </a>
               </div>
 
-              <div className="mt-10 flex items-center gap-8 border-t border-slate-100 pt-8">
+              <div className="mt-10 flex items-center gap-8">
                 {[
                   { value: "163", label: "avaliacoes" },
                   { value: "24h", label: "entrega" },
@@ -273,6 +273,7 @@ export default async function HomePage() {
             </div>
           </div>
         </div>
+        <div className="border-t border-slate-200" />
       </section>
 
       {/* Onde Operamos */}
