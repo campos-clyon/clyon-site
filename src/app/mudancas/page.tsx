@@ -272,7 +272,10 @@ export default function MudancasPage() {
             Mudanças por Zona
           </h2>
           <p className="mx-auto mb-10 max-w-2xl text-center text-slate-600">
-            Fazemos mudanças dentro de Lisboa, entre Lisboa e Margem Sul, e para Setúbal.
+            Fazemos mudanças dentro de Lisboa, entre Lisboa e Margem Sul, e para Setúbal. 
+            <Link href={`/${getCityServiceSlug("mudancas", "lisboa")}`} className="ml-1 font-medium text-emerald-600 hover:underline">
+              Ver preços de mudanças em Lisboa
+            </Link>
           </p>
 
           <div className="grid gap-8 md:grid-cols-3">
