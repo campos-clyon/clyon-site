@@ -6,6 +6,7 @@ import {
   CheckCircle2,
   ClipboardCheck,
   Home as HomeIcon,
+  MapPin,
   MessageSquareQuote,
   ShieldCheck,
   Sparkles,
@@ -281,7 +282,94 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <section className="bg-white py-16 lg:py-20">
+      {/* Secção Onde Operamos - Nova */}
+      <section className="bg-white py-12 lg:py-16">
+        <div className="mx-auto max-w-7xl px-6 lg:px-8">
+          <div className="mb-8 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+            <div>
+              <div className="inline-flex items-center gap-2 rounded-full border border-cyan-200 bg-cyan-50 px-4 py-2 text-sm font-semibold uppercase tracking-[0.18em] text-cyan-700">
+                <MapPin className="h-4 w-4" />
+                Cobertura geográfica
+              </div>
+              <h2 className="mt-4 text-3xl font-bold text-slate-950 sm:text-4xl">
+                Onde Operamos
+              </h2>
+              <p className="mt-3 max-w-2xl text-base text-slate-600">
+                Mais de 24 localidades cobertas em Lisboa, Margem Sul e Setúbal com resposta rápida.
+              </p>
+            </div>
+            <Link href="/areas-de-atuacao" className="site-btn-secondary px-6">
+              Ver todas as áreas
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </Link>
+          </div>
+
+          <div className="grid gap-5 md:grid-cols-3">
+            {[
+              { name: "Grande Lisboa", slug: "lisboa", cities: ["Lisboa", "Amadora", "Sintra", "Cascais", "Oeiras", "Loures", "Odivelas"], highlight: "Mais procurado" },
+              { name: "Margem Sul", slug: "margem-sul", cities: ["Almada", "Seixal", "Barreiro", "Moita", "Montijo", "Alcochete"], highlight: "Base CLYON" },
+              { name: "Setúbal", slug: "setubal", cities: ["Setúbal", "Palmela", "Sesimbra"], highlight: null },
+            ].map((region) => (
+              <div key={region.slug} className="relative rounded-[28px] border border-cyan-100 bg-gradient-to-br from-white to-cyan-50/50 p-6 shadow-[0_20px_50px_-30px_rgba(14,116,144,0.14)]">
+                {region.highlight && (
+                  <span className="absolute right-4 top-4 rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-700">
+                    {region.highlight}
+                  </span>
+                )}
+                <div className="flex items-center gap-3">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-cyan-100">
+                    <MapPin className="h-6 w-6 text-cyan-600" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-slate-900">{region.name}</h3>
+                    <p className="text-sm text-slate-500">{region.cities.length} localidades</p>
+                  </div>
+                </div>
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {region.cities.slice(0, 5).map((city) => (
+                    <span key={city} className="rounded-full bg-white px-3 py-1 text-sm text-slate-600 shadow-sm">
+                      {city}
+                    </span>
+                  ))}
+                  {region.cities.length > 5 && (
+                    <span className="rounded-full bg-cyan-50 px-3 py-1 text-sm font-medium text-cyan-600">
+                      +{region.cities.length - 5}
+                    </span>
+                  )}
+                </div>
+                <Link href={`/regioes/${region.slug}`} className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-cyan-600 hover:text-cyan-700">
+                  Ver serviços na região
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+              </div>
+            ))}
+          </div>
+
+          {/* Hubs de serviço */}
+          <div className="mt-10 rounded-[28px] border border-slate-200 bg-slate-50 p-6">
+            <h3 className="text-lg font-bold text-slate-900">Serviços mais procurados por região</h3>
+            <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              {[
+                { name: "Recolha de Móveis", href: "/recolha-de-moveis" },
+                { name: "Recolha de Entulho", href: "/recolha-de-entulho" },
+                { name: "Limpeza Pós-Obra", href: "/limpeza-pos-obra" },
+                { name: "Esvaziamento de Casas", href: "/esvaziamento-casas" },
+              ].map((service) => (
+                <Link
+                  key={service.href}
+                  href={service.href}
+                  className="group rounded-xl border border-slate-200 bg-white px-4 py-3 transition hover:-translate-y-0.5 hover:shadow-md"
+                >
+                  <span className="font-semibold text-slate-900 group-hover:text-cyan-600">{service.name}</span>
+                  <ArrowRight className="ml-2 inline h-4 w-4 text-slate-400 transition-transform group-hover:translate-x-1 group-hover:text-cyan-600" />
+                </Link>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="bg-slate-50 py-16 lg:py-20">
         <div className="mx-auto max-w-7xl px-6 lg:px-8">
           <div className="mb-10 rounded-[32px] border border-cyan-100 bg-cyan-50/80 p-7 shadow-[0_18px_50px_-34px_rgba(14,116,144,0.22)]">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">

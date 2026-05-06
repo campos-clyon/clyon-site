@@ -1,7 +1,9 @@
-﻿import type { Metadata } from "next";
+import type { Metadata } from "next";
 import Link from "next/link";
-import { MapPin } from "lucide-react";
+import { ArrowRight, MapPin } from "lucide-react";
 
+import Breadcrumb from "@/components/Breadcrumb";
+import CTABlock from "@/components/CTABlock";
 import { REGIONS, SERVICES, SITE_URL, getRegionCities } from "@/lib/seo-data";
 
 const simulatorCategoryMap: Record<string, string> = {
@@ -31,6 +33,7 @@ export default function RegioesPage() {
       <section className="relative overflow-hidden bg-gradient-to-br from-cyan-100 via-cyan-50 to-white">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(34,211,238,0.20),_transparent_34%),radial-gradient(circle_at_bottom_right,_rgba(6,182,212,0.12),_transparent_34%)]" />
         <div className="relative mx-auto max-w-7xl px-6 py-14 lg:px-8 lg:py-18">
+          <Breadcrumb items={[{ label: "Áreas de Atuação", href: "/areas-de-atuacao" }, { label: "Regiões" }]} className="mb-6" />
           <div className="max-w-4xl">
             <div className="inline-flex items-center gap-2 rounded-full border border-cyan-200 bg-white/90 px-4 py-2 text-sm font-semibold uppercase tracking-[0.18em] text-cyan-700 shadow-sm">
               <MapPin className="h-4 w-4" />
@@ -89,6 +92,33 @@ export default function RegioesPage() {
           })}
         </div>
 
+                {/* Hubs de serviço */}
+        <div className="mt-8 rounded-[30px] border border-cyan-100 bg-white p-7 shadow-[0_24px_60px_-34px_rgba(14,116,144,0.14)]">
+          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-700">Páginas hub</p>
+          <h2 className="mt-3 text-2xl font-bold text-slate-950">Hubs de Serviço</h2>
+          <p className="mt-3 text-slate-600">Páginas principais de cada serviço com links para todas as cidades.</p>
+          <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {[
+              { name: "Recolha de Móveis", href: "/recolha-de-moveis", color: "cyan" },
+              { name: "Recolha de Entulho", href: "/recolha-de-entulho", color: "amber" },
+              { name: "Limpeza Pós-Obra", href: "/limpeza-pos-obra", color: "emerald" },
+              { name: "Esvaziamento de Casas", href: "/esvaziamento-casas", color: "violet" },
+            ].map((hub) => (
+              <Link
+                key={hub.href}
+                href={hub.href}
+                className="group rounded-2xl border border-slate-200 bg-slate-50 p-5 transition-all hover:-translate-y-1 hover:shadow-lg"
+              >
+                <h3 className="font-bold text-slate-900 group-hover:text-cyan-600">{hub.name}</h3>
+                <div className="mt-3 flex items-center gap-1 text-sm font-medium text-cyan-600">
+                  Ver hub
+                  <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+
         <div className="mt-8 rounded-[30px] border border-cyan-100 bg-slate-950 p-7 text-white shadow-[0_24px_60px_-34px_rgba(2,6,23,0.45)]">
           <p className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-200">Serviços estratégicos</p>
           <h2 className="mt-3 text-3xl font-bold">Base local preparada para captar intenção comercial</h2>
@@ -103,6 +133,17 @@ export default function RegioesPage() {
               </Link>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* CTA Final */}
+      <section className="bg-slate-50 py-16">
+        <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
+          <CTABlock
+            variant="centered"
+            title="Precisa de serviço na sua zona?"
+            description="Peça um orçamento grátis. Respondemos em 24 horas."
+          />
         </div>
       </section>
     </div>
