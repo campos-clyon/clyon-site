@@ -40,10 +40,10 @@ export const CITY_SERVICE_CONTENT: Record<string, CityServiceContent> = {
   "recolha-moveis-lisboa": {
     citySlug: "lisboa",
     serviceSlug: "recolha-moveis",
-    metaTitle: "Recolha de Móveis em Lisboa — Sofás, Camas, Colchões e Recheios | CLYON",
+    metaTitle: "Recolha de Moveis em Lisboa — Sofas, Camas e Recheios Completos",
     metaDescription:
-      "Recolha de móveis usados em Lisboa: sofás, camas, colchões, armários e electrodomésticos. 163 avaliações 5 estrelas, resposta em 11 min. Desmontagem incluída. Orçamento grátis!",
-    h1: "Recolha de Móveis Usados em Lisboa — Sofás, Camas e Recheios Completos",
+      "Recolha de moveis usados em Lisboa: sofas, camas, colchoes, armarios e electrodomesticos. Entramos em casa, desmontamos, carregamos. 163 avaliacoes. Desde 35EUR.",
+    h1: "Recolha de Moveis Usados em Lisboa — Sofas, Camas, Armarios e Recheios",
     localIntro:
       "Precisa de retirar móveis em Lisboa? A CLYON retira sofás velhos, camas com colchão, armários, mesas, cadeiras, electrodomésticos e recheios completos de apartamentos. Trabalhamos em toda Lisboa: desde os prédios antigos sem elevador em Alfama e Mouraria até aos condomínios do Parque das Nações. Se o sofá não passa na porta, desmontamos. Se há escadas estreitas, descemos peça a peça. Se o estacionamento é complicado, coordenamos horário para evitar problemas.",
     accessNotes:
@@ -80,6 +80,14 @@ export const CITY_SERVICE_CONTENT: Record<string, CityServiceContent> = {
         q: "Fazem recolha de móveis ao sábado em Lisboa?",
         a: "Sim, aos sábados trabalhamos em Lisboa mediante disponibilidade. É melhor contactar durante a semana para garantir vaga no dia pretendido.",
       },
+      {
+        q: "Podem recolher móveis no mesmo dia em Lisboa?",
+        a: "Se contactar de manhã e tivermos disponibilidade, sim. Fazemos recolhas urgentes em Lisboa com frequência. Para garantir, o ideal é marcar com 24-48h de antecedência.",
+      },
+      {
+        q: "Fazem recolha de móveis em Benfica, Lumiar e Alvalade?",
+        a: "Sim. Benfica, Lumiar e Alvalade são das zonas onde mais trabalhamos em Lisboa. São bairros residenciais com bons acessos e muita procura de recolha de móveis.",
+      },
     ],
     pricingNotes: [
       "Sofá de 2-3 lugares: 35EUR a 55EUR",
@@ -90,7 +98,7 @@ export const CITY_SERVICE_CONTENT: Record<string, CityServiceContent> = {
       "Apartamento T2 completo: 280EUR a 450EUR",
       "Apartamento T3 completo: 380EUR a 600EUR",
     ],
-    ctaText: "Móveis para retirar em Lisboa? Envie fotos pelo WhatsApp e receba orçamento em 15 minutos.",
+    ctaText: "Moveis para retirar em Lisboa? Envie fotos pelo WhatsApp e receba orcamento em 15 minutos.",
   },
 
   // ---------------------------------------------------------------------------
@@ -144,10 +152,10 @@ export const CITY_SERVICE_CONTENT: Record<string, CityServiceContent> = {
   "recolha-monos-lisboa": {
     citySlug: "lisboa",
     serviceSlug: "recolha-monos",
-    metaTitle: "Recolha de Monos em Lisboa - Retiramos Móveis Usados em 24h | CLYON",
+    metaTitle: "Recolha de Monos em Lisboa — Alternativa Rapida a Camara",
     metaDescription:
-      "Recolha de monos em Lisboa: retiramos móveis usados, electrodomésticos e objectos volumosos. Empresa com 163 avaliações 5 estrelas. Resposta em 11 min. Orçamento grátis!",
-    h1: "Recolha de Monos em Lisboa — Retiramos Tudo o Que a Câmara Não Leva",
+      "Recolha de monos em Lisboa: entramos em casa, retiramos moveis usados, electrodomesticos e tralha. Alternativa a Camara sem lista de espera. 163 avaliacoes. Resposta em 11 min.",
+    h1: "Recolha de Monos em Lisboa — A Alternativa Rapida a Camara Municipal",
     localIntro:
       "Tem monos em casa que precisa de retirar? A CLYON é a alternativa rápida à recolha municipal em Lisboa. Enquanto a Câmara de Lisboa tem lista de espera de semanas e não entra no imóvel, nós vamos buscar os monos onde estiverem — seja num 5º andar sem elevador em Alfama, numa cave na Graça ou numa garagem no Parque das Nações. A diferença é simples: ligamos, combinamos, aparecemos no dia marcado e levamos tudo.",
     accessNotes:
@@ -184,6 +192,14 @@ export const CITY_SERVICE_CONTENT: Record<string, CityServiceContent> = {
         q: "Quando compensa contratar a CLYON em vez de esperar pela Câmara?",
         a: "Compensa sempre que: precisa dos monos fora rapidamente (mudança, venda de casa, obras), não consegue levar os monos para a rua sozinho, tem escadas sem elevador, ou simplesmente não quer esperar semanas. O preço compensa pela rapidez e conveniência.",
       },
+      {
+        q: "Posso doar os meus móveis usados em Lisboa em vez de pagar pela recolha?",
+        a: "Se os móveis estiverem em bom estado, pode contactar instituições como Cáritas, Comunidade Vida e Paz ou Re-Food que aceitam doações. A CLYON pode ajudar a encaminhar móveis reutilizáveis, mas na maioria dos casos os monos já não estão em condições de doação — estão danificados, sujos ou desactualizados.",
+      },
+      {
+        q: "Qual é a melhor empresa para retirar móveis usados em Lisboa?",
+        a: "A CLYON tem 163 avaliações 5 estrelas no Google e resposta média de 11 minutos. Entramos em casa, desmontamos, carregamos e levamos. Cobrimos toda Lisboa e Margem Sul. Para comparar, peça orçamento gratuito e veja a rapidez da resposta.",
+      },
     ],
     pricingNotes: [
       "Sofá de 2-3 lugares: 35EUR a 55EUR",
@@ -202,10 +218,10 @@ export const CITY_SERVICE_CONTENT: Record<string, CityServiceContent> = {
   "recolha-moveis-almada": {
     citySlug: "almada",
     serviceSlug: "recolha-moveis",
-    metaTitle: "Recolha de Móveis em Almada — Cacilhas, Pragal, Laranjeiro e Costa | CLYON",
+    metaTitle: "Recolha de Moveis em Almada — Empresa Local, Resposta Rapida",
     metaDescription:
-      "Recolha de móveis em Almada: Cacilhas, Pragal, Laranjeiro, Feijó e Costa da Caparica. Empresa local com 163 avaliações. Resposta rápida, preços desde 35EUR. Orçamento grátis!",
-    h1: "Recolha de Móveis em Almada — Cacilhas, Pragal, Laranjeiro e Costa da Caparica",
+      "Recolha de moveis em Almada, Cacilhas, Pragal, Laranjeiro e Costa da Caparica. Empresa local no Seixal. Sofas desde 35EUR. Resposta em minutos. Orcamento gratis.",
+    h1: "Recolha de Moveis em Almada — Cacilhas, Pragal, Laranjeiro e Costa",
     localIntro:
       "Precisa de retirar móveis em Almada? A CLYON é a empresa local para recolha de móveis usados em todo o concelho: Cacilhas, Pragal, Laranjeiro, Feijó, Cova da Piedade, Almada Velha e Costa da Caparica. Estamos sediados no Seixal, a 10 minutos de qualquer ponto de Almada. Conhecemos bem as diferenças entre Cacilhas (prédios antigos com escadas), Pragal e Laranjeiro (urbanizações mais recentes com elevador), e a Costa da Caparica (apartamentos de férias). Por sermos locais, respondemos mais depressa e com melhor preço do que empresas de Lisboa.",
     accessNotes:
@@ -241,6 +257,14 @@ export const CITY_SERVICE_CONTENT: Record<string, CityServiceContent> = {
       {
         q: "Recolhem electrodomésticos em Almada?",
         a: "Sim. Frigoríficos, máquinas de lavar, fogões, fornos, micro-ondas e TVs. Podemos recolher junto com os móveis no mesmo serviço.",
+      },
+      {
+        q: "Fazem recolha de móveis no Feijó e Cova da Piedade?",
+        a: "Sim. Feijó e Cova da Piedade são zonas centrais de Almada com boa acessibilidade. Trabalhamos regularmente nestes bairros com preços competitivos.",
+      },
+      {
+        q: "A CLYON também faz recolhas em Lisboa a partir de Almada?",
+        a: "Sim. Estamos no Seixal e cobrimos tanto Almada como Lisboa. Para Lisboa os preços são ligeiramente superiores pela travessia, mas continuamos a ser competitivos e rápidos.",
       },
     ],
     pricingNotes: [
@@ -490,10 +514,10 @@ export const CITY_SERVICE_CONTENT: Record<string, CityServiceContent> = {
   "recolha-moveis-setubal": {
     citySlug: "setubal",
     serviceSlug: "recolha-moveis",
-    metaTitle: "Recolha de Móveis em Setúbal — Apartamentos, Moradias e Quintas | CLYON",
+    metaTitle: "Recolha de Moveis em Setubal — Apartamentos, Quintas e Azeito",
     metaDescription:
-      "Recolha de móveis usados em Setúbal, Azeitão e Arrábida. Retiramos sofás, camas, armários de apartamentos, moradias e quintas. Empresa com 163 avaliações. Orçamento grátis!",
-    h1: "Recolha de Móveis em Setúbal — Apartamentos, Moradias e Quintas",
+      "Recolha de moveis em Setubal, Azeito e Arrabida. Sofas, camas, armarios, electrodomesticos. Apartamentos, moradias, lojas e quintas. Desde 40EUR. Orcamento gratis.",
+    h1: "Recolha de Moveis em Setubal — Apartamentos, Moradias e Quintas",
     localIntro:
       "Precisa de retirar móveis em Setúbal? A CLYON faz recolha de móveis usados em todo o concelho: centro histórico de Setúbal, Bairro Azul, Manteigadas, Avenida Luísa Todi, Azeitão e zona da Arrábida. Retiramos sofás, camas, armários, mesas, cadeiras e electrodomésticos de apartamentos, moradias, lojas e escritórios. Em Azeitão, temos experiência no esvaziamento de quintas com móveis antigos e volumes grandes.",
     accessNotes:
@@ -526,6 +550,14 @@ export const CITY_SERVICE_CONTENT: Record<string, CityServiceContent> = {
         q: "Recolhem electrodomésticos em Setúbal?",
         a: "Sim. Frigoríficos, máquinas de lavar, fogões, fornos, micro-ondas, arcas e TVs. Podemos recolher junto com os móveis no mesmo serviço.",
       },
+      {
+        q: "Podem recolher móveis no mesmo dia em Setúbal?",
+        a: "Se contactar de manhã e tivermos disponibilidade, tentamos encaixar no próprio dia. Setúbal fica a cerca de 40 minutos da nossa base no Seixal. Para garantir, marque com 24-48h de antecedência.",
+      },
+      {
+        q: "Qual a zona de Setúbal onde a CLYON faz mais recolhas?",
+        a: "As zonas com mais pedidos são o centro de Setúbal, Bairro Azul, Manteigadas e Azeitão. São áreas com muitos apartamentos e quintas que precisam de esvaziamento.",
+      },
     ],
     pricingNotes: [
       "Sofá de 2-3 lugares: 40EUR a 60EUR",
@@ -545,10 +577,10 @@ export const CITY_SERVICE_CONTENT: Record<string, CityServiceContent> = {
   "recolha-entulho-setubal": {
     citySlug: "setubal",
     serviceSlug: "recolha-entulho",
-    metaTitle: "Recolha de Entulho em Setúbal - Contentores e Sacos | CLYON",
+    metaTitle: "Recolha de Entulho em Setubal — Contentores e Sacos de Obra",
     metaDescription:
-      "Recolha de entulho em Setúbal: contentores de 3m³, 5m³ e 8m³. Entrega em 24h, recolha rápida. Ideal para obras, remodelações e limpezas. Preço desde 120EUR.",
-    h1: "Recolha de Entulho em Setúbal — Contentores e Recolha Rápida",
+      "Recolha de entulho em Setubal: contentores 3m3, 5m3, 8m3 e sacos de obra. Entrega em 24h. Remodelacoes, obras pequenas, limpezas. Desde 130EUR. Orcamento gratis.",
+    h1: "Recolha de Entulho em Setubal — Contentores, Sacos e Obras Pequenas",
     localIntro:
       "Tem entulho de obra em Setúbal? A CLYON fornece contentores e faz recolha de entulho em sacos para obras de qualquer dimensão. Cobrimos todo o concelho de Setúbal, desde o centro histórico até Azeitão e Arrábida. Para pequenas remodelações, retiramos sacos de entulho directamente. Para obras maiores, colocamos contentor no local pelo tempo necessário e depois vamos buscar.",
     accessNotes:
@@ -580,6 +612,14 @@ export const CITY_SERVICE_CONTENT: Record<string, CityServiceContent> = {
       {
         q: "A CLYON trata do encaminhamento do entulho em Setúbal?",
         a: "Sim. Todo o entulho é encaminhado para operadores de resíduos licenciados. Fazemos triagem e separação quando necessário. Emitimos guia de transporte se o cliente precisar.",
+      },
+      {
+        q: "Recolhem entulho em locais com acesso difícil em Setúbal?",
+        a: "Sim. Se o contentor não couber ou a rua for estreita, fazemos recolha manual com sacos. Avaliamos sempre o local antes de dar preço para não haver surpresas.",
+      },
+      {
+        q: "A CLYON também recolhe entulho em Azeitão e Arrábida?",
+        a: "Sim. Cobrimos todo o concelho de Setúbal, incluindo Azeitão, Arrábida e Palmela. Muitas quintas em remodelação geram entulho que retiramos regularmente.",
       },
     ],
     pricingNotes: [

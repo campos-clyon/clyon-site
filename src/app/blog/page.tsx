@@ -6,9 +6,9 @@ import { getAllBlogPosts } from "@/lib/blog-data";
 import { SITE_URL } from "@/lib/seo-data";
 
 export const metadata: Metadata = {
-  title: "Blog — Recolha de Móveis, Entulho, Doações e Monos em Lisboa",
+  title: "Blog — Guias de Recolha de Moveis, Monos e Entulho",
   description:
-    "Guias práticos sobre recolha de móveis, doações, monos, entulho pós-obra e esvaziamentos. Saiba como libertar espaço rapidamente em Lisboa, Margem Sul e Setúbal.",
+    "Guias praticos: como doar moveis, recolha de monos, entulho de obra, esvaziamento de casas. Dicas para libertar espaco em Lisboa, Almada e Setubal.",
   alternates: {
     canonical: `${SITE_URL}/blog`,
   },

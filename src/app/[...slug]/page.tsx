@@ -457,6 +457,7 @@ export default async function ServiceCityPage({ params }: Props) {
       { href: "/recolha-monos-lisboa", label: "Recolha de monos em Lisboa" },
       { href: "/recolha-moveis-lisboa", label: "Recolha de móveis em Lisboa" },
       { href: "/recolha-entulho-lisboa", label: "Recolha de entulho em Lisboa" },
+      { href: "/blog/recolha-de-monos-o-que-inclui", label: "Guia: o que inclui a recolha de monos" },
       { href: "/blog/recolha-de-moveis-como-funciona", label: "Guia: como funciona a recolha de móveis" },
       { href: "/contactos", label: "Contactos" },
     ],
@@ -892,8 +893,11 @@ export default async function ServiceCityPage({ params }: Props) {
           </div>
           <p className="mt-4 max-w-3xl text-base leading-8 text-slate-600">
             Diga-nos o que pretende retirar, quantos volumes tem e como é o acesso ao
-            imóvel. Com essa informaç��o conseguimos responder mais depressa e marcar
-            a recolha com maior precisão.
+            imovel. Com essa informacao conseguimos responder mais depressa e marcar
+            a recolha com maior precisao.
+          </p>
+          <p className="mt-2 text-sm text-slate-500">
+            163 avaliacoes 5 estrelas no Google. Tempo medio de resposta: 11 minutos.
           </p>
           <div className="mt-6 flex flex-col gap-3 sm:flex-row">
             <Link
