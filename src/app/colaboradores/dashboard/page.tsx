@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import ColaboradorDashboardClient from "./ColaboradorDashboardClient";
 
 export const metadata: Metadata = {
-  title: "Dashboard do Colaborador | CLYON",
+  title: "Dashboard do Colaborador",
   robots: { index: false, follow: false },
 };
 

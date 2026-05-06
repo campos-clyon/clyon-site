@@ -13,7 +13,7 @@ import {
 } from "@/lib/seo-data";
 
 export const metadata: Metadata = {
-  title: "Áreas de Atuação | Lisboa, Margem Sul e Setúbal | CLYON",
+  title: "Áreas de Atuação | Lisboa, Margem Sul e Setúbal",
   description:
     "A CLYON atua em mais de 24 localidades: Lisboa, Amadora, Sintra, Cascais, Oeiras, Almada, Seixal, Barreiro, Setúbal e mais. Recolha de móveis, entulho e limpezas.",
   alternates: { canonical: `${SITE_URL}/areas-de-atuacao` },

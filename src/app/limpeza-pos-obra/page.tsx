@@ -26,12 +26,12 @@ import {
 } from "@/lib/seo-data";
 
 export const metadata: Metadata = {
-  title: "Limpeza Pós-Obra Profissional em Lisboa e Setúbal | CLYON",
+  title: "Limpeza Pós-Obra Profissional em Lisboa e Setúbal",
   description:
     "Limpeza pós-obra profissional em Lisboa e Setúbal. Remoção de pó, cimento e resíduos de construção. Preços desde 150EUR, orçamento grátis em 24h.",
   alternates: { canonical: `${SITE_URL}/limpeza-pos-obra` },
   openGraph: {
-    title: "Limpeza Pós-Obra em Lisboa e Setúbal | CLYON",
+    title: "Limpeza Pós-Obra em Lisboa e Setúbal",
     description:
       "Limpeza profissional após obras de renovação. Preços desde 150EUR em Lisboa e Setúbal.",
     url: `${SITE_URL}/limpeza-pos-obra`,

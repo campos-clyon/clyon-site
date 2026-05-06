@@ -26,12 +26,12 @@ import {
 } from "@/lib/seo-data";
 
 export const metadata: Metadata = {
-  title: "Mudanças em Lisboa e Setúbal — Rápidas, Seguras, Sem Stress | CLYON",
+  title: "Mudanças em Lisboa e Setúbal — Rápidas, Seguras, Sem Stress",
   description:
     "Mudanças residenciais e comerciais em Lisboa e Setúbal. Equipa profissional, embalagem, carga, transporte e montagem. Resposta em 24h, 163 reviews 5⭐. Orçamento grátis!",
   alternates: { canonical: `${SITE_URL}/mudancas` },
   openGraph: {
-    title: "Mudanças em Lisboa e Setúbal — Profissional e Sem Stress | CLYON",
+    title: "Mudanças em Lisboa e Setúbal — Profissional e Sem Stress",
     description:
       "Mudanças rápidas com equipa profissional. Carga, transporte, descarga e montagem. Preços desde 150€. Orçamento grátis!",
     url: `${SITE_URL}/mudancas`,

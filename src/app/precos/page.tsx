@@ -10,14 +10,14 @@ import {
 import { BUSINESS_PHONE, SITE_URL } from "@/lib/seo-data";
 
 export const metadata: Metadata = {
-  title: "Preços de Recolha de Monos, Entulho e Móveis | CLYON",
+  title: "Preços de Recolha de Monos, Entulho e Móveis",
   description:
     "Veja preços orientativos para recolha de monos, entulho, móveis, esvaziamentos e limpeza pós-obra em Lisboa, Margem Sul e Setúbal.",
   alternates: {
     canonical: `${SITE_URL}/precos`,
   },
   openGraph: {
-    title: "Preços de Recolha de Monos, Entulho e Móveis | CLYON",
+    title: "Preços de Recolha de Monos, Entulho e Móveis",
     description:
       "Faixas de preço de referência, fatores que influenciam o valor e a melhor forma de pedir orçamento com precisão.",
     url: `${SITE_URL}/precos`,

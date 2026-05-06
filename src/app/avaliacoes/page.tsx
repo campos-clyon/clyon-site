@@ -3,14 +3,14 @@ import Link from "next/link";
 import { ArrowLeft, ArrowRight, Quote, Star } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "Avaliações Reais de Clientes | CLYON",
+  title: "Avaliações Reais de Clientes",
   description:
     "Veja avaliações reais de clientes da CLYON sobre recolha de entulho, móveis, monos, limpeza pós-obra e mudanças em Lisboa, Margem Sul e Setúbal.",
   alternates: {
     canonical: "https://clyon.pt/avaliacoes",
   },
   openGraph: {
-    title: "Avaliações Reais de Clientes | CLYON",
+    title: "Avaliações Reais de Clientes",
     description:
       "Clientes destacam rapidez, simpatia, clareza no orçamento e boa execução da CLYON.",
     url: "https://clyon.pt/avaliacoes",

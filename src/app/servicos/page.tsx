@@ -16,12 +16,12 @@ import {
 import { BUSINESS_NAME, BUSINESS_PHONE, SITE_URL } from "@/lib/seo-data";
 
 export const metadata: Metadata = {
-  title: "Serviços de Recolha de Entulho, Limpezas e Mudanças | CLYON",
+  title: "Serviços de Recolha de Entulho, Limpezas e Mudanças",
   description:
     "Recolha de entulho, móveis, monos, limpeza pós-obra, esvaziamentos e mudanças em Lisboa e Setúbal. Preços desde 120EUR, orçamento grátis em 24h!",
   alternates: { canonical: `${SITE_URL}/servicos` },
   openGraph: {
-    title: "Serviços de Recolha de Entulho, Limpezas e Mudanças | CLYON",
+    title: "Serviços de Recolha de Entulho, Limpezas e Mudanças",
     description:
       "Recolha de entulho, móveis, limpeza pós-obra e mudanças em Lisboa e Setúbal. Preços desde 120EUR!",
     url: `${SITE_URL}/servicos`,

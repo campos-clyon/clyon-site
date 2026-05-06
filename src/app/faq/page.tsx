@@ -5,12 +5,12 @@ import { ArrowRight } from "lucide-react";
 import FAQClient from "./FAQClient";
 
 export const metadata: Metadata = {
-  title: "Perguntas Frequentes | CLYON",
+  title: "Perguntas Frequentes",
   description:
     "Respostas rápidas sobre recolha de entulho, móveis, monos, limpeza pós-obra, mudanças, orçamentos e funcionamento dos serviços da CLYON.",
   alternates: { canonical: "https://clyon.pt/faq" },
   openGraph: {
-    title: "Perguntas Frequentes | CLYON",
+    title: "Perguntas Frequentes",
     description:
       "Esclareça dúvidas sobre recolha, limpeza, mudanças e orçamentos da CLYON.",
     url: "https://clyon.pt/faq",

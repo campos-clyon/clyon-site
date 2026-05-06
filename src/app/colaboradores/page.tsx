@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import ColaboradorLoginClient from "./login/ColaboradorLoginClient";
 
 export const metadata: Metadata = {
-  title: "Portal do Colaborador | CLYON",
+  title: "Portal do Colaborador",
   robots: { index: false, follow: false },
 };
 

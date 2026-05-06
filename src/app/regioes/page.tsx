@@ -17,7 +17,7 @@ const simulatorCategoryMap: Record<string, string> = {
 };
 
 export const metadata: Metadata = {
-  title: "Regiões de Atuação em Lisboa, Margem Sul e Setúbal | CLYON",
+  title: "Regiões de Atuação em Lisboa, Margem Sul e Setúbal",
   description:
     "Conheça as regiões de atuação da CLYON e encontre páginas locais fortes para recolha de entulho, móveis, monos, mudanças e limpeza pós-obra.",
   alternates: {

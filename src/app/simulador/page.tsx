@@ -7,14 +7,14 @@ type CategoriaId = "entulho" | "moveis" | "monos" | "limpeza" | "mudancas" | "ca
 const categoriaIds = new Set<CategoriaId>(["entulho", "moveis", "monos", "limpeza", "mudancas", "camiao"]);
 
 export const metadata: Metadata = {
-  title: "Simulador de Preços - Calcule o Custo do Seu Contentor | CLYON",
+  title: "Simulador de Preços - Calcule o Custo do Seu Contentor",
   description:
     "Calcule online o preço de recolha de entulho, móveis ou limpeza pós-obra em Lisboa e Setúbal. Orçamento instantâneo, preços desde 120EUR!",
   alternates: {
     canonical: "https://clyon.pt/simulador",
   },
   openGraph: {
-    title: "Simulador de Preços - Calcule o Custo do Seu Contentor | CLYON",
+    title: "Simulador de Preços - Calcule o Custo do Seu Contentor",
     description:
       "Calcule o preço da sua recolha em Lisboa e Setúbal. Orçamento instantâneo online!",
     url: "https://clyon.pt/simulador",

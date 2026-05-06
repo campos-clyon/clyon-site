@@ -21,7 +21,7 @@ import {
 } from "@/lib/seo-data";
 
 export const metadata: Metadata = {
-  title: "Recolha de Móveis em Lisboa, Grande Lisboa e Margem Sul | CLYON",
+  title: "Recolha de Móveis em Lisboa, Grande Lisboa e Margem Sul",
   description:
     "Recolha de móveis com desmontagem, carregamento, transporte e descarte legal em Lisboa, Amadora, Sintra, Oeiras, Cascais, Margem Sul e Setúbal. Orçamento rápido e recolha no mesmo dia quando disponível.",
   keywords: [
@@ -38,7 +38,7 @@ export const metadata: Metadata = {
     canonical: `${SITE_URL}/recolha-de-moveis`,
   },
   openGraph: {
-    title: "Recolha de Móveis em Lisboa e Região | CLYON",
+    title: "Recolha de Móveis em Lisboa e Região",
     description:
       "Serviço profissional para recolha de móveis velhos, recheios e volumes grandes com resposta rápida e descarte legal.",
     url: `${SITE_URL}/recolha-de-moveis`,
