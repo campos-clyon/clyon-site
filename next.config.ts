@@ -8,6 +8,12 @@ const nextConfig: NextConfig = {
   },
   async redirects() {
     return [
+      // URLs antigas deprecated
+      {
+        source: "/contato",
+        destination: "/contactos",
+        permanent: true,
+      },
       {
         source: "/avaliacoes-clientes",
         destination: "/avaliacoes",
@@ -66,6 +72,26 @@ const nextConfig: NextConfig = {
       },
       {
         source: "/mudancas-palmela",
+        destination: "/mudancas",
+        permanent: true,
+      },
+      {
+        source: "/mudancas-odivelas",
+        destination: "/mudancas",
+        permanent: true,
+      },
+      {
+        source: "/mudancas-lumiar",
+        destination: "/mudancas",
+        permanent: true,
+      },
+      {
+        source: "/mudancas-sesimbra",
+        destination: "/mudancas",
+        permanent: true,
+      },
+      {
+        source: "/mudancas-costa-da-caparica",
         destination: "/mudancas",
         permanent: true,
       },
