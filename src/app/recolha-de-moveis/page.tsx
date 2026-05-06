@@ -11,6 +11,7 @@ import {
   Truck,
 } from "lucide-react";
 
+import Breadcrumb from "@/components/Breadcrumb";
 import {
   BUSINESS_NAME,
   BUSINESS_PHONE,

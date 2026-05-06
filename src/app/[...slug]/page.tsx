@@ -16,7 +16,11 @@ import { notFound } from "next/navigation";
 
 import Breadcrumb from "@/components/Breadcrumb";
 import StickyCTA from "@/components/StickyCTA";
-import { getCityContent } from "@/lib/city-content";
+import {
+  getCityServiceContent,
+  getCityBaseContent,
+  hasPriorityContent,
+} from "@/lib/city-content";
 import {
   BUSINESS_NAME,
   BUSINESS_PHONE,
@@ -75,10 +79,15 @@ function buildDescription(
 }
 
 function getServiceIntro(serviceName: string, cityName: string, regionLabel: string, serviceSlug: string, citySlug: string) {
-  const cityContent = getCityContent(citySlug);
+  // Primeiro, tentar conteúdo prioritário cidade+serviço
+  const priorityContent = getCityServiceContent(citySlug, serviceSlug);
+  if (priorityContent?.localIntro) {
+    return priorityContent.localIntro;
+  }
   
+  // Fallback para conteúdo base da cidade
+  const cityContent = getCityBaseContent(citySlug);
   if (cityContent?.localIntro) {
-    // Usar intro específico da cidade
     if (isFurnitureService(serviceSlug)) {
       return `${cityContent.localIntro} Retiramos sofás, camas, armários, mesas, colchões e eletrodomésticos com desmontagem quando necessária.`;
     }
@@ -151,7 +160,14 @@ function getPricingCopy(serviceName: string, cityName: string, serviceSlug: stri
   ];
 }
 
-function getFaqs(serviceName: string, cityName: string, regionLabel: string, serviceSlug: string, relatedCities: { name: string }[]) {
+function getFaqs(serviceName: string, cityName: string, regionLabel: string, serviceSlug: string, citySlug: string, relatedCities: { name: string }[]) {
+  // Tentar FAQs únicas do conteúdo prioritário
+  const priorityContent = getCityServiceContent(citySlug, serviceSlug);
+  if (priorityContent?.faqs && priorityContent.faqs.length > 0) {
+    return priorityContent.faqs;
+  }
+  
+  // Fallback para FAQs genéricas
   if (isFurnitureService(serviceSlug)) {
     const baseFaqs = [
       {
@@ -282,7 +298,12 @@ export default async function ServiceCityPage({ params }: Props) {
     service.slug,
   );
   const intro = getServiceIntro(service.name, city.name, city.regionLabel, service.slug, city.slug);
-  const cityContent = getCityContent(city.slug);
+  
+  // Obter conteúdo prioritário e base
+  const priorityContent = getCityServiceContent(city.slug, service.slug);
+  const cityBaseContent = getCityBaseContent(city.slug);
+  const isPriorityPage = hasPriorityContent(city.slug, service.slug);
+  
   const includedItems = getIncludedItems(service.name, city.name, service.slug);
   const excludedItems = getExcludedItems(service.slug);
   const pricingCopy = getPricingCopy(service.name, city.name, service.slug);
@@ -291,6 +312,7 @@ export default async function ServiceCityPage({ params }: Props) {
     city.name,
     city.regionLabel,
     service.slug,
+    city.slug,
     relatedCities,
   );
   const whatsappNumber = BUSINESS_PHONE.replace(/[^\d]/g, "");
@@ -463,11 +485,17 @@ export default async function ServiceCityPage({ params }: Props) {
                 Resposta reforçada em {city.name}
               </h2>
               <p className="mt-4 text-base leading-8 text-slate-600">
-                {cityContent?.accessNotes || `Trabalhamos em ${city.name} e zonas próximas com resposta rápida, orçamento claro e recolha cuidada. Retiramos os volumes validados, protegemos os acessos e deixamos o espaço pronto para a etapa seguinte.`}
+                {priorityContent?.accessNotes ?? cityBaseContent?.accessNotes ?? `Trabalhamos em ${city.name} e zonas próximas com resposta rápida, orçamento claro e recolha cuidada. Retiramos os volumes validados, protegemos os acessos e deixamos o espaço pronto para a etapa seguinte.`}
               </p>
-              {cityContent?.landmarks && cityContent.landmarks.length > 0 && (
+              {/* Highlight local se for página prioritária */}
+              {priorityContent?.neighborhoodHighlight && (
+                <p className="mt-3 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm leading-6 text-amber-800">
+                  <strong>Destaque:</strong> {priorityContent.neighborhoodHighlight}
+                </p>
+              )}
+              {cityBaseContent?.landmarks && cityBaseContent.landmarks.length > 0 && (
                 <div className="mt-4 flex flex-wrap gap-2">
-                  {cityContent.landmarks.slice(0, 6).map((landmark) => (
+                  {cityBaseContent.landmarks.slice(0, 6).map((landmark) => (
                     <span key={landmark} className="rounded-full bg-white px-3 py-1 text-sm text-slate-600 shadow-sm">
                       {landmark}
                     </span>
