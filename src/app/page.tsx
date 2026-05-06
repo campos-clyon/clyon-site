@@ -348,7 +348,7 @@ export default async function HomePage() {
               {[
                 { name: "Recolha de Móveis", href: "/recolha-de-moveis" },
                 { name: "Recolha de Entulho", href: "/recolha-de-entulho" },
-                { name: "Limpeza Pós-Obra", href: "/limpeza-pos-obra" },
+                { name: "Mudanças", href: "/mudancas" },
                 { name: "Esvaziamento de Casas", href: "/esvaziamento-casas" },
               ].map((service) => (
                 <Link
