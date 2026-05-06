@@ -39,7 +39,14 @@ export default function sitemap(): MetadataRoute.Sitemap {
   }));
 
   const localPages = CITIES.flatMap((city) =>
-    SERVICES.map((service) => ({
+    SERVICES.filter((service) => {
+      // Excluir mudanças para todas as cidades EXCETO Lisboa
+      if (service.slug === "mudancas" && city.slug !== "lisboa") {
+        return false;
+      }
+      // Incluir todas as outras combinações
+      return true;
+    }).map((service) => ({
       url: `${SITE_URL}/${getCityServiceSlug(service.slug, city.slug)}`,
       lastModified: now,
       changeFrequency: "monthly" as const,
@@ -50,7 +57,9 @@ export default function sitemap(): MetadataRoute.Sitemap {
             ? 0.94
           : service.slug === "recolha-moveis"
             ? 0.9
-            : 0.85,
+            : service.slug === "mudancas" && city.slug === "lisboa"
+              ? 0.92
+              : 0.85,
     })),
   );
 

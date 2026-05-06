@@ -28,6 +28,47 @@ const nextConfig: NextConfig = {
         destination: "/recolha-moveis-lisboa",
         permanent: true,
       },
+      // Redirects de mudanças fracas para hub principal
+      {
+        source: "/mudancas-alcochete",
+        destination: "/mudancas",
+        permanent: true,
+      },
+      {
+        source: "/mudancas-sintra",
+        destination: "/mudancas",
+        permanent: true,
+      },
+      {
+        source: "/mudancas-montijo",
+        destination: "/mudancas",
+        permanent: true,
+      },
+      {
+        source: "/mudancas-carnaxide",
+        destination: "/mudancas",
+        permanent: true,
+      },
+      {
+        source: "/mudancas-oeiras",
+        destination: "/mudancas",
+        permanent: true,
+      },
+      {
+        source: "/mudancas-corroios",
+        destination: "/mudancas",
+        permanent: true,
+      },
+      {
+        source: "/mudancas-barreiro",
+        destination: "/mudancas",
+        permanent: true,
+      },
+      {
+        source: "/mudancas-palmela",
+        destination: "/mudancas",
+        permanent: true,
+      },
     ];
   },
   async headers() {
