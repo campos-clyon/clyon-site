@@ -248,7 +248,18 @@ function getFaqs(serviceName: string, cityName: string, regionLabel: string, ser
 }
 
 export function generateStaticParams() {
-  return getAllCityServiceSlugs().map((item) => ({ slug: item.slug }));
+  const weakMudancasUrls = ["alcochete", "sintra", "montijo", "carnaxide", "oeiras", "corroios", "barreiro", "palmela"];
+  
+  return getAllCityServiceSlugs()
+    .filter((item) => {
+      // Excluir URLs fracas de mudanças (não têm conteúdo prioritário)
+      const slugString = item.slug.join("/");
+      if (slugString.startsWith("mudancas-") && weakMudancasUrls.some((city) => slugString === `mudancas-${city}`)) {
+        return false;
+      }
+      return true;
+    })
+    .map((item) => ({ slug: item.slug }));
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
