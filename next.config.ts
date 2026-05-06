@@ -23,6 +23,11 @@ const nextConfig: NextConfig = {
         destination: "/contactos",
         permanent: true,
       },
+      {
+        source: "/recolha-moveis-parque-das-nacoes",
+        destination: "/recolha-moveis-lisboa",
+        permanent: true,
+      },
     ];
   },
   async headers() {

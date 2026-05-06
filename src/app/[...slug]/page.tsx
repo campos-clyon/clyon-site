@@ -40,20 +40,33 @@ function isFurnitureService(serviceSlug: string) {
   return serviceSlug === "recolha-moveis";
 }
 
-function buildTitle(serviceName: string, cityName: string, serviceSlug: string) {
+function buildTitle(serviceName: string, cityName: string, serviceSlug: string, citySlug: string) {
+  // Páginas de high-priority com titles mais comerciais e específicas
   if (isFurnitureService(serviceSlug)) {
-    return `Recolha de Móveis em ${cityName} - Preços desde 35EUR | CLYON`;
+    if (citySlug === "lisboa") {
+      return `Recolha de Móveis em Lisboa — Sofás, Camas, Eletrodomésticos | CLYON`;
+    }
+    if (citySlug === "setubal") {
+      return `Recolha de Móveis em Setúbal — Preços Competitivos | CLYON`;
+    }
+    if (citySlug === "almada") {
+      return `Recolha de Móveis em Almada — Resposta Rápida | CLYON`;
+    }
+    return `Recolha de Móveis em ${cityName} — Preço desde 35€ | CLYON`;
   }
 
   if (serviceSlug === "recolha-entulho") {
-    return `Recolha de Entulho em ${cityName} - Preços desde 120EUR | CLYON`;
+    if (citySlug === "setubal") {
+      return `Recolha de Entulho em Setúbal — Contentores e Resposta 24h | CLYON`;
+    }
+    return `Recolha de Entulho em ${cityName} — Preço desde 120€ | CLYON`;
   }
 
   if (serviceSlug === "limpeza-pos-obra") {
-    return `Limpeza Pós-Obra em ${cityName} - Orçamento Grátis | CLYON`;
+    return `Limpeza Pós-Obra em ${cityName} — Resposta em 24h | CLYON`;
   }
 
-  return `${serviceName} em ${cityName} - Preços e Orçamento | CLYON`;
+  return `${serviceName} em ${cityName} — Orçamento Grátis | CLYON`;
 }
 
 function buildDescription(
@@ -61,20 +74,33 @@ function buildDescription(
   cityName: string,
   regionLabel: string,
   serviceSlug: string,
+  citySlug: string,
 ) {
   if (isFurnitureService(serviceSlug)) {
-    return `Recolha de móveis em ${cityName}, ${regionLabel}. Preços desde 35EUR, desmontagem incluída, 163 avaliações 5 estrelas. Pedir orçamento grátis!`;
+    if (citySlug === "lisboa") {
+      return `Recolha de móveis em Lisboa: sofás, camas, armários, eletrodomésticos. Desmontagem, carga, transporte. Resposta rápida em 24h. 163 reviews 5⭐. Orçamento grátis!`;
+    }
+    if (citySlug === "setubal") {
+      return `Recolha de móveis em Setúbal com preços mais competitivos — somos vizinhos! Sofás, camas, eletrodomésticos. Resposta em 24h. Orçamento grátis.`;
+    }
+    if (citySlug === "almada") {
+      return `Recolha de móveis em Almada e zona de Caparica. Sofás, camas, armários, eletrodomésticos. Resposta rápida em 24h. Orçamento grátis!`;
+    }
+    return `Recolha de móveis em ${cityName}, ${regionLabel}. Desmontagem e transporte. Resposta rápida em 24h, 163 reviews 5⭐. Orçamento grátis!`;
   }
 
   if (serviceSlug === "recolha-entulho") {
-    return `Recolha de entulho em ${cityName}, ${regionLabel}. Preços desde 120EUR, entrega em 24h, 163 avaliações 5 estrelas. Orçamento grátis!`;
+    if (citySlug === "setubal") {
+      return `Recolha de entulho em Setúbal: contentores 3m³, 5m³, 8m³. Entrega em 24h, resposta rápida. Preço desde 120€. Orçamento grátis!`;
+    }
+    return `Recolha de entulho em ${cityName}, ${regionLabel}. Contentores, sacos big bag, limpeza fina. Entrega em 24h. Preço desde 120€. Orçamento grátis!`;
   }
 
   if (serviceSlug === "limpeza-pos-obra") {
-    return `Limpeza pós-obra em ${cityName}, ${regionLabel}. Equipa profissional, resposta em 24h, 163 avaliações 5 estrelas. Pedir orçamento grátis!`;
+    return `Limpeza pós-obra profissional em ${cityName}. Retiramos pó de obra, manchas, cimento. Resposta em 24h, equipa experiente. Orçamento grátis!`;
   }
 
-  return `${serviceName} em ${cityName}, ${regionLabel}. Resposta em 24h, orçamento grátis, 163 avaliações 5 estrelas. Pedir orçamento agora!`;
+  return `${serviceName} em ${cityName}, ${regionLabel}. Resposta rápida em 24h, 163 reviews 5⭐. Orçamento grátis!`;
 }
 
 function getServiceIntro(serviceName: string, cityName: string, regionLabel: string, serviceSlug: string, citySlug: string) {
@@ -234,12 +260,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 
   const { city, service } = parsed;
-  const title = buildTitle(service.name, city.name, service.slug);
+  const title = buildTitle(service.name, city.name, service.slug, city.slug);
   const description = buildDescription(
     service.name,
     city.name,
     city.regionLabel,
     service.slug,
+    city.slug,
   );
   const canonical = `${SITE_URL}/${getCityServiceSlug(service.slug, city.slug)}`;
 
@@ -289,12 +316,13 @@ export default async function ServiceCityPage({ params }: Props) {
   }
 
   const pageUrl = `${SITE_URL}/${getCityServiceSlug(service.slug, city.slug)}`;
-  const title = buildTitle(service.name, city.name, service.slug);
+  const title = buildTitle(service.name, city.name, service.slug, city.slug);
   const description = buildDescription(
     service.name,
     city.name,
     city.regionLabel,
     service.slug,
+    city.slug,
   );
   const intro = getServiceIntro(service.name, city.name, city.regionLabel, service.slug, city.slug);
   

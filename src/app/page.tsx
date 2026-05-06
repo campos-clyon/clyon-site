@@ -20,16 +20,16 @@ import { getCityServiceSlug } from "@/lib/seo-data";
 import { getHeroCarouselImages } from "@/lib/work-gallery";
 
 export const metadata: Metadata = {
-  title: "CLYON - Recolha de Entulho e Aluguer de Contentores em Lisboa e Setúbal",
+  title: "CLYON — Recolha de Móveis, Entulho e Mudanças em Lisboa e Setúbal",
   description:
-    "Recolha de entulho, móveis e monos em Lisboa e Setúbal. Entrega em 24h, preços desde 120EUR, 163 avaliações 5 estrelas. Pedir orçamento grátis agora!",
+    "Recolha de móveis, entulho, mudanças e limpeza pós-obra em Lisboa e Setúbal. Resposta em 24h, 163 reviews 5⭐. Orçamento grátis — ligue agora!",
   alternates: {
     canonical: "https://clyon.pt",
   },
   openGraph: {
-    title: "CLYON - Recolha de Entulho e Aluguer de Contentores em Lisboa e Setúbal",
+    title: "CLYON — Recolha de Móveis, Entulho e Mudanças em Lisboa e Setúbal",
     description:
-      "Recolha de entulho, móveis, monos, limpeza pós-obra e mudanças em Lisboa e Setúbal. Entrega em 24h, preços desde 120EUR!",
+      "Recolha de móveis, entulho, mudanças e limpeza pós-obra com resposta rápida em Lisboa e Setúbal. Orçamento grátis!",
     url: "https://clyon.pt",
   },
 };
