@@ -26,12 +26,12 @@ import {
 } from "@/lib/seo-data";
 
 export const metadata: Metadata = {
-  title: "Mudanças em Lisboa e Setúbal - Preços desde 150EUR | CLYON",
+  title: "Mudanças em Lisboa, Margem Sul e Setúbal | CLYON",
   description:
     "Serviço de mudanças residenciais e comerciais em Lisboa, Margem Sul e Setúbal. Carga, transporte, descarga e montagem. Orçamento grátis em 24h.",
   alternates: { canonical: `${SITE_URL}/mudancas` },
   openGraph: {
-    title: "Mudanças Residenciais e Comerciais | CLYON",
+    title: "Mudanças em Lisboa e Setúbal | CLYON",
     description:
       "Mudanças com equipa profissional em Lisboa e Setúbal. Carga, transporte, descarga e montagem. Preços desde 150EUR.",
     url: `${SITE_URL}/mudancas`,

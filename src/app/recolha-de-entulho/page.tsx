@@ -26,12 +26,12 @@ import {
 } from "@/lib/seo-data";
 
 export const metadata: Metadata = {
-  title: "Recolha de Entulho - Aluguer de Contentores | Preços desde 120EUR | CLYON",
+  title: "Recolha de Entulho e Aluguer de Contentores em Lisboa e Setúbal | CLYON",
   description:
     "Recolha de entulho e aluguer de contentores em Lisboa e Setúbal. Entrega em 24h, preços desde 120EUR, 163 avaliações 5 estrelas. Orçamento grátis!",
   alternates: { canonical: `${SITE_URL}/recolha-de-entulho` },
   openGraph: {
-    title: "Recolha de Entulho e Aluguer de Contentores | CLYON",
+    title: "Recolha de Entulho e Contentores em Lisboa e Setúbal | CLYON",
     description:
       "Recolha de entulho e aluguer de contentores. Entrega em 24h, preços desde 120EUR em Lisboa e Setúbal.",
     url: `${SITE_URL}/recolha-de-entulho`,

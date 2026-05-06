@@ -26,12 +26,12 @@ import {
 } from "@/lib/seo-data";
 
 export const metadata: Metadata = {
-  title: "Esvaziamento de Casas - Recheios Completos | Preços desde 350EUR | CLYON",
+  title: "Esvaziamento de Casas em Lisboa e Setúbal | Heranças e Recheios | CLYON",
   description:
     "Esvaziamento completo de casas, apartamentos e heranças em Lisboa e Setúbal. Removemos tudo: móveis, eletrodomésticos, roupas e objetos. Preços desde 350EUR.",
   alternates: { canonical: `${SITE_URL}/esvaziamento-casas` },
   openGraph: {
-    title: "Esvaziamento de Casas - Recheios Completos | CLYON",
+    title: "Esvaziamento de Casas e Heranças em Lisboa e Setúbal | CLYON",
     description:
       "Esvaziamento completo de casas e heranças. Preços desde 350EUR em Lisboa e Setúbal.",
     url: `${SITE_URL}/esvaziamento-casas`,
