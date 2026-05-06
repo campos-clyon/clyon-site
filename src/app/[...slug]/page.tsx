@@ -15,7 +15,6 @@ import {
 import { notFound } from "next/navigation";
 
 import Breadcrumb from "@/components/Breadcrumb";
-import StickyCTA from "@/components/StickyCTA";
 import {
   getCityServiceContent,
   getCityBaseContent,
@@ -830,8 +829,6 @@ export default async function ServiceCityPage({ params }: Props) {
           </div>
         </div>
       </section>
-
-      <StickyCTA />
 
       <script
         type="application/ld+json"

@@ -11,6 +11,7 @@ import {
   Truck,
 } from "lucide-react";
 
+import Breadcrumb from "@/components/Breadcrumb";
 import CTABlock from "@/components/CTABlock";
 import FAQSection from "@/components/service/FAQSection";
 import PricingTable from "@/components/service/PricingTable";
@@ -134,9 +135,16 @@ export default function RecolhaEntulhoPage() {
       {/* Hero */}
       <section className="relative overflow-hidden bg-gradient-to-br from-amber-50 via-amber-50/50 to-white">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(251,191,36,0.18),_transparent_36%),radial-gradient(circle_at_bottom_right,_rgba(245,158,11,0.12),_transparent_32%)]" />
-        <div className="relative mx-auto max-w-7xl px-6 py-14 lg:px-8 lg:py-18">
-          <div className="grid gap-10 lg:grid-cols-[1fr_0.92fr] lg:items-center">
-            <div className="max-w-3xl">
+<div className="relative mx-auto max-w-7xl px-6 py-14 lg:px-8 lg:py-18">
+  <Breadcrumb
+    items={[
+      { label: "Serviços", href: "/servicos" },
+      { label: "Recolha de Entulho" },
+    ]}
+    className="mb-6"
+  />
+  <div className="grid gap-10 lg:grid-cols-[1fr_0.92fr] lg:items-center">
+  <div className="max-w-3xl">
               <div className="inline-flex items-center gap-2 rounded-full border border-amber-200 bg-white/90 px-4 py-2 text-sm font-semibold uppercase tracking-[0.18em] text-amber-700 shadow-sm">
                 <HardHat className="h-4 w-4" />
                 Recolha de entulho em Lisboa e Setúbal

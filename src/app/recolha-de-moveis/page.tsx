@@ -218,6 +218,13 @@ export default function RecolhaDeMoveisPage() {
       <section className="relative overflow-hidden bg-gradient-to-br from-cyan-100 via-cyan-50 to-white">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(34,211,238,0.22),_transparent_36%),radial-gradient(circle_at_bottom_right,_rgba(6,182,212,0.14),_transparent_32%)]" />
         <div className="relative mx-auto max-w-7xl px-6 py-14 lg:px-8 lg:py-18">
+          <Breadcrumb
+            items={[
+              { label: "Serviços", href: "/servicos" },
+              { label: "Recolha de Móveis" },
+            ]}
+            className="mb-6"
+          />
           <div className="grid gap-10 lg:grid-cols-[1fr_0.92fr] lg:items-center">
             <div className="max-w-3xl">
               <div className="inline-flex items-center gap-2 rounded-full border border-cyan-200 bg-white/90 px-4 py-2 text-sm font-semibold uppercase tracking-[0.18em] text-cyan-700 shadow-sm">
