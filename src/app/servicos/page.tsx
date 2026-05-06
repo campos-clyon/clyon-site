@@ -70,12 +70,12 @@ const services = [
     cta: "Ver serviço",
   },
   {
-    title: "Mudanças e Apoio",
+    title: "Mudanças",
     description:
-      "Ajudamos em mudanças residenciais e comerciais com transporte, carga, descarga e organização do pedido.",
+      "Mudanças residenciais e comerciais com carga, transporte, descarga e montagem de móveis. Equipa profissional.",
     icon: Truck,
-    href: "/contactos",
-    cta: "Falar connosco",
+    href: "/mudancas",
+    cta: "Ver serviço",
   },
 ];
 

@@ -34,9 +34,9 @@ export default function Footer() {
   ];
   const extraServices = [
     { label: "Recolha de Móveis", href: "/recolha-de-moveis" },
-    { label: "Esvaziamento de Casas", href: "/esvaziamento-casas" },
-    { label: "Limpeza Pós-Obra", href: "/limpeza-pos-obra" },
     { label: "Recolha de Entulho", href: "/recolha-de-entulho" },
+    { label: "Mudanças", href: "/mudancas" },
+    { label: "Esvaziamento de Casas", href: "/esvaziamento-casas" },
   ];
 
   return (
