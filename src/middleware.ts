@@ -31,7 +31,29 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(redirectUrl, 308);
   }
 
-  // Redirect mudanças fracas para /mudancas
+  // Redirect URLs com cedilha "mudanças" para versão sem acento "mudancas"
+  // Trata tanto /mudanças como a versão URL-encoded /mudan%C3%A7as
+  if (nextUrl.pathname.includes("mudan%C3%A7as") || nextUrl.pathname.includes("mudanças")) {
+    // Decodifica a URL para trabalhar com o pathname descodificado
+    const decodedPath = decodeURIComponent(nextUrl.pathname);
+    
+    // Se for /mudanças-lisboa, redirecionar para /mudancas-lisboa
+    if (decodedPath === "/mudanças-lisboa") {
+      return NextResponse.redirect(new URL("/mudancas-lisboa", request.url), 301);
+    }
+    
+    // Se for /mudanças (sem cidade específica), redirecionar para /mudancas
+    if (decodedPath === "/mudanças") {
+      return NextResponse.redirect(new URL("/mudancas", request.url), 301);
+    }
+    
+    // Se for /mudanças-[qualquer outra cidade], redirecionar para /mudancas
+    if (decodedPath.startsWith("/mudanças-")) {
+      return NextResponse.redirect(new URL("/mudancas", request.url), 301);
+    }
+  }
+
+  // Redirect mudanças fracas sem cedilha (sem acento) para /mudancas
   if (nextUrl.pathname.startsWith("/mudancas-")) {
     const city = nextUrl.pathname.substring(10); // Remove "/mudancas-"
     if (WEAK_MUDANCAS_CITIES.includes(city)) {
