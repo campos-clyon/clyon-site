@@ -4,6 +4,7 @@ import { Inter, Poppins } from "next/font/google";
 import DeferredCookieConsent from "@/components/DeferredCookieConsent";
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
+import StickyCTA from "@/components/StickyCTA";
 import { TrpcProvider } from "@/components/TrpcProvider";
 import {
   BUSINESS_ADDRESS,
@@ -231,6 +232,7 @@ export default function RootLayout({
           <Header />
           <main className="site-page-shell pt-[76px]">{children}</main>
           <Footer />
+          <StickyCTA />
           <DeferredCookieConsent />
         </TrpcProvider>
       </body>

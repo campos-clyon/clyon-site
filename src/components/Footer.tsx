@@ -33,10 +33,10 @@ export default function Footer() {
     "Odivelas",
   ];
   const extraServices = [
-    "Recolha de móveis",
-    "Esvaziamento de casas",
-    "Limpeza pós-obra",
-    "Recolha de entulho",
+    { label: "Recolha de Móveis", href: "/recolha-de-moveis" },
+    { label: "Esvaziamento de Casas", href: "/esvaziamento-casas" },
+    { label: "Limpeza Pós-Obra", href: "/limpeza-pos-obra" },
+    { label: "Recolha de Entulho", href: "/recolha-de-entulho" },
   ];
 
   return (
@@ -52,12 +52,13 @@ export default function Footer() {
 
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
             {extraServices.map((item) => (
-              <div
-                key={item}
-                className="rounded-2xl border border-slate-200 bg-white px-4 py-4 text-sm font-medium text-slate-700 shadow-[0_10px_24px_-20px_rgba(15,23,42,0.5)]"
+              <Link
+                key={item.href}
+                href={item.href}
+                className="rounded-2xl border border-slate-200 bg-white px-4 py-4 text-sm font-medium text-slate-700 shadow-[0_10px_24px_-20px_rgba(15,23,42,0.5)] transition hover:-translate-y-0.5 hover:shadow-md"
               >
-                {item}
-              </div>
+                {item.label}
+              </Link>
             ))}
           </div>
         </div>
@@ -107,23 +108,23 @@ export default function Footer() {
               </h3>
               <ul className="space-y-3 text-[0.98rem] text-cyan-50/82">
                 <li>
-                  <Link href="/recolha-entulho-lisboa" className="transition-colors hover:text-white">
-                    Recolha de Entulho Lisboa
+                  <Link href="/recolha-de-moveis" className="transition-colors hover:text-white">
+                    Recolha de Móveis
                   </Link>
                 </li>
                 <li>
-                  <Link href="/recolha-moveis-lisboa" className="transition-colors hover:text-white">
-                    Recolha de Móveis Lisboa
+                  <Link href="/recolha-de-entulho" className="transition-colors hover:text-white">
+                    Recolha de Entulho
                   </Link>
                 </li>
                 <li>
-                  <Link href="/limpeza-pos-obra-lisboa" className="transition-colors hover:text-white">
-                    Limpeza Pós-Obra Lisboa
+                  <Link href="/limpeza-pos-obra" className="transition-colors hover:text-white">
+                    Limpeza Pós-Obra
                   </Link>
                 </li>
                 <li>
-                  <Link href="/servicos" className="transition-colors hover:text-white">
-                    Todos os serviços
+                  <Link href="/esvaziamento-casas" className="transition-colors hover:text-white">
+                    Esvaziamento de Casas
                   </Link>
                 </li>
                 <li>

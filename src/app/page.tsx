@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 
 import ImageCarousel from "@/components/ImageCarousel";
-import { CITIES, REGIONS, getCityServiceSlug } from "@/lib/seo-data";
+import { getCityServiceSlug } from "@/lib/seo-data";
 import { getHeroCarouselImages } from "@/lib/work-gallery";
 
 export const metadata: Metadata = {
@@ -212,10 +212,6 @@ export const revalidate = 3600;
 
 export default async function HomePage() {
   const workImages = await getHeroCarouselImages();
-  const regionCoverage = REGIONS.map((region) => ({
-    ...region,
-    cities: CITIES.filter((city) => city.region === region.slug).slice(0, 4),
-  }));
 
   return (
     <div className="min-h-screen bg-white text-slate-900">
@@ -589,32 +585,6 @@ export default async function HomePage() {
                 <p className="mt-4 text-sm leading-8 text-slate-600">{faq.answer}</p>
               </article>
             ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="bg-white py-16 lg:py-20">
-        <div className="mx-auto grid max-w-7xl gap-8 px-6 lg:grid-cols-[0.92fr_1.08fr] lg:px-8">
-          <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.24em] text-cyan-700">Cobertura regional</p>
-            <h2 className="mt-4 text-4xl font-bold leading-tight text-slate-950 sm:text-5xl">Presença local em Lisboa, Margem Sul e Setúbal.</h2>
-          </div>
-
-          <div className="rounded-[30px] border border-cyan-100 bg-white p-7 shadow-[0_22px_55px_-34px_rgba(14,116,144,0.18)]">
-            <div className="grid gap-6 lg:grid-cols-3">
-              {regionCoverage.map((region) => (
-                <div key={region.slug} className="rounded-[24px] border border-cyan-100 bg-cyan-50/70 p-5">
-                  <h3 className="text-lg font-bold text-slate-950">{region.shortLabel}</h3>
-                  <div className="mt-4 flex flex-wrap gap-2">
-                    {region.cities.map((city) => (
-                      <Link key={city.slug} href={`/${getCityServiceSlug("recolha-moveis", city.slug)}`} className="rounded-full border border-cyan-200 bg-white px-3 py-1.5 text-sm font-medium text-cyan-700 transition hover:bg-cyan-50">
-                        {city.name}
-                      </Link>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
           </div>
         </div>
       </section>

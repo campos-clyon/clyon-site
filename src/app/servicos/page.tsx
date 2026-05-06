@@ -30,52 +30,52 @@ export const metadata: Metadata = {
 
 const services = [
   {
-    title: "Recolha de Entulho",
-    description:
-      "Retiramos restos de obra, sacos, materiais mistos e volumes pesados com triagem simples e transporte profissional.",
-    icon: Trash2,
-    href: "/simulador",
-    cta: "Pedir orçamento",
-  },
-  {
     title: "Recolha de Móveis",
     description:
       "Sofás, camas, armários, recheios e eletrodomésticos com desmontagem, carregamento e encaminhamento responsável.",
     icon: Home,
     href: "/recolha-de-moveis",
-    cta: "Ver página de móveis",
+    cta: "Ver serviço",
   },
   {
-    title: "Recolha de Monos",
+    title: "Recolha de Entulho",
     description:
-      "Objetos volumosos, sucata, recheios soltos e espaço acumulado em garagens, arrecadações, lojas e apartamentos.",
-    icon: Wrench,
-    href: "/simulador",
-    cta: "Falar connosco",
+      "Retiramos restos de obra, sacos, materiais mistos e volumes pesados com triagem simples e transporte profissional.",
+    icon: Trash2,
+    href: "/recolha-de-entulho",
+    cta: "Ver serviço",
   },
   {
     title: "Limpeza Pós-Obra",
     description:
       "Limpeza final para deixar a casa, loja ou escritório pronto a usar depois da obra, com ritmo e acabamento cuidado.",
     icon: Zap,
-    href: "/simulador",
-    cta: "Pedir limpeza",
+    href: "/limpeza-pos-obra",
+    cta: "Ver serviço",
+  },
+  {
+    title: "Esvaziamento de Casas",
+    description:
+      "Libertação completa de casas, apartamentos, lojas e imóveis com recolha de móveis, monos e resíduos acumulados.",
+    icon: ShieldCheck,
+    href: "/esvaziamento-casas",
+    cta: "Ver serviço",
+  },
+  {
+    title: "Recolha de Monos",
+    description:
+      "Objetos volumosos, sucata, recheios soltos e espaço acumulado em garagens, arrecadações, lojas e apartamentos.",
+    icon: Wrench,
+    href: "/recolha-de-moveis",
+    cta: "Ver serviço",
   },
   {
     title: "Mudanças e Apoio",
     description:
       "Ajudamos em mudanças residenciais e comerciais com transporte, carga, descarga e organização do pedido.",
     icon: Truck,
-    href: "/simulador",
-    cta: "Pedir apoio",
-  },
-  {
-    title: "Esvaziamentos",
-    description:
-      "Libertacao completa de casas, apartamentos, lojas e imóveis com recolha de móveis, monos e resíduos acumulados.",
-    icon: ShieldCheck,
-    href: "/simulador",
-    cta: "Resolver esvaziamento",
+    href: "/contactos",
+    cta: "Falar connosco",
   },
 ];
 

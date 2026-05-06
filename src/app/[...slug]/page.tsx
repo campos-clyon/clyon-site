@@ -14,6 +14,9 @@ import {
 } from "lucide-react";
 import { notFound } from "next/navigation";
 
+import Breadcrumb from "@/components/Breadcrumb";
+import StickyCTA from "@/components/StickyCTA";
+import { getCityContent } from "@/lib/city-content";
 import {
   BUSINESS_NAME,
   BUSINESS_PHONE,
@@ -71,7 +74,18 @@ function buildDescription(
   return `${serviceName} em ${cityName}, ${regionLabel}. Resposta em 24h, orçamento grátis, 163 avaliações 5 estrelas. Pedir orçamento agora!`;
 }
 
-function getServiceIntro(serviceName: string, cityName: string, regionLabel: string, serviceSlug: string) {
+function getServiceIntro(serviceName: string, cityName: string, regionLabel: string, serviceSlug: string, citySlug: string) {
+  const cityContent = getCityContent(citySlug);
+  
+  if (cityContent?.localIntro) {
+    // Usar intro específico da cidade
+    if (isFurnitureService(serviceSlug)) {
+      return `${cityContent.localIntro} Retiramos sofás, camas, armários, mesas, colchões e eletrodomésticos com desmontagem quando necessária.`;
+    }
+    return `${cityContent.localIntro} ${serviceName} com resposta rápida e orçamento claro.`;
+  }
+
+  // Fallback genérico
   if (isFurnitureService(serviceSlug)) {
     return `Fazemos recolha de móveis em ${cityName} para apartamentos, moradias, lojas e escritórios. Retiramos sofás, camas, armários, mesas, colchões e eletrodomésticos com desmontagem quando necessária, carregamento porta a porta e encaminhamento responsável em ${regionLabel}.`;
   }
@@ -267,7 +281,8 @@ export default async function ServiceCityPage({ params }: Props) {
     city.regionLabel,
     service.slug,
   );
-  const intro = getServiceIntro(service.name, city.name, city.regionLabel, service.slug);
+  const intro = getServiceIntro(service.name, city.name, city.regionLabel, service.slug, city.slug);
+  const cityContent = getCityContent(city.slug);
   const includedItems = getIncludedItems(service.name, city.name, service.slug);
   const excludedItems = getExcludedItems(service.slug);
   const pricingCopy = getPricingCopy(service.name, city.name, service.slug);
@@ -366,9 +381,18 @@ export default async function ServiceCityPage({ params }: Props) {
   const isCostaFurniturePage =
     isFurnitureService(service.slug) && city.slug === "costa-da-caparica";
 
+  // Determinar link para hub de serviço
+  const serviceHubMap: Record<string, { href: string; label: string }> = {
+    "recolha-moveis": { href: "/recolha-de-moveis", label: "Ver todos os serviços de recolha de móveis" },
+    "recolha-entulho": { href: "/recolha-de-entulho", label: "Ver todos os serviços de recolha de entulho" },
+    "limpeza-pos-obra": { href: "/limpeza-pos-obra", label: "Ver todos os serviços de limpeza pós-obra" },
+    "esvaziamento-casas": { href: "/esvaziamento-casas", label: "Ver todos os serviços de esvaziamento" },
+  };
+  const currentServiceHub = serviceHubMap[service.slug];
+
   const supportLinks = isFurnitureService(service.slug)
     ? [
-        { href: "/recolha-de-moveis", label: "Página principal de recolha de móveis" },
+        ...(currentServiceHub ? [currentServiceHub] : []),
         { href: `/${getCityServiceSlug("recolha-monos", city.slug)}`, label: `Recolha de monos em ${city.name}` },
         { href: `/${getCityServiceSlug("esvaziamento-casas", city.slug)}`, label: `Esvaziamento de casas em ${city.name}` },
         { href: `/${getCityServiceSlug("recolha-entulho", city.slug)}`, label: `Recolha de entulho em ${city.name}` },
@@ -382,9 +406,9 @@ export default async function ServiceCityPage({ params }: Props) {
           : []),
       ]
     : [
+        ...(currentServiceHub ? [currentServiceHub] : []),
         { href: "/servicos", label: "Todos os serviços" },
         { href: "/simulador", label: "Pedir orçamento" },
-        { href: "/contactos", label: "Falar connosco" },
         { href: `/${getCityServiceSlug("recolha-moveis", city.slug)}`, label: `Recolha de móveis em ${city.name}` },
       ];
 
@@ -393,6 +417,14 @@ export default async function ServiceCityPage({ params }: Props) {
       <section className="relative overflow-hidden bg-gradient-to-br from-cyan-100 via-cyan-50 to-white">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(34,211,238,0.22),_transparent_34%),radial-gradient(circle_at_bottom_right,_rgba(6,182,212,0.14),_transparent_30%)]" />
         <div className="relative mx-auto max-w-7xl px-6 py-14 lg:px-8 lg:py-18">
+          <Breadcrumb
+            items={[
+              { label: "Regiões", href: "/regioes" },
+              { label: region.name, href: `/regioes/${region.slug}` },
+              { label: `${service.shortName} em ${city.name}` },
+            ]}
+            className="mb-6"
+          />
           <div className="grid gap-10 lg:grid-cols-[1fr_0.95fr] lg:items-center">
             <div className="max-w-3xl">
               <div className="inline-flex items-center gap-2 rounded-full border border-cyan-200 bg-white/90 px-4 py-2 text-sm font-semibold uppercase tracking-[0.18em] text-cyan-700 shadow-sm">
@@ -431,12 +463,17 @@ export default async function ServiceCityPage({ params }: Props) {
                 Resposta reforçada em {city.name}
               </h2>
               <p className="mt-4 text-base leading-8 text-slate-600">
-                Trabalhamos em {city.name} e zonas próximas com resposta rápida,
-                orçamento claro e recolha cuidada. Retiramos os volumes validados,
-                protegemos os acessos e deixamos o espaço pronto para a etapa
-                seguinte, seja renovação, mudança, arrendamento ou simples libertação
-                de área.
+                {cityContent?.accessNotes || `Trabalhamos em ${city.name} e zonas próximas com resposta rápida, orçamento claro e recolha cuidada. Retiramos os volumes validados, protegemos os acessos e deixamos o espaço pronto para a etapa seguinte.`}
               </p>
+              {cityContent?.landmarks && cityContent.landmarks.length > 0 && (
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {cityContent.landmarks.slice(0, 6).map((landmark) => (
+                    <span key={landmark} className="rounded-full bg-white px-3 py-1 text-sm text-slate-600 shadow-sm">
+                      {landmark}
+                    </span>
+                  ))}
+                </div>
+              )}
               <div className="mt-6 grid gap-3 sm:grid-cols-2">
                 <div className="rounded-[22px] border border-cyan-100 bg-cyan-50/80 p-4">
                   <p className="text-sm font-semibold text-slate-950">Tempo médio</p>
@@ -742,7 +779,7 @@ export default async function ServiceCityPage({ params }: Props) {
           </div>
           <p className="mt-4 max-w-3xl text-base leading-8 text-slate-600">
             Diga-nos o que pretende retirar, quantos volumes tem e como é o acesso ao
-            imóvel. Com essa informação conseguimos responder mais depressa e marcar
+            imóvel. Com essa informaç��o conseguimos responder mais depressa e marcar
             a recolha com maior precisão.
           </p>
           <div className="mt-6 flex flex-col gap-3 sm:flex-row">
@@ -765,6 +802,8 @@ export default async function ServiceCityPage({ params }: Props) {
           </div>
         </div>
       </section>
+
+      <StickyCTA />
 
       <script
         type="application/ld+json"
