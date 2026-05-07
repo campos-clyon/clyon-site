@@ -254,23 +254,10 @@ export default function Footer() {
         href={whatsappUrl}
         target="_blank"
         rel="noreferrer"
-        className="group fixed bottom-6 right-6 z-50 inline-flex h-16 w-16 items-center justify-center rounded-full border border-emerald-300/40 bg-[linear-gradient(135deg,#25d366_0%,#16b857_100%)] text-white shadow-[0_18px_42px_-16px_rgba(37,211,102,0.72)] ring-1 ring-emerald-200/30 transition duration-200 hover:scale-[1.06] hover:shadow-[0_22px_52px_-14px_rgba(37,211,102,0.82)] active:scale-[0.98] animate-[whatsapp-bounce_2.2s_ease-in-out_infinite]"
+        className="group fixed bottom-6 right-6 z-50 hidden h-14 w-14 items-center justify-center rounded-full bg-emerald-500 text-white shadow-lg transition hover:bg-emerald-600 hover:scale-105 md:inline-flex"
         aria-label="Falar no WhatsApp"
       >
-        <style>{`
-          @keyframes whatsapp-bounce {
-            0%, 100% { transform: translateY(0); }
-            18% { transform: translateY(-4px); }
-            30% { transform: translateY(0); }
-            42% { transform: translateY(-8px); }
-            54% { transform: translateY(0); }
-          }
-        `}</style>
-        <span className="absolute inset-0 rounded-full bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.24),transparent_62%)]" />
-        <span className="absolute -inset-2 rounded-full bg-emerald-300/25 blur-xl transition-opacity duration-200 group-hover:opacity-100" />
-        <span className="relative flex h-10 w-10 items-center justify-center rounded-full bg-white/14 ring-1 ring-white/18">
-          <MessageCircle className="h-5 w-5 text-white" />
-        </span>
+        <MessageCircle className="h-6 w-6 text-white" />
       </a>
     </>
   );
