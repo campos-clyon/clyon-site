@@ -213,8 +213,8 @@ export default async function HomePage() {
     <div className="min-h-screen bg-slate-100">
       {/* Hero */}
       <section className="bg-white">
-        <div className="mx-auto max-w-7xl px-6 pb-24 pt-16 lg:px-8 lg:pb-32 lg:pt-24">
-          <div className="grid items-center gap-12 lg:grid-cols-2 lg:gap-16">
+        <div className="mx-auto max-w-7xl px-6 pb-16 pt-12 sm:pb-20 sm:pt-16 lg:px-8 lg:pb-28 lg:pt-20">
+          <div className="grid items-center gap-10 lg:grid-cols-2 lg:gap-14">
             <div className="max-w-xl">
               <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-medium text-slate-600">
                 <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
@@ -250,7 +250,7 @@ export default async function HomePage() {
                 </a>
               </div>
 
-              <div className="mt-10 flex items-center gap-8">
+              <div className="mt-8 flex items-center gap-6 sm:mt-10 sm:gap-8">
                 {[
                   { value: "163", label: "avaliacoes" },
                   { value: "24h", label: "entrega" },
