@@ -74,10 +74,10 @@ const categorias: Categoria[] = [
 const categoriaIds = new Set<CategoriaId>(["entulho", "moveis", "monos", "limpeza", "mudancas", "camiao"]);
 
 const simulatorPrimaryButtonClass =
-  "site-btn-primary";
+  "bg-cyan-600 text-white border-2 border-cyan-600 hover:bg-cyan-700";
 
 const simulatorSecondaryButtonClass =
-  "site-btn-secondary";
+  "bg-white text-slate-600 border border-slate-200 hover:border-slate-300 hover:bg-slate-50";
 
 type SimuladorClientProps = {
   initialCategoriaId?: CategoriaId | null;
@@ -641,7 +641,7 @@ export default function SimuladorClient({ initialCategoriaId = null }: Simulador
                   type="button"
                   onClick={calcularDistancia}
                   disabled={!podeCalcularDistancia || kmLoading}
-                  className="site-btn-primary w-full py-5 text-base"
+                  className="w-full rounded-xl bg-cyan-600 py-4 text-base font-semibold text-white hover:bg-cyan-700"
                 >
                   {kmLoading ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Route className="mr-2 h-5 w-5" />}
                   Calcular distância
@@ -802,7 +802,7 @@ export default function SimuladorClient({ initialCategoriaId = null }: Simulador
                     onClick={calcularOrcamento}
                     disabled={!podeCalcularOrcamento}
                     className={cn(
-                      "site-btn-primary w-full py-5 text-base",
+                      "w-full rounded-xl bg-cyan-600 py-4 text-base font-semibold text-white hover:bg-cyan-700",
                       podeCalcularOrcamento &&
                         "border border-cyan-300 shadow-[0_0_0_0_rgba(34,211,238,0.55)] animate-[budget-button-pulse_1.8s_ease-in-out_infinite]",
                     )}
@@ -905,7 +905,7 @@ export default function SimuladorClient({ initialCategoriaId = null }: Simulador
                       type="button"
                       onClick={confirmarPedido}
                       className={cn(
-                        "site-btn-primary w-full py-6 text-base",
+                        "w-full rounded-xl bg-cyan-600 py-5 text-base font-semibold text-white hover:bg-cyan-700",
                         highlightBudget &&
                           "border border-cyan-200/70 animate-[whatsapp-cta-pulse_1.2s_ease-in-out_infinite]",
                       )}
@@ -945,7 +945,7 @@ export default function SimuladorClient({ initialCategoriaId = null }: Simulador
                 <Button
                   type="button"
                   onClick={confirmarPedido}
-                  className="site-btn-primary hidden mt-4 w-full py-6 text-base"
+                  className="mt-4 hidden w-full rounded-xl bg-cyan-600 py-5 text-base font-semibold text-white hover:bg-cyan-700"
                 >
                   <Phone className="mr-2 h-5 w-5" />
                   Solicitar este serviço no WhatsApp
@@ -1276,7 +1276,7 @@ function PeopleSelector({
               onManualModeChange(false);
               onChange("");
             }}
-            className="site-btn-secondary h-10 min-h-10 rounded-[18px] px-3 py-2 text-sm"
+            className="h-10 min-h-10 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600 hover:border-slate-300 hover:bg-slate-50"
           >
             Voltar
           </button>
