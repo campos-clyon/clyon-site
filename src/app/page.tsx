@@ -8,6 +8,7 @@ import {
   Home as HomeIcon,
   MapPin,
   MessageSquareQuote,
+  Package,
   ShieldCheck,
   Sparkles,
   Trash2,
@@ -35,26 +36,26 @@ export const metadata: Metadata = {
 
 const services = [
   {
-    name: "Recolha de Entulho",
-    description: "Retiramos restos de obra, sacos e materiais mistos com resposta rápida.",
-    icon: Trash2,
-    href: "/recolha-entulho-lisboa",
-  },
-  {
     name: "Recolha de Móveis",
     description: "Sofás, camas, armários, eletrodomésticos e recheios com desmontagem e carga.",
     icon: HomeIcon,
     href: "/recolha-moveis-lisboa",
   },
   {
-    name: "Limpeza Pós-Obra",
-    description: "Acabamento final para deixar casa, loja ou escritório pronto a usar.",
-    icon: Zap,
-    href: "/limpeza-pos-obra-lisboa",
+    name: "Recolha de Monos",
+    description: "Volumes grandes, sucata, despejos e objectos antigos com resposta rápida.",
+    icon: Package,
+    href: "/recolha-monos-lisboa",
   },
   {
-    name: "Mudanças e Apoio",
-    description: "Transporte, carga, descarga e apoio logístico com equipa organizada.",
+    name: "Recolha de Entulho",
+    description: "Retiramos restos de obra, sacos e materiais mistos com resposta rápida.",
+    icon: Trash2,
+    href: "/recolha-entulho-lisboa",
+  },
+  {
+    name: "Mudanças",
+    description: "Transporte, carga, descarga e apoio com equipa organizada.",
     icon: Truck,
     href: "/mudancas-lisboa",
   },

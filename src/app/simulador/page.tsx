@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 
 import SimuladorClient from "./SimuladorClient";
 
-type CategoriaId = "entulho" | "moveis" | "monos" | "limpeza" | "mudancas" | "camiao";
+type CategoriaId = "moveis" | "monos" | "entulho" | "mudancas" | "limpeza";
 
-const categoriaIds = new Set<CategoriaId>(["entulho", "moveis", "monos", "limpeza", "mudancas", "camiao"]);
+const categoriaIds = new Set<CategoriaId>(["moveis", "monos", "entulho", "mudancas", "limpeza"]);
 
 export const metadata: Metadata = {
   title: "Simulador de Preços - Calcule o Custo do Seu Contentor",

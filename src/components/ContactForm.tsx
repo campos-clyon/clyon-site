@@ -6,13 +6,12 @@ import { trackLeadFormStart, trackLeadFormSubmit, trackWhatsAppClick } from "@/l
 import { BUSINESS_PHONE } from "@/lib/seo-data";
 
 const SERVICES = [
-  "Recolha de entulho",
   "Recolha de móveis",
   "Recolha de monos",
-  "Limpeza pós-obra",
+  "Recolha de entulho",
   "Mudanças",
   "Esvaziamento de casas",
-  "Camião com motorista",
+  "Limpeza pós-obra",
   "Outro",
 ];
 

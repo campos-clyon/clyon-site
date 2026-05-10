@@ -7,13 +7,12 @@ import CTABlock from "@/components/CTABlock";
 import { REGIONS, SERVICES, SITE_URL, getRegionCities } from "@/lib/seo-data";
 
 const simulatorCategoryMap: Record<string, string> = {
-  "recolha-entulho": "entulho",
   "recolha-moveis": "moveis",
   "recolha-monos": "monos",
+  "recolha-entulho": "entulho",
+  mudancas: "mudancas",
   "esvaziamento-casas": "moveis",
   "limpeza-pos-obra": "limpeza",
-  mudancas: "mudancas",
-  "camiao-com-motorista": "camiao",
 };
 
 export const metadata: Metadata = {

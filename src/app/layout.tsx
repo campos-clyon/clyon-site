@@ -40,13 +40,12 @@ export const metadata: Metadata = {
   description:
     "Recolha de entulho, móveis, monos, limpeza pós-obra e mudanças em Lisboa e Setúbal. Entrega em 24h, preços desde 120EUR e 163 avaliações 5 estrelas. Orçamento grátis!",
   keywords: [
-    "recolha de entulho lisboa",
     "recolha de móveis lisboa",
     "recolha de monos margem sul",
-    "limpeza pós-obra lisboa",
+    "recolha de entulho lisboa",
     "mudanças margem sul",
     "esvaziamento de casas lisboa",
-    "camião com motorista lisboa",
+    "limpeza pós-obra lisboa",
   ],
   authors: [{ name: BUSINESS_NAME }],
   creator: BUSINESS_NAME,

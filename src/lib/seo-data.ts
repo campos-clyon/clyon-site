@@ -263,23 +263,6 @@ export const CITIES: CityData[] = [
 
 export const SERVICES: ServiceData[] = [
   {
-    slug: "recolha-entulho",
-    name: "Recolha de Entulho",
-    shortName: "entulho",
-    category: "recolha de entulho",
-    description:
-      "Recolha rápida e organizada de entulho para obras, remodelações e limpezas pesadas.",
-    longDescription:
-      "A CLYON trata da recolha de entulho com equipas rápidas, transporte responsável e triagem simples. Recolhemos restos de obra, sacos, materiais mistos e resíduos de remodelação em contexto residencial e comercial.",
-    primaryKeyword: "recolha de entulho",
-    keywords: [
-      "recolha de entulho",
-      "remoção de entulho",
-      "limpeza de obra",
-      "recolha de restos de obra",
-    ],
-  },
-  {
     slug: "recolha-moveis",
     name: "Recolha de Móveis",
     shortName: "móveis",
@@ -314,6 +297,40 @@ export const SERVICES: ServiceData[] = [
     ],
   },
   {
+    slug: "recolha-entulho",
+    name: "Recolha de Entulho",
+    shortName: "entulho",
+    category: "recolha de entulho",
+    description:
+      "Recolha rápida e organizada de entulho para obras, remodelações e limpezas pesadas.",
+    longDescription:
+      "A CLYON trata da recolha de entulho com equipas rápidas, transporte responsável e triagem simples. Recolhemos restos de obra, sacos, materiais mistos e resíduos de remodelação em contexto residencial e comercial.",
+    primaryKeyword: "recolha de entulho",
+    keywords: [
+      "recolha de entulho",
+      "remoção de entulho",
+      "limpeza de obra",
+      "recolha de restos de obra",
+    ],
+  },
+  {
+    slug: "mudancas",
+    name: "Mudanças",
+    shortName: "mudanças",
+    category: "mudanças",
+    description:
+      "Serviço de mudanças residenciais e comerciais com transporte, apoio e organização.",
+    longDescription:
+      "A CLYON apoia mudanças com transporte, carga, descarga, organização e equipas ajustadas ao tipo de imóvel. Trabalhamos com foco em rapidez, clareza no orçamento e cuidado no manuseamento.",
+    primaryKeyword: "mudanças",
+    keywords: [
+      "mudanças",
+      "empresa de mudanças",
+      "mudanças residenciais",
+      "transporte de móveis",
+    ],
+  },
+  {
     slug: "esvaziamento-casas",
     name: "Esvaziamento de Casas",
     shortName: "esvaziamento de casas",
@@ -345,40 +362,6 @@ export const SERVICES: ServiceData[] = [
       "limpeza após obra",
       "limpeza final de obra",
       "limpeza de construção",
-    ],
-  },
-  {
-    slug: "mudancas",
-    name: "Mudanças",
-    shortName: "mudanças",
-    category: "mudanças",
-    description:
-      "Serviço de mudanças residenciais e comerciais com transporte, apoio e organização.",
-    longDescription:
-      "A CLYON apoia mudanças com transporte, carga, descarga, organização e equipas ajustadas ao tipo de imóvel. Trabalhamos com foco em rapidez, clareza no orçamento e cuidado no manuseamento.",
-    primaryKeyword: "mudanças",
-    keywords: [
-      "mudanças",
-      "empresa de mudanças",
-      "mudanças residenciais",
-      "transporte de móveis",
-    ],
-  },
-  {
-    slug: "camiao-com-motorista",
-    name: "Camião com Motorista",
-    shortName: "camião com motorista",
-    category: "camião com motorista",
-    description:
-      "Aluguer de camião com motorista para apoio logístico, transporte e serviços pontuais.",
-    longDescription:
-      "Disponibilizamos camião com motorista para transporte, despejos, apoio a mudanças e recolhas específicas. É uma solução flexível para quem precisa de reforço logístico com rapidez.",
-    primaryKeyword: "camião com motorista",
-    keywords: [
-      "camião com motorista",
-      "aluguer de camião com motorista",
-      "transporte com motorista",
-      "camião com motorista lisboa",
     ],
   },
 ];
