@@ -17,19 +17,20 @@ import {
 } from "lucide-react";
 
 import ImageCarousel from "@/components/ImageCarousel";
+import RotatingHeroCopy from "@/components/RotatingHeroCopy";
 import { getHeroCarouselImages } from "@/lib/work-gallery";
 
 export const metadata: Metadata = {
-  title: "CLYON — Recolha de Móveis, Entulho e Mudanças em Lisboa e Setúbal",
+  title: "CLYON — Recolha de Móveis, Entulho, Monos e Esvaziamento de Casas em Lisboa e Setúbal",
   description:
-    "Recolha de móveis, entulho, mudanças e limpeza pós-obra em Lisboa e Setúbal. Resposta em 24h, 163 reviews 5 estrelas. Orçamento grátis — ligue agora!",
+    "Recolha de móveis, entulho, monos, esvaziamento de casas e limpeza pós-obra em Lisboa, Margem Sul e Setúbal. Resposta em 24h, 163 avaliações 5 estrelas. Orçamento grátis!",
   alternates: {
     canonical: "https://clyon.pt",
   },
   openGraph: {
-    title: "CLYON — Recolha de Móveis, Entulho e Mudanças em Lisboa e Setúbal",
+    title: "CLYON — Recolha de Móveis, Entulho, Monos e Esvaziamento de Casas em Lisboa e Setúbal",
     description:
-      "Recolha de móveis, entulho, mudanças e limpeza pós-obra com resposta rápida em Lisboa e Setúbal. Orçamento grátis!",
+      "Recolha de móveis, entulho, monos, esvaziamento de casas e limpeza pós-obra em Lisboa e Setúbal. Resposta em 24h. Orçamento grátis!",
     url: "https://clyon.pt",
   },
 };
@@ -222,18 +223,21 @@ export default async function HomePage() {
                 163 avaliações 5 estrelas
               </div>
 
-              <h1 className="text-[2.5rem] font-bold leading-tight tracking-tight text-slate-900 md:text-[3.25rem]">
-                Recolha de Entulho
-                <span className="mt-1 block text-cyan-600">e Aluguer de Contentores</span>
+              <h1 className="text-[2.25rem] font-bold leading-tight tracking-tight text-slate-900 md:text-[2.75rem]">
+                Recolha de Entulho, Móveis, Monos e Esvaziamento de Casas em Lisboa e Setúbal
               </h1>
 
-              <p className="mt-6 text-[1.0625rem] leading-7 text-slate-600">
-                Entrega em 24h, preços desde 120EUR. Recolha de entulho, móveis, limpeza pós-obra e mudanças em Lisboa e Setúbal.
+              <div className="mt-5">
+                <RotatingHeroCopy />
+              </div>
+
+              <p className="mt-4 text-[1.0625rem] leading-7 text-slate-600">
+                Recolha rápida de móveis, entulho, monos, esvaziamento de casas e limpeza pós-obra em Lisboa, Margem Sul e Setúbal.
               </p>
 
               <div className="mt-8 flex flex-col gap-3 sm:flex-row">
                 <Link 
-                  href="/contactos" 
+                  href="/simulador" 
                   className="inline-flex h-12 items-center justify-center rounded-lg bg-cyan-600 px-6 text-[0.9375rem] font-semibold text-white transition hover:bg-cyan-700"
                 >
                   Pedir Orçamento Grátis
@@ -254,8 +258,8 @@ export default async function HomePage() {
               <div className="mt-8 flex items-center gap-7 sm:mt-10 sm:gap-9">
                 {[
                   { value: "163", label: "avaliações" },
-                  { value: "24h", label: "entrega" },
-                  { value: "120EUR", label: "desde" },
+                  { value: "24h", label: "resposta" },
+                  { value: "Grátis", label: "orçamento" },
                 ].map((stat) => (
                   <div key={stat.label}>
                     <div className="text-[1.625rem] font-bold text-slate-900">{stat.value}</div>

@@ -34,7 +34,7 @@ const poppins = Poppins({
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: "CLYON - Recolha de Entulho e Aluguer de Contentores em Lisboa e Setúbal",
+    default: "CLYON - Recolha de Móveis, Entulho, Monos e Esvaziamento de Casas em Lisboa e Setúbal",
     template: "%s | CLYON",
   },
   description:

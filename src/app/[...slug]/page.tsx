@@ -59,9 +59,9 @@ function buildTitle(serviceName: string, cityName: string, serviceSlug: string, 
 
   if (serviceSlug === "recolha-entulho") {
     if (citySlug === "setubal") {
-      return `Recolha de Entulho em Setúbal — Contentores e Resposta 24h`;
+      return `Recolha de Entulho em Setúbal — Resposta em 24h`;
     }
-    return `Recolha de Entulho em ${cityName} — Preço desde 120€`;
+    return `Recolha de Entulho em ${cityName} — Preço desde 80€`;
   }
 
   if (serviceSlug === "limpeza-pos-obra") {
@@ -93,9 +93,9 @@ function buildDescription(
 
   if (serviceSlug === "recolha-entulho") {
     if (citySlug === "setubal") {
-      return `Recolha de entulho em Setúbal: contentores 3m³, 5m³, 8m³. Entrega em 24h, resposta rápida. Preço desde 120€. Orçamento grátis!`;
+      return `Recolha de entulho em Setúbal: carregamento directo, resposta em 24h. Preço desde 80€. Orçamento grátis!`;
     }
-    return `Recolha de entulho em ${cityName}, ${regionLabel}. Contentores, sacos big bag, limpeza fina. Entrega em 24h. Preço desde 120€. Orçamento grátis!`;
+    return `Recolha de entulho em ${cityName}, ${regionLabel}. Carregamento directo, sacos big bag, limpeza fina. Resposta em 24h. Preço desde 80€. Orçamento grátis!`;
   }
 
   if (serviceSlug === "limpeza-pos-obra") {

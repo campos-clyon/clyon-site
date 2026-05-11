@@ -26,14 +26,14 @@ import {
 } from "@/lib/seo-data";
 
 export const metadata: Metadata = {
-  title: "Recolha de Entulho e Aluguer de Contentores em Lisboa e Setúbal",
+  title: "Recolha de Entulho em Lisboa e Setúbal — Resposta em 24h",
   description:
-    "Recolha de entulho e aluguer de contentores em Lisboa e Setúbal. Entrega em 24h, preços desde 120EUR, 163 avaliações 5 estrelas. Orçamento grátis!",
+    "Recolha de entulho de obras e remodelações em Lisboa, Margem Sul e Setúbal. Carregamento directo, resposta em 24h, preços desde 80EUR. Orçamento grátis!",
   alternates: { canonical: `${SITE_URL}/recolha-de-entulho` },
   openGraph: {
-    title: "Recolha de Entulho e Contentores em Lisboa e Setúbal",
+    title: "Recolha de Entulho em Lisboa e Setúbal — Resposta em 24h",
     description:
-      "Recolha de entulho e aluguer de contentores. Entrega em 24h, preços desde 120EUR em Lisboa e Setúbal.",
+      "Recolha de entulho de obras e remodelações. Carregamento directo, resposta em 24h em Lisboa e Setúbal.",
     url: `${SITE_URL}/recolha-de-entulho`,
   },
 };
@@ -43,33 +43,33 @@ const keyCities = ["lisboa", "almada", "seixal", "setubal", "sintra", "cascais",
   .filter((city): city is (typeof CITIES)[number] => Boolean(city));
 
 const pricingRows = [
-  { service: "Contentor 3m³ (pequenas obras)", priceFrom: "120€", priceTo: "180€", description: "Ideal para remodelações de WC ou cozinha" },
-  { service: "Contentor 5m³ (obras médias)", priceFrom: "180€", priceTo: "280€", description: "Para obras de apartamento T1/T2" },
-  { service: "Contentor 8m³ (grandes obras)", priceFrom: "280€", priceTo: "400€", description: "Para demolições e renovações completas" },
-  { service: "Sacos de entulho (até 10 sacos)", priceFrom: "80€", priceTo: "120€", description: "Pequenas quantidades em saco" },
-  { service: "Recolha avulsa (carrada)", priceFrom: "150€", priceTo: "250€", description: "Sem contentor, carregamento direto" },
+  { service: "Sacos de entulho (até 10 sacos)", priceFrom: "80€", priceTo: "120€", description: "Pequenas quantidades em saco big bag" },
+  { service: "Recolha pequena (até 1m³)", priceFrom: "120€", priceTo: "180€", description: "Remodelações de WC ou cozinha" },
+  { service: "Recolha média (até 3m³)", priceFrom: "180€", priceTo: "280€", description: "Obras de apartamento T1/T2" },
+  { service: "Recolha grande (até 5m³)", priceFrom: "280€", priceTo: "400€", description: "Demolições e renovações completas" },
+  { service: "Recolha extra (acima de 5m³)", priceFrom: "400€", priceTo: "—", description: "Orçamento personalizado" },
 ];
 
 const faqs = [
   {
-    question: "Quanto tempo demora a entrega do contentor?",
-    answer: "Na maioria das zonas de Lisboa e Setúbal conseguimos entregar o contentor em 24 horas. Em situações urgentes, podemos entregar no mesmo dia mediante disponibilidade.",
+    question: "Quanto tempo demora a recolha de entulho?",
+    answer: "Na maioria das zonas de Lisboa, Margem Sul e Setúbal conseguimos fazer a recolha em 24 a 48 horas. Em situações urgentes, podemos ir no mesmo dia mediante disponibilidade.",
   },
   {
-    question: "Quanto tempo posso ficar com o contentor?",
-    answer: "O período standard é de 3 a 5 dias úteis. Se precisar de mais tempo, podemos combinar uma extensão com um custo adicional por dia.",
+    question: "Que tipo de entulho recolhem?",
+    answer: "Recolhemos restos de obra como tijolos, cimento, azulejos, telhas, gesso cartonado e madeira. Não aceitamos amianto, resíduos perigosos ou lixo doméstico misturado.",
   },
   {
-    question: "Que tipo de entulho posso colocar no contentor?",
-    answer: "Pode colocar restos de obra como tijolos, cimento, azulejos, telhas, gesso cartonado e madeira. Não aceitamos amianto, resíduos perigosos ou lixo doméstico misturado.",
+    question: "Fazem carregamento do entulho?",
+    answer: "Sim, a nossa equipa carrega o entulho diretamente para a carrinha. Não precisa de se preocupar com o transporte — nós tratamos de tudo.",
   },
   {
-    question: "Preciso de licença para colocar o contentor na rua?",
-    answer: "Se o contentor ficar em espaço público (passeio ou estrada), é necessária licença da câmara. Se ficar dentro da propriedade, não precisa de licença. Podemos ajudar com o processo.",
+    question: "Qual o preço mínimo para recolha de entulho?",
+    answer: "Para pequenas quantidades em saco, o preço começa nos 80€. Para volumes maiores, o valor depende da quantidade, acessos e localização. Envie fotos para orçamento rápido.",
   },
   {
-    question: "Fazem recolha de entulho sem contentor?",
-    answer: "Sim, fazemos recolha avulsa onde a nossa equipa carrega o entulho diretamente para a carrinha. É ideal para pequenas quantidades ou quando não há espaço para contentor.",
+    question: "Recolhem entulho em apartamentos?",
+    answer: "Sim, recolhemos entulho em apartamentos, moradias, lojas e escritórios. A equipa trata do carregamento mesmo em andares altos ou com acessos difíceis.",
   },
 ];
 
@@ -83,19 +83,19 @@ const includedItems = [
 ];
 
 const differentiators = [
-  "Entrega de contentor em 24 horas na maioria das zonas",
-  "Vários tamanhos disponíveis (3m³, 5m³, 8m³)",
+  "Recolha de entulho em 24 a 48 horas na maioria das zonas",
+  "Carregamento directo pela nossa equipa",
   "Recolha pontual e encaminhamento para reciclagem",
-  "Apoio no pedido de licença à câmara quando necessário",
-  "Equipa para carregamento de entulho em sacos ou monte",
+  "Sem espera: chegamos, carregamos e levamos",
+  "Equipa preparada para sacos, montes ou entulho disperso",
   "Cobertura em Lisboa, Margem Sul e Setúbal",
 ];
 
 const serviceSchema = {
   "@context": "https://schema.org",
   "@type": "Service",
-  name: "Recolha de Entulho e Aluguer de Contentores",
-  description: "Serviço de recolha de entulho e aluguer de contentores para obras em Lisboa e Setúbal.",
+  name: "Recolha de Entulho",
+  description: "Serviço de recolha de entulho de obras e remodelações em Lisboa, Margem Sul e Setúbal.",
   provider: {
     "@type": "LocalBusiness",
     name: BUSINESS_NAME,
@@ -149,13 +149,12 @@ export default function RecolhaEntulhoPage() {
                 <HardHat className="h-4 w-4" />
                 Recolha de entulho em Lisboa e Setúbal
               </div>
-              <h1 className="mt-5 max-w-[16ch] text-4xl font-bold tracking-tight text-slate-950 md:text-6xl">
-                Recolha de Entulho e Aluguer de Contentores
+              <h1 className="mt-5 max-w-[18ch] text-4xl font-bold tracking-tight text-slate-950 md:text-6xl">
+                Recolha de Entulho em Lisboa e Setúbal
               </h1>
               <p className="mt-5 max-w-2xl text-lg leading-8 text-slate-600">
-                Entregamos contentores de 3m³ a 8m³ em 24 horas, recolhemos quando
-                estiver cheio e encaminhamos para reciclagem. Também fazemos recolha
-                avulsa de entulho em sacos ou monte.
+                Recolhemos entulho de obras, remodelações e limpezas com carregamento directo. 
+                Sem espera: a equipa chega, carrega e encaminha para destino responsável.
               </p>
               <div className="mt-7 flex flex-col gap-3 sm:flex-row">
                 <Link
@@ -174,7 +173,7 @@ export default function RecolhaEntulhoPage() {
                 </a>
               </div>
               <p className="mt-4 text-sm text-slate-500">
-                Preços desde <span className="font-semibold text-amber-600">120EUR</span> para contentor 3m³
+                Preços desde <span className="font-semibold text-amber-600">80EUR</span> para recolha de sacos
               </p>
             </div>
 
@@ -182,12 +181,12 @@ export default function RecolhaEntulhoPage() {
               <TrustBadges variant="grid" />
               <div className="mt-6 grid gap-3 sm:grid-cols-2">
                 <div className="rounded-[22px] border border-amber-100 bg-amber-50/80 p-4">
-                  <p className="text-sm font-semibold text-slate-950">Entrega em</p>
+                  <p className="text-sm font-semibold text-slate-950">Resposta em</p>
                   <p className="mt-2 text-2xl font-bold text-amber-600">24 horas</p>
                 </div>
                 <div className="rounded-[22px] border border-amber-100 bg-white p-4">
-                  <p className="text-sm font-semibold text-slate-950">Tamanhos</p>
-                  <p className="mt-2 text-sm leading-7 text-slate-600">3m³, 5m³ e 8m³</p>
+                  <p className="text-sm font-semibold text-slate-950">Carregamento</p>
+                  <p className="mt-2 text-sm leading-7 text-slate-600">Directo pela equipa</p>
                 </div>
               </div>
             </div>
@@ -199,8 +198,8 @@ export default function RecolhaEntulhoPage() {
       <section className="mx-auto max-w-7xl px-6 py-16 lg:px-8">
         <div className="grid gap-6 md:grid-cols-3">
           {[
-            { icon: Clock3, title: "Entrega rápida", desc: "Contentor entregue em 24h na maioria das zonas de Lisboa e Setúbal." },
-            { icon: Truck, title: "Vários tamanhos", desc: "Contentores de 3m³ a 8m³ para obras pequenas, médias ou grandes." },
+            { icon: Clock3, title: "Resposta rápida", desc: "Recolha em 24 a 48 horas na maioria das zonas de Lisboa e Setúbal." },
+            { icon: Truck, title: "Carregamento directo", desc: "A nossa equipa carrega o entulho — sem espera nem trabalho para si." },
             { icon: Recycle, title: "Destino legal", desc: "Encaminhamento para reciclagem com guia de transporte e destino final." },
           ].map((item) => (
             <div key={item.title} className="rounded-[28px] border border-amber-100 bg-white p-6 shadow-[0_20px_50px_-34px_rgba(180,83,9,0.12)]">
@@ -360,8 +359,8 @@ export default function RecolhaEntulhoPage() {
           <CTABlock
             variant="centered"
             title="Precisa de recolher entulho?"
-            description="Peça um orçamento grátis. Entregamos o contentor em 24h e recolhemos quando estiver cheio."
-            whatsappMessage="Olá! Preciso de um contentor para entulho. Podem dar-me um orçamento?"
+            description="Peça um orçamento grátis. A equipa chega em 24h, carrega o entulho e encaminha para destino responsável."
+            whatsappMessage="Olá! Preciso de recolha de entulho. Podem dar-me um orçamento?"
           />
         </div>
       </section>
