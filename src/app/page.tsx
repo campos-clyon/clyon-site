@@ -223,15 +223,15 @@ export default async function HomePage() {
                 163 avaliações 5 estrelas
               </div>
 
-              <h1 className="text-[2.25rem] font-bold leading-tight tracking-tight text-slate-900 md:text-[2.75rem]">
+              <h1 className="text-[2.125rem] font-bold leading-tight tracking-tight text-slate-900 md:text-[2.625rem]">
                 Recolha de Entulho, Móveis, Monos e Esvaziamento de Casas em Lisboa e Setúbal
               </h1>
 
-              <div className="mt-5">
+              <div className="mt-4">
                 <RotatingHeroCopy />
               </div>
 
-              <p className="mt-4 text-[1.0625rem] leading-7 text-slate-600">
+              <p className="mt-3 text-base leading-7 text-slate-600">
                 Recolha rápida de móveis, entulho, monos, esvaziamento de casas e limpeza pós-obra em Lisboa, Margem Sul e Setúbal.
               </p>
 
@@ -255,14 +255,14 @@ export default async function HomePage() {
                 </a>
               </div>
 
-              <div className="mt-8 flex items-center gap-7 sm:mt-10 sm:gap-9">
+              <div className="mt-7 flex items-center gap-6 sm:mt-8 sm:gap-8">
                 {[
                   { value: "163", label: "avaliações" },
                   { value: "24h", label: "resposta" },
                   { value: "Grátis", label: "orçamento" },
                 ].map((stat) => (
                   <div key={stat.label}>
-                    <div className="text-[1.625rem] font-bold text-slate-900">{stat.value}</div>
+                    <div className="text-[1.5rem] font-bold text-slate-900">{stat.value}</div>
                     <div className="text-sm text-slate-500">{stat.label}</div>
                   </div>
                 ))}

@@ -85,12 +85,12 @@ export default function RotatingHeroCopy() {
 
   return (
     <div 
-      className="min-h-[4rem] sm:min-h-[3rem]"
+      className="min-h-[3.25rem] sm:min-h-[2.5rem]"
       aria-live="polite"
       aria-atomic="true"
     >
       <p
-        className={`text-xl font-semibold text-cyan-600 leading-relaxed transition-all duration-500 ${
+        className={`text-[1.0625rem] font-semibold text-cyan-600 leading-relaxed transition-all duration-500 ${
           isVisible ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-1"
         }`}
       >
