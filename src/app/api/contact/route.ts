@@ -41,7 +41,7 @@ Este email foi enviado automaticamente através do formulário de contacto em cl
     `.trim();
 
     const { data, error } = await resend.emails.send({
-      from: "CLYON Website <noreply@clyon.pt>",
+      from: "CLYON Website <onboarding@resend.dev>",
       to: [BUSINESS_EMAIL],
       subject: `Novo pedido: ${servico} em ${localidade}`,
       text: emailContent,
