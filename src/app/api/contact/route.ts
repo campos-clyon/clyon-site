@@ -31,11 +31,8 @@ ${mensagem ? `- Mensagem: ${mensagem}` : ""}
 Este email foi enviado automaticamente através do formulário de contacto em clyon.pt
     `.trim();
 
-    // Usa o domínio verificado no Resend ou o email de teste
-    const fromEmail = process.env.RESEND_FROM_EMAIL || "CLYON Website <onboarding@resend.dev>";
-    
     const { data, error } = await resend.emails.send({
-      from: fromEmail,
+      from: "CLYON Website <noreply@clyon.pt>",
       to: [BUSINESS_EMAIL],
       subject: `Novo pedido: ${servico} em ${localidade}`,
       text: emailContent,
