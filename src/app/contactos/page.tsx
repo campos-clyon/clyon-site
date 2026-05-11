@@ -66,11 +66,10 @@ export default function ContactosPage() {
                   Pedir orçamento
                 </p>
                 <h2 className="mt-3 text-2xl font-bold text-slate-950">
-                  Preencha e envie por WhatsApp
+                  Preencha e escolha como enviar
                 </h2>
                 <p className="mt-2 text-sm leading-7 text-slate-600">
-                  Todos os campos com * são obrigatórios. O seu contacto permite-nos
-                  responder mais rapidamente.
+                  Todos os campos com * são obrigatórios. Envie por WhatsApp ou email - respondemos em 24h.
                 </p>
               </div>
 

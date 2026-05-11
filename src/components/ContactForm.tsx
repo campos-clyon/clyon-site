@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { Send, AlertCircle, CheckCircle2 } from "lucide-react";
+import { Send, AlertCircle, Mail, MessageCircle } from "lucide-react";
 import { trackLeadFormStart, trackLeadFormSubmit, trackWhatsAppClick } from "@/lib/analytics";
-import { BUSINESS_PHONE } from "@/lib/seo-data";
+import { BUSINESS_PHONE, BUSINESS_EMAIL } from "@/lib/seo-data";
 
 const SERVICES = [
   "Recolha de móveis",
@@ -128,7 +128,7 @@ export default function ContactForm() {
     return Object.keys(newErrors).length === 0;
   }, [formData]);
 
-  const handleSubmit = useCallback((e: React.FormEvent) => {
+  const handleSubmitWhatsApp = useCallback((e: React.FormEvent) => {
     e.preventDefault();
 
     if (!validate()) {
@@ -159,8 +159,35 @@ Podem entrar em contacto comigo?`;
     setIsSubmitting(false);
   }, [formData, validate]);
 
+  const handleSubmitEmail = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+
+    if (!validate()) {
+      return;
+    }
+
+    trackLeadFormSubmit("contactos_page_email", formData.servico);
+
+    const subject = `Pedido de orçamento - ${formData.servico} em ${formData.localidade}`;
+    const body = `Olá! Gostava de pedir um orçamento à CLYON.
+
+Dados do pedido:
+- Nome: ${formData.nome}
+- Telemóvel: ${formData.telemovel}
+- Localidade: ${formData.localidade}
+- Serviço: ${formData.servico}
+${formData.mensagem ? `- Mensagem: ${formData.mensagem}` : ""}
+
+Podem entrar em contacto comigo?`;
+
+    const mailtoUrl = `mailto:${BUSINESS_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    
+    // Open email client
+    window.location.href = mailtoUrl;
+  }, [formData, validate]);
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-5">
+    <form onSubmit={handleSubmitWhatsApp} className="space-y-5">
       {/* Nome */}
       <div>
         <label htmlFor="nome" className="block text-sm font-semibold text-slate-950">
@@ -289,27 +316,38 @@ Podem entrar em contacto comigo?`;
         />
       </div>
 
-      {/* Submit */}
-      <button
-        type="submit"
-        disabled={isSubmitting}
-        className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-emerald-500 px-6 py-4 text-base font-semibold text-white shadow-[0_18px_40px_-22px_rgba(37,211,102,0.75)] transition hover:-translate-y-0.5 hover:bg-emerald-400 disabled:opacity-70 disabled:hover:translate-y-0"
-      >
-        {isSubmitting ? (
-          <>
-            <span className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
-            A enviar...
-          </>
-        ) : (
-          <>
-            <Send className="h-5 w-5" />
-            Enviar por WhatsApp
-          </>
-        )}
-      </button>
+      {/* Submit Options */}
+      <div className="space-y-3">
+        <button
+          type="submit"
+          disabled={isSubmitting}
+          className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-emerald-500 px-6 py-4 text-base font-semibold text-white shadow-[0_18px_40px_-22px_rgba(37,211,102,0.75)] transition hover:-translate-y-0.5 hover:bg-emerald-400 disabled:opacity-70 disabled:hover:translate-y-0"
+        >
+          {isSubmitting ? (
+            <>
+              <span className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
+              A enviar...
+            </>
+          ) : (
+            <>
+              <MessageCircle className="h-5 w-5" />
+              Enviar por WhatsApp
+            </>
+          )}
+        </button>
+
+        <button
+          type="button"
+          onClick={handleSubmitEmail}
+          className="inline-flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-cyan-500 bg-white px-6 py-4 text-base font-semibold text-cyan-600 transition hover:-translate-y-0.5 hover:bg-cyan-50"
+        >
+          <Mail className="h-5 w-5" />
+          Enviar por Email
+        </button>
+      </div>
 
       <p className="text-center text-sm text-slate-500">
-        Ao submeter, será redirecionado para o WhatsApp com os dados preenchidos.
+        Escolha como prefere enviar o seu pedido de orçamento.
       </p>
     </form>
   );
