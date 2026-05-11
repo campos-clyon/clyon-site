@@ -2,13 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { Resend } from "resend";
 import { BUSINESS_EMAIL } from "@/lib/seo-data";
 
-const resend = new Resend(process.env.RESEND_API_KEY_clyonsite);
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function POST(request: NextRequest) {
   try {
     // Verificar se a API key está configurada
-    if (!process.env.RESEND_API_KEY_clyonsite) {
-      console.error("[v0] RESEND_API_KEY_clyonsite não está configurada");
+    if (!process.env.RESEND_API_KEY) {
+      console.error("[v0] RESEND_API_KEY não está configurada");
       return NextResponse.json(
         { error: "Configuração de email em falta" },
         { status: 500 }
