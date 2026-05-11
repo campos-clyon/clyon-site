@@ -112,7 +112,7 @@ export const BLOG_POSTS: BlogPost[] = [
     publishDate: "2026-03-16",
     heroLabel: "Guia prático",
     intro:
-      "A recolha de móveis é um dos pedidos mais frequentes na operação da CLYON. Seja por mudança, renovação, venda de casa, fim de arrendamento, herança ou despejo de recheios, o objectivo costuma ser sempre o mesmo: libertar espaço depressa, com segurança e sem complicar acessos, desmontagens ou transporte. Precisa de recolha de móveis em Lisboa ou Margem Sul? Veja o serviço da CLYON em /recolha-de-moveis ou simule um orçamento em /simulador.",
+      "A recolha de móveis é um dos pedidos mais frequentes na operação da CLYON. Seja por mudança, renovação, venda de casa, fim de arrendamento, herança ou despejo de recheios, o objectivo costuma ser sempre o mesmo: libertar espaço depressa, com segurança e sem complicar acessos, desmontagens ou transporte. Precisa de recolha de móveis em Lisboa ou Margem Sul? Veja o serviço da CLYON em /recolha-de-moveis ou simule um orçamento em /simulador. Se precisa de esvaziar uma casa ou apartamento completo, veja o serviço de esvaziamento de casas em /esvaziamento-de-casas.",
     sections: [
       {
         title: "Quando faz sentido pedir recolha de móveis",

@@ -21,12 +21,14 @@ const seoLinks = [
   { href: "/recolha-moveis-lisboa", label: "Recolha de móveis em Lisboa", description: "Lisboa e bairros" },
   { href: "/recolha-moveis-almada", label: "Recolha de móveis em Almada", description: "Almada e Caparica" },
   { href: "/recolha-moveis-setubal", label: "Recolha de móveis em Setúbal", description: "Setúbal e Palmela" },
-  { href: "/recolha-moveis-amadora", label: "Recolha de móveis em Amadora", description: "Amadora e Queluz" },
+  { href: "/recolha-moveis-amadora", label: "Recolha de móveis na Amadora", description: "Amadora e Queluz" },
+  { href: "/recolha-de-monos-amadora", label: "Monos na Amadora", description: "Volumosos na Amadora" },
+  { href: "/esvaziamento-de-casas-amadora", label: "Esvaziamento na Amadora", description: "Casas e apartamentos" },
   { href: "/recolha-moveis-sintra", label: "Recolha de móveis em Sintra", description: "Sintra e região" },
   { href: "/recolha-moveis-oeiras", label: "Recolha de móveis em Oeiras", description: "Oeiras e arredores" },
   { href: "/recolha-moveis-cascais", label: "Recolha de móveis em Cascais", description: "Linha de Cascais" },
   { href: "/recolha-monos-lisboa", label: "Recolha de monos", description: "Monos e volumosos" },
-  { href: "/esvaziamento-casas-lisboa", label: "Esvaziamento de casas", description: "Recheios completos" },
+  { href: "/esvaziamento-de-casas", label: "Esvaziamento de casas", description: "Recheios completos" },
 ];
 
 const blogLinks = [
