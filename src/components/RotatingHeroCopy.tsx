@@ -78,20 +78,20 @@ export default function RotatingHeroCopy() {
         setCurrentIndex((prev) => (prev + 1) % phraseOrder.length);
         setIsVisible(true);
       }, 300);
-    }, 10000);
+    }, 7000);
 
     return () => clearInterval(interval);
   }, []);
 
   return (
     <div 
-      className="min-h-[3.5rem] sm:min-h-[2.5rem]"
+      className="min-h-[4rem] sm:min-h-[3rem]"
       aria-live="polite"
       aria-atomic="true"
     >
       <p
-        className={`text-lg font-medium text-cyan-600 transition-opacity duration-300 ${
-          isVisible ? "opacity-100" : "opacity-0"
+        className={`text-xl font-semibold text-cyan-600 leading-relaxed transition-all duration-500 ${
+          isVisible ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-1"
         }`}
       >
         {phraseOrder[currentIndex]}
