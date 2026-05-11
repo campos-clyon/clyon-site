@@ -6,6 +6,15 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function POST(request: NextRequest) {
   try {
+    // Verificar se a API key está configurada
+    if (!process.env.RESEND_API_KEY) {
+      console.error("[v0] RESEND_API_KEY não está configurada");
+      return NextResponse.json(
+        { error: "Configuração de email em falta" },
+        { status: 500 }
+      );
+    }
+
     const body = await request.json();
     const { nome, telemovel, localidade, servico, mensagem } = body;
 
@@ -39,9 +48,9 @@ Este email foi enviado automaticamente através do formulário de contacto em cl
     });
 
     if (error) {
-      console.error("[v0] Resend error:", error);
+      console.error("[v0] Resend error:", JSON.stringify(error, null, 2));
       return NextResponse.json(
-        { error: "Erro ao enviar email" },
+        { error: `Erro ao enviar email: ${error.message || "unknown"}` },
         { status: 500 }
       );
     }
