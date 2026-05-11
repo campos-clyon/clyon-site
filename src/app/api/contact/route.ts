@@ -16,10 +16,10 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { nome, telemovel, localidade, servico, mensagem } = body;
+    const { nome, telemovel, endereco, servico, mensagem } = body;
 
     // Validação básica
-    if (!nome || !telemovel || !localidade || !servico) {
+    if (!nome || !telemovel || !endereco || !servico) {
       return NextResponse.json(
         { error: "Campos obrigatórios em falta" },
         { status: 400 }
@@ -32,7 +32,7 @@ Novo pedido de orçamento recebido através do site CLYON.
 DADOS DO CLIENTE:
 - Nome: ${nome}
 - Telemóvel: ${telemovel}
-- Localidade: ${localidade}
+- Endereço: ${endereco}
 - Serviço: ${servico}
 ${mensagem ? `- Mensagem: ${mensagem}` : ""}
 
@@ -43,7 +43,7 @@ Este email foi enviado automaticamente através do formulário de contacto em cl
     const { data, error } = await resend.emails.send({
       from: "CLYON Website <noreply@clyon.pt>",
       to: [BUSINESS_EMAIL],
-      subject: `Novo pedido: ${servico} em ${localidade}`,
+      subject: `Novo pedido: ${servico} - ${endereco}`,
       text: emailContent,
     });
 

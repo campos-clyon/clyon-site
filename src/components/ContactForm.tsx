@@ -15,32 +15,10 @@ const SERVICES = [
   "Outro",
 ];
 
-const CITIES = [
-  "Lisboa",
-  "Almada",
-  "Amadora",
-  "Seixal",
-  "Barreiro",
-  "Oeiras",
-  "Cascais",
-  "Setúbal",
-  "Loures",
-  "Sintra",
-  "Montijo",
-  "Odivelas",
-  "Amora",
-  "Corroios",
-  "Palmela",
-  "Sesimbra",
-  "Moita",
-  "Alcochete",
-  "Outra",
-];
-
 interface FormData {
   nome: string;
   telemovel: string;
-  localidade: string;
+  endereco: string;
   servico: string;
   mensagem: string;
 }
@@ -48,7 +26,7 @@ interface FormData {
 interface FormErrors {
   nome?: string;
   telemovel?: string;
-  localidade?: string;
+  endereco?: string;
   servico?: string;
 }
 
@@ -69,7 +47,7 @@ export default function ContactForm() {
   const [formData, setFormData] = useState<FormData>({
     nome: "",
     telemovel: "",
-    localidade: "",
+    endereco: "",
     servico: "",
     mensagem: "",
   });
@@ -116,8 +94,8 @@ export default function ContactForm() {
       newErrors.telemovel = "Introduza um número de telemóvel válido (9 dígitos)";
     }
 
-    if (!formData.localidade) {
-      newErrors.localidade = "Selecione a localidade";
+    if (!formData.endereco.trim()) {
+      newErrors.endereco = "Endereço é obrigatório";
     }
 
     if (!formData.servico) {
@@ -145,7 +123,7 @@ export default function ContactForm() {
 *Dados do pedido:*
 - Nome: ${formData.nome}
 - Telemóvel: ${formData.telemovel}
-- Localidade: ${formData.localidade}
+- Endereço: ${formData.endereco}
 - Serviço: ${formData.servico}
 ${formData.mensagem ? `- Mensagem: ${formData.mensagem}` : ""}
 
@@ -185,7 +163,7 @@ Podem entrar em contacto comigo?`;
           setFormData({
             nome: "",
             telemovel: "",
-            localidade: "",
+            endereco: "",
             servico: "",
             mensagem: "",
           });
@@ -254,32 +232,27 @@ Podem entrar em contacto comigo?`;
         )}
       </div>
 
-      {/* Localidade */}
+      {/* Endereço */}
       <div>
-        <label htmlFor="localidade" className="block text-sm font-semibold text-slate-950">
-          Localidade <span className="text-red-500">*</span>
+        <label htmlFor="endereco" className="block text-sm font-semibold text-slate-950">
+          Endereço <span className="text-red-500">*</span>
         </label>
-        <select
-          id="localidade"
-          name="localidade"
-          value={formData.localidade}
+        <input
+          type="text"
+          id="endereco"
+          name="endereco"
+          value={formData.endereco}
           onChange={handleChange}
-          onFocus={() => handleFocus("localidade")}
+          onFocus={() => handleFocus("endereco")}
+          placeholder="Rua, número, cidade (ex: Rua das Flores 123, Lisboa)"
           className={`mt-2 w-full rounded-2xl border ${
-            errors.localidade ? "border-red-300 bg-red-50" : "border-cyan-100 bg-white"
-          } px-4 py-3.5 text-base text-slate-900 focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-100`}
-        >
-          <option value="">Selecione a localidade</option>
-          {CITIES.map((city) => (
-            <option key={city} value={city}>
-              {city}
-            </option>
-          ))}
-        </select>
-        {errors.localidade && (
+            errors.endereco ? "border-red-300 bg-red-50" : "border-cyan-100 bg-white"
+          } px-4 py-3.5 text-base text-slate-900 placeholder:text-slate-400 focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-100`}
+        />
+        {errors.endereco && (
           <p className="mt-2 flex items-center gap-1.5 text-sm text-red-600">
             <AlertCircle className="h-4 w-4" />
-            {errors.localidade}
+            {errors.endereco}
           </p>
         )}
       </div>
