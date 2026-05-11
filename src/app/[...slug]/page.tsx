@@ -15,6 +15,7 @@ import {
 import { notFound } from "next/navigation";
 
 import Breadcrumb from "@/components/Breadcrumb";
+import FurnitureSeoLinks from "@/components/FurnitureSeoLinks";
 import {
   getCityServiceContent,
   getCityBaseContent,
@@ -878,6 +879,16 @@ export default async function ServiceCityPage({ params }: Props) {
             ))}
           </div>
         </div>
+
+        {/* Links internos SEO para páginas de recolha de móveis */}
+        {isFurnitureService(service.slug) && (
+          <div className="mt-8">
+            <FurnitureSeoLinks 
+              currentPage={`/${getCityServiceSlug(service.slug, city.slug)}`}
+              variant="grid"
+            />
+          </div>
+        )}
 
         <div className="mt-8 rounded-[30px] border border-cyan-100 bg-white p-7 shadow-[0_24px_60px_-34px_rgba(14,116,144,0.14)]">
           <div className="flex items-start gap-3">

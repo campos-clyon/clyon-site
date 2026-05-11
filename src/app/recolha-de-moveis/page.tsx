@@ -7,49 +7,56 @@ import {
   MapPin,
   Phone,
   Recycle,
+  Shield,
   Sofa,
   Truck,
+  Users,
 } from "lucide-react";
 
 import Breadcrumb from "@/components/Breadcrumb";
+import FurnitureSeoLinks from "@/components/FurnitureSeoLinks";
 import {
   BUSINESS_NAME,
   BUSINESS_PHONE,
+  BUSINESS_EMAIL,
+  BUSINESS_ADDRESS,
   CITIES,
   SITE_URL,
   getCityServiceSlug,
 } from "@/lib/seo-data";
 
 export const metadata: Metadata = {
-  title: "Recolha de Móveis em Lisboa, Grande Lisboa e Margem Sul",
+  title: "Recolha de Móveis em Lisboa, Margem Sul e Setúbal",
   description:
-    "Recolha de móveis com desmontagem, carregamento, transporte e descarte legal em Lisboa, Amadora, Sintra, Oeiras, Cascais, Margem Sul e Setúbal. Orçamento rápido e recolha no mesmo dia quando disponível.",
+    "Recolha de móveis usados, sofás, camas, armários e eletrodomésticos em Lisboa, Margem Sul e Setúbal. Desmontagem, carregamento e transporte. Peça orçamento rápido.",
   keywords: [
     "recolha de móveis",
-    "recolha de móveis usados",
     "recolha de móveis lisboa",
-    "recolha de móveis amadora",
+    "recolha de móveis usados",
+    "recolha gratuita de móveis usados",
+    "recolha de sofá lisboa",
+    "retirar móveis velhos",
+    "recolha de móveis setúbal",
+    "recolha de móveis almada",
     "remoção de móveis",
-    "tirar móveis velhos",
-    "recolha de sofás",
-    "recolha de eletrodomésticos",
+    "levar móveis velhos",
   ],
   alternates: {
     canonical: `${SITE_URL}/recolha-de-moveis`,
   },
   openGraph: {
-    title: "Recolha de Móveis em Lisboa e Região",
+    title: "Recolha de Móveis em Lisboa, Margem Sul e Setúbal",
     description:
-      "Serviço profissional para recolha de móveis velhos, recheios e volumes grandes com resposta rápida e descarte legal.",
+      "Recolha de móveis usados, sofás, camas, armários e eletrodomésticos. Desmontagem, carregamento porta a porta e destino responsável.",
     url: `${SITE_URL}/recolha-de-moveis`,
     locale: "pt_PT",
-    type: "article",
+    type: "website",
   },
 };
 
 const keyCities = [
-  "amadora",
   "lisboa",
+  "amadora",
   "sintra",
   "oeiras",
   "cascais",
@@ -60,68 +67,40 @@ const keyCities = [
   .map((slug) => CITIES.find((city) => city.slug === slug))
   .filter((city): city is (typeof CITIES)[number] => Boolean(city));
 
+const areaServedCities = [
+  "Lisboa",
+  "Amadora",
+  "Sintra",
+  "Oeiras",
+  "Cascais",
+  "Almada",
+  "Seixal",
+  "Barreiro",
+  "Setúbal",
+];
+
+const benefits = [
+  { icon: Clock3, title: "Resposta rápida", desc: "Orçamento em minutos, recolha em 24-48h quando disponível" },
+  { icon: Users, title: "Desmontagem quando necessário", desc: "A equipa desmonta armários, camas e móveis grandes" },
+  { icon: Truck, title: "Carregamento porta a porta", desc: "Retirada a partir do interior do imóvel" },
+  { icon: Recycle, title: "Destino responsável", desc: "Triagem, doação ou encaminhamento correto" },
+];
+
 const includedItems = [
   "Sofás, chaise longues e cadeirões",
-  "Camas, estrados, colchões e mesinhas",
+  "Camas, estrados, colchões e mesinhas de cabeceira",
   "Armários, roupeiros, cómodas e aparadores",
   "Mesas, cadeiras, secretárias e móvel de TV",
   "Frigoríficos, máquinas de lavar e pequenos eletrodomésticos",
   "Recheios completos de apartamentos, moradias, escritórios e lojas",
 ];
 
-const differentiators = [
-  "Desmontagem quando necessária e retirada porta a porta",
-  "Proteção de paredes, elevadores e zonas comuns sempre que o acesso exige cuidado",
-  "Triagem responsável para doação, reaproveitamento e reciclagem",
-  "Equipa preparada para prédios sem elevador, caves, arrecadações e acessos difíceis",
-  "Atendimento rápido em Lisboa, Grande Lisboa, Margem Sul e Setúbal",
-  "Orçamento claro antes da recolha, sem deixar dúvidas sobre o que será retirado",
-];
-
-const pricingExamples = [
-  "Sofá de 2 a 3 lugares: 35 EUR a 55 EUR",
-  "Cama de casal com estrado: 25 EUR a 45 EUR",
-  "Armário grande: 45 EUR a 75 EUR",
-  "Mesa com cadeiras: 35 EUR a 55 EUR",
-  "Recolha de vários móveis num apartamento: 180 EUR a 350 EUR",
-];
-
-const lisbonFocusLinks = [
-  {
-    href: "/recolha-moveis-lisboa",
-    label: "Recolha de móveis em Lisboa",
-  },
-  {
-    href: "/recolha-moveis-benfica",
-    label: "Recolha de móveis em Benfica",
-  },
-  {
-    href: "/recolha-moveis-lumiar",
-    label: "Recolha de móveis no Lumiar",
-  },
-  {
-    href: "/recolha-moveis-alvalade",
-    label: "Recolha de móveis em Alvalade",
-  },
-];
-
-const cascaisFocusLinks = [
-  {
-    href: "/recolha-moveis-cascais",
-    label: "Recolha de móveis em Cascais",
-  },
-  {
-    href: "/recolha-moveis-oeiras",
-    label: "Recolha de móveis em Oeiras",
-  },
-  {
-    href: "/recolha-moveis-sintra",
-    label: "Recolha de móveis em Sintra",
-  },
-  {
-    href: "/recolha-moveis-carnaxide",
-    label: "Recolha de móveis em Carnaxide",
-  },
+const pricingTable = [
+  { item: "Sofá (2-3 lugares)", price: "desde 35€" },
+  { item: "Cama de casal com estrado", price: "desde 45€" },
+  { item: "Armário grande", price: "desde 55€" },
+  { item: "Eletrodoméstico (frigorífico, máquina)", price: "desde 35€" },
+  { item: "Recolha de vários móveis", price: "desde 180€" },
 ];
 
 const faqs = [
@@ -130,8 +109,8 @@ const faqs = [
     a: "O preço depende do volume, peso, acessos, necessidade de desmontagem e distância. A forma mais rápida de fechar o valor certo é enviar fotos e a morada para receber um orçamento imediato.",
   },
   {
-    q: "Recolhem móveis no mesmo dia?",
-    a: "Sim. Quando há disponibilidade operacional, a recolha pode ser feita no próprio dia ou no dia seguinte, sobretudo em Lisboa, Amadora, Sintra, Oeiras, Cascais e Margem Sul.",
+    q: "Recolhem móveis usados no mesmo dia?",
+    a: "Sim. Quando há disponibilidade operacional, a recolha pode ser feita no próprio dia ou no dia seguinte, sobretudo em Lisboa, Amadora, Sintra, Oeiras, Cascais, Almada e Setúbal.",
   },
   {
     q: "Também recolhem eletrodomésticos?",
@@ -140,6 +119,10 @@ const faqs = [
   {
     q: "O que acontece aos móveis recolhidos?",
     a: "Sempre que o estado dos móveis permita, fazemos triagem para doação ou reaproveitamento. O restante segue para encaminhamento responsável e descarte legal.",
+  },
+  {
+    q: "Fazem desmontagem de armários e camas?",
+    a: "Sim. Quando necessário, a equipa desmonta móveis e trata da retirada a partir do interior do imóvel. Indique essa necessidade no pedido para o orçamento refletir o trabalho.",
   },
   {
     q: "Qual é a diferença entre a CLYON e a recolha municipal?",
@@ -185,28 +168,70 @@ const faqSchema = {
   })),
 };
 
+const localBusinessSchema = {
+  "@context": "https://schema.org",
+  "@type": "LocalBusiness",
+  "@id": `${SITE_URL}/#organization`,
+  name: BUSINESS_NAME,
+  description: "Recolha de móveis, entulho, monos, esvaziamento de casas, mudanças e limpeza pós-obra em Lisboa, Margem Sul e Setúbal.",
+  url: SITE_URL,
+  telephone: BUSINESS_PHONE,
+  email: BUSINESS_EMAIL,
+  address: {
+    "@type": "PostalAddress",
+    streetAddress: "Rua dos Jasmins 3",
+    addressLocality: "Amora",
+    addressRegion: "Setúbal",
+    postalCode: "2845-513",
+    addressCountry: "PT",
+  },
+  geo: {
+    "@type": "GeoCoordinates",
+    latitude: 38.6266,
+    longitude: -9.1092,
+  },
+  areaServed: areaServedCities.map((city) => ({
+    "@type": "City",
+    name: city,
+  })),
+  openingHoursSpecification: {
+    "@type": "OpeningHoursSpecification",
+    dayOfWeek: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
+    opens: "08:00",
+    closes: "19:00",
+  },
+  priceRange: "€€",
+};
+
 const serviceSchema = {
   "@context": "https://schema.org",
   "@type": "Service",
   name: "Recolha de Móveis",
-  serviceType: "Recolha de móveis e eletrodomésticos",
+  serviceType: "Recolha de móveis usados e eletrodomésticos",
   url: `${SITE_URL}/recolha-de-moveis`,
   description:
-    "Serviço de recolha de móveis com desmontagem, carregamento, transporte e descarte legal em Lisboa, Grande Lisboa, Margem Sul e Setúbal.",
+    "Serviço de recolha de móveis usados com desmontagem, carregamento porta a porta, transporte e encaminhamento responsável em Lisboa, Margem Sul e Setúbal.",
   provider: {
     "@type": "LocalBusiness",
     name: BUSINESS_NAME,
     telephone: BUSINESS_PHONE,
     url: SITE_URL,
   },
-  areaServed: keyCities.map((city) => ({
+  areaServed: areaServedCities.map((city) => ({
     "@type": "City",
-    name: city.name,
+    name: city,
   })),
   availableChannel: {
     "@type": "ServiceChannel",
     serviceUrl: `${SITE_URL}/recolha-de-moveis`,
     servicePhone: BUSINESS_PHONE,
+  },
+  offers: {
+    "@type": "Offer",
+    priceCurrency: "EUR",
+    price: "35",
+    priceValidUntil: "2026-12-31",
+    availability: "https://schema.org/InStock",
   },
 };
 
@@ -214,10 +239,10 @@ export const revalidate = 86400;
 
 export default function RecolhaDeMoveisPage() {
   return (
-    <div className="min-h-screen bg-white">
-      <section className="relative overflow-hidden bg-gradient-to-br from-cyan-100 via-cyan-50 to-white">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(34,211,238,0.22),_transparent_36%),radial-gradient(circle_at_bottom_right,_rgba(6,182,212,0.14),_transparent_32%)]" />
-        <div className="relative mx-auto max-w-7xl px-6 py-14 lg:px-8 lg:py-18">
+    <div className="min-h-screen bg-slate-50">
+      {/* Hero Section */}
+      <section className="bg-white">
+        <div className="mx-auto max-w-7xl px-6 pb-16 pt-10 lg:px-8 lg:pb-20 lg:pt-14">
           <Breadcrumb
             items={[
               { label: "Serviços", href: "/servicos" },
@@ -225,384 +250,288 @@ export default function RecolhaDeMoveisPage() {
             ]}
             className="mb-6"
           />
-          <div className="grid gap-10 lg:grid-cols-[1fr_0.92fr] lg:items-center">
-            <div className="max-w-3xl">
-              <div className="inline-flex items-center gap-2 rounded-full border border-cyan-200 bg-white/90 px-4 py-2 text-sm font-semibold uppercase tracking-[0.18em] text-cyan-700 shadow-sm">
-                <Sofa className="h-4 w-4" />
-                Recolha de móveis em Lisboa, Grande Lisboa e Margem Sul
+          
+          <div className="grid gap-10 lg:grid-cols-2 lg:items-start">
+            <div>
+              <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-sm font-medium text-slate-600">
+                <Sofa className="h-4 w-4 text-cyan-600" />
+                Serviço profissional
               </div>
-              <h1 className="mt-5 max-w-[14ch] text-4xl font-bold tracking-tight text-slate-950 md:text-6xl">
-                Recolha de móveis com resposta rápida e descarte responsável.
+              
+              <h1 className="mt-4 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl lg:text-5xl">
+                Recolha de móveis em Lisboa, Margem Sul e Setúbal
               </h1>
-              <p className="mt-5 max-w-2xl text-lg leading-8 text-slate-600">
-                Recolhemos sofás, camas, armários, colchões, mesas, recheios
-                completos e eletrodomésticos com desmontagem, carregamento,
-                transporte e encaminhamento legal. O foco é resolver o pedido do
-                início ao fim, sem deixar o cliente a gerir volume, acessos e
-                descarte sozinho.
+              
+              <p className="mt-5 text-lg leading-8 text-slate-600">
+                Recolhemos <strong>móveis usados</strong>, <strong>sofás</strong>, <strong>camas</strong>, <strong>armários</strong>, <strong>colchões</strong> e <strong>eletrodomésticos</strong> com desmontagem quando necessária, carregamento porta a porta e destino responsável. Cobertura em <strong>Lisboa</strong>, <strong>Margem Sul</strong> e <strong>Setúbal</strong>.
               </p>
-              <div className="mt-7 flex flex-col gap-3 sm:flex-row">
+
+              {/* Benefits above the fold */}
+              <div className="mt-6 grid gap-3 sm:grid-cols-2">
+                {benefits.map((benefit) => (
+                  <div key={benefit.title} className="flex items-start gap-3 rounded-xl border border-slate-200 bg-slate-50 p-3">
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-cyan-100 text-cyan-600">
+                      <benefit.icon className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-slate-900">{benefit.title}</p>
+                      <p className="text-xs text-slate-500">{benefit.desc}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* CTAs */}
+              <div className="mt-6 flex flex-col gap-3 sm:flex-row">
                 <Link
                   href="/simulador"
-                  className="site-btn-primary min-w-[220px] px-6 py-3.5"
+                  className="inline-flex h-12 items-center justify-center gap-2 rounded-lg bg-cyan-600 px-6 text-sm font-semibold text-white transition hover:bg-cyan-700"
                 >
                   <CheckCircle2 className="h-4 w-4" />
-                  Pedir orçamento
+                  Pedir Orçamento Grátis
                 </Link>
                 <a
                   href={`tel:${BUSINESS_PHONE}`}
-                  className="site-btn-secondary min-w-[220px] border-slate-300 text-slate-900 hover:bg-slate-50"
+                  className="inline-flex h-12 items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-6 text-sm font-semibold text-slate-900 transition hover:bg-slate-50"
                 >
-                  <Phone className="mr-2 h-4 w-4" />
-                  Ligar {BUSINESS_PHONE}
+                  <Phone className="h-4 w-4" />
+                  Ligar Agora
+                </a>
+                <a
+                  href="https://wa.me/351931632622?text=Ol%C3%A1!%20Preciso%20de%20recolha%20de%20m%C3%B3veis."
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex h-12 items-center justify-center gap-2 rounded-lg border border-emerald-500 bg-emerald-500 px-6 text-sm font-semibold text-white transition hover:bg-emerald-600"
+                >
+                  WhatsApp
                 </a>
               </div>
             </div>
 
-            <div className="overflow-hidden rounded-[32px] border border-cyan-100 bg-white p-6 shadow-[0_24px_60px_-34px_rgba(14,116,144,0.18)]">
-              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-700">
-                Recolha completa e responsável
+            {/* Right side info card */}
+            <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+              <p className="text-sm font-semibold uppercase tracking-wide text-cyan-700">
+                Cobertura
               </p>
-              <h2 className="mt-3 text-3xl font-bold text-slate-950">
-                Retiramos os móveis, libertamos o espaço e tratamos do destino certo
+              <h2 className="mt-2 text-2xl font-bold text-slate-900">
+                Onde fazemos recolha de móveis
               </h2>
-              <p className="mt-4 text-base leading-8 text-slate-600">
-                Se tem sofás, camas, armários, colchões ou eletrodomésticos a ocupar
-                espaço, a nossa equipa trata da desmontagem, da retirada e do
-                transporte com rapidez e cuidado. Sempre que possível, os móveis em
-                bom estado seguem para reaproveitamento; o restante é encaminhado
-                para descarte responsável.
+              <p className="mt-3 text-sm text-slate-600">
+                Atuamos em Lisboa (Benfica, Lumiar, Alvalade, Olivais), Grande Lisboa (Amadora, Sintra, Oeiras, Cascais), Margem Sul (Almada, Seixal, Barreiro) e Setúbal. Resposta comercial rápida para todas estas zonas.
               </p>
-              <div className="mt-6 grid gap-3 sm:grid-cols-2">
-                <div className="rounded-[22px] border border-cyan-100 bg-cyan-50/80 p-4">
-                  <p className="text-sm font-semibold text-slate-950">
-                    Tempo médio de resposta
-                  </p>
-                  <p className="mt-2 text-sm leading-7 text-slate-600">11 minutos</p>
-                </div>
-                <div className="rounded-[22px] border border-cyan-100 bg-white p-4">
-                  <p className="text-sm font-semibold text-slate-950">
-                    Cobertura principal
-                  </p>
-                  <p className="mt-2 text-sm leading-7 text-slate-600">
-                    Lisboa, Amadora, Sintra, Oeiras, Cascais, Almada e Setúbal
-                  </p>
+              <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3">
+                {areaServedCities.slice(0, 6).map((city) => (
+                  <div key={city} className="flex items-center gap-1.5 text-sm text-slate-700">
+                    <MapPin className="h-3.5 w-3.5 text-cyan-600" />
+                    {city}
+                  </div>
+                ))}
+              </div>
+              <div className="mt-4 rounded-xl bg-slate-50 p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-semibold text-slate-900">Tempo médio de resposta</p>
+                    <p className="text-xs text-slate-500">Para pedidos com fotos e morada</p>
+                  </div>
+                  <p className="text-2xl font-bold text-cyan-600">11 min</p>
                 </div>
               </div>
             </div>
           </div>
         </div>
+        <div className="border-t border-slate-200" />
       </section>
 
-      <section className="mx-auto max-w-7xl px-6 py-16 lg:px-8">
-        <div className="grid gap-6 md:grid-cols-3">
-          {[
-            {
-              icon: Clock3,
-              title: "Resposta comercial rápida",
-              desc: "Triagem ágil para perceber volume, acessos, desmontagem e urgência logo no primeiro contacto.",
-            },
-            {
-              icon: Truck,
-              title: "Recolha completa",
-              desc: "A equipa trata de carregar, transportar e encaminhar os móveis sem deixar etapas a meio.",
-            },
-            {
-              icon: Recycle,
-              title: "Descarte legal",
-              desc: "Se houver reaproveitamento ou doação, a triagem é feita. O restante segue para encaminhamento responsável.",
-            },
-          ].map((item) => (
-            <div
-              key={item.title}
-              className="rounded-[28px] border border-cyan-100 bg-white p-6 shadow-[0_20px_50px_-34px_rgba(14,116,144,0.18)]"
+      {/* O que recolhemos */}
+      <section className="mx-auto max-w-7xl px-6 py-14 lg:px-8">
+        <div className="grid gap-8 lg:grid-cols-2">
+          <div className="rounded-2xl border border-slate-200 bg-white p-6">
+            <p className="text-sm font-semibold uppercase tracking-wide text-cyan-700">
+              O que recolhemos
+            </p>
+            <h2 className="mt-2 text-2xl font-bold text-slate-900">
+              Móveis usados, recheios e volumes grandes
+            </h2>
+            <div className="mt-4 space-y-2">
+              {includedItems.map((item) => (
+                <div key={item} className="flex items-start gap-2 rounded-lg border border-slate-100 bg-slate-50 px-3 py-2">
+                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-cyan-600" />
+                  <span className="text-sm text-slate-700">{item}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Pricing table */}
+          <div className="rounded-2xl border border-slate-200 bg-white p-6">
+            <p className="text-sm font-semibold uppercase tracking-wide text-cyan-700">
+              Preços de referência
+            </p>
+            <h2 className="mt-2 text-2xl font-bold text-slate-900">
+              Exemplos de valores para recolha de móveis
+            </h2>
+            <p className="mt-2 text-sm text-slate-600">
+              Valores orientativos. O orçamento final depende de volume, acessos, andares e necessidade de desmontagem.
+            </p>
+            <div className="mt-4 overflow-hidden rounded-xl border border-slate-200">
+              <table className="w-full text-sm">
+                <thead className="bg-slate-50">
+                  <tr>
+                    <th className="px-4 py-3 text-left font-semibold text-slate-900">Item</th>
+                    <th className="px-4 py-3 text-right font-semibold text-slate-900">Preço</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {pricingTable.map((row) => (
+                    <tr key={row.item}>
+                      <td className="px-4 py-3 text-slate-700">{row.item}</td>
+                      <td className="px-4 py-3 text-right font-semibold text-cyan-600">{row.price}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* SEO Section: Recolha gratuita vs privada */}
+      <section className="mx-auto max-w-7xl px-6 py-14 lg:px-8">
+        <div className="rounded-2xl border border-slate-200 bg-white p-6 lg:p-8">
+          <div className="flex items-start gap-4">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-cyan-100 text-cyan-600">
+              <Shield className="h-6 w-6" />
+            </div>
+            <div>
+              <h2 className="text-2xl font-bold text-slate-900">
+                Recolha gratuita, doação ou recolha privada: qual escolher?
+              </h2>
+              <p className="mt-3 text-base leading-7 text-slate-600">
+                Muitas pesquisas por &quot;recolha de móveis usados&quot; ou &quot;recolha gratuita de móveis&quot; incluem intenções diferentes: doação, recolha municipal, reaproveitamento ou serviço profissional. É importante perceber quando cada opção faz sentido.
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-6 grid gap-4 lg:grid-cols-3">
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-5">
+              <h3 className="font-semibold text-slate-900">Recolha municipal / gratuita</h3>
+              <p className="mt-2 text-sm text-slate-600">
+                Funciona bem para pedidos simples, agendados com antecedência, em que os móveis estão no exterior e não há urgência. Limitações: horários fixos, sem desmontagem, volume limitado, pode demorar semanas.
+              </p>
+            </div>
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-5">
+              <h3 className="font-semibold text-slate-900">Doação / reaproveitamento</h3>
+              <p className="mt-2 text-sm text-slate-600">
+                Ideal se os móveis estão em bom estado e há tempo para contactar instituições ou publicar anúncios. Requer que a peça seja funcional e que o interessado vá buscar.
+              </p>
+            </div>
+            <div className="rounded-xl border border-cyan-200 bg-cyan-50 p-5">
+              <h3 className="font-semibold text-cyan-800">Recolha privada (CLYON)</h3>
+              <p className="mt-2 text-sm text-cyan-700">
+                A escolha certa quando precisa de rapidez, desmontagem, carregamento a partir do interior do imóvel, transporte e retirada completa. Resolve tudo num só pedido, sem depender de terceiros.
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-6 rounded-xl bg-slate-900 p-5 text-white">
+            <p className="text-sm font-semibold">Quando escolher a CLYON:</p>
+            <ul className="mt-2 space-y-1 text-sm text-slate-300">
+              <li>• Precisa de recolha de móveis usados nos próximos dias</li>
+              <li>• Tem armários, camas ou móveis grandes que precisam de desmontagem</li>
+              <li>• Os móveis estão em andares altos ou acessos difíceis</li>
+              <li>• Quer libertar o espaço sem gerir múltiplos contactos</li>
+              <li>• Precisa de retirar móveis velhos de dentro do imóvel</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      {/* Cidades */}
+      <section className="mx-auto max-w-7xl px-6 py-14 lg:px-8">
+        <p className="text-sm font-semibold uppercase tracking-wide text-cyan-700">
+          Cobertura local
+        </p>
+        <h2 className="mt-2 text-2xl font-bold text-slate-900">
+          Recolha de móveis nas principais zonas
+        </h2>
+        <p className="mt-2 max-w-3xl text-base text-slate-600">
+          Atendemos pedidos em Lisboa, Grande Lisboa, Margem Sul e Setúbal. Clique na sua zona para ver mais detalhes e pedir orçamento.
+        </p>
+
+        <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {keyCities.map((city) => (
+            <Link
+              key={city.slug}
+              href={`/${getCityServiceSlug("recolha-moveis", city.slug)}`}
+              className="group rounded-xl border border-slate-200 bg-white p-4 transition hover:border-cyan-200 hover:shadow-sm"
             >
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-cyan-50 text-cyan-600">
-                <item.icon className="h-5 w-5" />
+              <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-cyan-600">
+                <MapPin className="h-3.5 w-3.5" />
+                {city.regionLabel}
               </div>
-              <h2 className="mt-5 text-xl font-bold text-slate-950">{item.title}</h2>
-              <p className="mt-3 text-sm leading-7 text-slate-600">{item.desc}</p>
+              <h3 className="mt-2 font-semibold text-slate-900 group-hover:text-cyan-700">
+                Recolha de móveis em {city.name}
+              </h3>
+              <p className="mt-1 text-sm text-slate-500">
+                Ver preços e pedir orçamento
+              </p>
+            </Link>
+          ))}
+        </div>
+      </section>
+
+      {/* Links internos SEO */}
+      <section className="mx-auto max-w-7xl px-6 py-14 lg:px-8">
+        <FurnitureSeoLinks currentPage="/recolha-de-moveis" />
+      </section>
+
+      {/* FAQs */}
+      <section className="mx-auto max-w-7xl px-6 py-14 lg:px-8">
+        <p className="text-sm font-semibold uppercase tracking-wide text-cyan-700">
+          Perguntas frequentes
+        </p>
+        <h2 className="mt-2 text-2xl font-bold text-slate-900">
+          Dúvidas sobre recolha de móveis usados
+        </h2>
+        <div className="mt-6 grid gap-4 lg:grid-cols-2">
+          {faqs.map((faq) => (
+            <div key={faq.q} className="rounded-xl border border-slate-200 bg-white p-5">
+              <h3 className="font-semibold text-slate-900">{faq.q}</h3>
+              <p className="mt-2 text-sm leading-7 text-slate-600">{faq.a}</p>
             </div>
           ))}
         </div>
+      </section>
 
-        <div className="mt-8 grid gap-6 lg:grid-cols-[1.08fr_0.92fr]">
-          <div className="rounded-[30px] border border-cyan-100 bg-white p-7 shadow-[0_24px_60px_-34px_rgba(14,116,144,0.14)]">
-            <p className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-700">
-              O que recolhemos
-            </p>
-            <h2 className="mt-3 text-3xl font-bold text-slate-950">
-              Móveis, recheios e volumes grandes
-            </h2>
-            <div className="mt-6 grid gap-3 sm:grid-cols-2">
-              {includedItems.map((item) => (
-                <div
-                  key={item}
-                  className="rounded-[22px] border border-cyan-100 bg-cyan-50/70 p-4 text-sm leading-7 text-slate-700"
-                >
-                  {item}
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="rounded-[30px] border border-cyan-100 bg-slate-950 p-7 text-white shadow-[0_24px_60px_-34px_rgba(2,6,23,0.45)]">
-            <p className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-200">
-              Porque escolher a CLYON
-            </p>
-            <h2 className="mt-3 text-3xl font-bold">Um serviço pensado para resolver sem complicações</h2>
-            <div className="mt-6 space-y-3">
-              {differentiators.map((item) => (
-                <div
-                  key={item}
-                  className="rounded-[22px] border border-white/10 bg-white/5 px-4 py-4 text-sm font-medium text-slate-100"
-                >
-                  {item}
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        <div className="mt-8 grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
-          <div className="rounded-[30px] border border-cyan-100 bg-cyan-50/70 p-7">
-            <p className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-700">
-              Preços orientativos
-            </p>
-            <h2 className="mt-3 text-3xl font-bold text-slate-950">
-              Exemplos que ajudam a qualificar o pedido
-            </h2>
-            <div className="mt-5 space-y-3">
-              {pricingExamples.map((item) => (
-                <div key={item} className="rounded-[22px] bg-white p-5 shadow-sm">
-                  <p className="text-sm font-semibold text-slate-950">{item}</p>
-                </div>
-              ))}
-            </div>
-            <p className="mt-5 text-sm leading-7 text-slate-600">
-              Estes valores servem apenas como referência. O orçamento final depende
-              da quantidade de móveis, andares, elevador, desmontagem e distância.
-            </p>
-          </div>
-
-          <div className="rounded-[30px] border border-cyan-100 bg-white p-7 shadow-[0_24px_60px_-34px_rgba(14,116,144,0.14)]">
-            <p className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-700">
-              Como funciona
-            </p>
-            <h2 className="mt-3 text-3xl font-bold text-slate-950">
-              Da primeira mensagem até ao espaço livre
-            </h2>
-            <div className="mt-6 space-y-5">
-              {[
-                "Envie fotos dos móveis, a morada e indique se há escadas, elevador ou necessidade de desmontagem.",
-                "Receba um orçamento claro com a melhor data de recolha para o seu caso.",
-                "No dia marcado, a equipa chega, protege os acessos, desmonta o que for preciso e retira tudo com cuidado.",
-                "No final, os móveis seguem para triagem, doação, reaproveitamento ou descarte responsável, conforme o estado.",
-              ].map((step, index) => (
-                <div key={step} className="flex gap-4">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-cyan-500 text-sm font-bold text-white">
-                    {index + 1}
-                  </div>
-                  <p className="pt-1 text-sm leading-7 text-slate-600">{step}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        <div className="mt-8 rounded-[30px] border border-cyan-100 bg-white p-7 shadow-[0_24px_60px_-34px_rgba(14,116,144,0.14)]">
-          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-700">
-            Onde atuamos
-          </p>
-          <h2 className="mt-3 text-3xl font-bold text-slate-950">
-            Recolha de móveis nas principais zonas da Grande Lisboa e Margem Sul
-          </h2>
-          <p className="mt-3 max-w-3xl text-base leading-8 text-slate-600">
-            Atendemos pedidos em Lisboa, Amadora, Sintra, Oeiras, Cascais, Almada,
-            Seixal e Setúbal. Se precisa de retirar móveis de um apartamento, moradia,
-            escritório, arrecadação ou loja, pode abrir a página da sua zona e pedir
-            resposta rápida com mais detalhe local.
-          </p>
-
-          <div className="mt-6 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-            {keyCities.map((city) => (
-              <Link
-                key={city.slug}
-                href={`/${getCityServiceSlug("recolha-moveis", city.slug)}`}
-                className="rounded-[22px] border border-cyan-100 bg-cyan-50/80 p-5 transition hover:-translate-y-0.5 hover:bg-cyan-50"
-              >
-                <div className="flex items-center gap-2 text-cyan-700">
-                  <MapPin className="h-4 w-4" />
-                  <span className="text-sm font-semibold uppercase tracking-[0.16em]">
-                    {city.regionLabel}
-                  </span>
-                </div>
-                <h3 className="mt-3 text-xl font-bold text-slate-950">
-                  Recolha de móveis em {city.name}
-                </h3>
-                <p className="mt-3 text-sm leading-7 text-slate-600">
-                  Veja a cobertura na sua zona, exemplos de recolha e a forma mais rápida
-                  de pedir orçamento em {city.name}.
-                </p>
-              </Link>
-            ))}
-          </div>
-
-          <div className="mt-8 rounded-[26px] border border-cyan-100 bg-cyan-50/80 p-6">
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-              <div className="max-w-3xl">
-                <p className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-700">
-                  Foco local em Lisboa
-                </p>
-                <h3 className="mt-3 text-2xl font-bold text-slate-950">
-                  A página mais importante para a pesquisa "recolha de móveis Lisboa"
-                </h3>
-                <p className="mt-3 text-sm leading-7 text-slate-600">
-                  Esta página é o hub do serviço, mas a procura mais forte acontece em Lisboa.
-                  Por isso ligamos daqui para a landing local principal e para alguns bairros
-                  estratégicos da cidade.
-                </p>
-              </div>
-              <Link href="/recolha-moveis-lisboa" className="site-btn-primary px-6">
-                Ver Lisboa
-              </Link>
-            </div>
-
-            <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-              {lisbonFocusLinks.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className="rounded-[20px] border border-cyan-100 bg-white px-4 py-4 text-sm font-medium text-slate-800 transition hover:bg-cyan-50"
-                >
-                  {item.label}
-                </Link>
-              ))}
-            </div>
-          </div>
-
-          <div className="mt-6 rounded-[26px] border border-cyan-100 bg-white p-6">
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-              <div className="max-w-3xl">
-                <p className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-700">
-                  Cluster Cascais
-                </p>
-                <h3 className="mt-3 text-2xl font-bold text-slate-950">
-                  Cascais, Oeiras e Sintra precisam de mais reforço interno
-                </h3>
-                <p className="mt-3 text-sm leading-7 text-slate-600">
-                  Como esta pesquisa costuma trazer câmaras, ecocentros e doação de móveis usados,
-                  empurramos também as páginas locais da linha de Cascais para aumentar relevância
-                  comercial nesse grupo de cidades.
-                </p>
-              </div>
-              <Link href="/recolha-moveis-cascais" className="site-btn-primary px-6">
-                Ver Cascais
-              </Link>
-            </div>
-
-            <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-              {cascaisFocusLinks.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className="rounded-[20px] border border-cyan-100 bg-cyan-50/60 px-4 py-4 text-sm font-medium text-slate-800 transition hover:bg-cyan-50"
-                >
-                  {item.label}
-                </Link>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        <div className="mt-8 grid gap-6 lg:grid-cols-[1fr_1fr]">
-          <div className="rounded-[30px] border border-cyan-100 bg-white p-7 shadow-[0_24px_60px_-34px_rgba(14,116,144,0.14)]">
-            <p className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-700">
-              Quando faz sentido chamar a nossa equipa
-            </p>
-            <h2 className="mt-3 text-3xl font-bold text-slate-950">
-              Ideal para quem precisa de rapidez, força de trabalho e solução completa
-            </h2>
-            <p className="mt-4 text-base leading-8 text-slate-600">
-              Este serviço é indicado para mudanças de casa, renovação de imóveis,
-              despejo de apartamentos, libertação de arrecadações e retirada de
-              móveis demasiado pesados para tratar sozinho. Em vez de perder tempo
-              com desmontagem, transporte e descarte, resolve tudo num único pedido.
-            </p>
-          </div>
-
-          <div className="rounded-[30px] border border-cyan-100 bg-white p-7 shadow-[0_24px_60px_-34px_rgba(14,116,144,0.14)]">
-            <p className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-700">
-              Serviços relacionados
-            </p>
-            <h2 className="mt-3 text-3xl font-bold text-slate-950">
-              Apoio adicional quando o pedido vai além dos móveis
-            </h2>
-            <div className="mt-6 grid gap-3 sm:grid-cols-2">
-              {[
-                { href: "/esvaziamento-casas-lisboa", label: "Esvaziamento de casas em Lisboa" },
-                { href: "/recolha-monos-amadora", label: "Recolha de monos em Amadora" },
-                { href: "/recolha-entulho-amadora", label: "Recolha de entulho em Amadora" },
-                { href: "/servicos", label: "Todos os serviços" },
-              ].map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className="flex items-center justify-between rounded-[22px] border border-cyan-100 bg-cyan-50/70 px-4 py-4 text-sm font-medium text-slate-800 transition hover:bg-cyan-50"
-                >
-                  <span>{item.label}</span>
-                  <ArrowRight className="h-4 w-4 text-cyan-700" />
-                </Link>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        <div className="mt-8 rounded-[30px] border border-cyan-100 bg-cyan-50/70 p-7">
-          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-700">
-            Perguntas frequentes
-          </p>
-          <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {faqs.map((faq) => (
-              <div key={faq.q} className="rounded-[22px] bg-white p-5 shadow-sm">
-                <h3 className="text-base font-semibold text-slate-950">{faq.q}</h3>
-                <p className="mt-3 text-sm leading-7 text-slate-600">{faq.a}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="mt-8 rounded-[30px] border border-cyan-100 bg-white p-7 shadow-[0_24px_60px_-34px_rgba(14,116,144,0.14)]">
-          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-700">
-            CTA final
-          </p>
-          <h2 className="mt-3 text-3xl font-bold text-slate-950">
+      {/* CTA Final */}
+      <section className="mx-auto max-w-7xl px-6 pb-20 pt-6 lg:px-8">
+        <div className="rounded-2xl bg-slate-900 p-8 text-center lg:p-12">
+          <h2 className="text-2xl font-bold text-white lg:text-3xl">
             Precisa de recolha de móveis hoje?
           </h2>
-          <p className="mt-4 max-w-3xl text-base leading-8 text-slate-600">
-            Se já sabe o que precisa de retirar, envie o pedido agora e receba uma
-            resposta rápida. Quanto mais informação nos der sobre quantidade,
-            localização e acessos, mais preciso será o orçamento.
+          <p className="mx-auto mt-3 max-w-2xl text-slate-300">
+            Envie fotos e morada para receber orçamento rápido. Quanto mais informação nos der, mais preciso será o valor.
           </p>
-          <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+          <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
             <Link
               href="/simulador"
-              className="site-btn-primary min-w-[220px] px-6 py-3.5"
+              className="inline-flex h-12 items-center justify-center gap-2 rounded-lg bg-cyan-500 px-8 font-semibold text-white transition hover:bg-cyan-400"
             >
-              <CheckCircle2 className="h-4 w-4" />
-              Simular agora
+              Simular Orçamento
+              <ArrowRight className="h-4 w-4" />
             </Link>
-            <Link
-              href="/contactos"
-              className="site-btn-secondary min-w-[220px] border-slate-300 text-slate-900 hover:bg-slate-50"
+            <a
+              href={`tel:${BUSINESS_PHONE}`}
+              className="inline-flex h-12 items-center justify-center gap-2 rounded-lg border border-white/20 bg-white/10 px-8 font-semibold text-white transition hover:bg-white/20"
             >
               <Phone className="h-4 w-4" />
-              Falar connosco
-            </Link>
+              Ligar Agora
+            </a>
           </div>
         </div>
       </section>
 
+      {/* Schema.org Scripts */}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
@@ -610,6 +539,10 @@ export default function RecolhaDeMoveisPage() {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(localBusinessSchema) }}
       />
       <script
         type="application/ld+json"

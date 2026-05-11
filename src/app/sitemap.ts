@@ -46,8 +46,13 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "recolha-moveis-lisboa",
     "recolha-moveis-setubal",
     "recolha-moveis-almada",
+    "recolha-moveis-amadora",
+    "recolha-moveis-sintra",
+    "recolha-moveis-oeiras",
+    "recolha-moveis-cascais",
     "recolha-entulho-setubal",
     "recolha-entulho-lisboa",
+    "esvaziamento-casas-lisboa",
   ];
 
   const localPages = CITIES.flatMap((city) =>
@@ -72,10 +77,14 @@ export default function sitemap(): MetadataRoute.Sitemap {
           : slug === "recolha-moveis-lisboa" ? 0.97
           : slug === "recolha-moveis-setubal" ? 0.95
           : slug === "recolha-moveis-almada" ? 0.95
+          : slug === "recolha-moveis-amadora" ? 0.93
+          : slug === "recolha-moveis-sintra" ? 0.93
+          : slug === "recolha-moveis-oeiras" ? 0.93
+          : slug === "recolha-moveis-cascais" ? 0.93
           : slug === "recolha-entulho-setubal" ? 0.94
           : slug === "recolha-entulho-lisboa" ? 0.94
+          : slug === "esvaziamento-casas-lisboa" ? 0.92
           // Outras páginas de recolha de móveis
-          : service.slug === "recolha-moveis" && city.slug === "cascais" ? 0.92
           : service.slug === "recolha-moveis" ? 0.9
           // Mudanças Lisboa
           : service.slug === "mudancas" && city.slug === "lisboa" ? 0.92

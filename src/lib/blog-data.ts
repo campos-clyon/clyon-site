@@ -112,7 +112,7 @@ export const BLOG_POSTS: BlogPost[] = [
     publishDate: "2026-03-16",
     heroLabel: "Guia prático",
     intro:
-      "A recolha de móveis é um dos pedidos mais frequentes na operação da CLYON. Seja por mudança, renovação, venda de casa, fim de arrendamento, herança ou despejo de recheios, o objectivo costuma ser sempre o mesmo: libertar espaço depressa, com segurança e sem complicar acessos, desmontagens ou transporte.",
+      "A recolha de móveis é um dos pedidos mais frequentes na operação da CLYON. Seja por mudança, renovação, venda de casa, fim de arrendamento, herança ou despejo de recheios, o objectivo costuma ser sempre o mesmo: libertar espaço depressa, com segurança e sem complicar acessos, desmontagens ou transporte. Precisa de recolha de móveis em Lisboa ou Margem Sul? Veja o serviço da CLYON em /recolha-de-moveis ou simule um orçamento em /simulador.",
     sections: [
       {
         title: "Quando faz sentido pedir recolha de móveis",
@@ -146,6 +146,19 @@ export const BLOG_POSTS: BlogPost[] = [
         paragraphs: [
           "Nem todo o móvel precisa de ir para despejo. Peças em bom estado podem seguir para doação, reaproveitamento ou venda. Peças partidas, húmidas, sem ferragens ou sem viabilidade de uso tendem a justificar despejo directo.",
           "Uma boa estratégia SEO para este tema não é falar apenas de recolha. É responder à dúvida real do utilizador: doar, vender, reaproveitar ou despejar? É aí que o conteúdo ganha intenção e relevância nas pesquisas.",
+        ],
+      },
+      {
+        title: "Quando a recolha gratuita não resolve",
+        paragraphs: [
+          "A pesquisa por recolha gratuita de móveis usados é muito comum, mas nem sempre a via gratuita resolve o problema. A recolha municipal tem limitações: horários restritos, agendamento demorado, volume máximo e nenhum apoio para desmontagem ou retirada do interior do imóvel.",
+          "Se o objectivo é libertar o espaço rapidamente, com desmontagem incluída, carregamento porta a porta e retirada completa, a recolha privada é a opção mais eficaz. A CLYON oferece resposta rápida, equipa preparada para acessos difíceis e encaminhamento responsável dos móveis usados.",
+          "A diferença principal: na recolha gratuita ou municipal, o cliente tem de colocar os móveis no exterior e aguardar. Na recolha privada, a equipa entra no imóvel, desmonta o necessário e resolve tudo num só pedido.",
+        ],
+        bullets: [
+          "Recolha municipal: gratuita, mas limitada em volume, horários e sem desmontagem",
+          "Doação: ideal para peças em bom estado, mas exige tempo e disponibilidade",
+          "Recolha privada (CLYON): paga, mas com rapidez, desmontagem e carregamento completo",
         ],
       },
     ],
