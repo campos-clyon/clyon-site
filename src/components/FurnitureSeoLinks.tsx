@@ -10,6 +10,11 @@ interface FurnitureSeoLinksProps {
 
 const seoLinks = [
   { href: "/recolha-de-moveis", label: "Recolha de Móveis", description: "Página principal do serviço" },
+  { href: "/recolha-de-sofas", label: "Recolha de Sofás", description: "Sofás e chaise longues" },
+  { href: "/recolha-de-camas", label: "Recolha de Camas", description: "Camas, estrados e colchões" },
+  { href: "/recolha-de-armarios", label: "Recolha de Armários", description: "Armários e roupeiros" },
+  { href: "/recolha-de-eletrodomesticos", label: "Recolha de Eletrodomésticos", description: "Frigoríficos e máquinas" },
+  { href: "/recolha-gratuita-de-moveis-usados", label: "Recolha Gratuita vs Privada", description: "Quando escolher" },
   { href: "/recolha-moveis-lisboa", label: "Recolha de móveis em Lisboa", description: "Lisboa e bairros" },
   { href: "/recolha-moveis-almada", label: "Recolha de móveis em Almada", description: "Almada e Caparica" },
   { href: "/recolha-moveis-setubal", label: "Recolha de móveis em Setúbal", description: "Setúbal e Palmela" },

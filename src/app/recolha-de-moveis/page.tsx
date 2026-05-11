@@ -446,6 +446,40 @@ export default function RecolhaDeMoveisPage() {
         </div>
       </section>
 
+      {/* Páginas por tipo de móvel */}
+      <section className="mx-auto max-w-7xl px-6 py-14 lg:px-8">
+        <p className="text-sm font-semibold uppercase tracking-wide text-cyan-700">
+          Serviços especializados
+        </p>
+        <h2 className="mt-2 text-2xl font-bold text-slate-900">
+          Recolha por tipo de móvel ou equipamento
+        </h2>
+        <p className="mt-2 max-w-3xl text-base text-slate-600">
+          Além da recolha geral de móveis, temos páginas específicas para cada tipo de item. Escolha o que precisa de recolher.
+        </p>
+
+        <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+          {[
+            { href: "/recolha-de-sofas", label: "Recolha de Sofás", desc: "Sofás, chaise longues, cadeirões" },
+            { href: "/recolha-de-camas", label: "Recolha de Camas", desc: "Camas, estrados, colchões" },
+            { href: "/recolha-de-armarios", label: "Recolha de Armários", desc: "Armários, roupeiros, cómodas" },
+            { href: "/recolha-de-eletrodomesticos", label: "Eletrodomésticos", desc: "Frigoríficos, máquinas" },
+            { href: "/recolha-gratuita-de-moveis-usados", label: "Gratuita vs Privada", desc: "Quando escolher" },
+          ].map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              className="group rounded-xl border border-slate-200 bg-white p-4 transition hover:border-cyan-200 hover:shadow-sm"
+            >
+              <h3 className="font-semibold text-slate-900 group-hover:text-cyan-700">
+                {item.label}
+              </h3>
+              <p className="mt-1 text-sm text-slate-500">{item.desc}</p>
+            </Link>
+          ))}
+        </div>
+      </section>
+
       {/* Cidades */}
       <section className="mx-auto max-w-7xl px-6 py-14 lg:px-8">
         <p className="text-sm font-semibold uppercase tracking-wide text-cyan-700">
