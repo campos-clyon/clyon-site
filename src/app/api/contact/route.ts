@@ -2,13 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { Resend } from "resend";
 import { BUSINESS_EMAIL } from "@/lib/seo-data";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+const resend = new Resend(process.env.RESEND_API_KEY_clyonsite);
 
 export async function POST(request: NextRequest) {
   try {
     // Verificar se a API key está configurada
-    if (!process.env.RESEND_API_KEY) {
-      console.error("[v0] RESEND_API_KEY não está configurada");
+    if (!process.env.RESEND_API_KEY_clyonsite) {
+      console.error("[v0] RESEND_API_KEY_clyonsite não está configurada");
       return NextResponse.json(
         { error: "Configuração de email em falta" },
         { status: 500 }
@@ -41,7 +41,7 @@ Este email foi enviado automaticamente através do formulário de contacto em cl
     `.trim();
 
     const { data, error } = await resend.emails.send({
-      from: "CLYON Website <onboarding@resend.dev>",
+      from: "CLYON Website <noreply@clyon.pt>",
       to: [BUSINESS_EMAIL],
       subject: `Novo pedido: ${servico} em ${localidade}`,
       text: emailContent,
