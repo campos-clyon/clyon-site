@@ -290,7 +290,7 @@ export const CITY_SERVICE_CONTENT: Record<string, CityServiceContent> = {
       "Recolha de móveis usados no Seixal. A CLYON está sediada em Amora - resposta imediata para Corroios, Arrentela e Paio Pires. Preços desde 30EUR.",
     h1: "Recolha de Móveis no Seixal - A Nossa Base",
     localIntro:
-      "O Seixal é a nossa casa. A sede da CLYON fica em Amora, na Rua dos Jasmins. Isto significa que para qualquer pedido no Seixal - seja em Corroios, Arrentela, Paio Pires ou Fernão Ferro - conseguimos responder em minutos e estar no local no mesmo dia. Os nossos preços no Seixal são os mais competitivos porque não temos deslocação.",
+      "O Seixal é a nossa casa. A sede da CLYON fica em Belverde, Amora. Isto significa que para qualquer pedido no Seixal - seja em Corroios, Arrentela, Paio Pires ou Fernão Ferro - conseguimos responder em minutos e estar no local no mesmo dia. Os nossos preços no Seixal são os mais competitivos porque não temos deslocação.",
     accessNotes:
       "O Seixal tem uma mistura de prédios com elevador (Corroios, Cruz de Pau) e moradias (Fernão Ferro, Paio Pires). Conhecemos bem cada zona e adaptamos a equipa ao tipo de acesso.",
     neighborhoodHighlight:
@@ -299,7 +299,7 @@ export const CITY_SERVICE_CONTENT: Record<string, CityServiceContent> = {
     faqs: [
       {
         q: "A CLYON é do Seixal?",
-        a: "Sim, a nossa sede é em Amora, Seixal. Estamos na Rua dos Jasmins, 2845-513. Para pedidos no Seixal, conseguimos os melhores preços e tempos de resposta.",
+        a: "Sim, a nossa sede é em Belverde, Amora (Seixal), 2845-513. Para pedidos no Seixal, conseguimos os melhores preços e tempos de resposta.",
       },
       {
         q: "Quanto custa recolher um sofá no Seixal?",

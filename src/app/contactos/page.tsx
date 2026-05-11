@@ -107,8 +107,6 @@ export default function ContactosPage() {
                         Morada
                       </p>
                       <p className="mt-2 text-sm leading-8 text-slate-600">
-                        Rua dos Jasmins 3
-                        <br />
                         Belverde, Amora
                         <br />
                         2845-513 Portugal

@@ -115,7 +115,7 @@ const localBusinessSchema = {
     "Empresa especializada em recolha de entulho, móveis, monos, esvaziamento de casas, limpeza pós-obra e mudanças em Lisboa, Margem Sul e Setúbal.",
   address: {
     "@type": "PostalAddress",
-    streetAddress: "Rua dos Jasmins 3",
+    streetAddress: "Belverde",
     addressLocality: "Amora",
     addressRegion: "Setúbal",
     postalCode: "2845-513",

@@ -179,7 +179,7 @@ const localBusinessSchema = {
   email: BUSINESS_EMAIL,
   address: {
     "@type": "PostalAddress",
-    streetAddress: "Rua dos Jasmins 3",
+    streetAddress: "Belverde",
     addressLocality: "Amora",
     addressRegion: "Setúbal",
     postalCode: "2845-513",
