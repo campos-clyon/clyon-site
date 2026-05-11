@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { Send, AlertCircle, Mail, MessageCircle } from "lucide-react";
+import { AlertCircle, Mail, MessageCircle, CheckCircle2 } from "lucide-react";
 import { trackLeadFormStart, trackLeadFormSubmit, trackWhatsAppClick } from "@/lib/analytics";
-import { BUSINESS_PHONE, BUSINESS_EMAIL } from "@/lib/seo-data";
+import { BUSINESS_PHONE } from "@/lib/seo-data";
 
 const SERVICES = [
   "Recolha de móveis",
@@ -159,31 +159,46 @@ Podem entrar em contacto comigo?`;
     setIsSubmitting(false);
   }, [formData, validate]);
 
-  const handleSubmitEmail = useCallback((e: React.MouseEvent) => {
+  const [emailStatus, setEmailStatus] = useState<"idle" | "sending" | "success" | "error">("idle");
+
+  const handleSubmitEmail = useCallback(async (e: React.MouseEvent) => {
     e.preventDefault();
 
     if (!validate()) {
       return;
     }
 
+    setEmailStatus("sending");
     trackLeadFormSubmit("contactos_page_email", formData.servico);
 
-    const subject = `Pedido de orçamento - ${formData.servico} em ${formData.localidade}`;
-    const body = `Olá! Gostava de pedir um orçamento à CLYON.
+    try {
+      const response = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
 
-Dados do pedido:
-- Nome: ${formData.nome}
-- Telemóvel: ${formData.telemovel}
-- Localidade: ${formData.localidade}
-- Serviço: ${formData.servico}
-${formData.mensagem ? `- Mensagem: ${formData.mensagem}` : ""}
-
-Podem entrar em contacto comigo?`;
-
-    const mailtoUrl = `mailto:${BUSINESS_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-    
-    // Open email client
-    window.location.href = mailtoUrl;
+      if (response.ok) {
+        setEmailStatus("success");
+        // Reset form after 3 seconds
+        setTimeout(() => {
+          setFormData({
+            nome: "",
+            telemovel: "",
+            localidade: "",
+            servico: "",
+            mensagem: "",
+          });
+          setEmailStatus("idle");
+        }, 3000);
+      } else {
+        setEmailStatus("error");
+        setTimeout(() => setEmailStatus("idle"), 3000);
+      }
+    } catch {
+      setEmailStatus("error");
+      setTimeout(() => setEmailStatus("idle"), 3000);
+    }
   }, [formData, validate]);
 
   return (
@@ -339,10 +354,36 @@ Podem entrar em contacto comigo?`;
         <button
           type="button"
           onClick={handleSubmitEmail}
-          className="inline-flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-cyan-500 bg-white px-6 py-4 text-base font-semibold text-cyan-600 transition hover:-translate-y-0.5 hover:bg-cyan-50"
+          disabled={emailStatus === "sending" || emailStatus === "success"}
+          className={`inline-flex w-full items-center justify-center gap-2 rounded-2xl border-2 px-6 py-4 text-base font-semibold transition hover:-translate-y-0.5 disabled:hover:translate-y-0 ${
+            emailStatus === "success"
+              ? "border-emerald-500 bg-emerald-50 text-emerald-600"
+              : emailStatus === "error"
+              ? "border-red-500 bg-red-50 text-red-600"
+              : "border-cyan-500 bg-white text-cyan-600 hover:bg-cyan-50"
+          }`}
         >
-          <Mail className="h-5 w-5" />
-          Enviar por Email
+          {emailStatus === "sending" ? (
+            <>
+              <span className="h-5 w-5 animate-spin rounded-full border-2 border-cyan-500 border-t-transparent" />
+              A enviar...
+            </>
+          ) : emailStatus === "success" ? (
+            <>
+              <CheckCircle2 className="h-5 w-5" />
+              Email enviado com sucesso!
+            </>
+          ) : emailStatus === "error" ? (
+            <>
+              <AlertCircle className="h-5 w-5" />
+              Erro ao enviar. Tente novamente.
+            </>
+          ) : (
+            <>
+              <Mail className="h-5 w-5" />
+              Enviar por Email
+            </>
+          )}
         </button>
       </div>
 
