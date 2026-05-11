@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter, Poppins } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
 
 import DeferredCookieConsent from "@/components/DeferredCookieConsent";
 import Footer from "@/components/Footer";
@@ -234,6 +235,7 @@ export default function RootLayout({
           <StickyCTA />
           <DeferredCookieConsent />
         </TrpcProvider>
+        <Analytics />
       </body>
     </html>
   );
