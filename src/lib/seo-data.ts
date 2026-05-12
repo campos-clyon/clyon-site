@@ -31,7 +31,7 @@ export interface ServiceData {
 
 export const SITE_URL = "https://clyon.pt";
 export const BUSINESS_NAME = "CLYON";
-export const BUSINESS_PHONE = "+351931632622";
+export const BUSINESS_PHONE = "+351934748005";
 export const BUSINESS_EMAIL = "geral@clyon.pt";
 export const BUSINESS_ADDRESS = "Belverde, Amora, 2845-513 Portugal";
 export const BUSINESS_INSTAGRAM =
