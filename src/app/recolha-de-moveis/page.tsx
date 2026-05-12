@@ -298,7 +298,7 @@ export default function RecolhaDeMoveisPage() {
                   Ligar Agora
                 </a>
                 <a
-                  href="https://wa.me/351931632622?text=Ol%C3%A1!%20Preciso%20de%20recolha%20de%20m%C3%B3veis."
+                  href="https://wa.me/351934748005?text=Ol%C3%A1!%20Preciso%20de%20recolha%20de%20m%C3%B3veis."
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex h-12 items-center justify-center gap-2 rounded-lg border border-emerald-500 bg-emerald-500 px-6 text-sm font-semibold text-white transition hover:bg-emerald-600"

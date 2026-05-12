@@ -15,7 +15,7 @@ import Breadcrumb from "@/components/Breadcrumb";
 export const metadata: Metadata = {
   title: "Retirar Móveis Velhos Lisboa, Margem Sul e Setúbal | CLYON",
   description:
-    "Precisa de retirar móveis velhos? A CLYON retira sofás, camas, armários e eletrodomésticos antigos em Lisboa, Margem Sul e Setúbal. Orçamento grátis: 931 632 622.",
+    "Precisa de retirar móveis velhos? A CLYON retira sofás, camas, armários e eletrodomésticos antigos em Lisboa, Margem Sul e Setúbal. Orçamento grátis: 934 748 005.",
   keywords: [
     "retirar móveis velhos",
     "retirar móveis velhos Lisboa",
@@ -125,7 +125,7 @@ export default function RetirarMoveisVelhosPage() {
         provider: {
           "@type": "LocalBusiness",
           name: "CLYON",
-          telephone: "+351931632622",
+          telephone: "+351934748005",
           address: {
             "@type": "PostalAddress",
             addressLocality: "Lisboa",
@@ -203,14 +203,14 @@ export default function RetirarMoveisVelhosPage() {
               Simular Orçamento
             </Link>
             <a
-              href="tel:+351931632622"
+              href="tel:+351934748005"
               className="inline-flex h-12 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-6 text-[0.9375rem] font-semibold text-slate-700 transition hover:bg-slate-50"
             >
               <Phone className="h-4 w-4" />
-              931 632 622
+              934 748 005
             </a>
             <a
-              href="https://wa.me/351931632622?text=Ol%C3%A1!%20Preciso%20de%20retirar%20m%C3%B3veis%20velhos."
+              href="https://wa.me/351934748005?text=Ol%C3%A1!%20Preciso%20de%20retirar%20m%C3%B3veis%20velhos."
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex h-12 items-center justify-center gap-2 rounded-lg bg-emerald-500 px-6 text-[0.9375rem] font-semibold text-white transition hover:bg-emerald-600"
@@ -383,14 +383,14 @@ export default function RetirarMoveisVelhosPage() {
             </p>
             <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
               <a
-                href="tel:+351931632622"
+                href="tel:+351934748005"
                 className="inline-flex h-12 items-center justify-center gap-2 rounded-lg bg-white px-6 font-semibold text-cyan-700 transition hover:bg-cyan-50"
               >
                 <Phone className="h-4 w-4" />
                 Ligar Agora
               </a>
               <a
-                href="https://wa.me/351931632622?text=Ol%C3%A1!%20Preciso%20de%20retirar%20m%C3%B3veis%20velhos."
+                href="https://wa.me/351934748005?text=Ol%C3%A1!%20Preciso%20de%20retirar%20m%C3%B3veis%20velhos."
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex h-12 items-center justify-center gap-2 rounded-lg border border-white/30 px-6 font-semibold text-white transition hover:bg-white/10"
