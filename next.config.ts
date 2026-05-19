@@ -8,6 +8,17 @@ const nextConfig: NextConfig = {
   },
   async redirects() {
     return [
+      // Redirect orçamento para simulador
+      {
+        source: "/orcamento",
+        destination: "/simulador",
+        permanent: true,
+      },
+      {
+        source: "/orçamento",
+        destination: "/simulador",
+        permanent: true,
+      },
       // URLs antigas deprecated
       {
         source: "/contato",

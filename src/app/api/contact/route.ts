@@ -2,8 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { Resend } from "resend";
 import { BUSINESS_EMAIL } from "@/lib/seo-data";
 
-const resend = new Resend(process.env.RESEND_API_KEY_clyonsite);
-
 export async function POST(request: NextRequest) {
   try {
     // Verificar se a API key está configurada
@@ -14,6 +12,9 @@ export async function POST(request: NextRequest) {
         { status: 500 }
       );
     }
+
+    // Inicializar Resend apenas quando necessário (evita erro no build)
+    const resend = new Resend(process.env.RESEND_API_KEY_clyonsite);
 
     const body = await request.json();
     const { nome, telemovel, endereco, servico, mensagem } = body;
