@@ -18,6 +18,7 @@ import {
 
 import ImageCarousel from "@/components/ImageCarousel";
 import RotatingHeroCopy from "@/components/RotatingHeroCopy";
+import { InstagramFeed } from "@/components/InstagramFeed";
 import { getHeroCarouselImages } from "@/lib/work-gallery";
 
 export const metadata: Metadata = {
@@ -585,6 +586,9 @@ export default async function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* Instagram Feed */}
+      <InstagramFeed />
 
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(homeFaqSchema) }} />
     </div>
