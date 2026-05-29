@@ -27,15 +27,33 @@ export async function GET() {
   if (!accessToken) {
     console.error("[v0] INSTAGRAM_ACCESS_TOKEN não está configurado");
     return NextResponse.json(
-      { error: "Instagram não configurado" },
+      { error: "Instagram não configurado", debug: "Token não encontrado" },
       { status: 500 }
     );
   }
 
   try {
+    // Primeiro, obter o ID do usuário Instagram Business
+    const userResponse = await fetch(
+      `https://graph.instagram.com/me?fields=id,username&access_token=${accessToken}`,
+      { next: { revalidate: 3600 } }
+    );
+
+    if (!userResponse.ok) {
+      const errorData = await userResponse.json();
+      console.error("[v0] Erro ao obter usuário Instagram:", errorData);
+      return NextResponse.json(
+        { error: "Erro ao autenticar Instagram", debug: errorData },
+        { status: userResponse.status }
+      );
+    }
+
+    const userData = await userResponse.json();
+    console.log("[v0] Instagram user:", userData);
+
     // Buscar os últimos 12 posts do Instagram
     const response = await fetch(
-      `https://graph.instagram.com/me/media?fields=id,media_type,media_url,thumbnail_url,permalink,caption,timestamp&limit=12&access_token=${accessToken}`,
+      `https://graph.instagram.com/${userData.id}/media?fields=id,media_type,media_url,thumbnail_url,permalink,caption,timestamp&limit=12&access_token=${accessToken}`,
       { next: { revalidate: 3600 } } // Cache por 1 hora
     );
 
@@ -43,12 +61,13 @@ export async function GET() {
       const errorData = await response.json();
       console.error("[v0] Erro Instagram API:", errorData);
       return NextResponse.json(
-        { error: "Erro ao buscar fotos do Instagram" },
+        { error: "Erro ao buscar fotos do Instagram", debug: errorData },
         { status: response.status }
       );
     }
 
     const data: InstagramResponse = await response.json();
+    console.log("[v0] Instagram media count:", data.data?.length || 0);
 
     // Filtrar apenas imagens e carousel (excluir vídeos ou pegar thumbnail)
     const media = data.data.map((item) => ({
@@ -60,11 +79,11 @@ export async function GET() {
       timestamp: item.timestamp,
     }));
 
-    return NextResponse.json({ media });
+    return NextResponse.json({ media, username: userData.username });
   } catch (error) {
     console.error("[v0] Erro ao buscar Instagram:", error);
     return NextResponse.json(
-      { error: "Erro interno ao buscar fotos" },
+      { error: "Erro interno ao buscar fotos", debug: String(error) },
       { status: 500 }
     );
   }

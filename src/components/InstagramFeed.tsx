@@ -17,18 +17,24 @@ interface InstagramPost {
 export function InstagramFeed() {
   const [posts, setPosts] = useState<InstagramPost[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchPosts() {
       try {
         const response = await fetch("/api/instagram");
-        if (!response.ok) throw new Error("Erro ao buscar posts");
         const data = await response.json();
+        
+        if (!response.ok) {
+          console.error("[v0] Instagram API error:", data);
+          setError(data.error || "Erro ao carregar");
+          return;
+        }
+        
         setPosts(data.media || []);
       } catch (err) {
-        console.error("Erro Instagram:", err);
-        setError(true);
+        console.error("[v0] Erro Instagram fetch:", err);
+        setError("Erro de conexão");
       } finally {
         setLoading(false);
       }
@@ -37,8 +43,21 @@ export function InstagramFeed() {
     fetchPosts();
   }, []);
 
+  // Em produção, não mostrar se houver erro
+  if (error && process.env.NODE_ENV === "production") {
+    return null;
+  }
+
+  // Em desenvolvimento, mostrar erro para debug
   if (error) {
-    return null; // Não mostrar nada se houver erro
+    return (
+      <section className="bg-slate-50 py-16">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-center">
+          <p className="text-red-500">Instagram Error: {error}</p>
+          <p className="text-sm text-slate-500 mt-2">Verifique os logs do servidor</p>
+        </div>
+      </section>
+    );
   }
 
   if (loading) {
