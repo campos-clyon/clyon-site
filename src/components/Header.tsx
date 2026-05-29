@@ -51,7 +51,7 @@ export default function Header() {
             target="_blank"
             rel="noopener noreferrer"
             onClick={() => trackWhatsAppClick("header")}
-            className="inline-flex items-center gap-2 rounded-xl bg-emerald-500 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-400"
+            className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-emerald-500/25 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-emerald-500/30"
           >
             <MessageCircle className="h-4 w-4" />
             <span>WhatsApp</span>
@@ -59,7 +59,7 @@ export default function Header() {
           <a
             href={phoneHref}
             onClick={() => trackPhoneCall("header")}
-            className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-cyan-300 hover:text-cyan-600"
+            className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-cyan-500 to-cyan-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-cyan-500/25 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-cyan-500/30"
             aria-label={`Ligar para ${BUSINESS_PHONE}`}
           >
             <Phone className="h-4 w-4" />
@@ -99,14 +99,14 @@ export default function Header() {
                 trackWhatsAppClick("header_mobile");
                 setMenuOpen(false);
               }}
-              className="mt-2 flex w-full items-center justify-center gap-2 rounded-2xl bg-emerald-500 px-4 py-3 text-base font-semibold text-white transition hover:bg-emerald-400"
+              className="mt-2 flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-emerald-500 to-emerald-600 px-4 py-3.5 text-base font-semibold text-white shadow-lg shadow-emerald-500/25 transition-all duration-200 hover:shadow-xl hover:shadow-emerald-500/30"
             >
               <MessageCircle className="h-4 w-4" />
               <span>WhatsApp</span>
             </a>
             <a
               href={phoneHref}
-              className="site-btn-primary site-btn-lively flex w-full py-3"
+              className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-cyan-500 to-cyan-600 px-4 py-3.5 text-base font-semibold text-white shadow-lg shadow-cyan-500/25 transition-all duration-200 hover:shadow-xl hover:shadow-cyan-500/30"
               onClick={() => {
                 trackPhoneCall("header_mobile");
                 setMenuOpen(false);
