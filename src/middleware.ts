@@ -32,7 +32,45 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(redirectUrl, 301);
   }
 
-  // 2. Redirects de URLs antigas e deprecated
+  // 2. URLs permanentemente removidas - retornar 410 Gone
+  const goneUrls = ["/credito-fiscal"];
+  if (goneUrls.includes(nextUrl.pathname)) {
+    return new NextResponse(
+      `<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+  <meta charset="UTF-8">
+  <meta name="robots" content="noindex">
+  <title>Página Removida | CLYON</title>
+  <style>
+    body { font-family: system-ui, sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; background: #f8fafc; }
+    .container { text-align: center; padding: 2rem; }
+    h1 { color: #0f172a; font-size: 1.5rem; margin-bottom: 0.5rem; }
+    p { color: #64748b; margin-bottom: 1.5rem; }
+    a { color: #0891b2; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <p style="color: #0891b2; font-size: 0.875rem; font-weight: 600; letter-spacing: 0.1em;">410 - PÁGINA REMOVIDA</p>
+    <h1>Esta página foi permanentemente removida</h1>
+    <p>O conteúdo que procura já não está disponível.</p>
+    <a href="/">← Voltar à página inicial</a>
+  </div>
+</body>
+</html>`,
+      {
+        status: 410,
+        headers: {
+          "Content-Type": "text/html; charset=utf-8",
+          "X-Robots-Tag": "noindex",
+        },
+      }
+    );
+  }
+
+  // 3. Redirects de URLs antigas e deprecated
   if (nextUrl.pathname === "/contato") {
     return NextResponse.redirect(new URL("/contactos", request.url), 301);
   }
@@ -41,15 +79,11 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL("/avaliacoes", request.url), 301);
   }
 
-  if (nextUrl.pathname === "/credito-fiscal") {
-    return NextResponse.redirect(new URL("/contactos", request.url), 301);
-  }
-
   if (nextUrl.pathname === "/central-ajuda") {
     return NextResponse.redirect(new URL("/faq", request.url), 301);
   }
 
-  // 3. Redirect URLs com cedilha "mudanças" para versão sem acento "mudancas"
+  // 4. Redirect URLs com cedilha "mudanças" para versão sem acento "mudancas"
   if (nextUrl.pathname.includes("mudan%C3%A7as") || nextUrl.pathname.includes("mudanças")) {
     const decodedPath = decodeURIComponent(nextUrl.pathname);
     

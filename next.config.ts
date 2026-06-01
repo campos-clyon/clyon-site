@@ -46,11 +46,6 @@ const nextConfig: NextConfig = {
         permanent: true,
       },
       {
-        source: "/credito-fiscal",
-        destination: "/contactos",
-        permanent: true,
-      },
-      {
         source: "/recolha-moveis-parque-das-nacoes",
         destination: "/recolha-moveis-lisboa",
         permanent: true,
