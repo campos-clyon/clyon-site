@@ -612,7 +612,7 @@ export default async function HomePage() {
                   href="https://wa.me/351934748005"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex h-14 items-center justify-center gap-2 rounded-xl border border-slate-600 px-8 text-base font-semibold text-white transition-all hover:border-slate-500 hover:bg-slate-800"
+                  className="inline-flex h-14 items-center justify-center gap-2 rounded-xl border-2 border-white/30 bg-white/10 px-8 text-base font-semibold text-white backdrop-blur-sm transition-all hover:border-white/50 hover:bg-white/20"
                 >
                   Contactar por WhatsApp
                 </a>
