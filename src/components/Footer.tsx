@@ -7,33 +7,6 @@ import { Instagram, MessageCircle, Phone, Mail, MapPin } from "lucide-react";
 import { trackWhatsAppClick, trackPhoneCall } from "@/lib/analytics";
 import { BUSINESS_INSTAGRAM, BUSINESS_PHONE, BUSINESS_EMAIL } from "@/lib/seo-data";
 
-const servicos = [
-  { nome: "Recolha de Móveis", url: "/recolha-de-moveis" },
-  { nome: "Recolha de Entulho", url: "/recolha-de-entulho" },
-  { nome: "Esvaziamento de Casas", url: "/esvaziamento-de-casas" },
-  { nome: "Limpeza Pós-Obra", url: "/limpeza-pos-obra" },
-  { nome: "Mudanças", url: "/mudancas" },
-  { nome: "Preços", url: "/precos" },
-];
-
-const regioes = [
-  { nome: "Lisboa", url: "/recolha-moveis-lisboa" },
-  { nome: "Almada", url: "/recolha-moveis-almada" },
-  { nome: "Seixal", url: "/recolha-moveis-seixal" },
-  { nome: "Setúbal", url: "/recolha-moveis-setubal" },
-  { nome: "Cascais", url: "/recolha-moveis-cascais" },
-  { nome: "Amadora", url: "/recolha-moveis-amadora" },
-];
-
-const empresa = [
-  { nome: "Sobre Nós", url: "/sobre-nos" },
-  { nome: "Trabalhos", url: "/trabalhos" },
-  { nome: "Avaliações", url: "/avaliacoes" },
-  { nome: "Blog", url: "/blog" },
-  { nome: "FAQ", url: "/faq" },
-  { nome: "Contactos", url: "/contactos" },
-];
-
 export default function Footer() {
   const anoAtual = new Date().getFullYear();
   const telHref = `tel:${BUSINESS_PHONE.replace(/\s+/g, "")}`;
@@ -41,7 +14,7 @@ export default function Footer() {
   const urlWhatsapp = `https://wa.me/${numeroWhatsapp}?text=${encodeURIComponent("Olá! Gostava de pedir um orçamento à CLYON.")}`;
 
   return (
-    <footer className="bg-slate-900">
+    <footer style={{ backgroundColor: "#0f172a", color: "white" }}>
       <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
         <div className="grid gap-12 lg:grid-cols-5">
           {/* Brand Column */}
@@ -55,86 +28,120 @@ export default function Footer() {
                 className="h-12 w-auto brightness-0 invert"
               />
             </Link>
-            <p className="mt-5 max-w-sm text-sm leading-relaxed text-slate-400">
+            <p style={{ marginTop: "1.25rem", maxWidth: "224px", fontSize: "0.875rem", lineHeight: "1.5", color: "#cbd5e1" }}>
               Recolha de móveis, entulho, esvaziamentos e mudanças em Lisboa, Margem Sul e Setúbal. Resposta rápida e orçamento grátis.
             </p>
 
-            <div className="mt-6 space-y-3">
+            <div style={{ marginTop: "1.5rem", display: "flex", flexDirection: "column", gap: "0.75rem" }}>
               <a
                 href={telHref}
                 onClick={() => trackPhoneCall("footer")}
-                className="flex items-center gap-3 text-sm text-white"
+                style={{ display: "flex", alignItems: "center", gap: "0.75rem", fontSize: "0.875rem", color: "white", textDecoration: "none" }}
               >
-                <Phone className="h-4 w-4 text-cyan-500" />
-                +351 934 748 005
+                <Phone style={{ height: "1rem", width: "1rem", color: "#06b6d4" }} />
+                <span>+351 934 748 005</span>
               </a>
               <a
                 href={`mailto:${BUSINESS_EMAIL}`}
-                className="flex items-center gap-3 text-sm text-white"
+                style={{ display: "flex", alignItems: "center", gap: "0.75rem", fontSize: "0.875rem", color: "white", textDecoration: "none" }}
               >
-                <Mail className="h-4 w-4 text-cyan-500" />
-                geral@clyon.pt
+                <Mail style={{ height: "1rem", width: "1rem", color: "#06b6d4" }} />
+                <span>geral@clyon.pt</span>
               </a>
-              <div className="flex items-start gap-3 text-sm text-white">
-                <MapPin className="mt-0.5 h-4 w-4 flex-shrink-0 text-cyan-500" />
-                Belverde, Amora, 2845-513
+              <div style={{ display: "flex", alignItems: "flex-start", gap: "0.75rem", fontSize: "0.875rem", color: "white" }}>
+                <MapPin style={{ marginTop: "0.125rem", height: "1rem", width: "1rem", flexShrink: 0, color: "#06b6d4" }} />
+                <span>Belverde, Amora, 2845-513</span>
               </div>
             </div>
 
-            <div className="mt-6 flex items-center gap-3">
+            <div style={{ marginTop: "1.5rem", display: "flex", alignItems: "center", gap: "0.75rem" }}>
               <a
                 href={urlWhatsapp}
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={() => trackWhatsAppClick("footer")}
-                className="inline-flex items-center gap-2 rounded-lg bg-emerald-500 px-4 py-2.5 text-sm font-semibold text-white transition-all hover:bg-emerald-600"
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "0.5rem",
+                  borderRadius: "0.5rem",
+                  backgroundColor: "#10b981",
+                  padding: "0.625rem 1rem",
+                  fontSize: "0.875rem",
+                  fontWeight: 600,
+                  color: "white",
+                  textDecoration: "none",
+                  transition: "background-color 0.2s",
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "#059669"}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "#10b981"}
               >
-                <MessageCircle className="h-4 w-4" />
-                <span>WhatsApp</span>
+                <MessageCircle style={{ height: "1rem", width: "1rem" }} />
+                WhatsApp
               </a>
               <a
                 href={BUSINESS_INSTAGRAM}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-800 text-slate-400 transition-colors hover:bg-slate-700 hover:text-white"
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  height: "2.5rem",
+                  width: "2.5rem",
+                  borderRadius: "0.5rem",
+                  backgroundColor: "#1e293b",
+                  color: "#cbd5e1",
+                  transition: "all 0.2s",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = "#334155";
+                  e.currentTarget.style.color = "white";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = "#1e293b";
+                  e.currentTarget.style.color = "#cbd5e1";
+                }}
                 aria-label="Instagram"
               >
-                <Instagram className="h-5 w-5" />
+                <Instagram style={{ height: "1.25rem", width: "1.25rem" }} />
               </a>
             </div>
           </div>
 
           {/* Serviços Column */}
           <div>
-            <h3 className="text-sm font-semibold uppercase tracking-wider text-white">Serviços</h3>
-            <ul className="mt-5 space-y-3">
+            <h3 style={{ fontSize: "0.875rem", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em", color: "white" }}>
+              Serviços
+            </h3>
+            <ul style={{ marginTop: "1.25rem", display: "flex", flexDirection: "column", gap: "0.75rem", listStyle: "none", padding: 0 }}>
               <li>
-                <Link href="/recolha-de-moveis" className="text-sm text-white hover:text-cyan-400">
+                <Link href="/recolha-de-moveis" style={{ fontSize: "0.875rem", color: "white", textDecoration: "none" }}>
                   Recolha de Móveis
                 </Link>
               </li>
               <li>
-                <Link href="/recolha-de-entulho" className="text-sm text-white hover:text-cyan-400">
+                <Link href="/recolha-de-entulho" style={{ fontSize: "0.875rem", color: "white", textDecoration: "none" }}>
                   Recolha de Entulho
                 </Link>
               </li>
               <li>
-                <Link href="/esvaziamento-de-casas" className="text-sm text-white hover:text-cyan-400">
+                <Link href="/esvaziamento-de-casas" style={{ fontSize: "0.875rem", color: "white", textDecoration: "none" }}>
                   Esvaziamento de Casas
                 </Link>
               </li>
               <li>
-                <Link href="/limpeza-pos-obra" className="text-sm text-white hover:text-cyan-400">
+                <Link href="/limpeza-pos-obra" style={{ fontSize: "0.875rem", color: "white", textDecoration: "none" }}>
                   Limpeza Pós-Obra
                 </Link>
               </li>
               <li>
-                <Link href="/mudancas" className="text-sm text-white hover:text-cyan-400">
+                <Link href="/mudancas" style={{ fontSize: "0.875rem", color: "white", textDecoration: "none" }}>
                   Mudanças
                 </Link>
               </li>
               <li>
-                <Link href="/precos" className="text-sm text-white hover:text-cyan-400">
+                <Link href="/precos" style={{ fontSize: "0.875rem", color: "white", textDecoration: "none" }}>
                   Preços
                 </Link>
               </li>
@@ -143,35 +150,37 @@ export default function Footer() {
 
           {/* Regiões Column */}
           <div>
-            <h3 className="text-sm font-semibold uppercase tracking-wider text-white">Regiões</h3>
-            <ul className="mt-5 space-y-3">
+            <h3 style={{ fontSize: "0.875rem", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em", color: "white" }}>
+              Regiões
+            </h3>
+            <ul style={{ marginTop: "1.25rem", display: "flex", flexDirection: "column", gap: "0.75rem", listStyle: "none", padding: 0 }}>
               <li>
-                <Link href="/recolha-moveis-lisboa" className="text-sm text-white hover:text-cyan-400">
+                <Link href="/recolha-moveis-lisboa" style={{ fontSize: "0.875rem", color: "white", textDecoration: "none" }}>
                   Lisboa
                 </Link>
               </li>
               <li>
-                <Link href="/recolha-moveis-almada" className="text-sm text-white hover:text-cyan-400">
+                <Link href="/recolha-moveis-almada" style={{ fontSize: "0.875rem", color: "white", textDecoration: "none" }}>
                   Almada
                 </Link>
               </li>
               <li>
-                <Link href="/recolha-moveis-seixal" className="text-sm text-white hover:text-cyan-400">
+                <Link href="/recolha-moveis-seixal" style={{ fontSize: "0.875rem", color: "white", textDecoration: "none" }}>
                   Seixal
                 </Link>
               </li>
               <li>
-                <Link href="/recolha-moveis-setubal" className="text-sm text-white hover:text-cyan-400">
+                <Link href="/recolha-moveis-setubal" style={{ fontSize: "0.875rem", color: "white", textDecoration: "none" }}>
                   Setúbal
                 </Link>
               </li>
               <li>
-                <Link href="/recolha-moveis-cascais" className="text-sm text-white hover:text-cyan-400">
+                <Link href="/recolha-moveis-cascais" style={{ fontSize: "0.875rem", color: "white", textDecoration: "none" }}>
                   Cascais
                 </Link>
               </li>
               <li>
-                <Link href="/recolha-moveis-amadora" className="text-sm text-white hover:text-cyan-400">
+                <Link href="/recolha-moveis-amadora" style={{ fontSize: "0.875rem", color: "white", textDecoration: "none" }}>
                   Amadora
                 </Link>
               </li>
@@ -180,35 +189,37 @@ export default function Footer() {
 
           {/* Empresa Column */}
           <div>
-            <h3 className="text-sm font-semibold uppercase tracking-wider text-white">Empresa</h3>
-            <ul className="mt-5 space-y-3">
+            <h3 style={{ fontSize: "0.875rem", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em", color: "white" }}>
+              Empresa
+            </h3>
+            <ul style={{ marginTop: "1.25rem", display: "flex", flexDirection: "column", gap: "0.75rem", listStyle: "none", padding: 0 }}>
               <li>
-                <Link href="/sobre-nos" className="text-sm text-white hover:text-cyan-400">
+                <Link href="/sobre-nos" style={{ fontSize: "0.875rem", color: "white", textDecoration: "none" }}>
                   Sobre Nós
                 </Link>
               </li>
               <li>
-                <Link href="/trabalhos" className="text-sm text-white hover:text-cyan-400">
+                <Link href="/trabalhos" style={{ fontSize: "0.875rem", color: "white", textDecoration: "none" }}>
                   Trabalhos
                 </Link>
               </li>
               <li>
-                <Link href="/avaliacoes" className="text-sm text-white hover:text-cyan-400">
+                <Link href="/avaliacoes" style={{ fontSize: "0.875rem", color: "white", textDecoration: "none" }}>
                   Avaliações
                 </Link>
               </li>
               <li>
-                <Link href="/blog" className="text-sm text-white hover:text-cyan-400">
+                <Link href="/blog" style={{ fontSize: "0.875rem", color: "white", textDecoration: "none" }}>
                   Blog
                 </Link>
               </li>
               <li>
-                <Link href="/faq" className="text-sm text-white hover:text-cyan-400">
+                <Link href="/faq" style={{ fontSize: "0.875rem", color: "white", textDecoration: "none" }}>
                   FAQ
                 </Link>
               </li>
               <li>
-                <Link href="/contactos" className="text-sm text-white hover:text-cyan-400">
+                <Link href="/contactos" style={{ fontSize: "0.875rem", color: "white", textDecoration: "none" }}>
                   Contactos
                 </Link>
               </li>
@@ -218,16 +229,16 @@ export default function Footer() {
       </div>
 
       {/* Bottom Bar */}
-      <div className="border-t border-slate-800">
+      <div style={{ borderTop: "1px solid #1e293b" }}>
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-4 py-6 sm:flex-row sm:px-6 lg:px-8">
-          <p className="text-sm text-slate-500">
+          <p style={{ fontSize: "0.875rem", color: "#64748b" }}>
             © {anoAtual} CLYON. Todos os direitos reservados.
           </p>
-          <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-6">
-            <Link href="/privacidade" className="text-sm text-slate-500 transition-colors hover:text-white">
+          <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "center", gap: "1.5rem" }}>
+            <Link href="/privacidade" style={{ fontSize: "0.875rem", color: "#64748b", textDecoration: "none" }}>
               Privacidade
             </Link>
-            <Link href="/cookies" className="text-sm text-slate-500 transition-colors hover:text-white">
+            <Link href="/cookies" style={{ fontSize: "0.875rem", color: "#64748b", textDecoration: "none" }}>
               Cookies
             </Link>
             <button
@@ -235,25 +246,13 @@ export default function Footer() {
               onClick={() => {
                 window.dispatchEvent(new CustomEvent("clyon-open-cookie-preferences"));
               }}
-              className="text-sm text-slate-500 transition-colors hover:text-white"
+              style={{ fontSize: "0.875rem", color: "#64748b", textDecoration: "none", background: "none", border: "none", cursor: "pointer", padding: 0 }}
             >
               Gerir cookies
             </button>
           </div>
         </div>
       </div>
-
-      {/* Floating WhatsApp Button */}
-      <a
-        href={urlWhatsapp}
-        target="_blank"
-        rel="noopener noreferrer"
-        onClick={() => trackWhatsAppClick("floating")}
-        className="fixed bottom-6 right-6 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-emerald-500 text-white shadow-lg shadow-emerald-500/30 transition-all hover:-translate-y-1 hover:bg-emerald-600 hover:shadow-xl"
-        aria-label="Falar no WhatsApp"
-      >
-        <MessageCircle className="h-6 w-6" />
-      </a>
     </footer>
   );
 }
