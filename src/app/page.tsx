@@ -215,7 +215,14 @@ export default async function HomePage() {
     <div className="min-h-screen bg-white">
       {/* Hero */}
       <section className="relative overflow-hidden bg-gradient-to-b from-slate-50 to-white">
-        <div className="mx-auto max-w-7xl px-4 pb-20 pt-16 sm:px-6 sm:pt-20 lg:px-8 lg:pb-28 lg:pt-24">
+        {/* Background truck image */}
+        <div className="absolute inset-0 opacity-5" style={{
+          backgroundImage: "url('/truck-bg.webp')",
+          backgroundPosition: "right bottom",
+          backgroundSize: "auto 80%",
+          backgroundRepeat: "no-repeat",
+        }} />
+        <div className="mx-auto max-w-7xl px-4 pb-20 pt-16 sm:px-6 sm:pt-20 lg:px-8 lg:pb-28 lg:pt-24 relative z-10">
           <div className="grid items-center gap-12 lg:grid-cols-2 lg:gap-16">
             <div className="max-w-xl">
               <div className="mb-6 inline-flex items-center gap-2.5 rounded-full border border-emerald-200 bg-emerald-50 px-4 py-2">
