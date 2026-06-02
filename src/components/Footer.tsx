@@ -22,7 +22,7 @@ export default function Footer() {
           <div style={{ backgroundColor: "#1e293b", borderRadius: "16px", padding: "28px" }}>
             <Link href="/">
               <Image
-                src="/logo-clyon-white.webp"
+                src="/logo-clyon-icon.webp"
                 alt="CLYON"
                 width={120}
                 height={40}
@@ -138,7 +138,7 @@ export default function Footer() {
           <div style={{ textAlign: "center", marginBottom: "32px" }}>
             <Link href="/">
               <Image
-                src="/logo-clyon-white.webp"
+                src="/logo-clyon-icon.webp"
                 alt="CLYON"
                 width={120}
                 height={40}
