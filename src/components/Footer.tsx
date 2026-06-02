@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { Instagram, MessageCircle, Phone, Mail, MapPin, ArrowRight, Lock, CreditCard, Smartphone, Building } from "lucide-react";
+import { Instagram, MessageCircle, ArrowRight, Lock, CreditCard, Smartphone, Building } from "lucide-react";
 
 import { trackWhatsAppClick, trackPhoneCall } from "@/lib/analytics";
 import { BUSINESS_INSTAGRAM, BUSINESS_PHONE, BUSINESS_EMAIL } from "@/lib/seo-data";
@@ -26,38 +26,29 @@ export default function Footer() {
                 alt="CLYON"
                 width={120}
                 height={40}
-                style={{ height: "36px", width: "auto" }}
+                style={{ height: "36px", width: "auto", filter: "brightness(0) invert(1)" }}
               />
             </Link>
             <p style={{ marginTop: "16px", fontSize: "14px", lineHeight: "1.7", color: "#cbd5e1" }}>
               Recolha e limpeza profissional em Lisboa, Margem Sul e Setúbal com resposta rápida e execução sem stress.
             </p>
-            
-            <div style={{ marginTop: "24px", display: "flex", flexDirection: "column", gap: "10px" }}>
-              <a
-                href={urlWhatsapp}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={() => trackWhatsAppClick("footer")}
-                style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: "8px", backgroundColor: "#10b981", color: "#ffffff", padding: "12px 16px", borderRadius: "8px", fontSize: "14px", fontWeight: "600", textDecoration: "none" }}
-              >
-                <MessageCircle style={{ width: "16px", height: "16px" }} />
-                Whatsapp
-              </a>
-              <Link
-                href="/simulador"
-                style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: "8px", backgroundColor: "#0891b2", color: "#ffffff", padding: "12px 16px", borderRadius: "8px", fontSize: "14px", fontWeight: "600", textDecoration: "none" }}
-              >
-                Pedir orçamento
-                <ArrowRight style={{ width: "14px", height: "14px" }} />
-              </Link>
-              <Link
-                href="/colaboradores"
-                style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: "8px", backgroundColor: "transparent", border: "1px solid #475569", color: "#ffffff", padding: "12px 16px", borderRadius: "8px", fontSize: "14px", fontWeight: "600", textDecoration: "none" }}
-              >
-                <Lock style={{ width: "14px", height: "14px" }} />
-                Área de Colaboradores
-              </Link>
+
+            <div style={{ marginTop: "24px", borderTop: "1px solid #334155", paddingTop: "20px" }}>
+              <h4 style={{ fontSize: "11px", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.1em", color: "#94a3b8", marginBottom: "14px" }}>Pagamentos</h4>
+              <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "10px", color: "#ffffff", fontSize: "14px" }}>
+                  <CreditCard style={{ width: "16px", height: "16px", color: "#06b6d4" }} />
+                  Revolut
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: "10px", color: "#ffffff", fontSize: "14px" }}>
+                  <Smartphone style={{ width: "16px", height: "16px", color: "#06b6d4" }} />
+                  MB WAY
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: "10px", color: "#ffffff", fontSize: "14px" }}>
+                  <Building style={{ width: "16px", height: "16px", color: "#06b6d4" }} />
+                  Novo Banco
+                </div>
+              </div>
             </div>
           </div>
 
@@ -151,7 +142,7 @@ export default function Footer() {
                 alt="CLYON"
                 width={120}
                 height={40}
-                style={{ height: "36px", width: "auto", margin: "0 auto" }}
+                style={{ height: "36px", width: "auto", margin: "0 auto", filter: "brightness(0) invert(1)" }}
               />
             </Link>
             <p style={{ marginTop: "16px", fontSize: "14px", lineHeight: "1.7", color: "#cbd5e1" }}>
@@ -159,32 +150,23 @@ export default function Footer() {
             </p>
           </div>
 
-          {/* CTA Buttons Mobile */}
-          <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginBottom: "32px" }}>
-            <a
-              href={urlWhatsapp}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={() => trackWhatsAppClick("footer-mobile")}
-              style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: "8px", backgroundColor: "#10b981", color: "#ffffff", padding: "14px 20px", borderRadius: "8px", fontSize: "14px", fontWeight: "600", textDecoration: "none" }}
-            >
-              <MessageCircle style={{ width: "16px", height: "16px" }} />
-              WhatsApp
-            </a>
-            <Link
-              href="/simulador"
-              style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: "8px", backgroundColor: "#0891b2", color: "#ffffff", padding: "14px 20px", borderRadius: "8px", fontSize: "14px", fontWeight: "600", textDecoration: "none" }}
-            >
-              Pedir orçamento
-              <ArrowRight style={{ width: "14px", height: "14px" }} />
-            </Link>
-            <Link
-              href="/colaboradores"
-              style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: "8px", backgroundColor: "transparent", border: "1px solid #475569", color: "#ffffff", padding: "14px 20px", borderRadius: "8px", fontSize: "14px", fontWeight: "600", textDecoration: "none" }}
-            >
-              <Lock style={{ width: "14px", height: "14px" }} />
-              Área de Colaboradores
-            </Link>
+          {/* Pagamentos Mobile */}
+          <div style={{ marginBottom: "32px" }}>
+            <h4 style={{ fontSize: "11px", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.1em", color: "#94a3b8", marginBottom: "14px" }}>Pagamentos</h4>
+            <div style={{ display: "flex", gap: "20px", flexWrap: "wrap" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "#ffffff", fontSize: "14px" }}>
+                <CreditCard style={{ width: "16px", height: "16px", color: "#06b6d4" }} />
+                Revolut
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "#ffffff", fontSize: "14px" }}>
+                <Smartphone style={{ width: "16px", height: "16px", color: "#06b6d4" }} />
+                MB WAY
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "#ffffff", fontSize: "14px" }}>
+                <Building style={{ width: "16px", height: "16px", color: "#06b6d4" }} />
+                Novo Banco
+              </div>
+            </div>
           </div>
 
           {/* Links Grid Mobile */}
@@ -210,24 +192,6 @@ export default function Footer() {
           </div>
         </div>
 
-        {/* Pagamentos Section */}
-        <div style={{ marginTop: "48px", paddingTop: "32px", borderTop: "1px solid #1e293b" }}>
-          <h3 style={{ fontSize: "12px", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.1em", color: "#94a3b8", marginBottom: "16px" }}>Pagamentos</h3>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: "24px", alignItems: "center" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "#cbd5e1", fontSize: "14px" }}>
-              <CreditCard style={{ width: "16px", height: "16px" }} />
-              Revolut
-            </div>
-            <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "#cbd5e1", fontSize: "14px" }}>
-              <Smartphone style={{ width: "16px", height: "16px" }} />
-              MB WAY
-            </div>
-            <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "#cbd5e1", fontSize: "14px" }}>
-              <Building style={{ width: "16px", height: "16px" }} />
-              Novo Banco
-            </div>
-          </div>
-        </div>
       </div>
 
       {/* Bottom Bar */}
