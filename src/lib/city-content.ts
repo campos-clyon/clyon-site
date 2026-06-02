@@ -54,11 +54,11 @@ export const CITY_SERVICE_CONTENT: Record<string, CityServiceContent> = {
     faqs: [
       {
         q: "Quanto custa recolher um sofá em Lisboa?",
-        a: "Um sofá de 2-3 lugares em Lisboa custa entre 35EUR e 55EUR, dependendo do piso e do acesso. Num 5º andar sem elevador em Alfama, o preço será maior do que num rés-do-chão em Telheiras. Enviamos orçamento exacto após ver fotos.",
+        a: "O valor depende do volume, acesso, piso e necessidade de desmontagem. Num 5º andar sem elevador em Alfama, o orçamento é diferente de um rés-do-chão em Telheiras. Enviamos orçamento personalizado após ver fotos.",
       },
       {
         q: "A CLYON retira camas e colchões em Lisboa?",
-        a: "Sim. Retiramos camas de casal, camas de solteiro, beliches, colchões de todas as medidas, sommiers e estrados. Desmontamos a cama se necessário. O preço de uma cama com colchão começa nos 30EUR.",
+        a: "Sim. Retiramos camas de casal, camas de solteiro, beliches, colchões de todas as medidas, sommiers e estrados. Desmontamos a cama se necessário. O valor depende do acesso e do conjunto de itens — enviamos orçamento após ver fotos.",
       },
       {
         q: "Recolhem armários e roupeiros em Lisboa?",
@@ -90,13 +90,11 @@ export const CITY_SERVICE_CONTENT: Record<string, CityServiceContent> = {
       },
     ],
     pricingNotes: [
-      "Sofá de 2-3 lugares: 35EUR a 55EUR",
-      "Cama de casal com colchão: 30EUR a 50EUR",
-      "Colchão de casal (sozinho): 20EUR a 35EUR",
-      "Armário de 2-3 portas: 35EUR a 60EUR",
-      "Frigorífico combinado: 25EUR a 45EUR",
-      "Apartamento T2 completo: 280EUR a 450EUR",
-      "Apartamento T3 completo: 380EUR a 600EUR",
+      "Sofá: orçamento conforme volume, acesso, urgência e necessidade de desmontagem",
+      "Cama de casal com colchão: orçamento conforme acesso e piso",
+      "Armário de 2-3 portas: valor depende do número de portas e piso",
+      "Frigorífico ou electrodoméstico: orçamento personalizado",
+      "Esvaziamento de apartamento: orçamento conforme volume total e tipologia",
     ],
     ctaText: "Moveis para retirar em Lisboa? Envie fotos pelo WhatsApp e receba orcamento em 15 minutos.",
   },
@@ -170,7 +168,7 @@ export const CITY_SERVICE_CONTENT: Record<string, CityServiceContent> = {
       },
       {
         q: "Quanto custa recolher monos em Lisboa?",
-        a: "Depende do volume e do acesso. Um sofá custa entre 35EUR e 55EUR. Uma carga de carrinha com vários monos custa entre 150EUR e 250EUR. Um apartamento completo com muitos monos custa entre 300EUR e 600EUR. Enviamos orçamento exacto após ver fotos.",
+        a: "Depende do volume, acesso, urgência e necessidade de desmontagem. Enviamos orçamento personalizado após ver fotos — respondemos em minutos.",
       },
       {
         q: "A CLYON retira monos em prédios sem elevador em Lisboa?",
@@ -202,12 +200,11 @@ export const CITY_SERVICE_CONTENT: Record<string, CityServiceContent> = {
       },
     ],
     pricingNotes: [
-      "Sofá de 2-3 lugares: 35EUR a 55EUR",
-      "Cama de casal com colchão: 30EUR a 50EUR",
-      "Armário grande de 2-3 portas: 40EUR a 60EUR",
-      "Electrodoméstico (frigorífico, máquina): 25EUR a 45EUR",
-      "Carga de carrinha (mista): 150EUR a 250EUR",
-      "Apartamento T2 com muitos monos: 300EUR a 500EUR",
+      "Sofá ou cadeirão: orçamento conforme volume, acesso e necessidade de desmontagem",
+      "Cama completa: orçamento conforme acesso e piso",
+      "Armário ou roupeiro: valor depende do número de portas e piso",
+      "Electrodoméstico: orçamento personalizado",
+      "Esvaziamento de apartamento: orçamento conforme volume total e tipologia",
     ],
     ctaText: "Monos para retirar em Lisboa? Envie fotos pelo WhatsApp e receba orçamento em 15 minutos.",
   },
@@ -236,7 +233,7 @@ export const CITY_SERVICE_CONTENT: Record<string, CityServiceContent> = {
       },
       {
         q: "Quanto custa recolher móveis em Almada?",
-        a: "Um sofá em Almada custa entre 35EUR e 50EUR. Uma cama com colchão custa entre 30EUR e 45EUR. Por sermos locais, conseguimos preços mais competitivos do que empresas que vêm de Lisboa.",
+        a: "O valor depende do volume, acesso, piso e necessidade de desmontagem. Por estarmos sediados no Seixal, conseguimos responder com eficiência a pedidos em Almada. Envie fotos para orçamento personalizado.",
       },
       {
         q: "Recolhem móveis em Cacilhas com escadas?",
@@ -268,13 +265,11 @@ export const CITY_SERVICE_CONTENT: Record<string, CityServiceContent> = {
       },
     ],
     pricingNotes: [
-      "Sofá de 2-3 lugares: 35EUR a 50EUR",
-      "Cama de casal com colchão: 30EUR a 45EUR",
-      "Armário de 2-3 portas: 40EUR a 60EUR",
-      "Frigorífico ou máquina: 25EUR a 40EUR",
-      "Apartamento T1 na Costa: 180EUR a 280EUR",
-      "Apartamento T2 em Almada: 250EUR a 380EUR",
-      "Moradia com garagem: 350EUR a 550EUR",
+      "Sofá: orçamento conforme volume, acesso e necessidade de desmontagem",
+      "Cama de casal com colchão: orçamento conforme acesso e piso",
+      "Armário de 2-3 portas: valor depende do número de portas e piso",
+      "Frigorífico ou máquina: orçamento personalizado",
+      "Esvaziamento de apartamento: orçamento conforme volume total e tipologia",
     ],
     ctaText: "Móveis para retirar em Almada? Somos locais — envie fotos e receba orçamento em minutos.",
   },
@@ -287,7 +282,7 @@ export const CITY_SERVICE_CONTENT: Record<string, CityServiceContent> = {
     serviceSlug: "recolha-moveis",
     metaTitle: "Recolha de Móveis no Seixal - Amora, Corroios e Arrentela | CLYON",
     metaDescription:
-      "Recolha de móveis usados no Seixal. A CLYON está sediada em Amora - resposta imediata para Corroios, Arrentela e Paio Pires. Preços desde 30EUR.",
+      "Recolha de móveis usados no Seixal. A CLYON está sediada em Amora - resposta imediata para Corroios, Arrentela e Paio Pires. Orçamento grátis.",
     h1: "Recolha de Móveis no Seixal - A Nossa Base",
     localIntro:
       "O Seixal é a nossa casa. A sede da CLYON fica em Belverde, Amora. Isto significa que para qualquer pedido no Seixal - seja em Corroios, Arrentela, Paio Pires ou Fernão Ferro - conseguimos responder em minutos e estar no local no mesmo dia. Os nossos preços no Seixal são os mais competitivos porque não temos deslocação.",
@@ -303,7 +298,7 @@ export const CITY_SERVICE_CONTENT: Record<string, CityServiceContent> = {
       },
       {
         q: "Quanto custa recolher um sofá no Seixal?",
-        a: "No Seixal, por sermos locais, um sofá custa a partir de 30EUR. É o nosso melhor preço porque não há deslocação.",
+        a: "O valor depende do volume, acesso e necessidade de desmontagem. Por estarmos sediados em Amora, não há custos de deslocação para o Seixal. Envie fotos para orçamento personalizado.",
       },
       {
         q: "Fazem recolha de móveis em Fernão Ferro?",
@@ -315,11 +310,11 @@ export const CITY_SERVICE_CONTENT: Record<string, CityServiceContent> = {
       },
     ],
     pricingNotes: [
-      "Sofá de 2-3 lugares: 30EUR a 45EUR",
-      "Cama de casal com estrado: 20EUR a 35EUR",
-      "Armário de 2 portas: 30EUR a 45EUR",
-      "Garagem com móveis e tralha: 150EUR a 250EUR",
-      "Apartamento T2 completo: 200EUR a 350EUR",
+      "Sofá: orçamento conforme volume, acesso e necessidade de desmontagem",
+      "Cama de casal com estrado: orçamento conforme acesso e piso",
+      "Armário: valor depende do número de portas e piso",
+      "Garagem ou tralha acumulada: orçamento conforme volume",
+      "Esvaziamento de apartamento: orçamento conforme volume total e tipologia",
     ],
     ctaText: "No Seixal, somos vizinhos. Envie fotos agora e respondemos em minutos.",
   },
@@ -454,11 +449,11 @@ export const CITY_SERVICE_CONTENT: Record<string, CityServiceContent> = {
       },
     ],
     pricingNotes: [
-      "Sofá grande de 3-4 lugares: 45EUR a 65EUR",
-      "Cama king size: 35EUR a 55EUR",
-      "Armário de 3 portas: 50EUR a 75EUR",
-      "Apartamento T3 no Estoril: 350EUR a 500EUR",
-      "Moradia completa: 500EUR a 800EUR",
+      "Sofá: orçamento conforme volume, acesso e necessidade de desmontagem",
+      "Cama: orçamento conforme acesso e piso",
+      "Armário: valor depende do número de portas e piso",
+      "Esvaziamento de apartamento: orçamento conforme volume total e tipologia",
+      "Moradia completa: orçamento personalizado após visita ou fotos",
     ],
     ctaText: "Móveis para retirar em Cascais? Enviamos equipa preparada para qualquer acesso.",
   },
@@ -471,7 +466,7 @@ export const CITY_SERVICE_CONTENT: Record<string, CityServiceContent> = {
     serviceSlug: "recolha-moveis",
     metaTitle: "Recolha de Móveis em Sintra - Mem Martins, Cacém e Rio de Mouro | CLYON",
     metaDescription:
-      "Recolha de móveis usados em Sintra, Mem Martins, Cacém e Rio de Mouro. Retiramos sofás, camas e armários. Preços desde 35EUR, resposta rápida.",
+      "Recolha de móveis usados em Sintra, Mem Martins, Cacém e Rio de Mouro. Retiramos sofás, camas e armários. Orçamento grátis, resposta rápida.",
     h1: "Recolha de Móveis em Sintra e Arredores",
     localIntro:
       "Sintra é um concelho grande com zonas muito diferentes: o centro histórico com ruas estreitas e empedradas, Mem Martins e Rio de Mouro com urbanizações de prédios, Cacém com uma mistura de ambos. A CLYON conhece estas diferenças e adapta o serviço. No centro histórico de Sintra, os acessos são complicados. Em Mem Martins, a maioria dos prédios tem elevador e o trabalho é mais simples.",
@@ -487,7 +482,7 @@ export const CITY_SERVICE_CONTENT: Record<string, CityServiceContent> = {
       },
       {
         q: "Quanto custa recolher móveis em Mem Martins?",
-        a: "Em Mem Martins, os preços são normais: um sofá custa entre 35EUR e 50EUR. A maioria dos prédios tem elevador e bom acesso.",
+        a: "Em Mem Martins, a maioria dos prédios tem elevador e bons acessos, o que simplifica o trabalho. O valor depende do volume e do conjunto de itens — enviamos orçamento após ver fotos.",
       },
       {
         q: "Recolhem móveis de quintas em Sintra?",
@@ -499,11 +494,11 @@ export const CITY_SERVICE_CONTENT: Record<string, CityServiceContent> = {
       },
     ],
     pricingNotes: [
-      "Sofá de 2-3 lugares: 35EUR a 55EUR",
-      "Cama de casal com estrado: 25EUR a 45EUR",
-      "Armário de 2 portas: 35EUR a 55EUR",
-      "Apartamento T2 em Mem Martins: 200EUR a 320EUR",
-      "Quinta com móveis antigos: 600EUR a 1000EUR",
+      "Sofá: orçamento conforme volume, acesso e necessidade de desmontagem",
+      "Cama de casal com estrado: orçamento conforme acesso e piso",
+      "Armário: valor depende do número de portas e piso",
+      "Esvaziamento de apartamento: orçamento conforme volume total e tipologia",
+      "Quinta com móveis antigos: orçamento personalizado após visita ou fotos",
     ],
     ctaText: "Móveis para retirar em Sintra? Diga-nos a zona e damos preço ajustado ao acesso.",
   },
@@ -581,7 +576,7 @@ export const CITY_SERVICE_CONTENT: Record<string, CityServiceContent> = {
       },
       {
         q: "Quanto custa recolher móveis em Setúbal?",
-        a: "Um sofá em Setúbal custa entre 40EUR e 60EUR. Uma cama com colchão custa entre 35EUR e 55EUR. Um apartamento T2 completo custa entre 280EUR e 450EUR. Enviamos orçamento exacto após ver fotos.",
+        a: "O valor depende do volume, acesso, piso e necessidade de desmontagem. Setúbal tem uma mistura de prédios antigos no centro e urbanizações mais recentes — avaliamos o acesso antes de confirmar. Enviamos orçamento personalizado após ver fotos.",
       },
       {
         q: "Recolhem móveis em quintas de Azeitão?",
@@ -609,13 +604,12 @@ export const CITY_SERVICE_CONTENT: Record<string, CityServiceContent> = {
       },
     ],
     pricingNotes: [
-      "Sofá de 2-3 lugares: 40EUR a 60EUR",
-      "Cama de casal com colchão: 35EUR a 55EUR",
-      "Armário de 2-3 portas: 45EUR a 70EUR",
-      "Frigorífico ou máquina: 30EUR a 50EUR",
-      "Apartamento T2 em Setúbal: 280EUR a 450EUR",
-      "Moradia T3 em Setúbal: 400EUR a 650EUR",
-      "Quinta com móveis antigos: 600EUR a 1200EUR",
+      "Sofá: orçamento conforme volume, acesso e necessidade de desmontagem",
+      "Cama de casal com colchão: orçamento conforme acesso e piso",
+      "Armário de 2-3 portas: valor depende do número de portas e piso",
+      "Frigorífico ou máquina: orçamento personalizado",
+      "Esvaziamento de apartamento: orçamento conforme volume total e tipologia",
+      "Quinta com móveis antigos: orçamento personalizado após visita ou fotos",
     ],
     ctaText: "Móveis para retirar em Setúbal? Envie fotos pelo WhatsApp e receba orçamento hoje.",
   },
@@ -628,7 +622,7 @@ export const CITY_SERVICE_CONTENT: Record<string, CityServiceContent> = {
     serviceSlug: "recolha-entulho",
     metaTitle: "Recolha de Entulho em Setubal — Contentores e Sacos de Obra",
     metaDescription:
-      "Recolha de entulho em Setubal: contentores 3m3, 5m3, 8m3 e sacos de obra. Entrega em 24h. Remodelacoes, obras pequenas, limpezas. Desde 130EUR. Orcamento gratis.",
+      "Recolha de entulho em Setubal: contentores 3m3, 5m3, 8m3 e sacos de obra. Entrega em 24h. Remodelacoes, obras pequenas, limpezas. Orcamento gratis.",
     h1: "Recolha de Entulho em Setubal — Contentores, Sacos e Obras Pequenas",
     localIntro:
       "Tem entulho de obra em Setúbal? A CLYON fornece contentores e faz recolha de entulho em sacos para obras de qualquer dimensão. Cobrimos todo o concelho de Setúbal, desde o centro histórico até Azeitão e Arrábida. Para pequenas remodelações, retiramos sacos de entulho directamente. Para obras maiores, colocamos contentor no local pelo tempo necessário e depois vamos buscar.",
@@ -791,7 +785,7 @@ export const CITY_SERVICE_CONTENT: Record<string, CityServiceContent> = {
       "Recolha de móveis usados em Monte Abraão, Queluz e Massamá. Sofás, camas, armários e electrodomésticos. Empresa local, orçamento grátis em minutos.",
     h1: "Recolha de Móveis em Monte Abraão - Sofás, Camas e Armários",
     localIntro:
-      "Precisa de retirar móveis em Monte Abraão? A CLYON faz recolha de sofás, camas, armários e electrodomésticos em toda a freguesia e zonas vizinhas: Queluz, Massamá, Belas e Agualva-Cacém. Monte Abraão é uma zona urbana densa com bons acessos pela IC19, o que nos permite chegar rapidamente e oferecer preços competitivos.",
+      "Precisa de retirar móveis em Monte Abraão? A CLYON faz recolha de sofás, camas, armários e electrodomésticos em toda a freguesia e zonas vizinhas: Queluz, Massamá, Belas e Agualva-Cacém. O orçamento é sempre personalizado conforme o volume, acesso, urgência e necessidade de desmontagem — enviamos resposta em minutos após receber fotos.",
     accessNotes:
       "Monte Abraão tem maioritariamente prédios com elevador, o que facilita a recolha. Nas zonas mais antigas próximas do centro de Queluz, alguns edifícios têm escadas estreitas - avaliamos sempre antes de dar preço final.",
     neighborhoodHighlight:
@@ -820,11 +814,11 @@ export const CITY_SERVICE_CONTENT: Record<string, CityServiceContent> = {
       },
     ],
     pricingNotes: [
-      "Sofá 2-3 lugares: valor orientativo a partir de 35€ (depende do acesso)",
-      "Cama de casal com colchão: valor orientativo a partir de 35€",
-      "Armário roupeiro: valor orientativo a partir de 40€",
-      "Frigorífico ou máquina de lavar: valor orientativo a partir de 25€",
-      "Esvaziamento de apartamento T2: orçamento personalizado conforme volume",
+      "Sofá: orçamento conforme volume, acesso, urgência e necessidade de desmontagem",
+      "Cama de casal com colchão: orçamento conforme acesso e piso",
+      "Armário roupeiro: valor depende do número de portas e piso",
+      "Frigorífico ou máquina de lavar: orçamento personalizado",
+      "Esvaziamento de apartamento: orçamento conforme volume total e tipologia",
     ],
     ctaText: "Precisa de recolha de móveis em Monte Abraão? Envie fotos e respondemos em minutos.",
   },
@@ -961,11 +955,11 @@ export const CITY_SERVICE_CONTENT: Record<string, CityServiceContent> = {
       },
     ],
     pricingNotes: [
-      "Sofá 2-3 lugares: valor orientativo a partir de 35€ (depende do acesso)",
-      "Cama de casal com colchão: valor orientativo a partir de 35€",
-      "Armário roupeiro: valor orientativo a partir de 40€",
-      "Frigorífico ou máquina de lavar: valor orientativo a partir de 25€",
-      "Esvaziamento de apartamento: orçamento personalizado conforme volume e piso",
+      "Sofá: orçamento conforme volume, acesso, urgência e necessidade de desmontagem",
+      "Cama de casal com colchão: orçamento conforme acesso e piso",
+      "Armário roupeiro: valor depende do número de portas e piso",
+      "Frigorífico ou máquina de lavar: orçamento personalizado",
+      "Esvaziamento de apartamento: orçamento conforme volume total e tipologia",
     ],
     ctaText: "Precisa de recolha de móveis em Queluz? Envie fotos para orçamento grátis.",
   },
@@ -983,7 +977,7 @@ export const CITY_SERVICE_CONTENT: Record<string, CityServiceContent> = {
     localIntro:
       "Precisa de retirar móveis em Carnaxide? A CLYON faz recolha de sofás, camas, armários e electrodomésticos em toda a freguesia e zonas vizinhas: Linda-a-Velha, Queijas, Alto da Loba e Miraflores. Carnaxide é uma zona residencial moderna com excelentes acessos pelo IC19 e A5, permitindo-nos chegar rapidamente e oferecer preços competitivos.",
     accessNotes:
-      "Carnaxide tem maioritariamente prédios recentes com elevador e bons acessos. Algumas urbanizações fechadas (como o Alto da Loba) requerem coordenação prévia para entrada e serão consideradas no orçamento.",
+      "Carnaxide tem maioritariamente prédios recentes com elevador e bons acessos. Algumas urbanizações fechadas (como o Alto da Loba) requerem coordenação prévia para entrada — o acesso pode influenciar o orçamento e deve ser confirmado antes da marcação.",
     neighborhoodHighlight:
       "Carnaxide e Linda-a-Velha são zonas muito procuradas por famílias, com muitos apartamentos em condomínios modernos. Os pedidos mais frequentes são recolha de sofás, camas de casal e mobília de quarto durante mudanças ou renovações.",
     nearbyAreas: ["Oeiras", "Lisboa", "Amadora", "Algés"],
@@ -1010,11 +1004,11 @@ export const CITY_SERVICE_CONTENT: Record<string, CityServiceContent> = {
       },
     ],
     pricingNotes: [
-      "Sofá 2-3 lugares: valor orientativo a partir de 35€ (depende do acesso)",
-      "Cama de casal com colchão: valor orientativo a partir de 35€",
-      "Armário roupeiro: valor orientativo a partir de 40€",
-      "Frigorífico ou máquina de lavar: valor orientativo a partir de 25€",
-      "Esvaziamento de apartamento: orçamento personalizado conforme volume e piso",
+      "Sofá: orçamento conforme volume, acesso, urgência e necessidade de desmontagem",
+      "Cama de casal com colchão: orçamento conforme acesso e piso",
+      "Armário roupeiro: valor depende do número de portas e piso",
+      "Frigorífico ou máquina de lavar: orçamento personalizado",
+      "Esvaziamento de apartamento: orçamento conforme volume total e tipologia",
     ],
     ctaText: "Precisa de recolha de móveis em Carnaxide? Envie fotos e respondemos em minutos.",
   },
