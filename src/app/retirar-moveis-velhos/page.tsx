@@ -52,7 +52,7 @@ const faqs = [
   {
     question: "Quanto custa retirar móveis velhos?",
     answer:
-      "O valor depende do volume, tipo de móveis, acessos (escadas, elevador, rua) e necessidade de desmontagem. Para um sofá ou cama com acesso fácil, os valores começam a partir de 35-45 EUR. Envie fotos para orçamento exacto.",
+      "O valor depende do volume, tipo de móveis, acessos (escadas, elevador, rua) e necessidade de desmontagem. Para um sofá ou cama com acesso fácil, os valores começam a partir de 35-45 €. Envie fotos para orçamento exacto.",
   },
   {
     question: "Retiram no mesmo dia?",

@@ -27,32 +27,32 @@ export const metadata: Metadata = {
 const priceExamples = [
   {
     title: "Recolha de sofá",
-    price: "desde 35 EUR",
+    price: "desde 35 €",
     includes: "Retirada, carregamento e transporte conforme acessos e volume.",
   },
   {
     title: "Cama, estrado e colchão",
-    price: "desde 45 EUR",
+    price: "desde 45 €",
     includes: "Ideal para trocas de quarto, mudanças ou libertação de espaço.",
   },
   {
     title: "Armário ou roupeiro grande",
-    price: "desde 55 EUR",
+    price: "desde 55 €",
     includes: "Pode incluir desmontagem e retirada em prédios sem elevador.",
   },
   {
     title: "Recolha de vários móveis",
-    price: "desde 180 EUR",
+    price: "desde 180 €",
     includes: "Pedidos com recheios, divisões completas ou volumes acumulados.",
   },
   {
     title: "Recolha de entulho",
-    price: "desde 90 EUR",
+    price: "desde 90 €",
     includes: "Valor depende do tipo de residuo, peso, quantidade e facilidade de carga.",
   },
   {
     title: "Limpeza pós-obra",
-    price: "desde 160 EUR",
+    price: "desde 160 €",
     includes: "Preco varia com área, nível de sujidade, vidros, cozinha e casas de banho.",
   },
 ];

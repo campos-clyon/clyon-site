@@ -40,23 +40,42 @@ export function middleware(request: NextRequest) {
 <html lang="pt-PT">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="robots" content="noindex">
-  <title>Página Removida | CLYON</title>
+  <title>Serviço Descontinuado | CLYON</title>
   <style>
-    body { font-family: system-ui, sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; background: #f8fafc; }
-    .container { text-align: center; padding: 2rem; }
-    h1 { color: #0f172a; font-size: 1.5rem; margin-bottom: 0.5rem; }
-    p { color: #64748b; margin-bottom: 1.5rem; }
-    a { color: #0891b2; text-decoration: none; }
-    a:hover { text-decoration: underline; }
+    * { box-sizing: border-box; }
+    body { font-family: system-ui, -apple-system, sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; background: #f8fafc; padding: 1rem; }
+    .container { max-width: 540px; text-align: center; padding: 2.5rem; background: white; border-radius: 1.5rem; box-shadow: 0 4px 24px rgba(0,0,0,0.06); }
+    .badge { display: inline-block; color: #0891b2; font-size: 0.75rem; font-weight: 600; letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 1rem; }
+    h1 { color: #0f172a; font-size: 1.5rem; font-weight: 700; margin: 0 0 0.75rem; line-height: 1.3; }
+    .desc { color: #64748b; font-size: 0.95rem; line-height: 1.6; margin-bottom: 1.5rem; }
+    .divider { height: 1px; background: #e2e8f0; margin: 1.5rem 0; }
+    .links-title { color: #334155; font-size: 0.875rem; font-weight: 600; margin-bottom: 1rem; }
+    .links { display: flex; flex-wrap: wrap; gap: 0.5rem; justify-content: center; }
+    .link { display: inline-block; padding: 0.5rem 1rem; background: #f1f5f9; color: #0f172a; text-decoration: none; border-radius: 0.5rem; font-size: 0.875rem; transition: all 0.15s; }
+    .link:hover { background: #0891b2; color: white; }
+    .home { display: inline-flex; align-items: center; gap: 0.5rem; margin-top: 1.5rem; color: #0891b2; text-decoration: none; font-weight: 500; }
+    .home:hover { text-decoration: underline; }
   </style>
 </head>
 <body>
   <div class="container">
-    <p style="color: #0891b2; font-size: 0.875rem; font-weight: 600; letter-spacing: 0.1em;">410 - PÁGINA REMOVIDA</p>
-    <h1>Esta página foi permanentemente removida</h1>
-    <p>O conteúdo que procura já não está disponível.</p>
-    <a href="/">← Voltar à página inicial</a>
+    <span class="badge">410 - Serviço Descontinuado</span>
+    <h1>Este serviço já não está disponível</h1>
+    <p class="desc">A CLYON não presta actualmente este serviço. Mas temos outras soluções que podem ajudar.</p>
+    <div class="divider"></div>
+    <p class="links-title">Serviços disponíveis:</p>
+    <div class="links">
+      <a href="/recolha-de-moveis" class="link">Recolha de Móveis</a>
+      <a href="/recolha-de-entulho" class="link">Recolha de Entulho</a>
+      <a href="/esvaziamento-de-casas" class="link">Esvaziamento de Casas</a>
+      <a href="/mudancas" class="link">Mudanças</a>
+      <a href="/servicos" class="link">Todos os Serviços</a>
+      <a href="/simulador" class="link">Simulador de Preços</a>
+      <a href="/contactos" class="link">Contactos</a>
+    </div>
+    <a href="/" class="home">← Voltar à página inicial</a>
   </div>
 </body>
 </html>`,

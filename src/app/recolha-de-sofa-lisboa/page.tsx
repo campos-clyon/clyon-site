@@ -41,7 +41,7 @@ const faqs = [
   {
     question: "Quanto custa retirar um sofá em Lisboa?",
     answer:
-      "O valor depende do tamanho do sofá, tipo de acesso (elevador, escadas, rua estreita) e andar. Para sofás pequenos ou médios com acesso fácil, os valores começam a partir de 35 EUR. Envie fotos para orçamento exacto.",
+      "O valor depende do tamanho do sofá, tipo de acesso (elevador, escadas, rua estreita) e andar. Para sofás pequenos ou médios com acesso fácil, os valores começam a partir de 35 €. Envie fotos para orçamento exacto.",
   },
   {
     question: "Recolhem sofás de qualquer tamanho?",

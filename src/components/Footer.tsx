@@ -241,7 +241,7 @@ export default function Footer() {
               <Link href="/privacidade" className="text-sm text-cyan-50/68 transition-colors hover:text-white">
                 Política de Privacidade
               </Link>
-              <Link href="/privacidade" className="text-sm text-cyan-50/68 transition-colors hover:text-white">
+              <Link href="/cookies" className="text-sm text-cyan-50/68 transition-colors hover:text-white">
                 Política de Cookies
               </Link>
               <CookiePreferencesLink />

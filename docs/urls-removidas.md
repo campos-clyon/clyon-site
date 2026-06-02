@@ -5,6 +5,19 @@
 
 ---
 
+## Resumo de Validação (2026-06-02)
+
+| Item | Estado |
+|------|--------|
+| `/credito-fiscal` retorna HTTP 410 | Implementado (middleware) |
+| `/credito-fiscal` não está no sitemap | Confirmado |
+| Links internos para `/credito-fiscal` | Nenhum encontrado |
+| Formato de preços (EUR → €) | Corrigido em todos os ficheiros |
+| Links legais do footer | Corrigidos (`/privacidade` + `/cookies` separados) |
+| Página 410 com links úteis | Implementado |
+
+---
+
 ## Legenda
 
 | Código | Significado |
@@ -186,7 +199,10 @@ Apenas são bloqueadas:
 
 ## Próximas Acções
 
-1. [ ] Verificar no Search Console quais URLs 404 específicas estão a ser rastreadas
-2. [ ] Alterar `/credito-fiscal` de 301 para 410
-3. [ ] Monitorizar soft 404 no Search Console
-4. [ ] Criar páginas locais de mudanças quando houver procura suficiente
+1. [x] `/credito-fiscal` retorna 410 (implementado no middleware)
+2. [x] Página 410 com design profissional e links para serviços
+3. [x] Formato de preços corrigido (EUR → €)
+4. [x] Links legais separados (privacidade vs cookies)
+5. [ ] Verificar no Search Console quais URLs 404 específicas estão a ser rastreadas
+6. [ ] Monitorizar soft 404 no Search Console
+7. [ ] Criar páginas locais de mudanças quando houver procura suficiente

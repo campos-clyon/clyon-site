@@ -172,11 +172,11 @@ function getExcludedItems(serviceSlug: string) {
 function getPricingCopy(serviceName: string, cityName: string, serviceSlug: string) {
   if (isFurnitureService(serviceSlug)) {
     return [
-      "Sofá de 2 a 3 lugares: 35 EUR a 55 EUR",
-      "Cama de casal com estrado: 25 EUR a 45 EUR",
-      "Armário grande: 45 EUR a 75 EUR",
-      "Mesa com cadeiras: 35 EUR a 55 EUR",
-      `Recolha de vários móveis em ${cityName}: 180 EUR a 350 EUR`,
+      "Sofá de 2 a 3 lugares: 35 € a 55 €",
+      "Cama de casal com estrado: 25 € a 45 €",
+      "Armário grande: 45 € a 75 €",
+      "Mesa com cadeiras: 35 € a 55 €",
+      `Recolha de vários móveis em ${cityName}: 180 € a 350 €`,
     ];
   }
 
