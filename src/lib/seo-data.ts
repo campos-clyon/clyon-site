@@ -175,6 +175,20 @@ export const CITIES: CityData[] = [
     nearby: ["Oeiras", "Benfica", "Cascais"],
   },
   {
+    slug: "monte-abraao",
+    name: "Monte Abraão",
+    region: "lisboa",
+    regionLabel: "Grande Lisboa",
+    nearby: ["Queluz", "Massamá", "Sintra", "Amadora"],
+  },
+  {
+    slug: "queluz",
+    name: "Queluz",
+    region: "lisboa",
+    regionLabel: "Grande Lisboa",
+    nearby: ["Monte Abraão", "Massamá", "Sintra", "Amadora"],
+  },
+  {
     slug: "almada",
     name: "Almada",
     region: "margem-sul",

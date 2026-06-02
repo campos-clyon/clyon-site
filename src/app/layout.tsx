@@ -147,6 +147,9 @@ const localBusinessSchema = {
     { "@type": "City", name: "Moita" },
     { "@type": "City", name: "Palmela" },
     { "@type": "City", name: "Sesimbra" },
+    { "@type": "City", name: "Carnaxide" },
+    { "@type": "City", name: "Monte Abraão" },
+    { "@type": "City", name: "Queluz" },
   ],
   aggregateRating: {
     "@type": "AggregateRating",

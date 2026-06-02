@@ -325,6 +325,55 @@ export const CITY_SERVICE_CONTENT: Record<string, CityServiceContent> = {
   },
 
   // ---------------------------------------------------------------------------
+  // RECOLHA DE ENTULHO NO SEIXAL - NOVA
+  // ---------------------------------------------------------------------------
+  "recolha-entulho-seixal": {
+    citySlug: "seixal",
+    serviceSlug: "recolha-entulho",
+    metaTitle: "Recolha de Entulho no Seixal - Obras em Amora, Corroios e Arrentela | CLYON",
+    metaDescription:
+      "Recolha de entulho de obras no Seixal. Contentores e sacos big bag em Amora, Corroios, Arrentela e Paio Pires. Empresa local - os melhores preços.",
+    h1: "Recolha de Entulho de Obras no Seixal - Preços Locais",
+    localIntro:
+      "A sede da CLYON fica em Belverde, Amora - no coração do Seixal. Isto significa que para recolha de entulho no Seixal conseguimos os melhores preços e tempos de resposta do mercado. Servimos obras em Corroios, Arrentela, Paio Pires, Fernão Ferro e todas as freguesias do concelho sem custos de deslocação.",
+    accessNotes:
+      "No Seixal temos excelente conhecimento local: sabemos onde cabe contentor (Corroios, Cruz de Pau), onde é melhor trabalhar com sacos (zonas mais antigas) e onde há restrições de estacionamento. Isto permite-nos dar orçamentos precisos à primeira.",
+    neighborhoodHighlight:
+      "Corroios e Amora são as zonas com mais obras de remodelação no Seixal. Muitos apartamentos dos anos 80-90 estão a ser modernizados, gerando entulho de demolição de WCs, cozinhas e divisórias.",
+    nearbyAreas: ["Almada", "Barreiro", "Lisboa", "Setúbal"],
+    faqs: [
+      {
+        q: "A CLYON é do Seixal?",
+        a: "Sim, a nossa sede é em Belverde, Amora (Seixal), 2845-513. Para entulho no Seixal, conseguimos os melhores preços porque não há deslocação.",
+      },
+      {
+        q: "Quanto custa um contentor de entulho no Seixal?",
+        a: "No Seixal, por sermos locais, um contentor pequeno (2m³) custa a partir de 120EUR - cerca de 20% menos que em zonas fora da nossa base. Contentor médio (5m³) desde 200EUR.",
+      },
+      {
+        q: "Podem deixar contentor em Corroios ou Amora?",
+        a: "Sim. Deixamos contentores em obras em Corroios, Amora, Arrentela, Paio Pires e Fernão Ferro. O contentor fica o tempo combinado e depois vamos buscar.",
+      },
+      {
+        q: "Recolhem entulho aos sacos no Seixal?",
+        a: "Sim. Para obras mais pequenas trabalhamos com sacos big bag. Até 10 sacos no Seixal custa desde 80EUR - o nosso melhor preço.",
+      },
+      {
+        q: "Podem recolher entulho no mesmo dia no Seixal?",
+        a: "Na maioria dos casos, sim. Por estarmos em Amora, conseguimos encaixar pedidos urgentes de entulho no Seixal com facilidade.",
+      },
+    ],
+    pricingNotes: [
+      "Até 10 sacos de entulho: 80EUR a 110EUR (preço local)",
+      "Contentor pequeno (2m³): 120EUR a 160EUR",
+      "Contentor médio (5m³): 200EUR a 280EUR",
+      "Remodelação de WC: 100EUR a 150EUR",
+      "Demolição de divisória: 130EUR a 200EUR",
+    ],
+    ctaText: "Obra no Seixal? Somos vizinhos - contentor ou sacos, entregamos hoje.",
+  },
+
+  // ---------------------------------------------------------------------------
   // 5. RECOLHA DE ENTULHO EM ALMADA
   // ---------------------------------------------------------------------------
   "recolha-entulho-almada": {
@@ -730,6 +779,153 @@ export const CITY_SERVICE_CONTENT: Record<string, CityServiceContent> = {
     ],
     ctaText: "Precisa de esvaziar uma casa em Lisboa? Fazemos tudo - envie fotos para orçamento.",
   },
+
+  // ---------------------------------------------------------------------------
+  // MONTE ABRAÃO - NOVA CIDADE
+  // ---------------------------------------------------------------------------
+  "recolha-moveis-monte-abraao": {
+    citySlug: "monte-abraao",
+    serviceSlug: "recolha-moveis",
+    metaTitle: "Recolha de Móveis em Monte Abraão - Queluz e Massamá | CLYON",
+    metaDescription:
+      "Recolha de móveis usados em Monte Abraão, Queluz e Massamá. Sofás, camas, armários e electrodomésticos. Empresa local, preços desde 35EUR. Orçamento grátis.",
+    h1: "Recolha de Móveis em Monte Abraão - Sofás, Camas e Armários",
+    localIntro:
+      "Precisa de retirar móveis em Monte Abraão? A CLYON faz recolha de sofás, camas, armários e electrodomésticos em toda a freguesia e zonas vizinhas: Queluz, Massamá, Belas e Agualva-Cacém. Monte Abraão é uma zona urbana densa com bons acessos pela IC19, o que nos permite chegar rapidamente e oferecer preços competitivos.",
+    accessNotes:
+      "Monte Abraão tem maioritariamente prédios com elevador, o que facilita a recolha. Nas zonas mais antigas próximas do centro de Queluz, alguns edifícios têm escadas estreitas - avaliamos sempre antes de dar preço final.",
+    neighborhoodHighlight:
+      "Monte Abraão e Massamá são zonas residenciais com muitas famílias e apartamentos arrendados. Os pedidos mais frequentes são recolha de sofás, camas de casal e mobília de quarto durante mudanças.",
+    nearbyAreas: ["Queluz", "Massamá", "Sintra", "Amadora"],
+    faqs: [
+      {
+        q: "A CLYON faz recolha de móveis em Monte Abraão?",
+        a: "Sim. Monte Abraão, Queluz e Massamá estão na nossa área de cobertura regular. Conseguimos responder rapidamente porque o acesso pela IC19 é muito bom.",
+      },
+      {
+        q: "Quanto custa recolher um sofá em Monte Abraão?",
+        a: "Um sofá de 2-3 lugares em Monte Abraão custa entre 35EUR e 50EUR, dependendo do piso e do acesso. A maioria dos prédios tem elevador, o que ajuda a manter o preço baixo.",
+      },
+      {
+        q: "Podem recolher móveis no mesmo dia em Monte Abraão?",
+        a: "Se contactar de manhã e tivermos disponibilidade, muitas vezes conseguimos ir no próprio dia. Monte Abraão fica a cerca de 20-25 minutos da nossa base.",
+      },
+      {
+        q: "Recolhem também em Queluz e Massamá?",
+        a: "Sim. Queluz, Massamá, Monte Abraão e Belas são todos servidos pela CLYON. Podemos até combinar recolhas em várias moradas próximas.",
+      },
+      {
+        q: "Fazem esvaziamento de apartamentos em Monte Abraão?",
+        a: "Sim. Fazemos esvaziamento completo de apartamentos para mudanças, heranças ou fim de arrendamento. Retiramos móveis, electrodomésticos e tralha.",
+      },
+    ],
+    pricingNotes: [
+      "Sofá 2-3 lugares: 35EUR a 50EUR",
+      "Cama casal com colchão: 35EUR a 45EUR",
+      "Armário roupeiro: 40EUR a 60EUR",
+      "Frigorífico ou máquina: 25EUR a 35EUR",
+      "Esvaziamento T2 completo: 300EUR a 500EUR",
+    ],
+    ctaText: "Precisa de recolha de móveis em Monte Abraão? Envie fotos e respondemos em minutos.",
+  },
+
+  // ---------------------------------------------------------------------------
+  // QUELUZ
+  // ---------------------------------------------------------------------------
+  "recolha-moveis-queluz": {
+    citySlug: "queluz",
+    serviceSlug: "recolha-moveis",
+    metaTitle: "Recolha de Móveis em Queluz - Belas e Monte Abraão | CLYON",
+    metaDescription:
+      "Recolha de móveis usados em Queluz, Belas e Monte Abraão. Sofás, camas, armários e electrodomésticos. Empresa local, preços desde 35EUR. Orçamento grátis.",
+    h1: "Recolha de Móveis em Queluz - Sofás, Camas e Armários",
+    localIntro:
+      "Precisa de retirar móveis em Queluz? A CLYON faz recolha de sofás, camas, armários e electrodomésticos em todo o concelho: centro de Queluz, Belas, Monte Abraão e Massamá. Queluz tem uma mistura interessante de zonas históricas (perto do Palácio) e urbanizações modernas, e conhecemos bem as diferenças de acesso entre elas.",
+    accessNotes:
+      "O centro histórico de Queluz tem algumas ruas mais estreitas e prédios antigos. As zonas mais recentes (Monte Abraão, Massamá Norte) têm excelentes acessos e elevadores. Avaliamos sempre antes de dar preço.",
+    neighborhoodHighlight:
+      "Queluz é uma freguesia grande com muitos apartamentos. Os pedidos mais frequentes vêm de mudanças, renovações de apartamentos arrendados e esvaziamentos de heranças.",
+    nearbyAreas: ["Monte Abraão", "Massamá", "Sintra", "Amadora", "Belas"],
+    faqs: [
+      {
+        q: "A CLYON faz recolha de móveis em Queluz?",
+        a: "Sim. Queluz, Belas e Monte Abraão estão na nossa área de cobertura. Respondemos rapidamente a pedidos na zona.",
+      },
+      {
+        q: "Quanto custa recolher móveis em Queluz?",
+        a: "Os preços em Queluz são semelhantes aos de Lisboa: sofá desde 35EUR, cama desde 35EUR, armário desde 40EUR. Depende do acesso e do volume.",
+      },
+      {
+        q: "Podem ir ao Palácio de Queluz?",
+        a: "Trabalhamos em toda a freguesia de Queluz, incluindo a zona histórica perto do Palácio. Nessa zona os acessos podem ser mais difíceis, mas resolvemos.",
+      },
+      {
+        q: "Fazem recolha em Belas?",
+        a: "Sim. Belas faz parte da nossa cobertura. É uma zona com muitas moradias e condomínios, geralmente com bons acessos.",
+      },
+      {
+        q: "Recolhem electrodomésticos junto com os móveis em Queluz?",
+        a: "Sim. Frigoríficos, máquinas de lavar, fogões, TVs - levamos tudo no mesmo serviço. É mais prático e sai mais barato.",
+      },
+    ],
+    pricingNotes: [
+      "Sofá 2-3 lugares: 35EUR a 55EUR",
+      "Cama casal com colchão: 35EUR a 50EUR",
+      "Armário roupeiro: 40EUR a 65EUR",
+      "Frigorífico ou máquina: 25EUR a 35EUR",
+      "Esvaziamento T2 completo: 300EUR a 550EUR",
+    ],
+    ctaText: "Precisa de recolha de móveis em Queluz? Envie fotos para orçamento grátis.",
+  },
+
+  // ---------------------------------------------------------------------------
+  // CARNAXIDE
+  // ---------------------------------------------------------------------------
+  "recolha-moveis-carnaxide": {
+    citySlug: "carnaxide",
+    serviceSlug: "recolha-moveis",
+    metaTitle: "Recolha de Móveis em Carnaxide - Linda-a-Velha e Queijas | CLYON",
+    metaDescription:
+      "Recolha de móveis usados em Carnaxide, Linda-a-Velha e Queijas. Sofás, camas, armários e electrodomésticos. Preços desde 35EUR. Orçamento grátis em minutos.",
+    h1: "Recolha de Móveis em Carnaxide - Sofás, Camas e Armários",
+    localIntro:
+      "Precisa de retirar móveis em Carnaxide? A CLYON faz recolha de sofás, camas, armários e electrodomésticos em toda a freguesia e zonas vizinhas: Linda-a-Velha, Queijas, Alto da Loba e Miraflores. Carnaxide é uma zona residencial moderna com excelentes acessos pelo IC19 e A5, permitindo-nos chegar rapidamente e oferecer preços competitivos.",
+    accessNotes:
+      "Carnaxide tem maioritariamente prédios recentes com elevador e bons acessos. Algumas urbanizações fechadas (como o Alto da Loba) requerem coordenação prévia para entrada, mas isso não afecta o preço.",
+    neighborhoodHighlight:
+      "Carnaxide e Linda-a-Velha são zonas muito procuradas por famílias, com muitos apartamentos em condomínios modernos. Os pedidos mais frequentes são recolha de sofás, camas de casal e mobília de quarto durante mudanças ou renovações.",
+    nearbyAreas: ["Oeiras", "Lisboa", "Amadora", "Algés"],
+    faqs: [
+      {
+        q: "A CLYON faz recolha de móveis em Carnaxide?",
+        a: "Sim. Carnaxide, Linda-a-Velha e Queijas estão na nossa área de cobertura regular. Conseguimos responder rapidamente porque o acesso pelo IC19 é muito bom.",
+      },
+      {
+        q: "Quanto custa recolher um sofá em Carnaxide?",
+        a: "Um sofá de 2-3 lugares em Carnaxide custa entre 35EUR e 50EUR, dependendo do piso e do acesso. A maioria dos prédios tem elevador, o que ajuda a manter o preço baixo.",
+      },
+      {
+        q: "Podem entrar em condomínios fechados em Carnaxide?",
+        a: "Sim. Trabalhamos regularmente em condomínios fechados no Alto da Loba e outras urbanizações. Basta coordenar connosco a entrada ou deixar o nome na portaria.",
+      },
+      {
+        q: "Recolhem em Linda-a-Velha e Queijas?",
+        a: "Sim. Linda-a-Velha, Queijas e todo o concelho de Oeiras são servidos pela CLYON. Podemos combinar recolhas em várias moradas próximas.",
+      },
+      {
+        q: "Fazem esvaziamento de apartamentos em Carnaxide?",
+        a: "Sim. Fazemos esvaziamento completo de apartamentos para mudanças, heranças ou fim de arrendamento. Retiramos móveis, electrodomésticos e tralha - deixamos o espaço vazio.",
+      },
+    ],
+    pricingNotes: [
+      "Sofá 2-3 lugares: 35EUR a 50EUR",
+      "Cama casal com colchão: 35EUR a 45EUR",
+      "Armário roupeiro: 40EUR a 60EUR",
+      "Frigorífico ou máquina: 25EUR a 35EUR",
+      "Esvaziamento T2 completo: 300EUR a 500EUR",
+    ],
+    ctaText: "Precisa de recolha de móveis em Carnaxide? Envie fotos e respondemos em minutos.",
+  },
 };
 
 // =============================================================================
@@ -809,6 +1005,15 @@ export const CITY_BASE_CONTENT: Record<string, CityBaseContent> = {
     landmarks: ["Algés", "Carnaxide", "Linda-a-Velha", "Paço de Arcos", "Taguspark", "Porto Salvo"],
     accessNotes: "Oeiras tem excelentes acessos rodoviários. As zonas empresariais facilitam operações de maior escala.",
     nearbyAreas: ["Lisboa", "Amadora", "Cascais", "Sintra"],
+  },
+  carnaxide: {
+    slug: "carnaxide",
+    name: "Carnaxide",
+    region: "lisboa",
+    localIntro: "Em Carnaxide, atuamos em toda a freguesia incluindo Linda-a-Velha, Queijas e as zonas residenciais junto ao IC19. Carnaxide combina urbanizações modernas com condomínios fechados e prédios tradicionais.",
+    landmarks: ["Centro de Carnaxide", "Linda-a-Velha", "Queijas", "Urbanização do Alto da Loba", "Fórum Oeiras", "Estádio de Oeiras"],
+    accessNotes: "Carnaxide tem excelentes acessos pelo IC19 e A5. A maioria dos prédios são recentes e têm elevador. Algumas urbanizações fechadas requerem coordenação prévia para entrada.",
+    nearbyAreas: ["Oeiras", "Lisboa", "Amadora", "Algés"],
   },
   amadora: {
     slug: "amadora",
@@ -890,6 +1095,24 @@ export const CITY_BASE_CONTENT: Record<string, CityBaseContent> = {
     landmarks: ["Centro histórico", "Urbanização do Freeport", "Passil", "Samouco"],
     accessNotes: "O centro histórico de Alcochete tem ruas mais estreitas. As zonas novas têm excelentes acessos.",
     nearbyAreas: ["Montijo", "Moita", "Palmela", "Setúbal"],
+  },
+  "monte-abraao": {
+    slug: "monte-abraao",
+    name: "Monte Abraão",
+    region: "lisboa",
+    localIntro: "Monte Abraão, no concelho de Sintra, é uma zona urbana densa com excelentes acessos pela IC19 e linha de comboio. A CLYON serve toda a freguesia com resposta rápida.",
+    landmarks: ["Centro de Monte Abraão", "Estação de Monte Abraão", "Massamá", "Queluz"],
+    accessNotes: "Monte Abraão tem muitos prédios com elevador, facilitando a recolha de móveis. As ruas são geralmente acessíveis para a nossa carrinha.",
+    nearbyAreas: ["Queluz", "Massamá", "Sintra", "Amadora"],
+  },
+  queluz: {
+    slug: "queluz",
+    name: "Queluz",
+    region: "lisboa",
+    localIntro: "Queluz, no concelho de Sintra, combina o charme histórico do Palácio de Queluz com zonas residenciais modernas. A CLYON cobre toda a freguesia, incluindo Belas e Monte Abraão.",
+    landmarks: ["Palácio de Queluz", "Centro de Queluz", "Belas", "Monte Abraão", "Massamá Norte"],
+    accessNotes: "Queluz tem uma mistura de prédios antigos no centro e edifícios modernos com elevador nas zonas mais recentes. Adaptamos a equipa ao tipo de acesso.",
+    nearbyAreas: ["Monte Abraão", "Massamá", "Sintra", "Amadora"],
   },
 };
 

@@ -61,8 +61,13 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "recolha-moveis-sintra",
     "recolha-moveis-oeiras",
     "recolha-moveis-cascais",
+    "recolha-moveis-carnaxide",
+    "recolha-moveis-monte-abraao",
+    "recolha-moveis-queluz",
+    "recolha-moveis-seixal",
     "recolha-entulho-setubal",
     "recolha-entulho-lisboa",
+    "recolha-entulho-seixal",
     "esvaziamento-casas-lisboa",
   ];
 

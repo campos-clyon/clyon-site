@@ -6,7 +6,17 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: "*",
         allow: "/",
-        disallow: ["/api/", "/painel/", "/_next/", "/colaboradores/", "/colaboradores"],
+        disallow: [
+          "/api/",
+          "/painel/",
+          "/_next/",
+          "/colaboradores/",
+          "/colaboradores",
+          "/auth/",
+          "/auth",
+          "/contacto",  // Redirect para /contactos
+          "/*?*",  // URLs com query strings
+        ],
       },
       {
         userAgent: ["Googlebot", "Bingbot"],
