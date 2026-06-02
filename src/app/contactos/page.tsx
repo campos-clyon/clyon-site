@@ -137,7 +137,7 @@ export default function ContactosPage() {
                     className="inline-flex items-center justify-center rounded-2xl bg-cyan-500 px-6 py-3.5 text-base font-semibold text-white shadow-[0_18px_40px_-22px_rgba(6,182,212,0.75)] transition hover:-translate-y-0.5 hover:bg-cyan-400"
                   >
                     <Phone className="mr-2 h-5 w-5" />
-                    Ligar agora
+                    <span className="text-white">Ligar agora</span>
                   </a>
                   <a
                     href="https://wa.me/351934748005?text=Ol%C3%A1!%20Gostava%20de%20pedir%20um%20or%C3%A7amento%20%C3%A0%20CLYON."
@@ -146,7 +146,7 @@ export default function ContactosPage() {
                     className="inline-flex items-center justify-center rounded-2xl bg-emerald-500 px-6 py-3.5 text-base font-semibold text-white shadow-[0_18px_40px_-22px_rgba(37,211,102,0.75)] transition hover:-translate-y-0.5 hover:bg-emerald-400"
                   >
                     <MessageCircle className="mr-2 h-5 w-5" />
-                    WhatsApp
+                    <span className="text-white">WhatsApp</span>
                   </a>
                 </div>
               </div>
@@ -165,7 +165,7 @@ export default function ContactosPage() {
                   href="/simulador"
                   className="mt-5 inline-flex items-center justify-center rounded-2xl bg-cyan-400 px-6 py-3 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-cyan-300"
                 >
-                  Abrir simulador
+                  <span className="text-white">Abrir simulador</span>
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Link>
               </div>

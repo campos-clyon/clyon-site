@@ -161,6 +161,17 @@ img {
   background-clip: text;
 }
 
+/* Garantir texto branco em todos os botoes com fundo colorido */
+a.bg-cyan-600,
+a.bg-cyan-500,
+a.bg-cyan-400,
+a.bg-emerald-500,
+a.bg-emerald-400,
+a[class*="bg-cyan-"],
+a[class*="bg-emerald-"] {
+  color: #ffffff !important;
+}
+
 /* Focus states for accessibility */
 button:focus-visible,
 a:focus-visible,

@@ -7,6 +7,7 @@ import {
   ClipboardCheck,
   Home as HomeIcon,
   MapPin,
+  MessageCircle,
   Package,
   ShieldCheck,
   Sparkles,
@@ -500,7 +501,7 @@ export default async function HomePage() {
                 ))}
               </div>
               <div className="mt-6">
-                <Link href="/precos" className="inline-flex items-center gap-2 rounded-xl bg-cyan-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-cyan-600/20 transition-all hover:-translate-y-0.5 hover:bg-cyan-700">
+                <Link href="/precos" className="inline-flex items-center gap-2 rounded-xl bg-cyan-600 px-5 py-3 text-sm font-semibold text-white transition-all hover:-translate-y-0.5 hover:bg-cyan-700 shadow-lg shadow-cyan-600/20">
                   Ver tabela completa
                   <ArrowRight className="h-4 w-4" />
                 </Link>
@@ -605,16 +606,17 @@ export default async function HomePage() {
                   href="/simulador" 
                   className="inline-flex h-14 items-center justify-center gap-2 rounded-xl bg-cyan-500 px-8 text-base font-semibold text-white shadow-lg shadow-cyan-500/30 transition-all hover:-translate-y-0.5 hover:bg-cyan-400 hover:shadow-xl"
                 >
-                  Simular orçamento grátis
+                  <span className="text-white">Simular orçamento grátis</span>
                   <ArrowRight className="h-5 w-5" />
                 </Link>
                 <a
-                  href="https://wa.me/351934748005"
+                  href={`https://wa.me/351934748005?text=${encodeURIComponent("Olá! Gostava de pedir um orçamento à CLYON.")}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex h-14 items-center justify-center gap-2 rounded-xl bg-emerald-500 px-8 text-base font-semibold text-white shadow-lg shadow-emerald-500/30 transition-all hover:-translate-y-0.5 hover:bg-emerald-400"
+                  className="inline-flex h-14 items-center justify-center gap-2 rounded-xl bg-emerald-500 px-8 text-base font-semibold text-white shadow-lg shadow-emerald-500/30 transition-all hover:-translate-y-0.5 hover:bg-emerald-400 hover:shadow-xl"
                 >
-                  Contactar por WhatsApp
+                  <MessageCircle className="h-5 w-5" />
+                  <span className="text-white">Contactar por WhatsApp</span>
                 </a>
               </div>
             </div>

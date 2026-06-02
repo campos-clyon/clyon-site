@@ -35,9 +35,9 @@ export default function CTABlock({
       <div className={`flex flex-col gap-3 sm:flex-row ${className}`}>
         <Link
           href={primaryHref}
-          className="site-btn-primary site-btn-lively min-w-[200px] px-6 py-3.5"
+          className="site-btn-primary site-btn-lively min-w-[200px] px-6 py-3.5 text-white"
         >
-          <span>{primaryText}</span>
+          <span className="text-white">{primaryText}</span>
           <ArrowRight className="h-4 w-4" />
         </Link>
         {showWhatsApp && (
@@ -48,7 +48,7 @@ export default function CTABlock({
             className="inline-flex min-w-[180px] items-center justify-center gap-2 rounded-2xl bg-emerald-500 px-6 py-3.5 text-base font-semibold text-white shadow-[0_18px_40px_-22px_rgba(37,211,102,0.75)] transition hover:-translate-y-0.5 hover:bg-emerald-400"
           >
             <MessageCircle className="h-4 w-4" />
-            WhatsApp
+            <span className="text-white">WhatsApp</span>
           </a>
         )}
         {showPhone && (
@@ -78,9 +78,9 @@ export default function CTABlock({
         <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">
           <Link
             href={primaryHref}
-            className="site-btn-primary site-btn-lively min-w-[220px] px-8 py-4 text-lg"
+            className="site-btn-primary site-btn-lively min-w-[220px] px-8 py-4 text-lg text-white"
           >
-            <span>{primaryText}</span>
+            <span className="text-white">{primaryText}</span>
             <ArrowRight className="h-5 w-5" />
           </Link>
           {showWhatsApp && (
@@ -91,7 +91,7 @@ export default function CTABlock({
               className="inline-flex min-w-[180px] items-center justify-center gap-2 rounded-2xl bg-emerald-500 px-6 py-4 text-lg font-semibold text-white shadow-[0_18px_40px_-22px_rgba(37,211,102,0.75)] transition hover:-translate-y-0.5 hover:bg-emerald-400"
             >
               <MessageCircle className="h-5 w-5" />
-              WhatsApp
+              <span className="text-white">WhatsApp</span>
             </a>
           )}
         </div>
@@ -112,9 +112,9 @@ export default function CTABlock({
       <div className="flex flex-shrink-0 flex-col gap-3 sm:flex-row">
         <Link
           href={primaryHref}
-          className="site-btn-primary site-btn-lively px-6 py-3.5"
+          className="site-btn-primary site-btn-lively px-6 py-3.5 text-white"
         >
-          <span>{primaryText}</span>
+          <span className="text-white">{primaryText}</span>
           <ArrowRight className="h-4 w-4" />
         </Link>
         {showWhatsApp && (
@@ -125,7 +125,7 @@ export default function CTABlock({
             className="inline-flex items-center justify-center gap-2 rounded-2xl bg-emerald-500 px-6 py-3.5 font-semibold text-white shadow-[0_18px_40px_-22px_rgba(37,211,102,0.75)] transition hover:-translate-y-0.5 hover:bg-emerald-400"
           >
             <MessageCircle className="h-4 w-4" />
-            WhatsApp
+            <span className="text-white">WhatsApp</span>
           </a>
         )}
       </div>
