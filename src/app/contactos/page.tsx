@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import { ArrowRight, Clock3, MapPin, MessageCircle, Phone, Star } from "lucide-react";
+import { ArrowRight, Clock3, Mail, MapPin, MessageCircle, Phone, Star } from "lucide-react";
 
 import ContactForm from "@/components/ContactForm";
 
@@ -94,6 +94,23 @@ export default function ContactosPage() {
                       </a>
                       <p className="mt-1 text-sm leading-7 text-slate-600">
                         Ideal para pedidos rápidos, validações e marcações.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-4">
+                    <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl bg-cyan-50 text-cyan-600">
+                      <Mail className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold uppercase tracking-[0.12em] text-cyan-700">
+                        Email
+                      </p>
+                      <a href="mailto:geral@clyon.pt" className="mt-2 block text-xl font-bold text-slate-950">
+                        geral@clyon.pt
+                      </a>
+                      <p className="mt-1 text-sm leading-7 text-slate-600">
+                        Para pedidos detalhados e dúvidas gerais.
                       </p>
                     </div>
                   </div>
