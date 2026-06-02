@@ -5,6 +5,7 @@ import {
   CheckCircle2,
   Clock3,
   MapPin,
+  MessageCircle,
   Phone,
   Recycle,
   ShieldCheck,
@@ -13,6 +14,13 @@ import {
 } from "lucide-react";
 import { notFound } from "next/navigation";
 
+import Breadcrumb from "@/components/Breadcrumb";
+import FurnitureSeoLinks from "@/components/FurnitureSeoLinks";
+import {
+  getCityServiceContent,
+  getCityBaseContent,
+  hasPriorityContent,
+} from "@/lib/city-content";
 import {
   BUSINESS_NAME,
   BUSINESS_PHONE,
@@ -33,12 +41,34 @@ function isFurnitureService(serviceSlug: string) {
   return serviceSlug === "recolha-moveis";
 }
 
-function buildTitle(serviceName: string, cityName: string, serviceSlug: string) {
+function buildTitle(serviceName: string, cityName: string, serviceSlug: string, citySlug: string) {
+  // Páginas de high-priority com titles mais comerciais e específicas
+  // NOTA: Não incluir "| CLYON" aqui - o template do layout já adiciona
   if (isFurnitureService(serviceSlug)) {
-    return `Recolha de Móveis em ${cityName} | Sofás, Armários e Recheios | CLYON`;
+    if (citySlug === "lisboa") {
+      return `Recolha de Móveis em Lisboa — Sofás, Camas, Eletrodomésticos`;
+    }
+    if (citySlug === "setubal") {
+      return `Recolha de Móveis em Setúbal — Preços Competitivos`;
+    }
+    if (citySlug === "almada") {
+      return `Recolha de Móveis em Almada — Resposta Rápida`;
+    }
+    return `Recolha de Móveis em ${cityName} — Orçamento Grátis`;
   }
 
-  return `${serviceName} em ${cityName} | Orçamento Rápido | CLYON`;
+  if (serviceSlug === "recolha-entulho") {
+    if (citySlug === "setubal") {
+      return `Recolha de Entulho em Setúbal — Resposta em 24h`;
+    }
+    return `Recolha de Entulho em ${cityName} — Orçamento Grátis`;
+  }
+
+  if (serviceSlug === "limpeza-pos-obra") {
+    return `Limpeza Pós-Obra em ${cityName} — Resposta em 24h`;
+  }
+
+  return `${serviceName} em ${cityName} — Orçamento Grátis`;
 }
 
 function buildDescription(
@@ -46,15 +76,52 @@ function buildDescription(
   cityName: string,
   regionLabel: string,
   serviceSlug: string,
+  citySlug: string,
 ) {
   if (isFurnitureService(serviceSlug)) {
-    return `Recolha de móveis em ${cityName}, ${regionLabel}, com desmontagem, carregamento, transporte e descarte legal. Retiramos sofás, camas, armários, eletrodomésticos e recheios com resposta rápida.`;
+    if (citySlug === "lisboa") {
+      return `Recolha de móveis em Lisboa: sofás, camas, armários, eletrodomésticos. Desmontagem, carga, transporte. Resposta rápida em 24h. 163 reviews 5⭐. Orçamento grátis!`;
+    }
+    if (citySlug === "setubal") {
+      return `Recolha de móveis em Setúbal com preços mais competitivos — somos vizinhos! Sofás, camas, eletrodomésticos. Resposta em 24h. Orçamento grátis.`;
+    }
+    if (citySlug === "almada") {
+      return `Recolha de móveis em Almada e zona de Caparica. Sofás, camas, armários, eletrodomésticos. Resposta rápida em 24h. Orçamento grátis!`;
+    }
+    return `Recolha de móveis em ${cityName}, ${regionLabel}. Desmontagem e transporte. Resposta rápida em 24h, 163 reviews 5⭐. Orçamento grátis!`;
   }
 
-  return `${serviceName} em ${cityName}, ${regionLabel}. Resposta rápida, orçamento em 11 minutos, serviço profissional e agendamento no mesmo dia quando disponível.`;
+  if (serviceSlug === "recolha-entulho") {
+    if (citySlug === "setubal") {
+      return `Recolha de entulho em Setúbal: carregamento directo, resposta em 24h. Orçamento grátis!`;
+    }
+    return `Recolha de entulho em ${cityName}, ${regionLabel}. Carregamento directo, sacos big bag, limpeza fina. Resposta em 24h. Orçamento grátis!`;
+  }
+
+  if (serviceSlug === "limpeza-pos-obra") {
+    return `Limpeza pós-obra profissional em ${cityName}. Retiramos pó de obra, manchas, cimento. Resposta em 24h, equipa experiente. Orçamento grátis!`;
+  }
+
+  return `${serviceName} em ${cityName}, ${regionLabel}. Resposta rápida em 24h, 163 reviews 5⭐. Orçamento grátis!`;
 }
 
-function getServiceIntro(serviceName: string, cityName: string, regionLabel: string, serviceSlug: string) {
+function getServiceIntro(serviceName: string, cityName: string, regionLabel: string, serviceSlug: string, citySlug: string) {
+  // Primeiro, tentar conteúdo prioritário cidade+serviço
+  const priorityContent = getCityServiceContent(citySlug, serviceSlug);
+  if (priorityContent?.localIntro) {
+    return priorityContent.localIntro;
+  }
+  
+  // Fallback para conteúdo base da cidade
+  const cityContent = getCityBaseContent(citySlug);
+  if (cityContent?.localIntro) {
+    if (isFurnitureService(serviceSlug)) {
+      return `${cityContent.localIntro} Retiramos sofás, camas, armários, mesas, colchões e eletrodomésticos com desmontagem quando necessária.`;
+    }
+    return `${cityContent.localIntro} ${serviceName} com resposta rápida e orçamento claro.`;
+  }
+
+  // Fallback genérico
   if (isFurnitureService(serviceSlug)) {
     return `Fazemos recolha de móveis em ${cityName} para apartamentos, moradias, lojas e escritórios. Retiramos sofás, camas, armários, mesas, colchões e eletrodomésticos com desmontagem quando necessária, carregamento porta a porta e encaminhamento responsável em ${regionLabel}.`;
   }
@@ -105,11 +172,11 @@ function getExcludedItems(serviceSlug: string) {
 function getPricingCopy(serviceName: string, cityName: string, serviceSlug: string) {
   if (isFurnitureService(serviceSlug)) {
     return [
-      "Sofá de 2 a 3 lugares: 35 EUR a 55 EUR",
-      "Cama de casal com estrado: 25 EUR a 45 EUR",
-      "Armário grande: 45 EUR a 75 EUR",
-      "Mesa com cadeiras: 35 EUR a 55 EUR",
-      `Recolha de vários móveis em ${cityName}: 180 EUR a 350 EUR`,
+      "Sofá de 2 a 3 lugares: 35 € a 55 €",
+      "Cama de casal com estrado: 25 € a 45 €",
+      "Armário grande: 45 € a 75 €",
+      "Mesa com cadeiras: 35 € a 55 €",
+      `Recolha de vários móveis em ${cityName}: 180 € a 350 €`,
     ];
   }
 
@@ -120,7 +187,14 @@ function getPricingCopy(serviceName: string, cityName: string, serviceSlug: stri
   ];
 }
 
-function getFaqs(serviceName: string, cityName: string, regionLabel: string, serviceSlug: string, relatedCities: { name: string }[]) {
+function getFaqs(serviceName: string, cityName: string, regionLabel: string, serviceSlug: string, citySlug: string, relatedCities: { name: string }[]) {
+  // Tentar FAQs únicas do conteúdo prioritário
+  const priorityContent = getCityServiceContent(citySlug, serviceSlug);
+  if (priorityContent?.faqs && priorityContent.faqs.length > 0) {
+    return priorityContent.faqs;
+  }
+  
+  // Fallback para FAQs genéricas
   if (isFurnitureService(serviceSlug)) {
     const baseFaqs = [
       {
@@ -176,7 +250,18 @@ function getFaqs(serviceName: string, cityName: string, regionLabel: string, ser
 }
 
 export function generateStaticParams() {
-  return getAllCityServiceSlugs().map((item) => ({ slug: item.slug }));
+  const weakMudancasUrls = ["alcochete", "sintra", "montijo", "carnaxide", "oeiras", "corroios", "barreiro", "palmela"];
+  
+  return getAllCityServiceSlugs()
+    .filter((item) => {
+      // Excluir URLs fracas de mudanças (não têm conteúdo prioritário)
+      const slugString = item.slug.join("/");
+      if (slugString.startsWith("mudancas-") && weakMudancasUrls.some((city) => slugString === `mudancas-${city}`)) {
+        return false;
+      }
+      return true;
+    })
+    .map((item) => ({ slug: item.slug }));
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -188,12 +273,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 
   const { city, service } = parsed;
-  const title = buildTitle(service.name, city.name, service.slug);
+  const title = buildTitle(service.name, city.name, service.slug, city.slug);
   const description = buildDescription(
     service.name,
     city.name,
     city.regionLabel,
     service.slug,
+    city.slug,
   );
   const canonical = `${SITE_URL}/${getCityServiceSlug(service.slug, city.slug)}`;
 
@@ -243,14 +329,21 @@ export default async function ServiceCityPage({ params }: Props) {
   }
 
   const pageUrl = `${SITE_URL}/${getCityServiceSlug(service.slug, city.slug)}`;
-  const title = buildTitle(service.name, city.name, service.slug);
+  const title = buildTitle(service.name, city.name, service.slug, city.slug);
   const description = buildDescription(
     service.name,
     city.name,
     city.regionLabel,
     service.slug,
+    city.slug,
   );
-  const intro = getServiceIntro(service.name, city.name, city.regionLabel, service.slug);
+  const intro = getServiceIntro(service.name, city.name, city.regionLabel, service.slug, city.slug);
+  
+  // Obter conteúdo prioritário e base
+  const priorityContent = getCityServiceContent(city.slug, service.slug);
+  const cityBaseContent = getCityBaseContent(city.slug);
+  const isPriorityPage = hasPriorityContent(city.slug, service.slug);
+  
   const includedItems = getIncludedItems(service.name, city.name, service.slug);
   const excludedItems = getExcludedItems(service.slug);
   const pricingCopy = getPricingCopy(service.name, city.name, service.slug);
@@ -259,8 +352,12 @@ export default async function ServiceCityPage({ params }: Props) {
     city.name,
     city.regionLabel,
     service.slug,
+    city.slug,
     relatedCities,
   );
+  const whatsappNumber = BUSINESS_PHONE.replace(/[^\d]/g, "");
+  const whatsappMessage = `Olá! Preciso de ${service.shortName} em ${city.name}. Podem dar-me um orçamento?`;
+  const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(whatsappMessage)}`;
 
   const faqSchema = {
     "@context": "https://schema.org",
@@ -346,9 +443,44 @@ export default async function ServiceCityPage({ params }: Props) {
   const isCostaFurniturePage =
     isFurnitureService(service.slug) && city.slug === "costa-da-caparica";
 
+  // Determinar link para hub de serviço
+  const serviceHubMap: Record<string, { href: string; label: string }> = {
+    "recolha-moveis": { href: "/recolha-de-moveis", label: "Ver todos os serviços de recolha de móveis" },
+    "recolha-entulho": { href: "/recolha-de-entulho", label: "Ver todos os serviços de recolha de entulho" },
+    "limpeza-pos-obra": { href: "/limpeza-pos-obra", label: "Ver todos os serviços de limpeza pós-obra" },
+    "esvaziamento-casas": { href: "/esvaziamento-casas", label: "Ver todos os serviços de esvaziamento" },
+  };
+  const currentServiceHub = serviceHubMap[service.slug];
+
+  // Definir links de clusters por região
+  const clusterLinks: Record<string, Array<{ href: string; label: string }>> = {
+    "lisboa": [
+      { href: "/recolha-monos-lisboa", label: "Recolha de monos em Lisboa" },
+      { href: "/recolha-moveis-lisboa", label: "Recolha de móveis em Lisboa" },
+      { href: "/recolha-entulho-lisboa", label: "Recolha de entulho em Lisboa" },
+      { href: "/blog/recolha-de-monos-o-que-inclui", label: "Guia: o que inclui a recolha de monos" },
+      { href: "/blog/recolha-de-moveis-como-funciona", label: "Guia: como funciona a recolha de móveis" },
+      { href: "/contactos", label: "Contactos" },
+    ],
+    "margem-sul": [
+      { href: "/recolha-moveis-almada", label: "Recolha de móveis em Almada" },
+      { href: "/recolha-moveis-seixal", label: "Recolha de móveis no Seixal" },
+      { href: "/recolha-moveis-setubal", label: "Recolha de móveis em Setúbal" },
+      { href: "/recolha-de-moveis", label: "Hub: Recolha de móveis" },
+      { href: "/recolha-de-entulho", label: "Hub: Recolha de entulho" },
+    ],
+    "setubal": [
+      { href: "/recolha-moveis-setubal", label: "Recolha de móveis em Setúbal" },
+      { href: "/recolha-entulho-setubal", label: "Recolha de entulho em Setúbal" },
+      { href: "/recolha-moveis-almada", label: "Recolha de móveis em Almada" },
+      { href: "/recolha-de-moveis", label: "Hub: Recolha de móveis" },
+      { href: "/blog/recolha-de-entulho-legal-e-organizada", label: "Guia: recolha de entulho" },
+    ],
+  };
+
   const supportLinks = isFurnitureService(service.slug)
     ? [
-        { href: "/recolha-de-moveis", label: "Página principal de recolha de móveis" },
+        ...(currentServiceHub ? [currentServiceHub] : []),
         { href: `/${getCityServiceSlug("recolha-monos", city.slug)}`, label: `Recolha de monos em ${city.name}` },
         { href: `/${getCityServiceSlug("esvaziamento-casas", city.slug)}`, label: `Esvaziamento de casas em ${city.name}` },
         { href: `/${getCityServiceSlug("recolha-entulho", city.slug)}`, label: `Recolha de entulho em ${city.name}` },
@@ -360,12 +492,33 @@ export default async function ServiceCityPage({ params }: Props) {
               },
             ]
           : []),
+        // Links do cluster regional
+        ...(clusterLinks[city.region] || []).filter(link => !link.href.includes(city.slug)).slice(0, 2),
+      ]
+    : service.slug === "recolha-monos"
+    ? [
+        ...(currentServiceHub ? [currentServiceHub] : []),
+        { href: `/${getCityServiceSlug("recolha-moveis", city.slug)}`, label: `Recolha de móveis em ${city.name}` },
+        { href: `/${getCityServiceSlug("esvaziamento-casas", city.slug)}`, label: `Esvaziamento de casas em ${city.name}` },
+        { href: "/blog/recolha-de-monos-o-que-inclui", label: "Guia: o que inclui a recolha de monos" },
+        { href: "/contactos", label: "Contactos" },
+        ...(clusterLinks[city.region] || []).filter(link => !link.href.includes(city.slug)).slice(0, 2),
+      ]
+    : service.slug === "recolha-entulho"
+    ? [
+        ...(currentServiceHub ? [currentServiceHub] : []),
+        { href: `/${getCityServiceSlug("limpeza-pos-obra", city.slug)}`, label: `Limpeza pós-obra em ${city.name}` },
+        { href: `/${getCityServiceSlug("recolha-moveis", city.slug)}`, label: `Recolha de móveis em ${city.name}` },
+        { href: "/blog/recolha-de-entulho-legal-e-organizada", label: "Guia: recolha de entulho" },
+        { href: "/contactos", label: "Contactos" },
+        ...(clusterLinks[city.region] || []).filter(link => !link.href.includes(city.slug)).slice(0, 2),
       ]
     : [
+        ...(currentServiceHub ? [currentServiceHub] : []),
         { href: "/servicos", label: "Todos os serviços" },
         { href: "/simulador", label: "Pedir orçamento" },
-        { href: "/contactos", label: "Falar connosco" },
         { href: `/${getCityServiceSlug("recolha-moveis", city.slug)}`, label: `Recolha de móveis em ${city.name}` },
+        ...(clusterLinks[city.region] || []).filter(link => !link.href.includes(city.slug)).slice(0, 2),
       ];
 
   return (
@@ -373,6 +526,14 @@ export default async function ServiceCityPage({ params }: Props) {
       <section className="relative overflow-hidden bg-gradient-to-br from-cyan-100 via-cyan-50 to-white">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(34,211,238,0.22),_transparent_34%),radial-gradient(circle_at_bottom_right,_rgba(6,182,212,0.14),_transparent_30%)]" />
         <div className="relative mx-auto max-w-7xl px-6 py-14 lg:px-8 lg:py-18">
+          <Breadcrumb
+            items={[
+              { label: "Regiões", href: "/regioes" },
+              { label: region.name, href: `/regioes/${region.slug}` },
+              { label: `${service.shortName} em ${city.name}` },
+            ]}
+            className="mb-6"
+          />
           <div className="grid gap-10 lg:grid-cols-[1fr_0.95fr] lg:items-center">
             <div className="max-w-3xl">
               <div className="inline-flex items-center gap-2 rounded-full border border-cyan-200 bg-white/90 px-4 py-2 text-sm font-semibold uppercase tracking-[0.18em] text-cyan-700 shadow-sm">
@@ -411,12 +572,23 @@ export default async function ServiceCityPage({ params }: Props) {
                 Resposta reforçada em {city.name}
               </h2>
               <p className="mt-4 text-base leading-8 text-slate-600">
-                Trabalhamos em {city.name} e zonas próximas com resposta rápida,
-                orçamento claro e recolha cuidada. Retiramos os volumes validados,
-                protegemos os acessos e deixamos o espaço pronto para a etapa
-                seguinte, seja renovação, mudança, arrendamento ou simples libertação
-                de área.
+                {priorityContent?.accessNotes ?? cityBaseContent?.accessNotes ?? `Trabalhamos em ${city.name} e zonas próximas com resposta rápida, orçamento claro e recolha cuidada. Retiramos os volumes validados, protegemos os acessos e deixamos o espaço pronto para a etapa seguinte.`}
               </p>
+              {/* Highlight local se for página prioritária */}
+              {priorityContent?.neighborhoodHighlight && (
+                <p className="mt-3 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm leading-6 text-amber-800">
+                  <strong>Destaque:</strong> {priorityContent.neighborhoodHighlight}
+                </p>
+              )}
+              {cityBaseContent?.landmarks && cityBaseContent.landmarks.length > 0 && (
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {cityBaseContent.landmarks.slice(0, 6).map((landmark) => (
+                    <span key={landmark} className="rounded-full bg-white px-3 py-1 text-sm text-slate-600 shadow-sm">
+                      {landmark}
+                    </span>
+                  ))}
+                </div>
+              )}
               <div className="mt-6 grid gap-3 sm:grid-cols-2">
                 <div className="rounded-[22px] border border-cyan-100 bg-cyan-50/80 p-4">
                   <p className="text-sm font-semibold text-slate-950">Tempo médio</p>
@@ -708,6 +880,16 @@ export default async function ServiceCityPage({ params }: Props) {
           </div>
         </div>
 
+        {/* Links internos SEO para páginas de recolha de móveis */}
+        {isFurnitureService(service.slug) && (
+          <div className="mt-8">
+            <FurnitureSeoLinks 
+              currentPage={`/${getCityServiceSlug(service.slug, city.slug)}`}
+              variant="grid"
+            />
+          </div>
+        )}
+
         <div className="mt-8 rounded-[30px] border border-cyan-100 bg-white p-7 shadow-[0_24px_60px_-34px_rgba(14,116,144,0.14)]">
           <div className="flex items-start gap-3">
             <Star className="mt-1 h-5 w-5 text-cyan-600" />
@@ -722,23 +904,28 @@ export default async function ServiceCityPage({ params }: Props) {
           </div>
           <p className="mt-4 max-w-3xl text-base leading-8 text-slate-600">
             Diga-nos o que pretende retirar, quantos volumes tem e como é o acesso ao
-            imóvel. Com essa informação conseguimos responder mais depressa e marcar
-            a recolha com maior precisão.
+            imovel. Com essa informacao conseguimos responder mais depressa e marcar
+            a recolha com maior precisao.
+          </p>
+          <p className="mt-2 text-sm text-slate-500">
+            163 avaliacoes 5 estrelas no Fixando. Tempo medio de resposta: 11 minutos.
           </p>
           <div className="mt-6 flex flex-col gap-3 sm:flex-row">
             <Link
-              href="/simulador"
+              href="/contactos"
               className="site-btn-primary min-w-[220px] px-6 py-3.5"
             >
               <CheckCircle2 className="h-4 w-4" />
-              Simular agora
+              Pedir Orçamento Grátis
             </Link>
             <a
-              href={`tel:${BUSINESS_PHONE}`}
-              className="site-btn-secondary min-w-[220px] border-slate-300 text-slate-900 hover:bg-slate-50"
+              href={whatsappUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex min-w-[220px] items-center justify-center gap-2 rounded-2xl bg-emerald-500 px-6 py-3.5 text-base font-semibold text-white shadow-[0_18px_40px_-22px_rgba(37,211,102,0.75)] transition hover:-translate-y-0.5 hover:bg-emerald-400"
             >
-              <Phone className="h-4 w-4" />
-              Ligar {BUSINESS_PHONE}
+              <MessageCircle className="h-4 w-4" />
+              Falar no WhatsApp
             </a>
           </div>
         </div>

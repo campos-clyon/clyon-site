@@ -7,7 +7,7 @@ export default function CookiePreferencesLink() {
       onClick={() => {
         window.dispatchEvent(new CustomEvent("clyon-open-cookie-preferences"));
       }}
-      className="text-sm text-cyan-50/68 transition-colors hover:text-white"
+      className="text-sm text-slate-500 transition-colors hover:text-white"
     >
       Gerir cookies
     </button>

@@ -21,18 +21,22 @@ import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  trackSimulatorStart,
+  trackSimulatorComplete,
+  trackSimulatorWhatsApp,
+} from "@/lib/analytics";
 import { BASE_ADDRESS } from "@/lib/maps-config";
 import { BUSINESS_PHONE } from "@/lib/seo-data";
 import { createSimulatorSettingsMap } from "@/lib/simulator-settings";
 import { cn } from "@/lib/utils";
 
 type CategoriaId =
-  | "entulho"
   | "moveis"
   | "monos"
-  | "limpeza"
+  | "entulho"
   | "mudancas"
-  | "camiao";
+  | "limpeza";
 type ModoCalculo = "entulho" | "moveis" | "mudancas";
 type ModoTrajeto = "base" | "custom";
 
@@ -58,21 +62,20 @@ type SettingsResponse = {
 };
 
 const categorias: Categoria[] = [
-  { id: "entulho", nome: "Recolha de entulho", descricao: "Obras, resíduos e limpezas pesadas.", icon: Wrench, calculo: "entulho", trajeto: "base" },
   { id: "moveis", nome: "Recolha de móveis", descricao: "Móveis antigos e recheios.", icon: Package, calculo: "moveis", trajeto: "base" },
   { id: "monos", nome: "Recolha de monos", descricao: "Volumes grandes, sucata e despejos.", icon: Package, calculo: "moveis", trajeto: "base" },
-  { id: "limpeza", nome: "Limpeza pós-obra", descricao: "Acabamento final e recolha associada.", icon: Sparkles, calculo: "entulho", trajeto: "base" },
+  { id: "entulho", nome: "Recolha de entulho", descricao: "Obras, resíduos e limpezas pesadas.", icon: Wrench, calculo: "entulho", trajeto: "base" },
   { id: "mudancas", nome: "Mudanças", descricao: "Origem e destino reais com cálculo automático.", icon: Truck, calculo: "mudancas", trajeto: "custom" },
-  { id: "camiao", nome: "Camião com motorista", descricao: "Apoio logístico com base CLYON.", icon: Truck, calculo: "mudancas", trajeto: "base" },
+  { id: "limpeza", nome: "Limpeza pós-obra", descricao: "Acabamento final e recolha associada.", icon: Sparkles, calculo: "entulho", trajeto: "base" },
 ];
 
-const categoriaIds = new Set<CategoriaId>(["entulho", "moveis", "monos", "limpeza", "mudancas", "camiao"]);
+const categoriaIds = new Set<CategoriaId>(["moveis", "monos", "entulho", "mudancas", "limpeza"]);
 
 const simulatorPrimaryButtonClass =
-  "site-btn-primary";
+  "bg-cyan-600 text-white border-2 border-cyan-600 hover:bg-cyan-700";
 
 const simulatorSecondaryButtonClass =
-  "site-btn-secondary";
+  "bg-white text-slate-600 border border-slate-200 hover:border-slate-300 hover:bg-slate-50";
 
 type SimuladorClientProps = {
   initialCategoriaId?: CategoriaId | null;
@@ -105,6 +108,8 @@ export default function SimuladorClient({ initialCategoriaId = null }: Simulador
   const [showValidation, setShowValidation] = useState(false);
   const [pessoasManual, setPessoasManual] = useState(false);
   const [highlightBudget, setHighlightBudget] = useState(false);
+  const [telemovel, setTelemovel] = useState("");
+  const [telemovelError, setTelemovelError] = useState("");
 
   const categoria = categorias.find((item) => item.id === categoriaId) ?? null;
   const origemValida = categoria?.trajeto === "base" || origem.trim().length >= 3;
@@ -202,6 +207,8 @@ export default function SimuladorClient({ initialCategoriaId = null }: Simulador
     setOrcamento(null);
     setShowValidation(false);
     setPessoasManual(false);
+    setTelemovel("");
+    setTelemovelError("");
   };
 
   useEffect(() => {
@@ -225,6 +232,7 @@ export default function SimuladorClient({ initialCategoriaId = null }: Simulador
   const escolherCategoria = (id: CategoriaId) => {
     resetFlow();
     setCategoriaId(id);
+    trackSimulatorStart(id);
   };
 
   const atualizarOrigem = (value: string) => {
@@ -348,8 +356,10 @@ export default function SimuladorClient({ initialCategoriaId = null }: Simulador
         pricingMap.mudancas_multiplicador;
     }
 
-    setOrcamento(Math.round(total * 100) / 100);
+    const finalValue = Math.round(total * 100) / 100;
+    setOrcamento(finalValue);
     setHighlightBudget(true);
+    trackSimulatorComplete(categoria.id, finalValue, destino);
   };
 
   useEffect(() => {
@@ -378,34 +388,69 @@ export default function SimuladorClient({ initialCategoriaId = null }: Simulador
     return true;
   })();
 
+  const validateTelemovel = (phone: string): boolean => {
+    const cleaned = phone.replace(/\D/g, "");
+    return /^9[1236]\d{7}$/.test(cleaned);
+  };
+
+  const formatTelemovel = (phone: string): string => {
+    const cleaned = phone.replace(/\D/g, "");
+    if (cleaned.length <= 3) return cleaned;
+    if (cleaned.length <= 6) return `${cleaned.slice(0, 3)} ${cleaned.slice(3)}`;
+    return `${cleaned.slice(0, 3)} ${cleaned.slice(3, 6)} ${cleaned.slice(6, 9)}`;
+  };
+
+  const handleTelemovelChange = (value: string) => {
+    const formatted = formatTelemovel(value);
+    setTelemovel(formatted);
+    setTelemovelError("");
+  };
+
   const confirmarPedido = () => {
-    if (!categoria || km === null) return;
+    if (!categoria || km === null || orcamento === null) return;
+    
+    // Validate phone
+    const cleanedPhone = telemovel.replace(/\D/g, "");
+    if (!cleanedPhone) {
+      setTelemovelError("Telemóvel é obrigatório para enviar o pedido");
+      return;
+    }
+    if (!validateTelemovel(cleanedPhone)) {
+      setTelemovelError("Introduza um número de telemóvel válido (9 dígitos)");
+      return;
+    }
+
     setHighlightBudget(false);
+    trackSimulatorWhatsApp(categoria.id, orcamento, true);
+
     const linhas = [
-      "Olá, quero solicitar este serviço com base no simulador.",
+      "Olá! Simulei um orçamento no site:",
       "",
-      `Serviço: ${categoria.nome}`,
-      categoria.trajeto === "custom" ? `Origem: ${origem}` : "Origem: Base CLYON",
-      `Destino: ${destino}`,
-      `Distância: ${km.toFixed(1)} km`,
-      `Tipo de acesso: ${tipoAcesso || "-"}`,
-      tipoAcesso === "apartamento" ? `Andares: ${numeroAndares || "0"}` : null,
-      tipoAcesso === "apartamento" ? `Elevador: ${temElevador || "-"}` : null,
-      `Pessoas: ${quantidadePessoas || "-"}`,
-      `Tempo estimado: ${tempoEstimado || "-"} h`,
-      `Acesso difícil: ${acessoDificil ? "Sim" : "Não"}`,
+      `*Serviço:* ${categoria.nome}`,
+      categoria.trajeto === "custom" ? `*Origem:* ${origem}` : "*Origem:* Base CLYON",
+      `*Destino:* ${destino}`,
+      `*Distância:* ${km.toFixed(1)} km`,
+      `*Telemóvel:* ${telemovel}`,
+      "",
+      `*Tipo de acesso:* ${tipoAcesso || "-"}`,
+      tipoAcesso === "apartamento" ? `*Andares:* ${numeroAndares || "0"}` : null,
+      tipoAcesso === "apartamento" ? `*Elevador:* ${temElevador || "-"}` : null,
+      `*Pessoas:* ${quantidadePessoas || "-"}`,
+      `*Tempo estimado:* ${tempoEstimado || "-"} h`,
+      acessoDificil ? "*Acesso difícil:* Sim" : null,
       categoria.calculo === "entulho"
-        ? `Condição: ${entulhoModo || "-"} | Sacos: ${quantidadeSacos || "0"}`
+        ? `*Condição:* ${entulhoModo || "-"} | Sacos: ${quantidadeSacos || "0"}`
         : null,
       categoria.calculo === "moveis" && moveisModo === "carga"
-        ? `Condição: por carga | Cargas: ${cargas || "1"}`
+        ? `*Condição:* por carga | Cargas: ${cargas || "1"}`
         : null,
       categoria.calculo === "moveis" && moveisModo === "item"
-        ? `Condição: por item | Pequeno: ${peq || "0"} | Médio: ${med || "0"} | Grande: ${gra || "0"}`
+        ? `*Condição:* por item | Pequeno: ${peq || "0"} | Médio: ${med || "0"} | Grande: ${gra || "0"}`
         : null,
-      `Valor simulado: EUR ${orcamento?.toFixed(2) ?? "-"}`,
       "",
-      "Peço confirmação deste valor aproximado com um assistente.",
+      `*Estimativa:* EUR ${orcamento.toFixed(2)}`,
+      "",
+      "Podem confirmar disponibilidade?",
     ].filter(Boolean);
 
     const mensagem = encodeURIComponent(linhas.join("\n"));
@@ -594,7 +639,7 @@ export default function SimuladorClient({ initialCategoriaId = null }: Simulador
                   type="button"
                   onClick={calcularDistancia}
                   disabled={!podeCalcularDistancia || kmLoading}
-                  className="site-btn-primary w-full py-5 text-base"
+                  className="w-full rounded-xl bg-cyan-600 py-4 text-base font-semibold text-white hover:bg-cyan-700"
                 >
                   {kmLoading ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Route className="mr-2 h-5 w-5" />}
                   Calcular distância
@@ -755,7 +800,7 @@ export default function SimuladorClient({ initialCategoriaId = null }: Simulador
                     onClick={calcularOrcamento}
                     disabled={!podeCalcularOrcamento}
                     className={cn(
-                      "site-btn-primary w-full py-5 text-base",
+                      "w-full rounded-xl bg-cyan-600 py-4 text-base font-semibold text-white hover:bg-cyan-700",
                       podeCalcularOrcamento &&
                         "border border-cyan-300 shadow-[0_0_0_0_rgba(34,211,238,0.55)] animate-[budget-button-pulse_1.8s_ease-in-out_infinite]",
                     )}
@@ -821,17 +866,50 @@ export default function SimuladorClient({ initialCategoriaId = null }: Simulador
                     <div className="rounded-[22px] border border-amber-200/35 bg-amber-50/10 px-4 py-3 text-sm leading-7 text-cyan-50">
                       Estes valores são aproximados e devem ser confirmados por um assistente.
                     </div>
+                    
+                    {/* Campo telemóvel obrigatório */}
+                    <div className="rounded-[22px] border border-white/15 bg-white/5 p-4">
+                      <p className="text-sm font-semibold text-cyan-100">
+                        Quer um valor mais exato?
+                      </p>
+                      <p className="mt-1 text-sm leading-6 text-slate-300">
+                        Deixe o seu contacto e respondemos em minutos.
+                      </p>
+                      <div className="mt-3">
+                        <label htmlFor="telemovel-simulador" className="sr-only">
+                          Telemóvel
+                        </label>
+                        <Input
+                          id="telemovel-simulador"
+                          type="tel"
+                          value={telemovel}
+                          onChange={(e) => handleTelemovelChange(e.target.value)}
+                          placeholder="912 345 678"
+                          maxLength={11}
+                          className={cn(
+                            "h-12 rounded-[14px] bg-white/10 border text-white placeholder:text-slate-400",
+                            telemovelError
+                              ? "border-red-400 ring-2 ring-red-400/30"
+                              : "border-white/20 focus:border-cyan-400"
+                          )}
+                        />
+                        {telemovelError && (
+                          <p className="mt-2 text-sm text-red-300">{telemovelError}</p>
+                        )}
+                      </div>
+                    </div>
+
                     <Button
                       type="button"
                       onClick={confirmarPedido}
                       className={cn(
-                        "site-btn-primary w-full py-6 text-base",
+                        "w-full rounded-xl bg-cyan-600 py-5 text-base font-semibold text-white hover:bg-cyan-700",
                         highlightBudget &&
                           "border border-cyan-200/70 animate-[whatsapp-cta-pulse_1.2s_ease-in-out_infinite]",
                       )}
                     >
                       <Phone className="mr-2 h-5 w-5" />
-                      Solicitar este serviço no WhatsApp
+                      Enviar por WhatsApp
                     </Button>
                   </>
                 ) : null}
@@ -865,7 +943,7 @@ export default function SimuladorClient({ initialCategoriaId = null }: Simulador
                 <Button
                   type="button"
                   onClick={confirmarPedido}
-                  className="site-btn-primary hidden mt-4 w-full py-6 text-base"
+                  className="mt-4 hidden w-full rounded-xl bg-cyan-600 py-5 text-base font-semibold text-white hover:bg-cyan-700"
                 >
                   <Phone className="mr-2 h-5 w-5" />
                   Solicitar este serviço no WhatsApp
@@ -1196,7 +1274,7 @@ function PeopleSelector({
               onManualModeChange(false);
               onChange("");
             }}
-            className="site-btn-secondary h-10 min-h-10 rounded-[18px] px-3 py-2 text-sm"
+            className="h-10 min-h-10 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600 hover:border-slate-300 hover:bg-slate-50"
           >
             Voltar
           </button>

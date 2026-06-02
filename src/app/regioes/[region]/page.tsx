@@ -67,7 +67,7 @@ export default async function RegionPage({ params }: Props) {
         name: `Que serviços a CLYON faz em ${regionData.name}?`,
         acceptedAnswer: {
           "@type": "Answer",
-          text: `Fazemos recolha de entulho, recolha de móveis, recolha de monos, esvaziamento de casas, limpeza pós-obra, mudanças e camião com motorista em ${regionData.name}.`,
+          text: `Fazemos recolha de móveis, recolha de monos, recolha de entulho, mudanças, esvaziamento de casas e limpeza pós-obra em ${regionData.name}.`,
         },
       },
       {

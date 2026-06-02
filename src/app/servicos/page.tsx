@@ -13,69 +13,69 @@ import {
   Zap,
 } from "lucide-react";
 
-import { SITE_URL } from "@/lib/seo-data";
+import { BUSINESS_NAME, BUSINESS_PHONE, SITE_URL } from "@/lib/seo-data";
 
 export const metadata: Metadata = {
-  title: "Serviços de Recolha de Monos, Entulho, Móveis e Limpeza | CLYON",
+  title: "Serviços de Recolha de Entulho, Limpezas e Mudanças",
   description:
-    "Conheça os serviços da CLYON para recolha de entulho, móveis, monos, limpeza pós-obra, esvaziamentos e mudanças em Lisboa, Margem Sul e Setúbal.",
+    "Recolha de entulho, móveis, monos, limpeza pós-obra, esvaziamentos e mudanças em Lisboa e Setúbal. Preços desde 120EUR, orçamento grátis em 24h!",
   alternates: { canonical: `${SITE_URL}/servicos` },
   openGraph: {
-    title: "Serviços de Recolha de Monos, Entulho, Móveis e Limpeza | CLYON",
+    title: "Serviços de Recolha de Entulho, Limpezas e Mudanças",
     description:
-      "Soluções rápidas e profissionais para recolha, limpeza, transporte e libertação de espaço em Lisboa, Margem Sul e Setúbal.",
+      "Recolha de entulho, móveis, limpeza pós-obra e mudanças em Lisboa e Setúbal. Preços desde 120EUR!",
     url: `${SITE_URL}/servicos`,
   },
 };
 
 const services = [
   {
-    title: "Recolha de Entulho",
-    description:
-      "Retiramos restos de obra, sacos, materiais mistos e volumes pesados com triagem simples e transporte profissional.",
-    icon: Trash2,
-    href: "/simulador",
-    cta: "Pedir orçamento",
-  },
-  {
     title: "Recolha de Móveis",
     description:
       "Sofás, camas, armários, recheios e eletrodomésticos com desmontagem, carregamento e encaminhamento responsável.",
     icon: Home,
     href: "/recolha-de-moveis",
-    cta: "Ver página de móveis",
+    cta: "Ver serviço",
   },
   {
-    title: "Recolha de Monos",
+    title: "Recolha de Entulho",
     description:
-      "Objetos volumosos, sucata, recheios soltos e espaço acumulado em garagens, arrecadações, lojas e apartamentos.",
-    icon: Wrench,
-    href: "/simulador",
-    cta: "Falar connosco",
+      "Retiramos restos de obra, sacos, materiais mistos e volumes pesados com triagem simples e transporte profissional.",
+    icon: Trash2,
+    href: "/recolha-de-entulho",
+    cta: "Ver serviço",
   },
   {
     title: "Limpeza Pós-Obra",
     description:
       "Limpeza final para deixar a casa, loja ou escritório pronto a usar depois da obra, com ritmo e acabamento cuidado.",
     icon: Zap,
-    href: "/simulador",
-    cta: "Pedir limpeza",
+    href: "/limpeza-pos-obra",
+    cta: "Ver serviço",
   },
   {
-    title: "Mudanças e Apoio",
+    title: "Esvaziamento de Casas",
     description:
-      "Ajudamos em mudanças residenciais e comerciais com transporte, carga, descarga e organização do pedido.",
-    icon: Truck,
-    href: "/simulador",
-    cta: "Pedir apoio",
-  },
-  {
-    title: "Esvaziamentos",
-    description:
-      "Libertacao completa de casas, apartamentos, lojas e imóveis com recolha de móveis, monos e resíduos acumulados.",
+      "Libertação completa de casas, apartamentos, lojas e imóveis com recolha de móveis, monos e resíduos acumulados.",
     icon: ShieldCheck,
-    href: "/simulador",
-    cta: "Resolver esvaziamento",
+    href: "/esvaziamento-casas",
+    cta: "Ver serviço",
+  },
+  {
+    title: "Recolha de Monos",
+    description:
+      "Objetos volumosos, sucata, recheios soltos e espaço acumulado em garagens, arrecadações, lojas e apartamentos.",
+    icon: Wrench,
+    href: "/recolha-de-moveis",
+    cta: "Ver serviço",
+  },
+  {
+    title: "Mudanças",
+    description:
+      "Mudanças residenciais e comerciais com carga, transporte, descarga e montagem de móveis. Equipa profissional.",
+    icon: Truck,
+    href: "/mudancas",
+    cta: "Ver serviço",
   },
 ];
 
@@ -151,6 +151,101 @@ const quickLinks = [
 ];
 
 export const revalidate = 86400;
+
+const serviceFaqSchema = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: [
+    {
+      "@type": "Question",
+      name: "Que tipo de pedidos a CLYON aceita?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "Atendemos recolha de entulho, móveis, monos, recheios, limpeza pós-obra, esvaziamento de casas e apoio em mudanças, tanto para particulares como para empresas.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "Como saber qual é o serviço certo?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "Basta enviar fotos e indicar a morada. A nossa equipa ajuda a enquadrar o pedido e diz-lhe qual o serviço mais indicado para o volume, acesso e urgência.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "A CLYON recolhe no mesmo dia?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "Sempre que existe disponibilidade operacional, sim. Em Lisboa, Grande Lisboa, Margem Sul e Setúbal muitos pedidos conseguem resposta no próprio dia ou no dia seguinte.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "Fazem desmontagem e retirada dentro do imóvel?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "Sim. Quando necessário, desmontamos móveis e tratamos do carregamento a partir do interior da casa, loja, escritório ou arrecadação.",
+      },
+    },
+  ],
+};
+
+const serviceListSchema = {
+  "@context": "https://schema.org",
+  "@type": "ItemList",
+  name: "Serviços CLYON",
+  itemListElement: [
+    {
+      "@type": "Service",
+      position: 1,
+      name: "Recolha de Entulho",
+      description: "Retiramos restos de obra, sacos, materiais mistos e volumes pesados com triagem simples e transporte profissional.",
+      provider: {
+        "@type": "LocalBusiness",
+        name: BUSINESS_NAME,
+        telephone: BUSINESS_PHONE,
+      },
+      areaServed: ["Lisboa", "Setúbal", "Almada", "Seixal"],
+    },
+    {
+      "@type": "Service",
+      position: 2,
+      name: "Recolha de Móveis",
+      description: "Sofás, camas, armários, recheios e eletrodomésticos com desmontagem, carregamento e encaminhamento responsável.",
+      provider: {
+        "@type": "LocalBusiness",
+        name: BUSINESS_NAME,
+        telephone: BUSINESS_PHONE,
+      },
+      areaServed: ["Lisboa", "Setúbal", "Almada", "Seixal"],
+    },
+    {
+      "@type": "Service",
+      position: 3,
+      name: "Limpeza Pós-Obra",
+      description: "Limpeza final para deixar a casa, loja ou escritório pronto a usar depois da obra.",
+      provider: {
+        "@type": "LocalBusiness",
+        name: BUSINESS_NAME,
+        telephone: BUSINESS_PHONE,
+      },
+      areaServed: ["Lisboa", "Setúbal", "Almada", "Seixal"],
+    },
+    {
+      "@type": "Service",
+      position: 4,
+      name: "Mudanças",
+      description: "Ajudamos em mudanças residenciais e comerciais com transporte, carga, descarga e organização do pedido.",
+      provider: {
+        "@type": "LocalBusiness",
+        name: BUSINESS_NAME,
+        telephone: BUSINESS_PHONE,
+      },
+      areaServed: ["Lisboa", "Setúbal", "Almada", "Seixal"],
+    },
+  ],
+};
 
 export default function ServicosPage() {
   return (
@@ -355,6 +450,15 @@ export default function ServicosPage() {
           </div>
         </div>
       </section>
+
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(serviceFaqSchema) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(serviceListSchema) }}
+      />
     </div>
   );
 }

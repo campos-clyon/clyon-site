@@ -10,14 +10,14 @@ import {
 import { BUSINESS_PHONE, SITE_URL } from "@/lib/seo-data";
 
 export const metadata: Metadata = {
-  title: "Preços de Recolha de Monos, Entulho e Móveis | CLYON",
+  title: "Preços de Recolha de Monos, Entulho e Móveis",
   description:
     "Veja preços orientativos para recolha de monos, entulho, móveis, esvaziamentos e limpeza pós-obra em Lisboa, Margem Sul e Setúbal.",
   alternates: {
     canonical: `${SITE_URL}/precos`,
   },
   openGraph: {
-    title: "Preços de Recolha de Monos, Entulho e Móveis | CLYON",
+    title: "Preços de Recolha de Monos, Entulho e Móveis",
     description:
       "Faixas de preço de referência, fatores que influenciam o valor e a melhor forma de pedir orçamento com precisão.",
     url: `${SITE_URL}/precos`,
@@ -27,32 +27,32 @@ export const metadata: Metadata = {
 const priceExamples = [
   {
     title: "Recolha de sofá",
-    price: "desde 35 EUR",
+    price: "sob avaliação",
     includes: "Retirada, carregamento e transporte conforme acessos e volume.",
   },
   {
     title: "Cama, estrado e colchão",
-    price: "desde 45 EUR",
+    price: "sob avaliação",
     includes: "Ideal para trocas de quarto, mudanças ou libertação de espaço.",
   },
   {
     title: "Armário ou roupeiro grande",
-    price: "desde 55 EUR",
+    price: "sob avaliação",
     includes: "Pode incluir desmontagem e retirada em prédios sem elevador.",
   },
   {
     title: "Recolha de vários móveis",
-    price: "desde 180 EUR",
+    price: "orçamento personalizado",
     includes: "Pedidos com recheios, divisões completas ou volumes acumulados.",
   },
   {
     title: "Recolha de entulho",
-    price: "desde 90 EUR",
+    price: "orçamento personalizado",
     includes: "Valor depende do tipo de residuo, peso, quantidade e facilidade de carga.",
   },
   {
     title: "Limpeza pós-obra",
-    price: "desde 160 EUR",
+    price: "desde 160 €",
     includes: "Preco varia com área, nível de sujidade, vidros, cozinha e casas de banho.",
   },
 ];

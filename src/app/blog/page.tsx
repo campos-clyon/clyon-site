@@ -6,9 +6,9 @@ import { getAllBlogPosts } from "@/lib/blog-data";
 import { SITE_URL } from "@/lib/seo-data";
 
 export const metadata: Metadata = {
-  title: "Blog CLYON: recolha, doações, despejo de móveis, entulho e monos",
+  title: "Blog — Guias de Recolha de Moveis, Monos e Entulho",
   description:
-    "Blog SEO da CLYON com conteúdos sobre recolha de móveis, doações, despejo, entulho, monos, pós-obra e esvaziamentos em Lisboa, Margem Sul e Setúbal.",
+    "Guias praticos: como doar moveis, recolha de monos, entulho de obra, esvaziamento de casas. Dicas para libertar espaco em Lisboa, Almada e Setubal.",
   alternates: {
     canonical: `${SITE_URL}/blog`,
   },

@@ -112,7 +112,7 @@ export const BLOG_POSTS: BlogPost[] = [
     publishDate: "2026-03-16",
     heroLabel: "Guia prático",
     intro:
-      "A recolha de móveis é um dos pedidos mais frequentes na operação da CLYON. Seja por mudança, renovação, venda de casa, fim de arrendamento, herança ou despejo de recheios, o objectivo costuma ser sempre o mesmo: libertar espaço depressa, com segurança e sem complicar acessos, desmontagens ou transporte.",
+      "A recolha de móveis é um dos pedidos mais frequentes na operação da CLYON. Seja por mudança, renovação, venda de casa, fim de arrendamento, herança ou despejo de recheios, o objectivo costuma ser sempre o mesmo: libertar espaço depressa, com segurança e sem complicar acessos, desmontagens ou transporte. Precisa de recolha de móveis em Lisboa ou Margem Sul? Veja o serviço da CLYON em /recolha-de-moveis ou simule um orçamento em /simulador. Se precisa de esvaziar uma casa ou apartamento completo, veja o serviço de esvaziamento de casas em /esvaziamento-de-casas.",
     sections: [
       {
         title: "Quando faz sentido pedir recolha de móveis",
@@ -146,6 +146,19 @@ export const BLOG_POSTS: BlogPost[] = [
         paragraphs: [
           "Nem todo o móvel precisa de ir para despejo. Peças em bom estado podem seguir para doação, reaproveitamento ou venda. Peças partidas, húmidas, sem ferragens ou sem viabilidade de uso tendem a justificar despejo directo.",
           "Uma boa estratégia SEO para este tema não é falar apenas de recolha. É responder à dúvida real do utilizador: doar, vender, reaproveitar ou despejar? É aí que o conteúdo ganha intenção e relevância nas pesquisas.",
+        ],
+      },
+      {
+        title: "Quando a recolha gratuita não resolve",
+        paragraphs: [
+          "A pesquisa por recolha gratuita de móveis usados é muito comum, mas nem sempre a via gratuita resolve o problema. A recolha municipal tem limitações: horários restritos, agendamento demorado, volume máximo e nenhum apoio para desmontagem ou retirada do interior do imóvel.",
+          "Se o objectivo é libertar o espaço rapidamente, com desmontagem incluída, carregamento porta a porta e retirada completa, a recolha privada é a opção mais eficaz. A CLYON oferece resposta rápida, equipa preparada para acessos difíceis e encaminhamento responsável dos móveis usados.",
+          "A diferença principal: na recolha gratuita ou municipal, o cliente tem de colocar os móveis no exterior e aguardar. Na recolha privada, a equipa entra no imóvel, desmonta o necessário e resolve tudo num só pedido.",
+        ],
+        bullets: [
+          "Recolha municipal: gratuita, mas limitada em volume, horários e sem desmontagem",
+          "Doação: ideal para peças em bom estado, mas exige tempo e disponibilidade",
+          "Recolha privada (CLYON): paga, mas com rapidez, desmontagem e carregamento completo",
         ],
       },
     ],
@@ -547,9 +560,184 @@ export const BLOG_POSTS: BlogPost[] = [
     ],
     faq: [
       {
-        question: "Vale a pena tentar solução pública antes da recolha privadaí",
+        question: "Vale a pena tentar solução pública antes da recolha privada?",
         answer:
           "Depende do volume, da urgência, do acesso e dos meios disponíveis. Para pequenas quantidades pode fazer sentido. Para operações maiores, a recolha privada tende a ser mais prática.",
+      },
+    ],
+  },
+  {
+    slug: "quanto-custa-uma-mudanca-em-lisboa",
+    title: "Quanto custa uma mudança em Lisboa em 2026? Guia completo de preços",
+    description:
+      "Preços de mudanças em Lisboa para T1, T2 e T3. Factores que influenciam o custo: volume, distância, andar, elevador e serviços extra.",
+    category: "Mudanças",
+    keywords: [
+      "quanto custa mudança lisboa",
+      "preço mudança lisboa",
+      "mudança t1 preço",
+      "mudança t2 preço",
+      "mudança t3 preço",
+      "empresa mudanças lisboa preços",
+    ],
+    readingTime: "8 min",
+    publishDate: "2026-06-01",
+    heroLabel: "Mudanças",
+    intro:
+      "O preço de uma mudança em Lisboa depende de vários factores: o tamanho do apartamento, a distância entre moradas, o andar (com ou sem elevador), a necessidade de desmontagem e montagem de móveis e se quer incluir embalagem. Este guia ajuda a perceber valores reais e a evitar surpresas.",
+    sections: [
+      {
+        title: "Preços médios por tipologia de apartamento",
+        paragraphs: [
+          "Um T0 ou T1 pequeno, dentro de Lisboa, custa entre 150 € e 280 €. Um T2 familiar fica entre 280 € e 450 €. Um T3 ou T4 grande pode variar entre 450 € e 700 €, dependendo do volume real de móveis e caixas.",
+          "Estes valores incluem normalmente carga, transporte, descarga e proteção básica dos móveis. Serviços extra como embalagem completa ou montagem de móveis podem acrescentar entre 80 € e 150 € ao total.",
+        ],
+      },
+      {
+        title: "O que faz o preço subir ou descer",
+        paragraphs: [
+          "O andar é um dos principais factores. Um 5.º andar sem elevador exige mais tempo e esforço da equipa, o que se reflecte no orçamento. A distância entre a casa antiga e a nova também conta: uma mudança dentro do mesmo bairro sai mais barata do que uma mudança para outra cidade.",
+          "Móveis grandes como pianos, cofres ou móveis de canto podem exigir técnicas especiais de transporte e aumentar o custo. Dias de fim de semana ou fim de mês também tendem a ter maior procura e preços ligeiramente mais altos.",
+        ],
+      },
+      {
+        title: "Como pedir orçamento",
+        paragraphs: [
+          "O ideal é enviar fotos de todos os móveis e caixas que vão na mudança, indicar os dois endereços com andar e tipo de acesso (elevador, escadas, rua estreita) e definir a data pretendida.",
+          "Com esta informação, a equipa consegue dar um orçamento mais preciso e evitar ajustes no dia da mudança.",
+        ],
+      },
+    ],
+    faq: [
+      {
+        question: "O preço pode mudar no dia da mudança?",
+        answer:
+          "Sim, se o volume real for muito diferente do previsto ou se houver dificuldades de acesso não comunicadas. Por isso, fotos detalhadas ajudam a evitar surpresas.",
+      },
+      {
+        question: "Vale a pena fazer a mudança sozinho?",
+        answer:
+          "Para volumes pequenos (algumas caixas e um ou dois móveis), pode fazer sentido. Para apartamentos inteiros, o tempo, o esforço e o risco de danos costumam justificar contratar uma equipa.",
+      },
+    ],
+  },
+  {
+    slug: "como-organizar-uma-mudanca-de-casa",
+    title: "Como organizar uma mudança de casa sem stress: checklist completa",
+    description:
+      "Guia prático para organizar uma mudança de apartamento: o que fazer antes, durante e depois. Checklist, dicas e erros a evitar.",
+    category: "Mudanças",
+    keywords: [
+      "como organizar mudança",
+      "checklist mudança casa",
+      "preparar mudança apartamento",
+      "dicas mudança de casa",
+      "o que fazer antes da mudança",
+    ],
+    readingTime: "7 min",
+    publishDate: "2026-06-01",
+    heroLabel: "Mudanças",
+    intro:
+      "Uma mudança bem organizada evita stress, perdas de tempo e problemas no dia. Com planeamento antecipado, triagem de objectos e comunicação clara com a equipa de mudanças, o processo torna-se muito mais simples. Este guia mostra o que fazer antes, durante e depois da mudança.",
+    sections: [
+      {
+        title: "4 semanas antes: preparar e triar",
+        paragraphs: [
+          "Comece por percorrer todas as divisões e separar o que vai manter, doar, vender ou descartar. Quanto menos volume transportar, mais barata e rápida será a mudança.",
+          "Peça orçamentos a empresas de mudanças, compare preços e confirme disponibilidade para a data pretendida. Reserve com antecedência, especialmente se for fim de mês ou fim de semana.",
+        ],
+        bullets: [
+          "Fazer inventário de todos os móveis e objectos",
+          "Separar o que não vai para a casa nova",
+          "Pedir 2-3 orçamentos de mudanças",
+          "Reservar a data e a equipa",
+        ],
+      },
+      {
+        title: "1 semana antes: embalar e preparar",
+        paragraphs: [
+          "Comece a embalar divisão a divisão, etiquetando as caixas com o conteúdo e o destino (ex: 'Cozinha - Loiça'). Proteja objectos frágeis com papel ou plástico bolha.",
+          "Confirme os detalhes com a empresa de mudanças: horário, moradas exactas, andar, elevador e contacto para o dia.",
+        ],
+        bullets: [
+          "Embalar divisão a divisão",
+          "Etiquetar todas as caixas",
+          "Confirmar detalhes com a empresa",
+          "Preparar caixa de 'essenciais' para o primeiro dia",
+        ],
+      },
+      {
+        title: "No dia: coordenar e supervisionar",
+        paragraphs: [
+          "Esteja presente para indicar à equipa quais as caixas e móveis prioritários e onde devem ficar na nova casa. Verifique se todos os objectos foram carregados antes de sair.",
+          "Na chegada, confirme se não há danos e indique onde colocar cada volume. Móveis grandes devem ser posicionados primeiro.",
+        ],
+      },
+    ],
+    faq: [
+      {
+        question: "Devo embalar tudo ou a empresa faz isso?",
+        answer:
+          "Depende do serviço contratado. Pode embalar sozinho para poupar, ou pedir embalagem completa à empresa por um valor extra.",
+      },
+      {
+        question: "E se tiver móveis para descartar?",
+        answer:
+          "Pode pedir recolha separada ou combinar com a empresa de mudanças para retirar no mesmo dia o que não vai para a casa nova.",
+      },
+    ],
+  },
+  {
+    slug: "pequenas-mudancas-em-lisboa-quando-compensa",
+    title: "Pequenas mudanças em Lisboa: quando compensa contratar uma equipa",
+    description:
+      "Guia sobre pequenas mudanças em Lisboa: transporte de 1-3 móveis, quando vale a pena contratar, preços e alternativas.",
+    category: "Mudanças",
+    keywords: [
+      "pequenas mudanças lisboa",
+      "transporte de móveis lisboa",
+      "mudança de sofá",
+      "mudança de cama",
+      "transporte de armário",
+      "pequena mudança preço",
+    ],
+    readingTime: "6 min",
+    publishDate: "2026-06-01",
+    heroLabel: "Mudanças",
+    intro:
+      "Nem toda a mudança envolve um apartamento inteiro. Muitas vezes, basta transportar um sofá novo, levar uma cama para outra casa ou mover um armário pesado. Para estes casos, contratar uma equipa pode poupar tempo, esforço e evitar danos. Veja quando compensa.",
+    sections: [
+      {
+        title: "O que é uma pequena mudança",
+        paragraphs: [
+          "Consideramos pequena mudança o transporte de 1 a 3 peças grandes: sofá, cama, armário, secretária, frigorífico ou máquina de lavar. É diferente de uma mudança completa porque não envolve dezenas de caixas e mobiliário de todas as divisões.",
+          "Estes serviços são rápidos (1-2 horas) e têm preços mais acessíveis, geralmente entre 80 € e 150 € dependendo do volume e da distância.",
+        ],
+      },
+      {
+        title: "Quando vale a pena contratar",
+        paragraphs: [
+          "Se o móvel é pesado, volumoso ou difícil de manobrar (escadas estreitas, sem elevador, portas pequenas), contratar uma equipa evita lesões e danos. Profissionais têm experiência em desmontar, proteger e transportar peças grandes.",
+          "Se não tem carro ou carrinha adequada, o aluguer de veículo mais o tempo e esforço muitas vezes sai mais caro e trabalhoso do que contratar quem já tem tudo preparado.",
+        ],
+      },
+      {
+        title: "Como pedir orçamento",
+        paragraphs: [
+          "Envie fotos do móvel, indique as duas moradas com andar e tipo de acesso. Quanto mais detalhe, mais preciso será o orçamento. A maioria das empresas responde em poucas horas.",
+        ],
+      },
+    ],
+    faq: [
+      {
+        question: "Posso transportar só um sofá?",
+        answer:
+          "Sim. É um dos pedidos mais comuns. O preço depende do tamanho do sofá, da distância e do acesso nos dois endereços.",
+      },
+      {
+        question: "E se o móvel não couber no elevador?",
+        answer:
+          "A equipa sobe pelas escadas. Isso pode aumentar ligeiramente o preço, mas é uma situação muito comum e faz parte do serviço.",
       },
     ],
   },

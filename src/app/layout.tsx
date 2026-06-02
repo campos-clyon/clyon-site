@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
 import { Inter, Poppins } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
 
 import DeferredCookieConsent from "@/components/DeferredCookieConsent";
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
+import StickyCTA from "@/components/StickyCTA";
 import { TrpcProvider } from "@/components/TrpcProvider";
 import {
   BUSINESS_ADDRESS,
@@ -33,19 +35,18 @@ const poppins = Poppins({
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: "Recolha de Entulho, Móveis e Monos em Lisboa e Margem Sul | CLYON",
+    default: "CLYON - Recolha de Móveis, Entulho, Monos e Esvaziamento de Casas em Lisboa e Setúbal",
     template: "%s | CLYON",
   },
   description:
-    "Recolha de entulho, móveis velhos, monos, esvaziamentos, limpeza pós-obra e mudanças em Lisboa, Margem Sul e Setúbal. Orçamento rápido e resposta no mesmo dia.",
+    "Recolha de entulho, móveis, monos, limpeza pós-obra e mudanças em Lisboa e Setúbal. Entrega em 24h, preços desde 120EUR e 163 avaliações 5 estrelas. Orçamento grátis!",
   keywords: [
-    "recolha de entulho lisboa",
     "recolha de móveis lisboa",
     "recolha de monos margem sul",
-    "limpeza pós-obra lisboa",
+    "recolha de entulho lisboa",
     "mudanças margem sul",
     "esvaziamento de casas lisboa",
-    "camião com motorista lisboa",
+    "limpeza pós-obra lisboa",
   ],
   authors: [{ name: BUSINESS_NAME }],
   creator: BUSINESS_NAME,
@@ -68,6 +69,15 @@ export const metadata: Metadata = {
       "pt-PT": SITE_URL,
     },
   },
+  icons: {
+    icon: [
+      { url: "/favicon.svg", type: "image/svg+xml" },
+      { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
+      { url: "/favicon-16x16.png", sizes: "16x16", type: "image/png" },
+    ],
+    apple: [{ url: "/apple-touch-icon.png", sizes: "180x180" }],
+  },
+  manifest: "/site.webmanifest",
   openGraph: {
     type: "website",
     locale: "pt_PT",
@@ -114,17 +124,41 @@ const localBusinessSchema = {
     "Empresa especializada em recolha de entulho, móveis, monos, esvaziamento de casas, limpeza pós-obra e mudanças em Lisboa, Margem Sul e Setúbal.",
   address: {
     "@type": "PostalAddress",
-    streetAddress: "Rua dos Jasmins 3",
+    streetAddress: "Belverde",
     addressLocality: "Amora",
     addressRegion: "Setúbal",
     postalCode: "2845-513",
     addressCountry: "PT",
   },
   sameAs: [BUSINESS_INSTAGRAM],
-  areaServed: REGIONS.map((region) => ({
-    "@type": "AdministrativeArea",
-    name: region.name,
-  })),
+  areaServed: [
+    { "@type": "City", name: "Lisboa" },
+    { "@type": "City", name: "Almada" },
+    { "@type": "City", name: "Seixal" },
+    { "@type": "City", name: "Barreiro" },
+    { "@type": "City", name: "Setúbal" },
+    { "@type": "City", name: "Cascais" },
+    { "@type": "City", name: "Oeiras" },
+    { "@type": "City", name: "Sintra" },
+    { "@type": "City", name: "Amadora" },
+    { "@type": "City", name: "Loures" },
+    { "@type": "City", name: "Odivelas" },
+    { "@type": "City", name: "Montijo" },
+    { "@type": "City", name: "Moita" },
+    { "@type": "City", name: "Palmela" },
+    { "@type": "City", name: "Sesimbra" },
+    { "@type": "City", name: "Carnaxide" },
+    { "@type": "City", name: "Monte Abraão" },
+    { "@type": "City", name: "Queluz" },
+  ],
+  aggregateRating: {
+    "@type": "AggregateRating",
+    ratingValue: "4.9",
+    reviewCount: "163",
+    bestRating: "5",
+    worstRating: "1",
+  },
+  priceRange: "120EUR - 500EUR",
   openingHoursSpecification: [
     {
       "@type": "OpeningHoursSpecification",
@@ -210,8 +244,10 @@ export default function RootLayout({
           <Header />
           <main className="site-page-shell pt-[76px]">{children}</main>
           <Footer />
+          <StickyCTA />
           <DeferredCookieConsent />
         </TrpcProvider>
+        <Analytics />
       </body>
     </html>
   );

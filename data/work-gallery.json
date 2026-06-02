@@ -7,7 +7,7 @@
       "subtitle": "Exemplo inicial para substituir no painel",
       "description": "Imagem inicial enquanto as fotos reais são carregadas no painel.",
       "alt": "Recolha de entulho",
-      "imageUrl": "/images/service-1.webp",
+      "imageUrl": "/images/service-1.jpg",
       "order": 1,
       "isActive": true,
       "projectKey": "recolha-entulho"
@@ -19,7 +19,7 @@
       "subtitle": "Exemplo inicial para substituir no painel",
       "description": "Imagem inicial enquanto as fotos reais são carregadas no painel.",
       "alt": "Recolha de móveis",
-      "imageUrl": "/images/service-2.webp",
+      "imageUrl": "/images/service-2.jpg",
       "order": 2,
       "isActive": true,
       "projectKey": "recolha-moveis"
@@ -31,7 +31,7 @@
       "subtitle": "Exemplo inicial para substituir no painel",
       "description": "Imagem inicial enquanto as fotos reais são carregadas no painel.",
       "alt": "Mudanças completas",
-      "imageUrl": "/images/service-3.webp",
+      "imageUrl": "/images/service-3.jpg",
       "order": 3,
       "isActive": true,
       "projectKey": "mudancas-completas"
@@ -43,7 +43,7 @@
       "subtitle": "Exemplo inicial para substituir no painel",
       "description": "Imagem inicial enquanto as fotos reais são carregadas no painel.",
       "alt": "Limpeza pós-obra",
-      "imageUrl": "/images/service-4.webp",
+      "imageUrl": "/images/service-4.jpg",
       "order": 4,
       "isActive": true,
       "projectKey": "limpeza-pos-obra"
@@ -55,7 +55,7 @@
       "subtitle": "Caso inicial",
       "description": "Substitua esta imagem por uma foto real de antes ou depois no painel.",
       "alt": "Caso inicial de recolha de entulho",
-      "imageUrl": "/images/service-1.webp",
+      "imageUrl": "/images/service-1.jpg",
       "order": 1,
       "isActive": true,
       "projectKey": "recolha-entulho"
@@ -67,7 +67,7 @@
       "subtitle": "Caso inicial",
       "description": "Substitua esta imagem por uma foto real de antes ou depois no painel.",
       "alt": "Caso inicial de recolha de móveis",
-      "imageUrl": "/images/service-2.webp",
+      "imageUrl": "/images/service-2.jpg",
       "order": 2,
       "isActive": true,
       "projectKey": "recolha-moveis"
@@ -79,7 +79,7 @@
       "subtitle": "Caso inicial",
       "description": "Substitua esta imagem por uma foto real de antes ou depois no painel.",
       "alt": "Caso inicial de mudanças",
-      "imageUrl": "/images/service-3.webp",
+      "imageUrl": "/images/service-3.jpg",
       "order": 3,
       "isActive": true,
       "projectKey": "mudancas-completas"
@@ -91,10 +91,11 @@
       "subtitle": "Caso inicial",
       "description": "Substitua esta imagem por uma foto real de antes ou depois no painel.",
       "alt": "Caso inicial de limpeza pós-obra",
-      "imageUrl": "/images/service-4.webp",
+      "imageUrl": "/images/service-4.jpg",
       "order": 4,
       "isActive": true,
       "projectKey": "limpeza-pos-obra"
     }
   ]
 }
+

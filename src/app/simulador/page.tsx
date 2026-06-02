@@ -2,21 +2,21 @@ import type { Metadata } from "next";
 
 import SimuladorClient from "./SimuladorClient";
 
-type CategoriaId = "entulho" | "moveis" | "monos" | "limpeza" | "mudancas" | "camiao";
+type CategoriaId = "moveis" | "monos" | "entulho" | "mudancas" | "limpeza";
 
-const categoriaIds = new Set<CategoriaId>(["entulho", "moveis", "monos", "limpeza", "mudancas", "camiao"]);
+const categoriaIds = new Set<CategoriaId>(["moveis", "monos", "entulho", "mudancas", "limpeza"]);
 
 export const metadata: Metadata = {
-  title: "Simulador de Orçamento para Recolha e Mudanças | CLYON",
+  title: "Simulador de Preços — Calcule o Custo da Sua Recolha",
   description:
-    "Simule o seu pedido de recolha, limpeza ou mudança com a CLYON. Introduza a morada, calcule a distância e receba uma estimativa inicial clara.",
+    "Calcule online o preço de recolha de móveis, entulho, monos ou limpeza pós-obra em Lisboa e Setúbal. Orçamento personalizado conforme o seu pedido!",
   alternates: {
     canonical: "https://clyon.pt/simulador",
   },
   openGraph: {
-    title: "Simulador de Orçamento para Recolha e Mudanças | CLYON",
+    title: "Simulador de Preços — Calcule o Custo da Sua Recolha",
     description:
-      "Escolha o serviço, use sugestões automáticas de moradas e calcule a distância antes de gerar a estimativa.",
+      "Calcule o preço da sua recolha em Lisboa e Setúbal. Orçamento instantâneo online!",
     url: "https://clyon.pt/simulador",
   },
 };

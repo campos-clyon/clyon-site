@@ -144,7 +144,7 @@ export default function ImageCarousel({
   const currentImage = images[currentIndex];
 
   return (
-    <div className="group relative h-full w-full overflow-hidden rounded-[28px] bg-[linear-gradient(180deg,#d9faff_0%,#f4fdff_42%,#083344_100%)]">
+    <div className="group relative h-full w-full overflow-hidden bg-slate-100">
       <Image
         src={currentImage.url}
         alt={currentImage.alt}
@@ -192,15 +192,15 @@ export default function ImageCarousel({
       ) : null}
 
       {showIndicators && images.length > 1 ? (
-        <div className="absolute bottom-4 left-1/2 z-10 flex -translate-x-1/2 gap-2.5 rounded-full bg-slate-950/18 px-3 py-2 backdrop-blur-sm">
+        <div className="absolute bottom-3 left-1/2 z-10 flex -translate-x-1/2 gap-1.5">
           {images.map((_, index) => (
             <button
               key={index}
               onClick={() => void goToIndex(index)}
-              className={`min-h-3 min-w-3 rounded-full transition-all ${
+              className={`h-1.5 rounded-full transition-all ${
                 index === currentIndex
-                  ? "h-3 w-7 bg-cyan-400"
-                  : "h-3 w-3 bg-white/65 hover:bg-white/85"
+                  ? "w-6 bg-white"
+                  : "w-1.5 bg-white/50 hover:bg-white/70"
               }`}
               aria-label={`Ir para slide ${index + 1}`}
               disabled={isPending}

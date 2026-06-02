@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import ColaboradorAdminClient from "./ColaboradorAdminClient";
 
 export const metadata: Metadata = {
-  title: "Painel Admin | CLYON",
+  title: "Painel Admin",
   robots: { index: false, follow: false },
 };
 

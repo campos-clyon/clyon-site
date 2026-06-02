@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import ImageManagerClient from "../ImageManagerClient";
 
 export const metadata: Metadata = {
-  title: "Gestor de Imagens | CLYON",
+  title: "Gestor de Imagens",
   robots: { index: false, follow: false },
 };
 
