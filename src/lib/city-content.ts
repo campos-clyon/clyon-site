@@ -348,7 +348,7 @@ export const CITY_SERVICE_CONTENT: Record<string, CityServiceContent> = {
       },
       {
         q: "Quanto custa um contentor de entulho no Seixal?",
-        a: "No Seixal, por sermos locais, um contentor pequeno (2m³) custa a partir de 120EUR - cerca de 20% menos que em zonas fora da nossa base. Contentor médio (5m³) desde 200EUR.",
+        a: "Por estarmos sediados em Amora, conseguimos preços mais competitivos no Seixal do que em zonas mais distantes. O valor depende do volume, tipo de entulho e duração. Peça orçamento sem compromisso.",
       },
       {
         q: "Podem deixar contentor em Corroios ou Amora?",
@@ -356,7 +356,7 @@ export const CITY_SERVICE_CONTENT: Record<string, CityServiceContent> = {
       },
       {
         q: "Recolhem entulho aos sacos no Seixal?",
-        a: "Sim. Para obras mais pequenas trabalhamos com sacos big bag. Até 10 sacos no Seixal custa desde 80EUR - o nosso melhor preço.",
+        a: "Sim. Para obras mais pequenas trabalhamos com sacos big bag. Por estarmos sediados em Amora, o custo de deslocação é mínimo, o que torna o preço mais competitivo. Peça orçamento.",
       },
       {
         q: "Podem recolher entulho no mesmo dia no Seixal?",
@@ -364,11 +364,11 @@ export const CITY_SERVICE_CONTENT: Record<string, CityServiceContent> = {
       },
     ],
     pricingNotes: [
-      "Até 10 sacos de entulho: 80EUR a 110EUR (preço local)",
-      "Contentor pequeno (2m³): 120EUR a 160EUR",
-      "Contentor médio (5m³): 200EUR a 280EUR",
-      "Remodelação de WC: 100EUR a 150EUR",
-      "Demolição de divisória: 130EUR a 200EUR",
+      "Sacos big bag de entulho: valor orientativo a partir de 80€ (depende do volume)",
+      "Contentor pequeno: orçamento personalizado — sem custo de deslocação no Seixal",
+      "Contentor médio: orçamento personalizado conforme volume e duração",
+      "Entulho de remodelação de WC: orçamento personalizado conforme volume",
+      "Demolição de divisória: orçamento personalizado conforme resíduos",
     ],
     ctaText: "Obra no Seixal? Somos vizinhos - contentor ou sacos, entregamos hoje.",
   },
@@ -804,7 +804,7 @@ export const CITY_SERVICE_CONTENT: Record<string, CityServiceContent> = {
       },
       {
         q: "Quanto custa recolher um sofá em Monte Abraão?",
-        a: "Um sofá de 2-3 lugares em Monte Abraão custa entre 35EUR e 50EUR, dependendo do piso e do acesso. A maioria dos prédios tem elevador, o que ajuda a manter o preço baixo.",
+        a: "O valor depende do piso, acesso e dimensões do sofá. A maioria dos prédios em Monte Abraão tem elevador, o que ajuda a manter o custo mais baixo. Envie fotos para recebermos um orçamento personalizado.",
       },
       {
         q: "Podem recolher móveis no mesmo dia em Monte Abraão?",
@@ -820,11 +820,11 @@ export const CITY_SERVICE_CONTENT: Record<string, CityServiceContent> = {
       },
     ],
     pricingNotes: [
-      "Sofá 2-3 lugares: 35EUR a 50EUR",
-      "Cama casal com colchão: 35EUR a 45EUR",
-      "Armário roupeiro: 40EUR a 60EUR",
-      "Frigorífico ou máquina: 25EUR a 35EUR",
-      "Esvaziamento T2 completo: 300EUR a 500EUR",
+      "Sofá 2-3 lugares: valor orientativo a partir de 35€ (depende do acesso)",
+      "Cama de casal com colchão: valor orientativo a partir de 35€",
+      "Armário roupeiro: valor orientativo a partir de 40€",
+      "Frigorífico ou máquina de lavar: valor orientativo a partir de 25€",
+      "Esvaziamento de apartamento T2: orçamento personalizado conforme volume",
     ],
     ctaText: "Precisa de recolha de móveis em Monte Abraão? Envie fotos e respondemos em minutos.",
   },
@@ -853,7 +853,7 @@ export const CITY_SERVICE_CONTENT: Record<string, CityServiceContent> = {
       },
       {
         q: "Quanto custa recolher móveis em Queluz?",
-        a: "Os preços em Queluz são semelhantes aos de Lisboa: sofá desde 35EUR, cama desde 35EUR, armário desde 40EUR. Depende do acesso e do volume.",
+        a: "O valor depende do acesso, piso e volume. Queluz tem uma mistura de edifícios antigos e modernos — avaliamos sempre antes de confirmar o preço. Envie fotos para orçamento personalizado.",
       },
       {
         q: "Podem ir ao Palácio de Queluz?",
@@ -869,11 +869,11 @@ export const CITY_SERVICE_CONTENT: Record<string, CityServiceContent> = {
       },
     ],
     pricingNotes: [
-      "Sofá 2-3 lugares: 35EUR a 55EUR",
-      "Cama casal com colchão: 35EUR a 50EUR",
-      "Armário roupeiro: 40EUR a 65EUR",
-      "Frigorífico ou máquina: 25EUR a 35EUR",
-      "Esvaziamento T2 completo: 300EUR a 550EUR",
+      "Sofá 2-3 lugares: valor orientativo a partir de 35€ (depende do acesso)",
+      "Cama de casal com colchão: valor orientativo a partir de 35€",
+      "Armário roupeiro: valor orientativo a partir de 40€",
+      "Frigorífico ou máquina de lavar: valor orientativo a partir de 25€",
+      "Esvaziamento de apartamento: orçamento personalizado conforme volume e piso",
     ],
     ctaText: "Precisa de recolha de móveis em Queluz? Envie fotos para orçamento grátis.",
   },
@@ -902,7 +902,7 @@ export const CITY_SERVICE_CONTENT: Record<string, CityServiceContent> = {
       },
       {
         q: "Quanto custa recolher um sofá em Carnaxide?",
-        a: "Um sofá de 2-3 lugares em Carnaxide custa entre 35EUR e 50EUR, dependendo do piso e do acesso. A maioria dos prédios tem elevador, o que ajuda a manter o preço baixo.",
+        a: "O valor depende do piso, acesso e dimensões. A maioria dos prédios em Carnaxide tem elevador, o que favorece um custo mais baixo. Envie fotos para orçamento personalizado.",
       },
       {
         q: "Podem entrar em condomínios fechados em Carnaxide?",
@@ -918,11 +918,11 @@ export const CITY_SERVICE_CONTENT: Record<string, CityServiceContent> = {
       },
     ],
     pricingNotes: [
-      "Sofá 2-3 lugares: 35EUR a 50EUR",
-      "Cama casal com colchão: 35EUR a 45EUR",
-      "Armário roupeiro: 40EUR a 60EUR",
-      "Frigorífico ou máquina: 25EUR a 35EUR",
-      "Esvaziamento T2 completo: 300EUR a 500EUR",
+      "Sofá 2-3 lugares: valor orientativo a partir de 35€ (depende do acesso)",
+      "Cama de casal com colchão: valor orientativo a partir de 35€",
+      "Armário roupeiro: valor orientativo a partir de 40€",
+      "Frigorífico ou máquina de lavar: valor orientativo a partir de 25€",
+      "Esvaziamento de apartamento: orçamento personalizado conforme volume e piso",
     ],
     ctaText: "Precisa de recolha de móveis em Carnaxide? Envie fotos e respondemos em minutos.",
   },

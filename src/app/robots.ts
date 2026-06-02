@@ -14,8 +14,6 @@ export default function robots(): MetadataRoute.Robots {
           "/colaboradores",
           "/auth/",
           "/auth",
-          "/contacto",  // Redirect para /contactos
-          "/*?*",  // URLs com query strings
         ],
       },
       {
