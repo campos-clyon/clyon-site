@@ -18,6 +18,8 @@ import {
 
 import RotatingHeroCopy from "@/components/RotatingHeroCopy";
 import { InstagramFeed } from "@/components/InstagramFeed";
+import ImageCarousel from "@/components/ImageCarousel";
+import { getHeroCarouselImages } from "@/lib/work-gallery";
 
 export const metadata: Metadata = {
   title: "CLYON — Recolha de Móveis, Entulho, Monos e Esvaziamento de Casas em Lisboa e Setúbal",
@@ -208,6 +210,8 @@ const homeFaqSchema = {
 export const revalidate = 3600;
 
 export default async function HomePage() {
+  const workImages = await getHeroCarouselImages();
+
   return (
     <div className="min-h-screen bg-white">
       {/* Hero */}
