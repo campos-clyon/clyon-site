@@ -64,21 +64,21 @@ export default function Footer() {
               <a
                 href={telHref}
                 onClick={() => trackPhoneCall("footer")}
-                className="flex items-center gap-3 text-sm text-slate-400 transition-colors hover:text-white"
+                className="flex items-center gap-3 text-sm text-white"
               >
                 <Phone className="h-4 w-4 text-cyan-500" />
-                <span>+351 934 748 005</span>
+                +351 934 748 005
               </a>
               <a
                 href={`mailto:${BUSINESS_EMAIL}`}
-                className="flex items-center gap-3 text-sm text-slate-400 transition-colors hover:text-white"
+                className="flex items-center gap-3 text-sm text-white"
               >
                 <Mail className="h-4 w-4 text-cyan-500" />
-                <span>{BUSINESS_EMAIL}</span>
+                geral@clyon.pt
               </a>
-              <div className="flex items-start gap-3 text-sm text-slate-400">
+              <div className="flex items-start gap-3 text-sm text-white">
                 <MapPin className="mt-0.5 h-4 w-4 flex-shrink-0 text-cyan-500" />
-                <span>Belverde, Amora, 2845-513</span>
+                Belverde, Amora, 2845-513
               </div>
             </div>
 
@@ -110,32 +110,32 @@ export default function Footer() {
             <h3 className="text-sm font-semibold uppercase tracking-wider text-white">Serviços</h3>
             <ul className="mt-5 space-y-3">
               <li>
-                <Link href="/recolha-de-moveis" className="text-sm text-slate-400 transition-colors hover:text-white">
+                <Link href="/recolha-de-moveis" className="text-sm text-white hover:text-cyan-400">
                   Recolha de Móveis
                 </Link>
               </li>
               <li>
-                <Link href="/recolha-de-entulho" className="text-sm text-slate-400 transition-colors hover:text-white">
+                <Link href="/recolha-de-entulho" className="text-sm text-white hover:text-cyan-400">
                   Recolha de Entulho
                 </Link>
               </li>
               <li>
-                <Link href="/esvaziamento-de-casas" className="text-sm text-slate-400 transition-colors hover:text-white">
+                <Link href="/esvaziamento-de-casas" className="text-sm text-white hover:text-cyan-400">
                   Esvaziamento de Casas
                 </Link>
               </li>
               <li>
-                <Link href="/limpeza-pos-obra" className="text-sm text-slate-400 transition-colors hover:text-white">
+                <Link href="/limpeza-pos-obra" className="text-sm text-white hover:text-cyan-400">
                   Limpeza Pós-Obra
                 </Link>
               </li>
               <li>
-                <Link href="/mudancas" className="text-sm text-slate-400 transition-colors hover:text-white">
+                <Link href="/mudancas" className="text-sm text-white hover:text-cyan-400">
                   Mudanças
                 </Link>
               </li>
               <li>
-                <Link href="/precos" className="text-sm text-slate-400 transition-colors hover:text-white">
+                <Link href="/precos" className="text-sm text-white hover:text-cyan-400">
                   Preços
                 </Link>
               </li>
@@ -147,32 +147,32 @@ export default function Footer() {
             <h3 className="text-sm font-semibold uppercase tracking-wider text-white">Regiões</h3>
             <ul className="mt-5 space-y-3">
               <li>
-                <Link href="/recolha-moveis-lisboa" className="text-sm text-slate-400 transition-colors hover:text-white">
+                <Link href="/recolha-moveis-lisboa" className="text-sm text-white hover:text-cyan-400">
                   Lisboa
                 </Link>
               </li>
               <li>
-                <Link href="/recolha-moveis-almada" className="text-sm text-slate-400 transition-colors hover:text-white">
+                <Link href="/recolha-moveis-almada" className="text-sm text-white hover:text-cyan-400">
                   Almada
                 </Link>
               </li>
               <li>
-                <Link href="/recolha-moveis-seixal" className="text-sm text-slate-400 transition-colors hover:text-white">
+                <Link href="/recolha-moveis-seixal" className="text-sm text-white hover:text-cyan-400">
                   Seixal
                 </Link>
               </li>
               <li>
-                <Link href="/recolha-moveis-setubal" className="text-sm text-slate-400 transition-colors hover:text-white">
+                <Link href="/recolha-moveis-setubal" className="text-sm text-white hover:text-cyan-400">
                   Setúbal
                 </Link>
               </li>
               <li>
-                <Link href="/recolha-moveis-cascais" className="text-sm text-slate-400 transition-colors hover:text-white">
+                <Link href="/recolha-moveis-cascais" className="text-sm text-white hover:text-cyan-400">
                   Cascais
                 </Link>
               </li>
               <li>
-                <Link href="/recolha-moveis-amadora" className="text-sm text-slate-400 transition-colors hover:text-white">
+                <Link href="/recolha-moveis-amadora" className="text-sm text-white hover:text-cyan-400">
                   Amadora
                 </Link>
               </li>
@@ -184,32 +184,32 @@ export default function Footer() {
             <h3 className="text-sm font-semibold uppercase tracking-wider text-white">Empresa</h3>
             <ul className="mt-5 space-y-3">
               <li>
-                <Link href="/sobre-nos" className="text-sm text-slate-400 transition-colors hover:text-white">
+                <Link href="/sobre-nos" className="text-sm text-white hover:text-cyan-400">
                   Sobre Nós
                 </Link>
               </li>
               <li>
-                <Link href="/trabalhos" className="text-sm text-slate-400 transition-colors hover:text-white">
+                <Link href="/trabalhos" className="text-sm text-white hover:text-cyan-400">
                   Trabalhos
                 </Link>
               </li>
               <li>
-                <Link href="/avaliacoes" className="text-sm text-slate-400 transition-colors hover:text-white">
+                <Link href="/avaliacoes" className="text-sm text-white hover:text-cyan-400">
                   Avaliações
                 </Link>
               </li>
               <li>
-                <Link href="/blog" className="text-sm text-slate-400 transition-colors hover:text-white">
+                <Link href="/blog" className="text-sm text-white hover:text-cyan-400">
                   Blog
                 </Link>
               </li>
               <li>
-                <Link href="/faq" className="text-sm text-slate-400 transition-colors hover:text-white">
+                <Link href="/faq" className="text-sm text-white hover:text-cyan-400">
                   FAQ
                 </Link>
               </li>
               <li>
-                <Link href="/contactos" className="text-sm text-slate-400 transition-colors hover:text-white">
+                <Link href="/contactos" className="text-sm text-white hover:text-cyan-400">
                   Contactos
                 </Link>
               </li>
