@@ -75,7 +75,7 @@ const simulatorPrimaryButtonClass =
   "bg-cyan-600 text-white border-2 border-cyan-600 hover:bg-cyan-700";
 
 const simulatorSecondaryButtonClass =
-  "bg-white text-slate-600 border border-slate-200 hover:border-slate-300 hover:bg-slate-50";
+  "bg-white text-slate-600 border border-cyan-100 hover:border-slate-300 hover:bg-slate-50";
 
 type SimuladorClientProps = {
   initialCategoriaId?: CategoriaId | null;
@@ -459,35 +459,25 @@ export default function SimuladorClient({ initialCategoriaId = null }: Simulador
 
   if (!categoria) {
     return (
-      <div className="min-h-screen bg-slate-50">
-        <section 
-          className="relative min-h-[500px] overflow-hidden bg-cover bg-center bg-no-repeat md:min-h-[560px]"
-          style={{
-            backgroundImage: "url('/hero-clyon-carrinha-lisboa.jpg')",
-            backgroundPosition: "center bottom",
-          }}
-        >
-          <div className="absolute inset-0 bg-gradient-to-r from-white/90 via-white/65 to-white/5" />
-          <div className="relative z-10 mx-auto max-w-7xl px-4 pb-16 pt-20 sm:px-6 lg:px-8">
+      <div className="min-h-screen bg-white">
+        <section className="relative overflow-hidden bg-white">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(34,211,238,0.18),transparent_24%),linear-gradient(90deg,rgba(236,254,255,0.96)_0%,rgba(255,255,255,1)_55%)]" />
+          <div className="relative mx-auto max-w-7xl px-4 pb-16 pt-20 sm:px-6 lg:px-8">
             <div className="grid gap-8 lg:grid-cols-[1fr_0.9fr] lg:items-end">
-              <div className="max-w-xl">
-                <div className="inline-flex items-center gap-2.5 rounded-full border border-emerald-200 bg-emerald-50 px-4 py-2">
-                  <span className="flex h-2 w-2">
-                    <span className="absolute inline-flex h-2 w-2 animate-ping rounded-full bg-emerald-400 opacity-75"></span>
-                    <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500"></span>
-                  </span>
-                  <span className="text-sm font-semibold text-emerald-700">Simulador de Preços</span>
+              <div>
+                <div className="inline-flex items-center rounded-full border border-cyan-200 bg-cyan-50 px-4 py-2 text-sm font-semibold uppercase tracking-[0.22em] text-cyan-700 shadow-sm">
+                  Simulador
                 </div>
-                <h1 className="mt-4 text-[2rem] font-bold leading-[1.15] tracking-tight text-slate-900 sm:text-[2.5rem] lg:text-[2.75rem]">
+                <h1 className="mt-4 max-w-[18ch] text-[2.25rem] font-bold leading-[1.05] tracking-tight text-slate-950 sm:text-[3.35rem]">
                   Calcule a distância antes do preço final.
                 </h1>
-                <p className="mt-4 max-w-2xl text-lg leading-7 text-slate-600">
+                <p className="mt-4 max-w-2xl text-[0.98rem] leading-7 text-slate-600">
                   O cliente escreve a morada, recebe sugestões automáticas do Google
                   e só depois avança para o cálculo do valor final.
                 </p>
               </div>
-              <Card className="rounded-2xl border border-slate-200 bg-white/95 p-6 shadow-xl backdrop-blur-sm">
-                <p className="text-sm font-semibold uppercase tracking-wide text-cyan-700">
+              <Card className="rounded-[30px] border border-cyan-100 bg-white p-6 shadow-[0_24px_60px_-34px_rgba(14,116,144,0.2)]">
+                <p className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-700">
                   Fluxo novo
                 </p>
                 <ol className="mt-4 space-y-2 text-sm leading-7 text-slate-600">
@@ -501,27 +491,27 @@ export default function SimuladorClient({ initialCategoriaId = null }: Simulador
           </div>
         </section>
 
-        <section className="bg-slate-50 py-12 lg:py-16">
+        <section className="bg-slate-50 py-16">
           <div className="mx-auto grid max-w-7xl gap-4 px-4 sm:px-6 lg:grid-cols-2 lg:px-8">
             {categorias.map((item) => (
               <button
                 key={item.id}
                 type="button"
                 onClick={() => escolherCategoria(item.id)}
-                className="group rounded-2xl border border-slate-200 bg-white p-5 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-cyan-300 hover:shadow-md"
+                className="group rounded-[28px] border border-cyan-100 bg-white p-5 text-left shadow-[0_20px_44px_-34px_rgba(14,116,144,0.22)] transition hover:-translate-y-0.5 hover:border-cyan-300"
               >
                 <div className="flex items-start justify-between gap-4">
                   <div>
-                    <h3 className="text-lg font-semibold text-slate-900">{item.nome}</h3>
+                    <h3 className="text-lg font-semibold text-slate-950">{item.nome}</h3>
                     <p className="mt-2 text-sm leading-6 text-slate-600">{item.descricao}</p>
                   </div>
-                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-cyan-50 text-cyan-600">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-[18px] bg-cyan-50 text-cyan-600">
                     <item.icon className="h-5 w-5" />
                   </div>
                 </div>
                 <div
                   className={cn(
-                    "mt-4 inline-flex min-h-[48px] items-center rounded-xl border px-5 py-3 text-sm font-bold",
+                    "mt-4 inline-flex min-h-[54px] items-center rounded-[22px] border px-5 py-3 text-sm font-bold",
                     simulatorPrimaryButtonClass,
                   )}
                 >
@@ -537,23 +527,17 @@ export default function SimuladorClient({ initialCategoriaId = null }: Simulador
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <section 
-        className="relative min-h-[400px] overflow-hidden bg-cover bg-center bg-no-repeat md:min-h-[440px]"
-        style={{
-          backgroundImage: "url('/hero-clyon-carrinha-lisboa.jpg')",
-          backgroundPosition: "center bottom",
-        }}
-      >
-        <div className="absolute inset-0 bg-gradient-to-r from-white/90 via-white/65 to-white/5" />
-        <div className="relative z-10 mx-auto max-w-7xl px-4 pb-12 pt-20 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-white">
+      <section className="relative overflow-hidden bg-white">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(34,211,238,0.18),transparent_24%),linear-gradient(90deg,rgba(236,254,255,0.96)_0%,rgba(255,255,255,1)_55%)]" />
+        <div className="relative mx-auto max-w-7xl px-4 pb-12 pt-20 sm:px-6 lg:px-8">
           <button
             onClick={() => {
               resetFlow();
               setCategoriaId(null);
             }}
             className={cn(
-              "inline-flex min-h-[48px] items-center gap-2 rounded-xl border px-5 py-3 text-sm font-bold transition bg-white/90 backdrop-blur-sm",
+              "inline-flex min-h-[54px] items-center gap-2 rounded-[22px] border px-5 py-3 text-sm font-bold transition",
               simulatorSecondaryButtonClass,
             )}
           >
@@ -562,19 +546,15 @@ export default function SimuladorClient({ initialCategoriaId = null }: Simulador
           </button>
 
           <div className="mt-5 grid gap-8 lg:grid-cols-[1fr_0.9fr] lg:items-end">
-            <div className="max-w-xl">
-              <div className="inline-flex items-center gap-2.5 rounded-full border border-emerald-200 bg-emerald-50 px-4 py-2">
-                <span className="flex h-2 w-2">
-                  <span className="absolute inline-flex h-2 w-2 animate-ping rounded-full bg-emerald-400 opacity-75"></span>
-                  <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500"></span>
-                </span>
-                <span className="text-sm font-semibold text-emerald-700">{categoria.nome}</span>
+            <div>
+              <div className="inline-flex items-center rounded-full border border-cyan-200 bg-cyan-50 px-4 py-2 text-sm font-semibold uppercase tracking-[0.22em] text-cyan-700 shadow-sm">
+                {categoria.nome}
               </div>
-              <h1 className="mt-4 text-[2rem] font-bold leading-[1.15] tracking-tight text-slate-900 sm:text-[2.5rem] lg:text-[2.75rem]">
+              <h1 className="mt-4 max-w-[16ch] text-[2.2rem] font-bold leading-[1.04] tracking-tight text-slate-950 sm:text-[3.15rem]">
                 Introduza a morada e calcule a distância.
               </h1>
             </div>
-            <Card className="rounded-2xl border border-slate-200 bg-white/95 p-6 shadow-xl backdrop-blur-sm">
+            <Card className="rounded-[30px] border border-cyan-100 bg-white p-6 shadow-[0_24px_60px_-34px_rgba(14,116,144,0.2)]">
               <p className="text-sm leading-7 text-slate-600">
                 {categoria.trajeto === "custom"
                   ? "Este serviço usa origem e destino reais."
@@ -585,10 +565,10 @@ export default function SimuladorClient({ initialCategoriaId = null }: Simulador
         </div>
       </section>
 
-      <section className="bg-slate-50 py-12 lg:py-16">
+      <section className="bg-slate-50 py-16">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="grid gap-6 lg:grid-cols-2 lg:items-start">
-            <Card className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <Card className="rounded-[28px] border border-cyan-100 bg-white p-5 shadow-[0_20px_52px_-34px_rgba(14,116,144,0.18)]">
               <StepTitle number="1" title="Morada e distância" />
               <div className="mt-4 space-y-4">
                 {categoria.trajeto === "custom" ? (
@@ -605,7 +585,7 @@ export default function SimuladorClient({ initialCategoriaId = null }: Simulador
                     })}
                   />
                 ) : (
-                  <div className="rounded-[20px] border border-slate-200 bg-cyan-50/80 p-3.5 text-sm leading-7 text-slate-700">
+                  <div className="rounded-[20px] border border-cyan-100 bg-cyan-50/80 p-3.5 text-sm leading-7 text-slate-700">
                     A origem operacional é a base CLYON e é aplicada automaticamente.
                   </div>
                 )}
@@ -659,7 +639,7 @@ export default function SimuladorClient({ initialCategoriaId = null }: Simulador
                   type="button"
                   onClick={calcularDistancia}
                   disabled={!podeCalcularDistancia || kmLoading}
-                  className="w-full rounded-xl bg-cyan-600 py-4 text-base font-semibold text-white hover:bg-cyan-700"
+                  className="w-full rounded-[22px] bg-cyan-600 py-4 text-base font-semibold text-white hover:bg-cyan-700"
                 >
                   {kmLoading ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Route className="mr-2 h-5 w-5" />}
                   Calcular distância
@@ -672,7 +652,7 @@ export default function SimuladorClient({ initialCategoriaId = null }: Simulador
                 ) : null}
 
                 {km !== null ? (
-                  <div className="rounded-xl border border-slate-200 bg-cyan-50/70 p-4">
+                  <div className="rounded-[22px] border border-cyan-100 bg-cyan-50/70 p-4">
                     <p className="text-sm font-semibold uppercase tracking-[0.16em] text-cyan-700">Distância calculada</p>
                     <p className="mt-2 text-[2.5rem] font-bold leading-none text-slate-950">{km.toFixed(1)} km</p>
                     <p className="mt-2 text-sm leading-7 text-slate-600">
@@ -684,7 +664,7 @@ export default function SimuladorClient({ initialCategoriaId = null }: Simulador
             </Card>
 
             {km !== null ? (
-              <Card className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+              <Card className="rounded-2xl border border-cyan-100 bg-white p-5 shadow-[0_20px_52px_-34px_rgba(14,116,144,0.18)]">
                 <StepTitle number="2" title="Detalhes do serviço" />
                 <div className="mt-4 space-y-4">
                   {categoria.calculo === "moveis" ? (
@@ -762,7 +742,7 @@ export default function SimuladorClient({ initialCategoriaId = null }: Simulador
                   </Field>
 
                   {tipoAcesso === "apartamento" ? (
-                    <div className="grid gap-4 rounded-xl border border-slate-200 bg-cyan-50/70 p-4 md:grid-cols-2">
+                    <div className="grid gap-4 rounded-[22px] border border-cyan-100 bg-cyan-50/70 p-4 md:grid-cols-2">
                       <Field>
                         <Label htmlFor="andares">Número de andares *</Label>
                         <Input id="andares" type="number" min="1" value={numeroAndares} onChange={(event) => setNumeroAndares(event.target.value)} className={cn("h-10 w-24 rounded-[14px] text-center", fieldToneClass(getFieldTone({
@@ -808,7 +788,7 @@ export default function SimuladorClient({ initialCategoriaId = null }: Simulador
                     />
                   </div>
 
-                  <div className="flex items-center gap-3 rounded-[20px] border border-slate-200 bg-cyan-50/70 p-4">
+                  <div className="flex items-center gap-3 rounded-[20px] border border-cyan-100 bg-cyan-50/70 p-4">
                     <Checkbox id="dificil" checked={acessoDificil} onCheckedChange={(checked) => setAcessoDificil(Boolean(checked))} />
                     <Label htmlFor="dificil" className="cursor-pointer font-medium leading-6">
                       O acesso é considerado difícil
@@ -820,7 +800,7 @@ export default function SimuladorClient({ initialCategoriaId = null }: Simulador
                     onClick={calcularOrcamento}
                     disabled={!podeCalcularOrcamento}
                     className={cn(
-                      "w-full rounded-xl bg-cyan-600 py-4 text-base font-semibold text-white hover:bg-cyan-700",
+                      "w-full rounded-[22px] bg-cyan-600 py-4 text-base font-semibold text-white hover:bg-cyan-700",
                       podeCalcularOrcamento &&
                         "border border-cyan-300 shadow-[0_0_0_0_rgba(34,211,238,0.55)] animate-[budget-button-pulse_1.8s_ease-in-out_infinite]",
                     )}
@@ -883,12 +863,12 @@ export default function SimuladorClient({ initialCategoriaId = null }: Simulador
                 </div>
                 {orcamento !== null ? (
                   <>
-                    <div className="rounded-xl border border-amber-200/35 bg-amber-50/10 px-4 py-3 text-sm leading-7 text-cyan-50">
+                    <div className="rounded-[22px] border border-amber-200/35 bg-amber-50/10 px-4 py-3 text-sm leading-7 text-cyan-50">
                       Estes valores são aproximados e devem ser confirmados por um assistente.
                     </div>
                     
                     {/* Campo telemóvel obrigatório */}
-                    <div className="rounded-xl border border-white/15 bg-white/5 p-4">
+                    <div className="rounded-[22px] border border-white/15 bg-white/5 p-4">
                       <p className="text-sm font-semibold text-cyan-100">
                         Quer um valor mais exato?
                       </p>
@@ -923,7 +903,7 @@ export default function SimuladorClient({ initialCategoriaId = null }: Simulador
                       type="button"
                       onClick={confirmarPedido}
                       className={cn(
-                        "w-full rounded-xl bg-cyan-600 py-5 text-base font-semibold text-white hover:bg-cyan-700",
+                        "w-full rounded-[22px] bg-cyan-600 py-5 text-base font-semibold text-white hover:bg-cyan-700",
                         highlightBudget &&
                           "border border-cyan-200/70 animate-[whatsapp-cta-pulse_1.2s_ease-in-out_infinite]",
                       )}
@@ -935,7 +915,7 @@ export default function SimuladorClient({ initialCategoriaId = null }: Simulador
                 ) : null}
               </div>
             </div>
-            <div className="mt-5 space-y-3 rounded-xl border border-white/10 bg-white/5 p-4">
+            <div className="mt-5 space-y-3 rounded-[22px] border border-white/10 bg-white/5 p-4">
               {categoria.trajeto === "custom" ? (
                 <SummaryRow icon={<MapPin className="h-4.5 w-4.5" />} label="Origem" value={origem || "Ainda não definida"} />
               ) : (
@@ -957,20 +937,20 @@ export default function SimuladorClient({ initialCategoriaId = null }: Simulador
 
             {orcamento !== null ? (
               <>
-                <div className="hidden mt-5 rounded-xl border border-amber-200/35 bg-amber-50/10 px-4 py-3 text-sm leading-7 text-cyan-50">
+                <div className="hidden mt-5 rounded-[22px] border border-amber-200/35 bg-amber-50/10 px-4 py-3 text-sm leading-7 text-cyan-50">
                   Estes valores são aproximados e devem ser confirmados por um assistente.
                 </div>
                 <Button
                   type="button"
                   onClick={confirmarPedido}
-                  className="mt-4 hidden w-full rounded-xl bg-cyan-600 py-5 text-base font-semibold text-white hover:bg-cyan-700"
+                  className="mt-4 hidden w-full rounded-[22px] bg-cyan-600 py-5 text-base font-semibold text-white hover:bg-cyan-700"
                 >
                   <Phone className="mr-2 h-5 w-5" />
                   Solicitar este serviço no WhatsApp
                 </Button>
               </>
             ) : (
-              <div className="mt-5 rounded-xl border border-dashed border-white/15 bg-white/5 p-4 text-sm leading-7 text-slate-300">
+              <div className="mt-5 rounded-[22px] border border-dashed border-white/15 bg-white/5 p-4 text-sm leading-7 text-slate-300">
                 Calcule a distância e complete os detalhes para ver o valor final.
               </div>
             )}
@@ -1012,7 +992,7 @@ function fieldToneClass(tone: FieldTone) {
   if (tone === "next") {
     return "border-cyan-300 ring-4 ring-cyan-100 shadow-[0_0_0_1px_rgba(34,211,238,0.15)]";
   }
-  return "border-slate-200";
+  return "border-cyan-100";
 }
 
 function fieldToneRingClass(tone: FieldTone) {
@@ -1031,7 +1011,7 @@ function fieldToneRingClass(tone: FieldTone) {
 function StepTitle({ number, title }: { number: string; title: string }) {
   return (
     <div>
-      <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-cyan-50 px-3 py-1.5 text-sm font-semibold text-cyan-700">
+      <div className="inline-flex items-center gap-2 rounded-full border border-cyan-100 bg-cyan-50 px-3 py-1.5 text-sm font-semibold text-cyan-700">
         <span className="flex h-6 w-6 items-center justify-center rounded-full bg-cyan-500 text-white">
           {number}
         </span>
@@ -1148,7 +1128,7 @@ function AddressField({
           </div>
         ) : null}
         {focused && predictions.length > 0 ? (
-          <div className="absolute left-0 right-0 top-[calc(100%+0.5rem)] z-20 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-[0_24px_60px_-34px_rgba(14,116,144,0.3)]">
+          <div className="absolute left-0 right-0 top-[calc(100%+0.5rem)] z-20 overflow-hidden rounded-[22px] border border-cyan-100 bg-white shadow-[0_24px_60px_-34px_rgba(14,116,144,0.3)]">
             {predictions.map((prediction) => (
               <button
                 key={prediction.placeId}
@@ -1214,8 +1194,8 @@ function ChoiceGrid({
             onClick={() => onChange(option.value)}
             className={cn(
               compact
-                ? "min-h-[54px] rounded-xl px-4 py-3 text-center text-sm"
-                : "min-h-[54px] rounded-xl px-4 py-3 text-center text-sm",
+                ? "min-h-[54px] rounded-[22px] px-4 py-3 text-center text-sm"
+                : "min-h-[54px] rounded-[22px] px-4 py-3 text-center text-sm",
               "inline-flex items-center justify-center font-bold transition",
               active
                 ? simulatorPrimaryButtonClass
@@ -1294,7 +1274,7 @@ function PeopleSelector({
               onManualModeChange(false);
               onChange("");
             }}
-            className="h-10 min-h-10 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600 hover:border-slate-300 hover:bg-slate-50"
+            className="h-10 min-h-10 rounded-lg border border-cyan-100 bg-white px-3 py-2 text-sm text-slate-600 hover:border-slate-300 hover:bg-slate-50"
           >
             Voltar
           </button>
