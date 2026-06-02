@@ -4,7 +4,6 @@ import Link from "next/link";
 import Image from "next/image";
 import { Instagram, MessageCircle, Phone, Mail, MapPin } from "lucide-react";
 
-import CookiePreferencesLink from "@/components/CookiePreferencesLink";
 import { trackWhatsAppClick, trackPhoneCall } from "@/lib/analytics";
 import { BUSINESS_INSTAGRAM, BUSINESS_PHONE, BUSINESS_EMAIL } from "@/lib/seo-data";
 
@@ -231,7 +230,15 @@ export default function Footer() {
             <Link href="/cookies" className="text-sm text-slate-500 transition-colors hover:text-white">
               Cookies
             </Link>
-            <CookiePreferencesLink />
+            <button
+              type="button"
+              onClick={() => {
+                window.dispatchEvent(new CustomEvent("clyon-open-cookie-preferences"));
+              }}
+              className="text-sm text-slate-500 transition-colors hover:text-white"
+            >
+              Gerir cookies
+            </button>
           </div>
         </div>
       </div>
