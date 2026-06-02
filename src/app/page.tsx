@@ -219,7 +219,7 @@ export default async function HomePage() {
         className="relative min-h-[620px] overflow-hidden bg-cover bg-center bg-no-repeat md:min-h-[720px]"
         style={{
           backgroundImage: "url('/hero-clyon-carrinha-lisboa.jpg')",
-          backgroundPosition: "center 5%",
+          backgroundPosition: "center bottom",
         }}
       >
         {/* Subtle overlay: keeps white bg feel on left for text, fades to near-transparent on right for image visibility */}
