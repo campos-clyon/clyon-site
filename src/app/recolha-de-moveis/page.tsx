@@ -308,33 +308,21 @@ export default function RecolhaDeMoveisPage() {
               </div>
             </div>
 
-            {/* Right side info card */}
-            <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-              <p className="text-sm font-semibold uppercase tracking-wide text-cyan-700">
-                Cobertura
-              </p>
-              <h2 className="mt-2 text-2xl font-bold text-slate-900">
-                Onde fazemos recolha de móveis
-              </h2>
-              <p className="mt-3 text-sm text-slate-600">
-                Atuamos em Lisboa (Benfica, Lumiar, Alvalade, Olivais), Grande Lisboa (Amadora, Sintra, Oeiras, Cascais), Margem Sul (Almada, Seixal, Barreiro) e Setúbal. Resposta comercial rápida para todas estas zonas.
-              </p>
-              <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3">
-                {areaServedCities.slice(0, 6).map((city) => (
-                  <div key={city} className="flex items-center gap-1.5 text-sm text-slate-700">
-                    <MapPin className="h-3.5 w-3.5 text-cyan-600" />
-                    {city}
-                  </div>
-                ))}
-              </div>
-              <div className="mt-4 rounded-xl bg-slate-50 p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-semibold text-slate-900">Tempo médio de resposta</p>
-                    <p className="text-xs text-slate-500">Para pedidos com fotos e morada</p>
-                  </div>
-                  <p className="text-2xl font-bold text-cyan-600">11 min</p>
-                </div>
+            {/* Right side info card with background image */}
+            <div className="relative overflow-hidden rounded-2xl border border-slate-200 bg-cover bg-center bg-no-repeat shadow-sm h-96" style={{
+              backgroundImage: "url('/hero-recolha-moveis.jpg')",
+            }}>
+              {/* Overlay escuro para legibilidade */}
+              <div className="absolute inset-0 bg-black/40" />
+              
+              {/* Conteúdo */}
+              <div className="relative z-10 flex flex-col justify-end h-full p-6">
+                <p className="text-sm font-semibold uppercase tracking-wide text-white">
+                  Recolha Local
+                </p>
+                <h2 className="mt-2 text-2xl font-bold text-white">
+                  Lisboa, Margem Sul e Setúbal
+                </h2>
               </div>
             </div>
           </div>
