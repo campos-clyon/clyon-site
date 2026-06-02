@@ -23,13 +23,13 @@ export default function Header() {
   ];
 
   return (
-    <header className="fixed left-0 right-0 top-0 z-50 border-b border-slate-200/40 bg-white/95 shadow-[0_10px_30px_-18px_rgba(15,23,42,0.28)] backdrop-blur-md">
-      <div className="mx-auto flex w-full max-w-[1380px] items-center justify-between gap-3 px-4 py-4 sm:px-6 xl:px-8">
-        <Link href="/" className="flex-shrink-0 cursor-pointer">
+    <header className="fixed left-0 right-0 top-0 z-50 border-b border-slate-100 bg-white/98 shadow-sm backdrop-blur-lg">
+      <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6 lg:px-8">
+        <Link href="/" className="flex-shrink-0">
           <Image
             src="/logo-clyon-icon.webp"
             alt="CLYON - Recolha de Móveis e Entulho"
-            className="h-[46px] w-auto scale-x-105 sm:h-[58px]"
+            className="h-11 w-auto sm:h-12"
             width={205}
             height={84}
             priority
@@ -37,85 +37,82 @@ export default function Header() {
           />
         </Link>
 
-        <nav className="hidden flex-1 items-center justify-center gap-9 text-[15px] font-medium text-slate-600 lg:flex">
+        <nav className="hidden flex-1 items-center justify-center gap-8 lg:flex">
           {navLinks.map((link) => (
-            <Link key={link.href} href={link.href} className="transition hover:text-cyan-600">
+            <Link 
+              key={link.href} 
+              href={link.href} 
+              className="text-[0.9375rem] font-medium text-slate-600 transition-colors hover:text-cyan-600"
+            >
               {link.label}
             </Link>
           ))}
         </nav>
 
-        <div className="hidden items-center gap-2 sm:flex">
+        <div className="hidden items-center gap-3 sm:flex">
           <a
             href={whatsappUrl}
             target="_blank"
             rel="noopener noreferrer"
             onClick={() => trackWhatsAppClick("header")}
-            className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-emerald-500/25 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-emerald-500/30"
+            className="inline-flex items-center gap-2 rounded-xl bg-emerald-500 px-4 py-2.5 text-sm font-semibold text-white transition-all hover:bg-emerald-600"
           >
             <MessageCircle className="h-4 w-4" />
             <span>WhatsApp</span>
           </a>
-          <a
-            href={phoneHref}
-            onClick={() => trackPhoneCall("header")}
-            className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-cyan-500 to-cyan-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-cyan-500/25 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-cyan-500/30"
-            aria-label={`Ligar para ${BUSINESS_PHONE}`}
+          <Link
+            href="/simulador"
+            className="inline-flex items-center gap-2 rounded-xl bg-cyan-600 px-4 py-2.5 text-sm font-semibold text-white transition-all hover:bg-cyan-700"
           >
-            <Phone className="h-4 w-4" />
-            <span>Ligar</span>
-          </a>
+            Pedir Orçamento
+          </Link>
         </div>
-        <div className="flex items-center gap-2 sm:hidden">
 
-          <button
-            className="inline-flex rounded-xl border border-cyan-200 bg-white p-3 text-slate-600 transition-colors hover:text-cyan-600 lg:hidden"
-            onClick={() => setMenuOpen((open) => !open)}
-            aria-label="Abrir menu"
-          >
-            {menuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-          </button>
-        </div>
+        <button
+          className="inline-flex rounded-xl border border-slate-200 bg-white p-2.5 text-slate-600 transition-colors hover:border-cyan-200 hover:text-cyan-600 lg:hidden"
+          onClick={() => setMenuOpen((open) => !open)}
+          aria-label={menuOpen ? "Fechar menu" : "Abrir menu"}
+        >
+          {menuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+        </button>
       </div>
 
       {menuOpen && (
-        <div className="border-t border-cyan-100/60 bg-white/95 backdrop-blur lg:hidden">
-          <nav className="grid gap-2 px-4 py-4">
+        <div className="border-t border-slate-100 bg-white lg:hidden">
+          <nav className="mx-auto max-w-7xl space-y-1 px-4 py-4">
             {navLinks.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
-                className="flex items-center rounded-2xl border border-cyan-200 bg-white px-4 py-3 transition-colors hover:bg-cyan-50"
+                onClick={() => setMenuOpen(false)}
+                className="flex items-center rounded-xl px-4 py-3 text-base font-medium text-slate-700 transition-colors hover:bg-slate-50 hover:text-cyan-600"
               >
-                <span className="!text-base !font-semibold !text-[#047faa]">{link.label}</span>
+                {link.label}
               </Link>
             ))}
 
-            <a
-              href={whatsappUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={() => {
-                trackWhatsAppClick("header_mobile");
-                setMenuOpen(false);
-              }}
-              className="mt-2 flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-emerald-500 to-emerald-600 px-4 py-3.5 text-base font-semibold text-white shadow-lg shadow-emerald-500/25 transition-all duration-200 hover:shadow-xl hover:shadow-emerald-500/30"
-            >
-              <MessageCircle className="h-4 w-4" />
-              <span>WhatsApp</span>
-            </a>
-            <a
-              href={phoneHref}
-              className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-cyan-500 to-cyan-600 px-4 py-3.5 text-base font-semibold text-white shadow-lg shadow-cyan-500/25 transition-all duration-200 hover:shadow-xl hover:shadow-cyan-500/30"
-              onClick={() => {
-                trackPhoneCall("header_mobile");
-                setMenuOpen(false);
-              }}
-              aria-label={`Ligar para ${BUSINESS_PHONE}`}
-            >
-              <Phone className="h-4 w-4" />
-              <span>Ligar</span>
-            </a>
+            <div className="mt-4 grid gap-3 pt-4 border-t border-slate-100">
+              <a
+                href={whatsappUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => {
+                  trackWhatsAppClick("header_mobile");
+                  setMenuOpen(false);
+                }}
+                className="flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-500 px-4 py-3.5 text-base font-semibold text-white transition-all hover:bg-emerald-600"
+              >
+                <MessageCircle className="h-5 w-5" />
+                WhatsApp
+              </a>
+              <Link
+                href="/simulador"
+                onClick={() => setMenuOpen(false)}
+                className="flex w-full items-center justify-center gap-2 rounded-xl bg-cyan-600 px-4 py-3.5 text-base font-semibold text-white transition-all hover:bg-cyan-700"
+              >
+                Pedir Orçamento Grátis
+              </Link>
+            </div>
           </nav>
         </div>
       )}

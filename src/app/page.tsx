@@ -213,33 +213,36 @@ export default async function HomePage() {
   const workImages = await getHeroCarouselImages();
 
   return (
-    <div className="min-h-screen bg-slate-100">
+    <div className="min-h-screen bg-white">
       {/* Hero */}
-      <section className="bg-white">
-        <div className="mx-auto max-w-7xl px-6 pb-16 pt-12 sm:pb-20 sm:pt-16 lg:px-8 lg:pb-28 lg:pt-20">
-          <div className="grid items-center gap-10 lg:grid-cols-2 lg:gap-14">
+      <section className="relative overflow-hidden bg-gradient-to-b from-slate-50 to-white">
+        <div className="mx-auto max-w-7xl px-4 pb-20 pt-16 sm:px-6 sm:pt-20 lg:px-8 lg:pb-28 lg:pt-24">
+          <div className="grid items-center gap-12 lg:grid-cols-2 lg:gap-16">
             <div className="max-w-xl">
-              <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3.5 py-2 text-sm font-medium text-slate-600">
-                <span className="h-2 w-2 rounded-full bg-emerald-500" />
-                163 avaliações 5 estrelas
+              <div className="mb-6 inline-flex items-center gap-2.5 rounded-full border border-emerald-200 bg-emerald-50 px-4 py-2">
+                <span className="flex h-2 w-2">
+                  <span className="absolute inline-flex h-2 w-2 animate-ping rounded-full bg-emerald-400 opacity-75"></span>
+                  <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500"></span>
+                </span>
+                <span className="text-sm font-semibold text-emerald-700">163 avaliações 5 estrelas</span>
               </div>
 
-              <h1 className="text-[2.125rem] font-bold leading-tight tracking-tight text-slate-900 md:text-[2.625rem]">
-                Recolha de Entulho, Móveis, Monos e Esvaziamento de Casas em Lisboa e Setúbal
+              <h1 className="text-balance text-[2rem] font-bold leading-[1.15] tracking-tight text-slate-900 sm:text-[2.5rem] lg:text-[2.75rem]">
+                Recolha de Móveis, Entulho e Esvaziamento de Casas em Lisboa
               </h1>
 
               <div className="mt-4">
                 <RotatingHeroCopy />
               </div>
 
-              <p className="mt-3 text-base leading-7 text-slate-600">
-                Recolha rápida de móveis, entulho, monos, esvaziamento de casas e limpeza pós-obra em Lisboa, Margem Sul e Setúbal.
+              <p className="mt-4 text-lg leading-relaxed text-slate-600">
+                Recolha rápida de móveis, entulho, monos e limpeza pós-obra em Lisboa, Margem Sul e Setúbal. Orçamento grátis em 24h.
               </p>
 
               <div className="mt-8 flex flex-col gap-3 sm:flex-row">
                 <Link 
                   href="/simulador" 
-                  className="inline-flex h-12 items-center justify-center rounded-lg bg-cyan-600 px-6 text-[0.9375rem] font-semibold text-white transition hover:bg-cyan-700"
+                  className="inline-flex h-14 items-center justify-center rounded-xl bg-cyan-600 px-8 text-base font-semibold text-white shadow-lg shadow-cyan-600/25 transition-all hover:-translate-y-0.5 hover:bg-cyan-700 hover:shadow-xl"
                 >
                   Pedir Orçamento Grátis
                 </Link>
@@ -247,81 +250,108 @@ export default async function HomePage() {
                   href="https://wa.me/351934748005?text=Ol%C3%A1!%20Gostava%20de%20pedir%20um%20or%C3%A7amento%20%C3%A0%20CLYON."
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex h-12 items-center justify-center gap-2 rounded-lg border border-emerald-500 bg-emerald-500 px-6 text-[0.9375rem] font-semibold text-white transition hover:bg-emerald-600"
+                  className="inline-flex h-14 items-center justify-center gap-2 rounded-xl bg-emerald-500 px-8 text-base font-semibold text-white shadow-lg shadow-emerald-500/25 transition-all hover:-translate-y-0.5 hover:bg-emerald-600 hover:shadow-xl"
                 >
-                  <svg className="h-[1.125rem] w-[1.125rem]" fill="currentColor" viewBox="0 0 24 24">
+                  <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
                   </svg>
                   WhatsApp
                 </a>
               </div>
 
-              <div className="mt-7 flex items-center gap-6 sm:mt-8 sm:gap-8">
+              <div className="mt-10 grid grid-cols-3 gap-6 border-t border-slate-200 pt-8">
                 {[
-                  { value: "163", label: "avaliações" },
-                  { value: "24h", label: "resposta" },
-                  { value: "Grátis", label: "orçamento" },
+                  { value: "163", label: "Avaliações" },
+                  { value: "24h", label: "Resposta" },
+                  { value: "Grátis", label: "Orçamento" },
                 ].map((stat) => (
-                  <div key={stat.label}>
-                    <div className="text-[1.5rem] font-bold text-slate-900">{stat.value}</div>
-                    <div className="text-sm text-slate-500">{stat.label}</div>
+                  <div key={stat.label} className="text-center sm:text-left">
+                    <div className="text-2xl font-bold text-slate-900 sm:text-3xl">{stat.value}</div>
+                    <div className="mt-1 text-sm text-slate-500">{stat.label}</div>
                   </div>
                 ))}
               </div>
             </div>
 
-            <div>
-              <div className="overflow-hidden rounded-2xl bg-slate-200 shadow-lg">
+            <div className="relative">
+              <div className="overflow-hidden rounded-2xl bg-slate-100 shadow-2xl shadow-slate-900/10">
                 <div className="aspect-[4/3]">
                   <ImageCarousel images={workImages} autoPlayInterval={5000} />
+                </div>
+              </div>
+              {/* Floating badges */}
+              <div className="absolute -bottom-4 -left-4 hidden rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-lg lg:block">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-100">
+                    <Zap className="h-5 w-5 text-emerald-600" />
+                  </div>
+                  <div>
+                    <div className="text-sm font-semibold text-slate-900">Resposta Rápida</div>
+                    <div className="text-xs text-slate-500">Em 11 minutos</div>
+                  </div>
+                </div>
+              </div>
+              <div className="absolute -right-4 -top-4 hidden rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-lg lg:block">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-cyan-100">
+                    <ShieldCheck className="h-5 w-5 text-cyan-600" />
+                  </div>
+                  <div>
+                    <div className="text-sm font-semibold text-slate-900">Equipa Profissional</div>
+                    <div className="text-xs text-slate-500">Lisboa e Setúbal</div>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
-        <div className="border-t border-slate-200" />
       </section>
 
       {/* Onde Operamos */}
-      <section className="py-16 lg:py-20">
-        <div className="mx-auto max-w-7xl px-6 lg:px-8">
-          <div className="mb-10">
-            <div className="mb-4 inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-cyan-600">
+      <section className="bg-slate-50 py-20 lg:py-24">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="mb-12 text-center">
+            <div className="mb-3 inline-flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-cyan-600">
               <MapPin className="h-4 w-4" />
               Cobertura geográfica
             </div>
-            <h2 className="text-3xl font-bold text-slate-900">Onde Operamos</h2>
-            <p className="mt-2 text-slate-600">Mais de 24 localidades cobertas em Lisboa, Margem Sul e Setúbal.</p>
+            <h2 className="text-3xl font-bold text-slate-900 sm:text-4xl">Onde Operamos</h2>
+            <p className="mx-auto mt-3 max-w-2xl text-lg text-slate-600">
+              Mais de 24 localidades cobertas em Lisboa, Margem Sul e Setúbal.
+            </p>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-3">
+          <div className="grid gap-6 md:grid-cols-3">
             {[
               { name: "Grande Lisboa", slug: "lisboa", cities: ["Lisboa", "Amadora", "Sintra", "Cascais", "Oeiras"], highlight: "Mais procurado" },
               { name: "Margem Sul", slug: "margem-sul", cities: ["Almada", "Seixal", "Barreiro", "Moita", "Montijo"], highlight: "Base CLYON" },
               { name: "Setúbal", slug: "setubal", cities: ["Setúbal", "Palmela", "Sesimbra"], highlight: null },
             ].map((region) => (
-              <div key={region.slug} className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+              <div key={region.slug} className="group rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition-all hover:border-cyan-200 hover:shadow-lg">
                 <div className="flex items-start justify-between">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-100">
-                    <MapPin className="h-5 w-5 text-slate-600" />
+                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-cyan-50">
+                    <MapPin className="h-6 w-6 text-cyan-600" />
                   </div>
                   {region.highlight && (
-                    <span className="rounded-full bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-700">
+                    <span className="rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700">
                       {region.highlight}
                     </span>
                   )}
                 </div>
-                <h3 className="mt-4 text-lg font-semibold text-slate-900">{region.name}</h3>
-                <div className="mt-3 flex flex-wrap gap-1.5">
+                <h3 className="mt-5 text-xl font-bold text-slate-900">{region.name}</h3>
+                <div className="mt-4 flex flex-wrap gap-2">
                   {region.cities.map((city) => (
-                    <span key={city} className="rounded-md bg-slate-100 px-2 py-1 text-xs text-slate-600">
+                    <span key={city} className="rounded-lg bg-slate-100 px-3 py-1.5 text-sm font-medium text-slate-600">
                       {city}
                     </span>
                   ))}
                 </div>
-                <Link href={`/regioes/${region.slug}`} className="mt-4 inline-flex items-center gap-1 text-sm font-medium text-cyan-600 hover:text-cyan-700">
-                  Ver serviços
-                  <ArrowRight className="h-3.5 w-3.5" />
+                <Link 
+                  href={`/regioes/${region.slug}`} 
+                  className="mt-5 inline-flex items-center gap-1.5 text-sm font-semibold text-cyan-600 transition-colors group-hover:text-cyan-700"
+                >
+                  Ver serviços na região
+                  <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                 </Link>
               </div>
             ))}
@@ -330,19 +360,32 @@ export default async function HomePage() {
       </section>
 
       {/* Servicos */}
-      <section className="py-16 lg:py-20">
-        <div className="mx-auto max-w-7xl px-6 lg:px-8">
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <section className="bg-white py-20 lg:py-24">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="mb-12 text-center">
+            <div className="mb-3 text-sm font-semibold uppercase tracking-wider text-cyan-600">
+              Serviços principais
+            </div>
+            <h2 className="text-3xl font-bold text-slate-900 sm:text-4xl">O que fazemos</h2>
+            <p className="mx-auto mt-3 max-w-2xl text-lg text-slate-600">
+              Recolha profissional com equipa organizada e resposta rápida.
+            </p>
+          </div>
+
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {services.map((service) => (
-              <div key={service.name} className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm transition hover:shadow-md">
-                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-cyan-50">
-                  <service.icon className="h-6 w-6 text-cyan-600" />
+              <div key={service.name} className="group rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition-all hover:border-cyan-200 hover:shadow-lg">
+                <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br from-cyan-50 to-cyan-100">
+                  <service.icon className="h-7 w-7 text-cyan-600" />
                 </div>
-                <h3 className="mt-4 text-lg font-semibold text-slate-900">{service.name}</h3>
-                <p className="mt-2 text-sm leading-6 text-slate-600">{service.description}</p>
-                <Link href={service.href} className="mt-4 inline-flex items-center gap-1 text-sm font-medium text-cyan-600 hover:text-cyan-700">
+                <h3 className="mt-5 text-lg font-bold text-slate-900">{service.name}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-slate-600">{service.description}</p>
+                <Link 
+                  href={service.href} 
+                  className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-cyan-600 transition-colors group-hover:text-cyan-700"
+                >
                   Ver em Lisboa
-                  <ArrowRight className="h-3.5 w-3.5" />
+                  <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                 </Link>
               </div>
             ))}
