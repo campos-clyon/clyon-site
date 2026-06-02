@@ -280,14 +280,12 @@ export default async function HomePage() {
               </div>
             </div>
 
-            <div className="relative overflow-hidden rounded-2xl shadow-2xl shadow-slate-900/10">
-              <div 
-                className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-                style={{
-                  backgroundImage: "url('/hero-team-truck-lisbon.jpg')",
-                }}
-              />
-              <div className="aspect-[4/3] relative" />
+            <div className="relative">
+              <div className="overflow-hidden rounded-2xl bg-slate-100 shadow-2xl shadow-slate-900/10">
+                <div className="aspect-[4/3]">
+                  <ImageCarousel images={workImages} autoPlayInterval={5000} />
+                </div>
+              </div>
               {/* Floating badges */}
               <div className="absolute -bottom-4 -left-4 hidden rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-lg lg:block">
                 <div className="flex items-center gap-3">
