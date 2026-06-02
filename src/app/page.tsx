@@ -7,7 +7,6 @@ import {
   ClipboardCheck,
   Home as HomeIcon,
   MapPin,
-  MessageSquareQuote,
   Package,
   ShieldCheck,
   Sparkles,
@@ -476,36 +475,42 @@ export default async function HomePage() {
       </section>
 
       {/* Precos e O que recolhemos */}
-      <section className="py-16 lg:py-20">
-        <div className="mx-auto max-w-7xl px-6 lg:px-8">
-          <div className="grid gap-6 lg:grid-cols-2">
+      <section className="bg-slate-50 py-20 lg:py-24">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="grid gap-8 lg:grid-cols-2">
             <div className="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
-              <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-cyan-600">
+              <div className="mb-3 text-sm font-semibold uppercase tracking-wider text-cyan-600">
                 Preços orientativos
               </div>
-              <h2 className="text-2xl font-bold text-slate-900">Valores de referência.</h2>
+              <h2 className="text-2xl font-bold text-slate-900">Valores de referência</h2>
+              <p className="mt-2 text-slate-600">Orçamento final depende do volume e acesso.</p>
               <div className="mt-6 space-y-3">
                 {priceHighlights.map((item) => (
-                  <div key={item} className="rounded-lg bg-slate-50 px-4 py-3 text-sm text-slate-700">{item}</div>
+                  <div key={item} className="flex items-center justify-between rounded-xl bg-slate-50 px-4 py-3">
+                    <span className="text-sm font-medium text-slate-700">{item.split(":")[0]}</span>
+                    <span className="text-sm font-bold text-slate-900">{item.split(":")[1]}</span>
+                  </div>
                 ))}
               </div>
-              <div className="mt-6 flex gap-3">
-                <Link href="/precos" className="inline-flex h-10 items-center justify-center rounded-lg bg-cyan-600 px-4 text-sm font-semibold text-white transition hover:bg-cyan-700">
-                  Ver preços
+              <div className="mt-6">
+                <Link href="/precos" className="inline-flex items-center gap-2 rounded-xl bg-cyan-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-cyan-600/20 transition-all hover:-translate-y-0.5 hover:bg-cyan-700">
+                  Ver tabela completa
+                  <ArrowRight className="h-4 w-4" />
                 </Link>
               </div>
             </div>
 
             <div className="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
-              <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-cyan-600">
+              <div className="mb-3 text-sm font-semibold uppercase tracking-wider text-cyan-600">
                 O que recolhemos
               </div>
-              <h2 className="text-2xl font-bold text-slate-900">Do sofá ao entulho.</h2>
+              <h2 className="text-2xl font-bold text-slate-900">Do sofá ao entulho</h2>
+              <p className="mt-2 text-slate-600">Serviço completo para particulares e empresas.</p>
               <div className="mt-6 space-y-3">
                 {collectedItems.map((item) => (
-                  <div key={item} className="flex items-start gap-2 text-sm text-slate-700">
-                    <CheckCircle2 className="mt-0.5 h-4 w-4 flex-shrink-0 text-cyan-600" />
-                    {item}
+                  <div key={item} className="flex items-start gap-3 rounded-xl bg-slate-50 px-4 py-3">
+                    <CheckCircle2 className="mt-0.5 h-5 w-5 flex-shrink-0 text-emerald-500" />
+                    <span className="text-sm font-medium text-slate-700">{item}</span>
                   </div>
                 ))}
               </div>
@@ -515,26 +520,29 @@ export default async function HomePage() {
       </section>
 
       {/* Como funciona */}
-      <section className="bg-white py-16 lg:py-20">
-        <div className="mx-auto max-w-7xl px-6 lg:px-8">
-          <div className="mb-10">
-            <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-cyan-600">
+      <section className="bg-white py-20 lg:py-24">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="mb-12 text-center">
+            <div className="mb-3 text-sm font-semibold uppercase tracking-wider text-cyan-600">
               Como funciona
             </div>
-            <h2 className="text-3xl font-bold text-slate-900">3 passos simples.</h2>
+            <h2 className="text-3xl font-bold text-slate-900 sm:text-4xl">3 passos simples</h2>
+            <p className="mx-auto mt-3 max-w-2xl text-lg text-slate-600">
+              Do pedido à execução sem complicações.
+            </p>
           </div>
 
-          <div className="grid gap-6 lg:grid-cols-3">
-            {steps.map((step) => (
-              <div key={step.step} className="rounded-xl border border-slate-200 bg-slate-50 p-6">
-                <div className="flex items-center justify-between">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-cyan-600 text-white">
-                    <step.icon className="h-6 w-6" />
-                  </div>
-                  <span className="text-xs font-bold text-slate-400">{step.step}</span>
+          <div className="grid gap-8 lg:grid-cols-3">
+            {steps.map((step, index) => (
+              <div key={step.step} className="relative rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
+                <div className="absolute -top-4 left-8 flex h-8 w-8 items-center justify-center rounded-full bg-cyan-600 text-sm font-bold text-white">
+                  {index + 1}
                 </div>
-                <h3 className="mt-4 text-lg font-semibold text-slate-900">{step.title}</h3>
-                <p className="mt-2 text-sm leading-6 text-slate-600">{step.description}</p>
+                <div className="mt-4 flex h-14 w-14 items-center justify-center rounded-xl bg-cyan-50">
+                  <step.icon className="h-7 w-7 text-cyan-600" />
+                </div>
+                <h3 className="mt-5 text-xl font-bold text-slate-900">{step.title}</h3>
+                <p className="mt-3 text-base leading-relaxed text-slate-600">{step.description}</p>
               </div>
             ))}
           </div>
@@ -542,88 +550,65 @@ export default async function HomePage() {
       </section>
 
       {/* FAQs */}
-      <section className="py-16 lg:py-20">
-        <div className="mx-auto max-w-7xl px-6 lg:px-8">
-          <div className="mb-10">
-            <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-cyan-600">
+      <section className="bg-slate-50 py-20 lg:py-24">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="mb-12 text-center">
+            <div className="mb-3 text-sm font-semibold uppercase tracking-wider text-cyan-600">
               Perguntas frequentes
             </div>
-            <h2 className="text-3xl font-bold text-slate-900">Dúvidas típicas.</h2>
+            <h2 className="text-3xl font-bold text-slate-900 sm:text-4xl">Dúvidas comuns</h2>
+            <p className="mx-auto mt-3 max-w-2xl text-lg text-slate-600">
+              Respostas às perguntas mais frequentes sobre os nossos serviços.
+            </p>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {homeFaqs.map((faq) => (
-              <div key={faq.question} className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-                <h3 className="font-semibold text-slate-900">{faq.question}</h3>
-                <p className="mt-3 text-sm leading-6 text-slate-600">{faq.answer}</p>
+              <div key={faq.question} className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+                <h3 className="text-base font-bold text-slate-900">{faq.question}</h3>
+                <p className="mt-3 text-sm leading-relaxed text-slate-600">{faq.answer}</p>
               </div>
             ))}
           </div>
 
-          <div className="mt-8 flex gap-3">
-            <Link href="/faq" className="inline-flex h-10 items-center justify-center rounded-lg border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">
+          <div className="mt-10 text-center">
+            <Link href="/faq" className="inline-flex items-center gap-2 text-base font-semibold text-cyan-600 transition-colors hover:text-cyan-700">
               Ver FAQ completa
+              <ArrowRight className="h-4 w-4" />
             </Link>
           </div>
         </div>
       </section>
 
-      {/* Testemunhos */}
-      <section className="bg-white py-16 lg:py-20">
-        <div className="mx-auto max-w-7xl px-6 lg:px-8">
-          <div className="grid gap-4 md:grid-cols-3">
-            {testimonials.map((review) => (
-              <div key={review.name} className="rounded-xl border border-slate-200 bg-slate-50 p-6">
-                <MessageSquareQuote className="h-6 w-6 text-cyan-600" />
-                <div className="mt-3 text-xs font-semibold uppercase tracking-wider text-cyan-600">{review.service}</div>
-                <p className="mt-3 text-sm leading-6 text-slate-600">{review.text}</p>
-                <p className="mt-4 text-sm font-semibold text-slate-900">{review.name}</p>
+      {/* CTA Final */}
+      <section className="bg-white py-20 lg:py-24">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-8 sm:p-12 lg:p-16">
+            <div className="flex flex-col items-center text-center">
+              <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-cyan-500/10 px-4 py-2 text-cyan-400">
+                <Sparkles className="h-4 w-4" />
+                <span className="text-sm font-semibold">Orçamento imediato</span>
               </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Porque escolher */}
-      <section className="py-16 lg:py-20">
-        <div className="mx-auto max-w-7xl px-6 lg:px-8">
-          <div className="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
-            <div className="grid gap-8 lg:grid-cols-[1fr_1fr]">
-              <div>
-                <div className="mb-4 inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-cyan-600">
-                  <ShieldCheck className="h-4 w-4" />
-                  Porque escolher a CLYON
-                </div>
-                <h2 className="text-2xl font-bold text-slate-900">Menos complicação, mais execução.</h2>
-              </div>
-
-              <div className="grid gap-3 sm:grid-cols-2">
-                {proofPoints.map((item) => (
-                  <div key={item} className="flex items-start gap-2 rounded-lg bg-slate-50 p-4">
-                    <CheckCircle2 className="mt-0.5 h-4 w-4 flex-shrink-0 text-cyan-600" />
-                    <span className="text-sm text-slate-700">{item}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* CTA Final */}
-            <div className="mt-8 rounded-xl bg-slate-900 p-8 text-white">
-              <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
-                <div>
-                  <div className="mb-2 inline-flex items-center gap-2 text-cyan-400">
-                    <Sparkles className="h-4 w-4" />
-                    <span className="text-xs font-semibold uppercase tracking-wider">Pedido imediato</span>
-                  </div>
-                  <h2 className="text-2xl font-bold">Pronto para libertar espaço hoje?</h2>
-                  <p className="mt-2 text-sm text-slate-300">
-                    Simule o pedido, confirme os detalhes e receba uma resposta clara.
-                  </p>
-                </div>
-                <Link href="/simulador" className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-cyan-500 px-5 text-sm font-semibold text-white transition hover:bg-cyan-400">
-                  Simular orçamento
-                  <ArrowRight className="h-4 w-4" />
+              <h2 className="text-3xl font-bold text-white sm:text-4xl">Pronto para libertar espaço?</h2>
+              <p className="mx-auto mt-4 max-w-xl text-lg text-slate-300">
+                Simule o pedido, confirme os detalhes e receba uma resposta clara em minutos.
+              </p>
+              <div className="mt-8 flex flex-col gap-4 sm:flex-row">
+                <Link 
+                  href="/simulador" 
+                  className="inline-flex h-14 items-center justify-center gap-2 rounded-xl bg-cyan-500 px-8 text-base font-semibold text-white shadow-lg shadow-cyan-500/30 transition-all hover:-translate-y-0.5 hover:bg-cyan-400 hover:shadow-xl"
+                >
+                  Simular orçamento grátis
+                  <ArrowRight className="h-5 w-5" />
                 </Link>
+                <a
+                  href="https://wa.me/351934748005"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex h-14 items-center justify-center gap-2 rounded-xl border border-slate-600 px-8 text-base font-semibold text-white transition-all hover:border-slate-500 hover:bg-slate-800"
+                >
+                  Contactar por WhatsApp
+                </a>
               </div>
             </div>
           </div>

@@ -1,264 +1,186 @@
+"use client";
+
 import Link from "next/link";
-import {
-  ArrowRight,
-  Instagram,
-  Lock,
-  MessageCircle,
-  Square,
-  Wallet,
-} from "lucide-react";
+import Image from "next/image";
+import { Instagram, MessageCircle, Phone, Mail, MapPin } from "lucide-react";
 
 import CookiePreferencesLink from "@/components/CookiePreferencesLink";
-import { trackWhatsAppClick } from "@/lib/analytics";
-import { BUSINESS_INSTAGRAM, BUSINESS_PHONE } from "@/lib/seo-data";
+import { trackWhatsAppClick, trackPhoneCall } from "@/lib/analytics";
+import { BUSINESS_INSTAGRAM, BUSINESS_PHONE, BUSINESS_EMAIL } from "@/lib/seo-data";
+
+const services = [
+  { name: "Recolha de Móveis", href: "/recolha-de-moveis" },
+  { name: "Recolha de Entulho", href: "/recolha-de-entulho" },
+  { name: "Esvaziamento de Casas", href: "/esvaziamento-de-casas" },
+  { name: "Limpeza Pós-Obra", href: "/limpeza-pos-obra" },
+  { name: "Mudanças", href: "/mudancas" },
+  { name: "Preços", href: "/precos" },
+];
+
+const regions = [
+  { name: "Lisboa", href: "/recolha-moveis-lisboa" },
+  { name: "Almada", href: "/recolha-moveis-almada" },
+  { name: "Seixal", href: "/recolha-moveis-seixal" },
+  { name: "Setúbal", href: "/recolha-moveis-setubal" },
+  { name: "Cascais", href: "/recolha-moveis-cascais" },
+  { name: "Amadora", href: "/recolha-moveis-amadora" },
+];
+
+const company = [
+  { name: "Sobre Nós", href: "/sobre-nos" },
+  { name: "Trabalhos", href: "/trabalhos" },
+  { name: "Avaliações", href: "/avaliacoes" },
+  { name: "Blog", href: "/blog" },
+  { name: "FAQ", href: "/faq" },
+  { name: "Contactos", href: "/contactos" },
+];
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();
+  const phoneHref = `tel:${BUSINESS_PHONE.replace(/\s+/g, "")}`;
   const whatsappNumber = BUSINESS_PHONE.replace(/[^\d]/g, "");
-  const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(
-    "Olá! Gostava de pedir um orçamento à CLYON.",
-  )}`;
-  const serviceCities = [
-    "Lisboa",
-    "Almada",
-    "Amadora",
-    "Seixal",
-    "Barreiro",
-    "Oeiras",
-    "Cascais",
-    "Setúbal",
-    "Loures",
-    "Sintra",
-    "Montijo",
-    "Odivelas",
-  ];
-  const extraServices = [
-    { label: "Recolha de Móveis", href: "/recolha-de-moveis" },
-    { label: "Recolha de Entulho", href: "/recolha-de-entulho" },
-    { label: "Mudanças", href: "/mudancas" },
-    { label: "Esvaziamento de Casas", href: "/esvaziamento-casas" },
-  ];
+  const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent("Olá! Gostava de pedir um orçamento à CLYON.")}`;
 
   return (
-    <>
-      <section className="border-t border-slate-200 bg-slate-100">
-        <div className="mx-auto grid w-full max-w-[1380px] gap-6 px-6 py-7 lg:grid-cols-[1.1fr_2fr] xl:px-8">
-          <div>
-            <p className="text-[1.05rem] font-semibold text-slate-800">Outras áreas de apoio da CLYON</p>
-            <p className="mt-2 max-w-xl text-sm leading-6 text-slate-500">
-              Estrutura operacional preparada para recolhas, limpezas, apoio rápido e cobertura regional em vários pontos da Grande Lisboa.
-            </p>
-          </div>
-
-          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-            {extraServices.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className="rounded-2xl border border-slate-200 bg-white px-4 py-4 text-sm font-medium text-slate-700 shadow-[0_10px_24px_-20px_rgba(15,23,42,0.5)] transition hover:-translate-y-0.5 hover:shadow-md"
-              >
-                {item.label}
-              </Link>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <footer className="relative overflow-hidden border-t border-cyan-200/20 bg-[#062737] text-white">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(34,211,238,0.18),transparent_20%),radial-gradient(circle_at_85%_15%,rgba(14,165,233,0.14),transparent_18%),linear-gradient(180deg,rgba(9,37,53,0.92)_0%,rgba(7,31,46,0.98)_100%)]" />
-        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-cyan-300/40 to-transparent" />
-
-        <div className="relative mx-auto max-w-[1380px] px-6 py-16 xl:px-8">
-          <div className="grid gap-8 xl:grid-cols-[1.2fr_0.9fr_0.9fr_0.8fr_1.3fr]">
-            <div className="rounded-[28px] border border-white/10 bg-white/5 p-6 shadow-[0_24px_60px_-34px_rgba(8,145,178,0.45)] backdrop-blur-sm">
-              <img
+    <footer className="bg-slate-900">
+      {/* Main Footer */}
+      <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
+        <div className="grid gap-12 lg:grid-cols-5">
+          {/* Brand */}
+          <div className="lg:col-span-2">
+            <Link href="/" className="inline-block">
+              <Image
                 src="/logo-clyon-icon.webp"
                 alt="CLYON"
-                className="mb-4 h-11 w-auto"
-                width="205"
-                height="84"
+                width={160}
+                height={56}
+                className="h-12 w-auto brightness-0 invert"
               />
-              <p className="max-w-sm text-[1.02rem] leading-8 text-cyan-50/88">
-                Recolha e limpeza profissional em Lisboa, Margem Sul e Setúbal com resposta rápida e execução sem stress.
-              </p>
+            </Link>
+            <p className="mt-5 max-w-sm text-sm leading-relaxed text-slate-400">
+              Recolha de móveis, entulho, esvaziamentos e mudanças em Lisboa, Margem Sul e Setúbal. Resposta rápida e orçamento grátis.
+            </p>
 
-              <div className="mt-6 flex flex-wrap gap-3">
-                <a
-                  href={whatsappUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex items-center justify-center gap-2 rounded-2xl bg-emerald-500 px-5 py-3 text-sm font-semibold text-white shadow-[0_18px_40px_-22px_rgba(37,211,102,0.75)] transition hover:-translate-y-0.5 hover:bg-emerald-400"
-                >
-                  <MessageCircle className="h-4 w-4" />
-                  WhatsApp
-                </a>
-                <Link href="/contactos" className="site-btn-primary">
-                  Pedir orçamento
-                  <ArrowRight className="ml-2 h-4 w-4 text-white" />
-                </Link>
-                <Link href="/colaboradores" className="site-btn-secondary">
-                  Área de Colaboradores
-                </Link>
+            {/* Contact Info */}
+            <div className="mt-6 space-y-3">
+              <a
+                href={phoneHref}
+                onClick={() => trackPhoneCall("footer")}
+                className="flex items-center gap-3 text-sm text-slate-400 transition-colors hover:text-white"
+              >
+                <Phone className="h-4 w-4 text-cyan-500" />
+                +351 934 748 005
+              </a>
+              <a
+                href={`mailto:${BUSINESS_EMAIL}`}
+                className="flex items-center gap-3 text-sm text-slate-400 transition-colors hover:text-white"
+              >
+                <Mail className="h-4 w-4 text-cyan-500" />
+                {BUSINESS_EMAIL}
+              </a>
+              <div className="flex items-start gap-3 text-sm text-slate-400">
+                <MapPin className="mt-0.5 h-4 w-4 flex-shrink-0 text-cyan-500" />
+                <span>Belverde, Amora, 2845-513</span>
               </div>
             </div>
 
-            <div className="pt-2">
-              <h3 className="mb-4 text-sm font-semibold uppercase tracking-[0.18em] text-white">
-                Serviços
-              </h3>
-              <ul className="space-y-3 text-[0.98rem] text-cyan-50/82">
-                <li>
-                  <Link href="/recolha-de-moveis" className="transition-colors hover:text-white">
-                    Recolha de Móveis
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/recolha-de-entulho" className="transition-colors hover:text-white">
-                    Recolha de Entulho
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/limpeza-pos-obra" className="transition-colors hover:text-white">
-                    Limpeza Pós-Obra
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/esvaziamento-casas" className="transition-colors hover:text-white">
-                    Esvaziamento de Casas
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/precos" className="transition-colors hover:text-white">
-                    Preços orientativos
-                  </Link>
-                </li>
-              </ul>
-            </div>
-
-            <div className="pt-2">
-              <h3 className="mb-4 text-sm font-semibold uppercase tracking-[0.18em] text-white">
-                Empresa
-              </h3>
-              <ul className="space-y-3 text-[0.98rem] text-cyan-50/82">
-                <li>
-                  <Link href="/sobre-nos" className="transition-colors hover:text-white">
-                    Sobre nós
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/faq" className="transition-colors hover:text-white">
-                    FAQ
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/blog" className="transition-colors hover:text-white">
-                    Blog
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/contactos" className="transition-colors hover:text-white">
-                    Contactos
-                  </Link>
-                </li>
-                <li>
-                  <a
-                    href={BUSINESS_INSTAGRAM}
-                    target="_blank"
-                    rel="noopener noreferrer me"
-                    className="inline-flex items-center gap-2 transition-colors hover:text-white"
-                    aria-label="Instagram da CLYON"
-                  >
-                    <Instagram className="h-4 w-4" />
-                    Instagram
-                  </a>
-                </li>
-              </ul>
-            </div>
-
-            <div className="pt-2">
-              <h3 className="mb-4 text-sm font-semibold uppercase tracking-[0.18em] text-white">
-                Cobertura
-              </h3>
-              <ul className="grid grid-cols-2 gap-x-4 gap-y-3 text-[0.98rem] text-cyan-50/82">
-                {serviceCities.map((city) => (
-                  <li key={city}>{city}</li>
-                ))}
-              </ul>
-            </div>
-
-            <div className="pt-2">
-              <h3 className="mb-4 text-sm font-semibold uppercase tracking-[0.18em] text-white">
-                Contacto rápido
-              </h3>
-              <div className="space-y-3 text-[0.98rem] text-cyan-50/82">
-                <a
-                  href={whatsappUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 transition hover:bg-white/[0.08]"
-                >
-                  <MessageCircle className="h-4 w-4 text-cyan-300" />
-                  WhatsApp direto
-                </a>
-                <Link
-                  href="/contactos"
-                  className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 transition hover:bg-white/[0.08]"
-                >
-                  <ArrowRight className="h-4 w-4 text-cyan-300" />
-                  Pedir orçamento
-                </Link>
-                <Link
-                  href="/colaboradores"
-                  className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 transition hover:bg-white/[0.08]"
-                >
-                  <Lock className="h-4 w-4 text-cyan-300" />
-                  Área de colaboradores
-                </Link>
-              </div>
-            </div>
-
-            <div className="pt-2">
-              <h3 className="mb-4 text-sm font-semibold uppercase tracking-[0.18em] text-white">
-                Pagamentos
-              </h3>
-              <ul className="space-y-3 text-[0.98rem] text-cyan-50/82">
-                <li className="flex items-center gap-3">
-                  <Wallet className="h-4 w-4 text-cyan-300" /> Revolut
-                </li>
-                <li className="flex items-center gap-3">
-                  <Square className="h-4 w-4 text-cyan-300" /> MB WAY
-                </li>
-                <li className="flex items-center gap-3">
-                  <Lock className="h-4 w-4 text-cyan-300" /> Novo Banco
-                </li>
-              </ul>
+            {/* Social & WhatsApp */}
+            <div className="mt-6 flex items-center gap-3">
+              <a
+                href={whatsappUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => trackWhatsAppClick("footer")}
+                className="inline-flex items-center gap-2 rounded-lg bg-emerald-500 px-4 py-2.5 text-sm font-semibold text-white transition-all hover:bg-emerald-600"
+              >
+                <MessageCircle className="h-4 w-4" />
+                WhatsApp
+              </a>
+              <a
+                href={BUSINESS_INSTAGRAM}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-800 text-slate-400 transition-colors hover:bg-slate-700 hover:text-white"
+                aria-label="Instagram"
+              >
+                <Instagram className="h-5 w-5" />
+              </a>
             </div>
           </div>
 
-          <div className="mt-10 flex flex-col items-center justify-between gap-4 border-t border-white/10 pt-7 md:flex-row">
-            <p className="text-sm text-cyan-50/68">© CLYON {currentYear} - Todos os direitos reservados</p>
-            <div className="flex flex-wrap items-center justify-center gap-4">
-              <Link href="/privacidade" className="text-sm text-cyan-50/68 transition-colors hover:text-white">
-                Política de Privacidade
-              </Link>
-              <Link href="/cookies" className="text-sm text-cyan-50/68 transition-colors hover:text-white">
-                Política de Cookies
-              </Link>
-              <CookiePreferencesLink />
-            </div>
+          {/* Services */}
+          <div>
+            <h3 className="text-sm font-semibold uppercase tracking-wider text-white">Serviços</h3>
+            <ul className="mt-5 space-y-3">
+              {services.map((item) => (
+                <li key={item.name}>
+                  <Link href={item.href} className="text-sm text-slate-400 transition-colors hover:text-white">
+                    {item.name}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Regions */}
+          <div>
+            <h3 className="text-sm font-semibold uppercase tracking-wider text-white">Regiões</h3>
+            <ul className="mt-5 space-y-3">
+              {regions.map((item) => (
+                <li key={item.name}>
+                  <Link href={item.href} className="text-sm text-slate-400 transition-colors hover:text-white">
+                    {item.name}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Company */}
+          <div>
+            <h3 className="text-sm font-semibold uppercase tracking-wider text-white">Empresa</h3>
+            <ul className="mt-5 space-y-3">
+              {company.map((item) => (
+                <li key={item.name}>
+                  <Link href={item.href} className="text-sm text-slate-400 transition-colors hover:text-white">
+                    {item.name}
+                  </Link>
+                </li>
+              ))}
+            </ul>
           </div>
         </div>
-      </footer>
+      </div>
 
+      {/* Bottom Bar */}
+      <div className="border-t border-slate-800">
+        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-4 py-6 sm:flex-row sm:px-6 lg:px-8">
+          <p className="text-sm text-slate-500">
+            © {currentYear} CLYON. Todos os direitos reservados.
+          </p>
+          <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-6">
+            <Link href="/privacidade" className="text-sm text-slate-500 transition-colors hover:text-white">
+              Privacidade
+            </Link>
+            <Link href="/cookies" className="text-sm text-slate-500 transition-colors hover:text-white">
+              Cookies
+            </Link>
+            <CookiePreferencesLink />
+          </div>
+        </div>
+      </div>
+
+      {/* Floating WhatsApp Button */}
       <a
         href={whatsappUrl}
         target="_blank"
-        rel="noreferrer"
-        className="group fixed bottom-6 right-6 z-50 hidden h-14 w-14 items-center justify-center rounded-full bg-emerald-500 text-white shadow-lg transition hover:bg-emerald-600 hover:scale-105 md:inline-flex"
+        rel="noopener noreferrer"
+        onClick={() => trackWhatsAppClick("floating")}
+        className="fixed bottom-6 right-6 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-emerald-500 text-white shadow-lg shadow-emerald-500/30 transition-all hover:-translate-y-1 hover:bg-emerald-600 hover:shadow-xl"
         aria-label="Falar no WhatsApp"
       >
-        <MessageCircle className="h-6 w-6 text-white" />
+        <MessageCircle className="h-6 w-6" />
       </a>
-    </>
+    </footer>
   );
 }
