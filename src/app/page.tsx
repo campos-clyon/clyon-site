@@ -222,8 +222,8 @@ export default async function HomePage() {
           backgroundPosition: "center right",
         }}
       >
-        {/* Gradient overlay: opaque left → transparent right so truck is visible */}
-        <div className="absolute inset-0 bg-gradient-to-r from-white via-white/90 to-white/20" />
+        {/* Subtle overlay: keeps white bg feel on left for text, fades to near-transparent on right for image visibility */}
+        <div className="absolute inset-0 bg-gradient-to-r from-white/95 via-white/70 to-white/10" />
 
         <div className="relative z-10 mx-auto max-w-7xl px-4 pb-20 pt-16 sm:px-6 sm:pt-20 lg:px-8 lg:pb-28 lg:pt-24">
           <div className="grid items-center gap-12 lg:grid-cols-2 lg:gap-16">
