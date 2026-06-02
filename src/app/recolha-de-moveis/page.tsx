@@ -26,6 +26,7 @@ import {
   SITE_URL,
   getCityServiceSlug,
 } from "@/lib/seo-data";
+import { getHeroCarouselImages } from "@/lib/work-gallery";
 
 export const metadata: Metadata = {
   title: "Recolha de Móveis em Lisboa, Margem Sul e Setúbal",
@@ -79,19 +80,6 @@ const areaServedCities = [
   "Seixal",
   "Barreiro",
   "Setúbal",
-];
-
-const carouselImages = [
-  {
-    url: "/hero-recolha-moveis.jpg",
-    alt: "Serviço de recolha de entulho",
-    title: "ENTULHO",
-  },
-  {
-    url: "/hero-team-truck-lisbon.jpg",
-    alt: "Equipa de recolha de móveis",
-    title: "MÓVEIS",
-  },
 ];
 
 const benefits = [
@@ -252,7 +240,9 @@ const serviceSchema = {
 
 export const revalidate = 86400;
 
-export default function RecolhaDeMoveisPage() {
+export default async function RecolhaDeMoveisPage() {
+  const carouselImages = await getHeroCarouselImages();
+
   return (
     <div className="min-h-screen bg-slate-50">
       {/* Hero Section */}
@@ -323,14 +313,9 @@ export default function RecolhaDeMoveisPage() {
               </div>
             </div>
 
-            {/* Right side - Carousel with background image */}
+            {/* Right side - Carousel */}
             <div 
               className="relative overflow-hidden rounded-2xl border border-slate-200 shadow-sm"
-              style={{
-                backgroundImage: "url('/hero-recolha-moveis.jpg')",
-                backgroundSize: "cover",
-                backgroundPosition: "center",
-              }}
             >
               <div className="overflow-hidden rounded-2xl bg-slate-100 shadow-2xl shadow-slate-900/10">
                 <div className="aspect-[4/3]">
