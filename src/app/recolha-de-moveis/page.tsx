@@ -315,14 +315,14 @@ export default async function RecolhaDeMoveisPage() {
 
             {/* Right side - Carousel with background */}
             <div 
-              className="relative overflow-hidden rounded-2xl border border-slate-200 shadow-sm"
+              className="relative overflow-hidden rounded-2xl border border-slate-200 shadow-sm bg-cover bg-center"
               style={{
                 backgroundImage: "url('/hero-entulho-bg.jpg')",
                 backgroundSize: "cover",
                 backgroundPosition: "center",
               }}
             >
-              <div className="overflow-hidden rounded-2xl bg-slate-100 shadow-2xl shadow-slate-900/10">
+              <div className="overflow-hidden rounded-2xl bg-black/30 backdrop-blur-sm shadow-2xl shadow-slate-900/10">
                 <div className="aspect-[4/3]">
                   <ImageCarousel images={carouselImages} autoPlayInterval={5000} />
                 </div>
