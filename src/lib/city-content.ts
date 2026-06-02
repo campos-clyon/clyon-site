@@ -42,7 +42,7 @@ export const CITY_SERVICE_CONTENT: Record<string, CityServiceContent> = {
     serviceSlug: "recolha-moveis",
     metaTitle: "Recolha de Moveis em Lisboa — Sofas, Camas e Recheios Completos",
     metaDescription:
-      "Recolha de moveis usados em Lisboa: sofas, camas, colchoes, armarios e electrodomesticos. Entramos em casa, desmontamos, carregamos. 163 avaliacoes. Desde 35EUR.",
+      "Recolha de moveis usados em Lisboa: sofas, camas, colchoes, armarios e electrodomesticos. Entramos em casa, desmontamos, carregamos. 163 avaliacoes. Orcamento gratis.",
     h1: "Recolha de Moveis Usados em Lisboa — Sofas, Camas, Armarios e Recheios",
     localIntro:
       "Precisa de retirar móveis em Lisboa? A CLYON retira sofás velhos, camas com colchão, armários, mesas, cadeiras, electrodomésticos e recheios completos de apartamentos. Trabalhamos em toda Lisboa: desde os prédios antigos sem elevador em Alfama e Mouraria até aos condomínios do Parque das Nações. Se o sofá não passa na porta, desmontamos. Se há escadas estreitas, descemos peça a peça. Se o estacionamento é complicado, coordenamos horário para evitar problemas.",
@@ -198,7 +198,7 @@ export const CITY_SERVICE_CONTENT: Record<string, CityServiceContent> = {
       },
       {
         q: "Qual é a melhor empresa para retirar móveis usados em Lisboa?",
-        a: "A CLYON tem 163 avaliações 5 estrelas no Google e resposta média de 11 minutos. Entramos em casa, desmontamos, carregamos e levamos. Cobrimos toda Lisboa e Margem Sul. Para comparar, peça orçamento gratuito e veja a rapidez da resposta.",
+        a: "A CLYON tem 163 avaliações 5 estrelas no Fixando e resposta média de 11 minutos. Entramos em casa, desmontamos, carregamos e levamos. Cobrimos toda Lisboa e Margem Sul. Para comparar, peça orçamento gratuito e veja a rapidez da resposta.",
       },
     ],
     pricingNotes: [
@@ -220,7 +220,7 @@ export const CITY_SERVICE_CONTENT: Record<string, CityServiceContent> = {
     serviceSlug: "recolha-moveis",
     metaTitle: "Recolha de Moveis em Almada — Empresa Local, Resposta Rapida",
     metaDescription:
-      "Recolha de moveis em Almada, Cacilhas, Pragal, Laranjeiro e Costa da Caparica. Empresa local no Seixal. Sofas desde 35EUR. Resposta em minutos. Orcamento gratis.",
+      "Recolha de moveis em Almada, Cacilhas, Pragal, Laranjeiro e Costa da Caparica. Empresa local no Seixal. Resposta em minutos. Orcamento gratis.",
     h1: "Recolha de Moveis em Almada — Cacilhas, Pragal, Laranjeiro e Costa",
     localIntro:
       "Precisa de retirar móveis em Almada? A CLYON é a empresa local para recolha de móveis usados em todo o concelho: Cacilhas, Pragal, Laranjeiro, Feijó, Cova da Piedade, Almada Velha e Costa da Caparica. Estamos sediados no Seixal, a 10 minutos de qualquer ponto de Almada. Conhecemos bem as diferenças entre Cacilhas (prédios antigos com escadas), Pragal e Laranjeiro (urbanizações mais recentes com elevador), e a Costa da Caparica (apartamentos de férias). Por sermos locais, respondemos mais depressa e com melhor preço do que empresas de Lisboa.",
@@ -788,7 +788,7 @@ export const CITY_SERVICE_CONTENT: Record<string, CityServiceContent> = {
     serviceSlug: "recolha-moveis",
     metaTitle: "Recolha de Móveis em Monte Abraão - Queluz e Massamá | CLYON",
     metaDescription:
-      "Recolha de móveis usados em Monte Abraão, Queluz e Massamá. Sofás, camas, armários e electrodomésticos. Empresa local, preços desde 35EUR. Orçamento grátis.",
+      "Recolha de móveis usados em Monte Abraão, Queluz e Massamá. Sofás, camas, armários e electrodomésticos. Empresa local, orçamento grátis em minutos.",
     h1: "Recolha de Móveis em Monte Abraão - Sofás, Camas e Armários",
     localIntro:
       "Precisa de retirar móveis em Monte Abraão? A CLYON faz recolha de sofás, camas, armários e electrodomésticos em toda a freguesia e zonas vizinhas: Queluz, Massamá, Belas e Agualva-Cacém. Monte Abraão é uma zona urbana densa com bons acessos pela IC19, o que nos permite chegar rapidamente e oferecer preços competitivos.",
@@ -808,7 +808,7 @@ export const CITY_SERVICE_CONTENT: Record<string, CityServiceContent> = {
       },
       {
         q: "Podem recolher móveis no mesmo dia em Monte Abraão?",
-        a: "Se contactar de manhã e tivermos disponibilidade, muitas vezes conseguimos ir no próprio dia. Monte Abraão fica a cerca de 20-25 minutos da nossa base.",
+        a: "Se contactar de manhã e tivermos disponibilidade, muitas vezes conseguimos ir no próprio dia. Monte Abraão é uma zona com boa cobertura operacional.",
       },
       {
         q: "Recolhem também em Queluz e Massamá?",
@@ -830,6 +830,98 @@ export const CITY_SERVICE_CONTENT: Record<string, CityServiceContent> = {
   },
 
   // ---------------------------------------------------------------------------
+  // MONTE ABRAÃO - RECOLHA DE ENTULHO
+  // ---------------------------------------------------------------------------
+  "recolha-entulho-monte-abraao": {
+    citySlug: "monte-abraao",
+    serviceSlug: "recolha-entulho",
+    metaTitle: "Recolha de Entulho em Monte Abraão - Obras em Queluz e Massamá | CLYON",
+    metaDescription:
+      "Recolha de entulho de obras em Monte Abraão, Queluz e Massamá. Contentores e sacos big bag. Orçamento grátis em minutos.",
+    h1: "Recolha de Entulho de Obras em Monte Abraão",
+    localIntro:
+      "Monte Abraão e Massamá têm muitos apartamentos dos anos 80-90 que estão a ser renovados. Remodelações de casas de banho, cozinhas e demolição de divisórias geram entulho que precisa de ser retirado rapidamente para a obra avançar. A CLYON recolhe entulho em sacos big bag ou contentor, adaptando o serviço ao volume da obra e ao espaço disponível no prédio.",
+    accessNotes:
+      "A maioria dos prédios em Monte Abraão tem elevador, mas o entulho é pesado e sujo. Trabalhamos com sacos resistentes e protegemos as zonas comuns durante o transporte. Para obras maiores, podemos deixar contentor na rua se houver licença.",
+    neighborhoodHighlight:
+      "As zonas com mais obras de remodelação em Monte Abraão são os edifícios junto à estação de comboio e as urbanizações de Massamá Norte. São apartamentos familiares em processo de modernização.",
+    nearbyAreas: ["Queluz", "Massamá", "Sintra", "Amadora"],
+    faqs: [
+      {
+        q: "A CLYON recolhe entulho de obras em Monte Abraão?",
+        a: "Sim. Recolhemos entulho de remodelações em Monte Abraão, Queluz e Massamá. Trabalhamos com sacos big bag para obras pequenas ou contentores para volumes maiores.",
+      },
+      {
+        q: "Podem recolher entulho de um apartamento em Monte Abraão?",
+        a: "Sim. Subimos ao apartamento, ensacamos o entulho se necessário e transportamos até à carrinha. Protegemos as zonas comuns do prédio durante o trabalho.",
+      },
+      {
+        q: "Quanto custa a recolha de entulho em Monte Abraão?",
+        a: "O valor depende do volume de entulho, tipo de resíduos e facilidade de acesso. Envie fotos da obra para recebermos um orçamento personalizado.",
+      },
+      {
+        q: "Fornecem contentor para obras em Monte Abraão?",
+        a: "Sim, fornecemos contentores de vários tamanhos. O contentor fica no local o tempo combinado. É necessário verificar se há espaço na rua ou garagem do prédio.",
+      },
+    ],
+    pricingNotes: [
+      "Sacos big bag: orçamento conforme volume",
+      "Contentor pequeno: orçamento conforme duração",
+      "Remodelação de WC: orçamento personalizado",
+      "Demolição de divisória: orçamento personalizado",
+    ],
+    ctaText: "Obra em Monte Abraão? Envie fotos do entulho para orçamento grátis.",
+  },
+
+  // ---------------------------------------------------------------------------
+  // MONTE ABRAÃO - ESVAZIAMENTO DE CASAS
+  // ---------------------------------------------------------------------------
+  "esvaziamento-casas-monte-abraao": {
+    citySlug: "monte-abraao",
+    serviceSlug: "esvaziamento-casas",
+    metaTitle: "Esvaziamento de Casas em Monte Abraão - Heranças e Mudanças | CLYON",
+    metaDescription:
+      "Esvaziamento completo de apartamentos em Monte Abraão, Queluz e Massamá. Heranças, mudanças e entregas de imóveis. Orçamento grátis.",
+    h1: "Esvaziamento de Casas e Apartamentos em Monte Abraão",
+    localIntro:
+      "Precisa de esvaziar um apartamento em Monte Abraão? A CLYON faz esvaziamento completo de casas para heranças, mudanças, entregas de imóveis arrendados e limpezas de recheios acumulados. Retiramos todos os móveis, electrodomésticos, roupa, decoração e tralha — o apartamento fica completamente vazio e pronto para entrega ou nova ocupação.",
+    accessNotes:
+      "Monte Abraão tem prédios com elevador na maioria, o que facilita o esvaziamento. Para apartamentos maiores ou com muito recheio, podemos precisar de fazer várias viagens ou usar equipa reforçada.",
+    neighborhoodHighlight:
+      "Os pedidos de esvaziamento em Monte Abraão vêm sobretudo de heranças (famílias que precisam de limpar casa de familiar falecido) e de senhorios que recuperam apartamentos arrendados com recheio deixado por inquilinos.",
+    nearbyAreas: ["Queluz", "Massamá", "Sintra", "Amadora"],
+    faqs: [
+      {
+        q: "A CLYON faz esvaziamento de apartamentos em Monte Abraão?",
+        a: "Sim. Fazemos esvaziamento completo de apartamentos T1 a T4 em Monte Abraão, Queluz e Massamá. Retiramos tudo: móveis, electrodomésticos, roupa, decoração e lixo acumulado.",
+      },
+      {
+        q: "Quanto custa esvaziar um apartamento em Monte Abraão?",
+        a: "O valor depende da tipologia do apartamento, volume de recheio e facilidade de acesso. Um T2 standard em Monte Abraão tem um preço diferente de um T3 cheio até ao tecto. Enviamos orçamento após ver fotos.",
+      },
+      {
+        q: "Fazem esvaziamento de heranças em Monte Abraão?",
+        a: "Sim. Esvaziamento de heranças é um dos nossos serviços mais frequentes. Tratamos do recheio com respeito, separamos o que pode ser doado ou reciclado, e deixamos o imóvel pronto para venda ou arrendamento.",
+      },
+      {
+        q: "Podem limpar o apartamento depois do esvaziamento?",
+        a: "Sim. Após retirar o recheio, podemos fazer uma limpeza básica ou profunda conforme necessário. É um serviço adicional que muitos clientes pedem para entregar o imóvel em boas condições.",
+      },
+      {
+        q: "Quanto tempo demora a esvaziar um apartamento em Monte Abraão?",
+        a: "Um T2 standard pode ser esvaziado num dia. Apartamentos maiores ou com muito recheio podem precisar de mais tempo. Combinamos sempre o prazo antes de começar.",
+      },
+    ],
+    pricingNotes: [
+      "T1 com recheio normal: orçamento personalizado",
+      "T2 com recheio normal: orçamento personalizado",
+      "T3 ou maior: orçamento conforme volume",
+      "Limpeza adicional: orçamento à parte",
+    ],
+    ctaText: "Precisa de esvaziar um apartamento em Monte Abraão? Envie fotos para orçamento.",
+  },
+
+  // ---------------------------------------------------------------------------
   // QUELUZ
   // ---------------------------------------------------------------------------
   "recolha-moveis-queluz": {
@@ -837,7 +929,7 @@ export const CITY_SERVICE_CONTENT: Record<string, CityServiceContent> = {
     serviceSlug: "recolha-moveis",
     metaTitle: "Recolha de Móveis em Queluz - Belas e Monte Abraão | CLYON",
     metaDescription:
-      "Recolha de móveis usados em Queluz, Belas e Monte Abraão. Sofás, camas, armários e electrodomésticos. Empresa local, preços desde 35EUR. Orçamento grátis.",
+      "Recolha de móveis usados em Queluz, Belas e Monte Abraão. Sofás, camas, armários e electrodomésticos. Empresa local, orçamento grátis em minutos.",
     h1: "Recolha de Móveis em Queluz - Sofás, Camas e Armários",
     localIntro:
       "Precisa de retirar móveis em Queluz? A CLYON faz recolha de sofás, camas, armários e electrodomésticos em todo o concelho: centro de Queluz, Belas, Monte Abraão e Massamá. Queluz tem uma mistura interessante de zonas históricas (perto do Palácio) e urbanizações modernas, e conhecemos bem as diferenças de acesso entre elas.",
@@ -865,7 +957,7 @@ export const CITY_SERVICE_CONTENT: Record<string, CityServiceContent> = {
       },
       {
         q: "Recolhem electrodomésticos junto com os móveis em Queluz?",
-        a: "Sim. Frigoríficos, máquinas de lavar, fogões, TVs - levamos tudo no mesmo serviço. É mais prático e sai mais barato.",
+        a: "Sim. Frigoríficos, máquinas de lavar, fogões, TVs - levamos tudo no mesmo serviço. Pode ser mais eficiente avaliar vários itens no mesmo pedido.",
       },
     ],
     pricingNotes: [
@@ -886,12 +978,12 @@ export const CITY_SERVICE_CONTENT: Record<string, CityServiceContent> = {
     serviceSlug: "recolha-moveis",
     metaTitle: "Recolha de Móveis em Carnaxide - Linda-a-Velha e Queijas | CLYON",
     metaDescription:
-      "Recolha de móveis usados em Carnaxide, Linda-a-Velha e Queijas. Sofás, camas, armários e electrodomésticos. Preços desde 35EUR. Orçamento grátis em minutos.",
+      "Recolha de móveis usados em Carnaxide, Linda-a-Velha e Queijas. Sofás, camas, armários e electrodomésticos. Orçamento grátis em minutos.",
     h1: "Recolha de Móveis em Carnaxide - Sofás, Camas e Armários",
     localIntro:
       "Precisa de retirar móveis em Carnaxide? A CLYON faz recolha de sofás, camas, armários e electrodomésticos em toda a freguesia e zonas vizinhas: Linda-a-Velha, Queijas, Alto da Loba e Miraflores. Carnaxide é uma zona residencial moderna com excelentes acessos pelo IC19 e A5, permitindo-nos chegar rapidamente e oferecer preços competitivos.",
     accessNotes:
-      "Carnaxide tem maioritariamente prédios recentes com elevador e bons acessos. Algumas urbanizações fechadas (como o Alto da Loba) requerem coordenação prévia para entrada, mas isso não afecta o preço.",
+      "Carnaxide tem maioritariamente prédios recentes com elevador e bons acessos. Algumas urbanizações fechadas (como o Alto da Loba) requerem coordenação prévia para entrada e serão consideradas no orçamento.",
     neighborhoodHighlight:
       "Carnaxide e Linda-a-Velha são zonas muito procuradas por famílias, com muitos apartamentos em condomínios modernos. Os pedidos mais frequentes são recolha de sofás, camas de casal e mobília de quarto durante mudanças ou renovações.",
     nearbyAreas: ["Oeiras", "Lisboa", "Amadora", "Algés"],

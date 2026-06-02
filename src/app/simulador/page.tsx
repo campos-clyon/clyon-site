@@ -9,7 +9,7 @@ const categoriaIds = new Set<CategoriaId>(["moveis", "monos", "entulho", "mudanc
 export const metadata: Metadata = {
   title: "Simulador de Preços — Calcule o Custo da Sua Recolha",
   description:
-    "Calcule online o preço de recolha de móveis, entulho, monos ou limpeza pós-obra em Lisboa e Setúbal. Orçamento instantâneo, preços desde 35EUR!",
+    "Calcule online o preço de recolha de móveis, entulho, monos ou limpeza pós-obra em Lisboa e Setúbal. Orçamento personalizado conforme o seu pedido!",
   alternates: {
     canonical: "https://clyon.pt/simulador",
   },

@@ -63,10 +63,10 @@ const services = [
 ];
 
 const priceHighlights = [
-  "Sofá ou cadeirão: desde 35 €",
-  "Cama, estrado e colchão: desde 45 €",
-  "Armário grande: desde 55 €",
-  "Vários móveis num pedido: desde 180 €",
+  "Sofá ou cadeirão: orçamento conforme acesso",
+  "Cama completa: valor sob avaliação",
+  "Armário grande: depende do volume e piso",
+  "Vários móveis: orçamento personalizado",
 ];
 
 const collectedItems = [

@@ -9,7 +9,7 @@ const badges = [
   {
     icon: Star,
     value: "163",
-    label: "avaliações 5 estrelas",
+    label: "avaliações no Fixando",
     color: "text-amber-500",
   },
   {
@@ -20,8 +20,8 @@ const badges = [
   },
   {
     icon: Truck,
-    value: "120€",
-    label: "preço desde",
+    value: "Rápido",
+    label: "serviço eficiente",
     color: "text-emerald-500",
   },
   {

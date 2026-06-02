@@ -54,14 +54,14 @@ function buildTitle(serviceName: string, cityName: string, serviceSlug: string, 
     if (citySlug === "almada") {
       return `Recolha de Móveis em Almada — Resposta Rápida`;
     }
-    return `Recolha de Móveis em ${cityName} — Preço desde 35€`;
+    return `Recolha de Móveis em ${cityName} — Orçamento Grátis`;
   }
 
   if (serviceSlug === "recolha-entulho") {
     if (citySlug === "setubal") {
       return `Recolha de Entulho em Setúbal — Resposta em 24h`;
     }
-    return `Recolha de Entulho em ${cityName} — Preço desde 80€`;
+    return `Recolha de Entulho em ${cityName} — Orçamento Grátis`;
   }
 
   if (serviceSlug === "limpeza-pos-obra") {
@@ -93,9 +93,9 @@ function buildDescription(
 
   if (serviceSlug === "recolha-entulho") {
     if (citySlug === "setubal") {
-      return `Recolha de entulho em Setúbal: carregamento directo, resposta em 24h. Preço desde 80€. Orçamento grátis!`;
+      return `Recolha de entulho em Setúbal: carregamento directo, resposta em 24h. Orçamento grátis!`;
     }
-    return `Recolha de entulho em ${cityName}, ${regionLabel}. Carregamento directo, sacos big bag, limpeza fina. Resposta em 24h. Preço desde 80€. Orçamento grátis!`;
+    return `Recolha de entulho em ${cityName}, ${regionLabel}. Carregamento directo, sacos big bag, limpeza fina. Resposta em 24h. Orçamento grátis!`;
   }
 
   if (serviceSlug === "limpeza-pos-obra") {
@@ -908,7 +908,7 @@ export default async function ServiceCityPage({ params }: Props) {
             a recolha com maior precisao.
           </p>
           <p className="mt-2 text-sm text-slate-500">
-            163 avaliacoes 5 estrelas no Google. Tempo medio de resposta: 11 minutos.
+            163 avaliacoes 5 estrelas no Fixando. Tempo medio de resposta: 11 minutos.
           </p>
           <div className="mt-6 flex flex-col gap-3 sm:flex-row">
             <Link

@@ -183,10 +183,10 @@ export default function MonosAmadoraPage() {
                 </p>
                 <div className="mt-4 space-y-3">
                   {[
-                    { type: "1-2 itens pequenos", price: "35€ – 60€" },
-                    { type: "Sofá ou cadeirão", price: "45€ – 80€" },
-                    { type: "Cama completa", price: "55€ – 90€" },
-                    { type: "Vários monos", price: "120€ – 250€" },
+                    { type: "1-2 itens pequenos", price: "sob avaliação" },
+                    { type: "Sofá ou cadeirão", price: "sob avaliação" },
+                    { type: "Cama completa", price: "sob avaliação" },
+                    { type: "Vários monos", price: "orçamento personalizado" },
                   ].map((item) => (
                     <div key={item.type} className="flex items-center justify-between rounded-lg bg-slate-50 px-4 py-3">
                       <span className="text-sm text-slate-700">{item.type}</span>

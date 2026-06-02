@@ -96,11 +96,11 @@ const includedItems = [
 ];
 
 const pricingTable = [
-  { item: "Sofá (2-3 lugares)", price: "desde 35€" },
-  { item: "Cama de casal com estrado", price: "desde 45€" },
-  { item: "Armário grande", price: "desde 55€" },
-  { item: "Eletrodoméstico (frigorífico, máquina)", price: "desde 35€" },
-  { item: "Recolha de vários móveis", price: "desde 180€" },
+  { item: "Sofá (2-3 lugares)", price: "sob avaliação" },
+  { item: "Cama de casal com estrado", price: "sob avaliação" },
+  { item: "Armário grande", price: "sob avaliação" },
+  { item: "Eletrodoméstico (frigorífico, máquina)", price: "sob avaliação" },
+  { item: "Recolha de vários móveis", price: "orçamento personalizado" },
 ];
 
 const faqs = [
