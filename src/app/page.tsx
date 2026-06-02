@@ -219,7 +219,7 @@ export default async function HomePage() {
         className="relative min-h-[620px] overflow-hidden bg-cover bg-center bg-no-repeat md:min-h-[720px]"
         style={{
           backgroundImage: "url('/hero-clyon-carrinha-lisboa.jpg')",
-          backgroundPosition: "center right",
+          backgroundPosition: "center 5%",
         }}
       >
         {/* Subtle overlay: keeps white bg feel on left for text, fades to near-transparent on right for image visibility */}
@@ -322,7 +322,7 @@ export default async function HomePage() {
       </section>
 
       {/* Onde Operamos */}
-      <section className="bg-slate-50 py-20 lg:py-24">
+      <section className="bg-slate-50 py-12 lg:py-16">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="mb-12 text-center">
             <div className="mb-3 inline-flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-cyan-600">
