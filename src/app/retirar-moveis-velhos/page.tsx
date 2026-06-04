@@ -393,7 +393,7 @@ export default function RetirarMoveisVelhosPage() {
                 href="https://wa.me/351931632622?text=Ol%C3%A1!%20Preciso%20de%20retirar%20m%C3%B3veis%20velhos."
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex h-12 items-center justify-center gap-2 rounded-lg border border-white/30 px-6 font-semibold text-white transition hover:bg-white/10"
+                className="inline-flex h-12 items-center justify-center gap-2 rounded-lg bg-emerald-500 px-6 font-semibold text-white transition hover:bg-emerald-600"
               >
                 <MessageCircle className="h-4 w-4" />
                 WhatsApp

@@ -72,7 +72,7 @@ export default async function TrabalhosPage() {
                 </Link>
                 <Link
                   href="/contactos"
-                  className="inline-flex items-center justify-center rounded-2xl border border-white/15 bg-white/5 px-6 py-3.5 text-base font-semibold text-white transition hover:bg-white/10"
+                  className="inline-flex items-center justify-center rounded-2xl bg-white px-6 py-3.5 text-base font-semibold text-slate-900 transition hover:bg-slate-100"
                 >
                   Falar connosco
                   <ArrowRight className="ml-2 h-4 w-4" />

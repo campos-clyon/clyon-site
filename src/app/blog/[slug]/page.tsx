@@ -151,7 +151,7 @@ export default async function BlogPostPage({ params }: Props) {
                 </Link>
                 <Link
                   href={CONTACT_PATH}
-                  className="inline-flex items-center justify-center rounded-2xl border border-cyan-300/30 bg-white/10 px-6 py-3 text-sm font-semibold text-white transition hover:bg-white/15"
+                  className="inline-flex items-center justify-center rounded-2xl bg-white px-6 py-3 text-sm font-semibold text-slate-900 transition hover:bg-slate-100"
                 >
                   Falar connosco
                   <ArrowRight className="ml-2 h-4 w-4" />

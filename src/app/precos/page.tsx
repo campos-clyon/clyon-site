@@ -310,7 +310,7 @@ export default function PrecosPage() {
                 </Link>
                 <a
                   href={`tel:${BUSINESS_PHONE}`}
-                  className="inline-flex items-center justify-center rounded-2xl border border-white/15 bg-white/5 px-7 py-4 text-base font-semibold text-white transition hover:bg-white/10"
+                  className="inline-flex items-center justify-center rounded-2xl bg-white px-7 py-4 text-base font-semibold text-slate-900 transition hover:bg-slate-100"
                 >
                   <Phone className="mr-2 h-4 w-4" />
                   Ligar agora
