@@ -237,7 +237,7 @@ export default function LimpezaQuintaisPage() {
             {keyCities.map((city) => (
               <div
                 key={city.slug}
-                className="flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm"
+                className="flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-900 shadow-sm"
               >
                 <MapPin className="h-4 w-4 text-green-500" />
                 {city.name}

@@ -274,7 +274,7 @@ export default function LimpezaPosObraPage() {
                   <Link
                     key={city.slug}
                     href={`/${getCityServiceSlug("limpeza-pos-obra", city.slug)}`}
-                    className="rounded-full bg-slate-100 px-3 py-1.5 text-sm text-slate-700 transition-colors hover:bg-emerald-100 hover:text-emerald-700"
+                    className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-900 transition-colors hover:border-emerald-300 hover:bg-emerald-50"
                   >
                     {city.name}
                   </Link>
@@ -292,7 +292,7 @@ export default function LimpezaPosObraPage() {
                   <Link
                     key={city.slug}
                     href={`/${getCityServiceSlug("limpeza-pos-obra", city.slug)}`}
-                    className="rounded-full bg-slate-100 px-3 py-1.5 text-sm text-slate-700 transition-colors hover:bg-emerald-100 hover:text-emerald-700"
+                    className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-900 transition-colors hover:border-emerald-300 hover:bg-emerald-50"
                   >
                     {city.name}
                   </Link>
@@ -307,7 +307,7 @@ export default function LimpezaPosObraPage() {
                   <Link
                     key={city.slug}
                     href={`/${getCityServiceSlug("limpeza-pos-obra", city.slug)}`}
-                    className="rounded-full bg-slate-100 px-3 py-1.5 text-sm text-slate-700 transition-colors hover:bg-emerald-100 hover:text-emerald-700"
+                    className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-900 transition-colors hover:border-emerald-300 hover:bg-emerald-50"
                   >
                     {city.name}
                   </Link>

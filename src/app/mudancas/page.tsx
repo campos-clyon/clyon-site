@@ -286,7 +286,7 @@ export default function MudancasPage() {
                 {lisboaCities.slice(0, 8).map((city) => (
                   <span
                     key={city.slug}
-                    className="rounded-full bg-slate-100 px-3 py-1.5 text-sm text-slate-700"
+                    className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-900"
                   >
                     {city.name}
                   </span>
@@ -304,7 +304,7 @@ export default function MudancasPage() {
                 {margemSulCities.map((city) => (
                   <span
                     key={city.slug}
-                    className="rounded-full bg-slate-100 px-3 py-1.5 text-sm text-slate-700"
+                    className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-900"
                   >
                     {city.name}
                   </span>
@@ -319,7 +319,7 @@ export default function MudancasPage() {
                 {setubalCities.map((city) => (
                   <span
                     key={city.slug}
-                    className="rounded-full bg-slate-100 px-3 py-1.5 text-sm text-slate-700"
+                    className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-900"
                   >
                     {city.name}
                   </span>

@@ -279,7 +279,7 @@ export default function EsvaziamentoCasasPage() {
                   <Link
                     key={city.slug}
                     href={`/${getCityServiceSlug("esvaziamento-casas", city.slug)}`}
-                    className="rounded-full bg-slate-100 px-3 py-1.5 text-sm text-slate-700 transition-colors hover:bg-violet-100 hover:text-violet-700"
+                    className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-900 transition-colors hover:border-violet-300 hover:bg-violet-50"
                   >
                     {city.name}
                   </Link>
@@ -297,7 +297,7 @@ export default function EsvaziamentoCasasPage() {
                   <Link
                     key={city.slug}
                     href={`/${getCityServiceSlug("esvaziamento-casas", city.slug)}`}
-                    className="rounded-full bg-slate-100 px-3 py-1.5 text-sm text-slate-700 transition-colors hover:bg-violet-100 hover:text-violet-700"
+                    className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-900 transition-colors hover:border-violet-300 hover:bg-violet-50"
                   >
                     {city.name}
                   </Link>
@@ -312,7 +312,7 @@ export default function EsvaziamentoCasasPage() {
                   <Link
                     key={city.slug}
                     href={`/${getCityServiceSlug("esvaziamento-casas", city.slug)}`}
-                    className="rounded-full bg-slate-100 px-3 py-1.5 text-sm text-slate-700 transition-colors hover:bg-violet-100 hover:text-violet-700"
+                    className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-900 transition-colors hover:border-violet-300 hover:bg-violet-50"
                   >
                     {city.name}
                   </Link>
