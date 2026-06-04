@@ -17,7 +17,7 @@ export default function Footer() {
     <footer style={{ backgroundColor: "#0f172a", color: "white" }}>
       <div style={{ maxWidth: "1280px", margin: "0 auto", padding: "64px 24px" }}>
         {/* Desktop Layout */}
-        <div className="hidden lg:grid" style={{ display: "grid", gridTemplateColumns: "280px repeat(4, 1fr)", gap: "48px" }}>
+        <div className="hidden lg:grid lg:grid-cols-[280px_repeat(4,1fr)] lg:gap-12">
           {/* Brand Column with CTA Box */}
           <div style={{ backgroundColor: "#1e293b", borderRadius: "16px", padding: "28px" }}>
             <Link href="/">
@@ -196,7 +196,7 @@ export default function Footer() {
 
       {/* Bottom Bar */}
       <div style={{ borderTop: "1px solid #1e293b" }}>
-        <div style={{ maxWidth: "1280px", margin: "0 auto", padding: "20px 24px", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "space-between", gap: "16px" }} className="sm:flex-row">
+        <div style={{ maxWidth: "1280px", margin: "0 auto", padding: "20px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "16px" }} className="flex-col sm:flex-row">
           <p style={{ fontSize: "14px", color: "#64748b" }}>
             © CLYON {anoAtual} - Todos os direitos reservados
           </p>
