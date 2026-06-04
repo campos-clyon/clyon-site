@@ -182,6 +182,17 @@ select:focus-visible {
   outline-offset: 2px;
 }
 
+/* Garantir texto visivel em links com fundo branco */
+a.bg-white span,
+a.bg-white {
+  color: #0f172a;
+}
+
+a.bg-white:hover span,
+a.bg-white:hover {
+  color: #0f172a;
+}
+
 /* Footer styles - ensure text is visible */
 footer {
   background-color: #0f172a;
