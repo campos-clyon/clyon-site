@@ -206,7 +206,7 @@ export default function RecolhaDeSofasPage() {
                   Ligar agora
                 </a>
                 <a
-                  href="https://wa.me/351934748005?text=Ol%C3%A1!%20Preciso%20de%20recolha%20de%20sof%C3%A1."
+                  href="https://wa.me/351931632622?text=Ol%C3%A1!%20Preciso%20de%20recolha%20de%20sof%C3%A1."
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-emerald-500 px-6 text-base font-semibold text-white transition hover:bg-emerald-600"
@@ -373,7 +373,7 @@ export default function RecolhaDeSofasPage() {
               <ArrowRight className="h-4 w-4" />
             </Link>
             <a
-              href="https://wa.me/351934748005?text=Ol%C3%A1!%20Preciso%20de%20recolha%20de%20sof%C3%A1."
+              href="https://wa.me/351931632622?text=Ol%C3%A1!%20Preciso%20de%20recolha%20de%20sof%C3%A1."
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-emerald-500 px-6 text-base font-semibold text-white transition hover:bg-emerald-600"

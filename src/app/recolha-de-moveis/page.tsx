@@ -291,7 +291,7 @@ export default function RecolhaDeMoveisPage() {
                 Pedir Orçamento Grátis
               </Link>
               <a
-                href="https://wa.me/351934748005?text=Ol%C3%A1!%20Preciso%20de%20recolha%20de%20m%C3%B3veis."
+                href="https://wa.me/351931632622?text=Ol%C3%A1!%20Preciso%20de%20recolha%20de%20m%C3%B3veis."
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex h-14 items-center justify-center gap-2 rounded-xl border-2 border-emerald-400 bg-emerald-500 px-8 text-base font-semibold text-white shadow-lg shadow-emerald-500/30 transition hover:bg-emerald-400"

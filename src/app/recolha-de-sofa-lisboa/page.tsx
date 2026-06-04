@@ -14,7 +14,7 @@ import Breadcrumb from "@/components/Breadcrumb";
 export const metadata: Metadata = {
   title: "Recolha de Sofá Lisboa | Carregamento e Transporte | CLYON",
   description:
-    "Recolha de sofá em Lisboa com carregamento porta a porta e transporte incluído. Retiramos sofás, chaise longues e cadeirões. Orçamento grátis: 934 748 005.",
+    "Recolha de sofá em Lisboa com carregamento porta a porta e transporte incluído. Retiramos sofás, chaise longues e cadeirões. Orçamento grátis: 931 632 622.",
   keywords: [
     "recolha de sofá Lisboa",
     "retirar sofá Lisboa",
@@ -123,7 +123,7 @@ export default function RecolhaSofaLisboaPage() {
         provider: {
           "@type": "LocalBusiness",
           name: "CLYON",
-          telephone: "+351934748005",
+          telephone: "+351931632622",
           address: {
             "@type": "PostalAddress",
             addressLocality: "Lisboa",
@@ -204,14 +204,14 @@ export default function RecolhaSofaLisboaPage() {
               Simular Orçamento
             </Link>
             <a
-              href="tel:+351934748005"
+              href="tel:+351931632622"
               className="inline-flex h-12 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-6 text-[0.9375rem] font-semibold text-slate-700 transition hover:bg-slate-50"
             >
               <Phone className="h-4 w-4" />
-              934 748 005
+              931 632 622
             </a>
             <a
-              href="https://wa.me/351934748005?text=Ol%C3%A1!%20Preciso%20de%20recolha%20de%20sof%C3%A1%20em%20Lisboa."
+              href="https://wa.me/351931632622?text=Ol%C3%A1!%20Preciso%20de%20recolha%20de%20sof%C3%A1%20em%20Lisboa."
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex h-12 items-center justify-center gap-2 rounded-lg bg-emerald-500 px-6 text-[0.9375rem] font-semibold text-white transition hover:bg-emerald-600"
@@ -360,14 +360,14 @@ export default function RecolhaSofaLisboaPage() {
             </p>
             <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
               <a
-                href="tel:+351934748005"
+                href="tel:+351931632622"
                 className="inline-flex h-12 items-center justify-center gap-2 rounded-lg bg-white px-6 font-semibold text-cyan-700 transition hover:bg-cyan-50"
               >
                 <Phone className="h-4 w-4" />
                 Ligar Agora
               </a>
               <a
-                href="https://wa.me/351934748005?text=Ol%C3%A1!%20Preciso%20de%20recolha%20de%20sof%C3%A1%20em%20Lisboa."
+                href="https://wa.me/351931632622?text=Ol%C3%A1!%20Preciso%20de%20recolha%20de%20sof%C3%A1%20em%20Lisboa."
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex h-12 items-center justify-center gap-2 rounded-lg border border-white/30 px-6 font-semibold text-white transition hover:bg-white/10"

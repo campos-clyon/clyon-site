@@ -258,7 +258,7 @@ export default async function HomePage() {
                   Pedir Orçamento Grátis
                 </Link>
                 <a
-                  href="https://wa.me/351934748005?text=Ol%C3%A1!%20Gostava%20de%20pedir%20um%20or%C3%A7amento%20%C3%A0%20CLYON."
+                  href="https://wa.me/351931632622?text=Ol%C3%A1!%20Gostava%20de%20pedir%20um%20or%C3%A7amento%20%C3%A0%20CLYON."
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex h-14 items-center justify-center gap-2 rounded-xl bg-emerald-500 px-8 text-base font-semibold text-white shadow-lg shadow-emerald-500/25 transition-all hover:-translate-y-0.5 hover:bg-emerald-600 hover:shadow-xl"
@@ -617,7 +617,7 @@ export default async function HomePage() {
                   <ArrowRight className="h-5 w-5" />
                 </Link>
                 <a
-                  href={`https://wa.me/351934748005?text=${encodeURIComponent("Olá! Gostava de pedir um orçamento à CLYON.")}`}
+                  href={`https://wa.me/351931632622?text=${encodeURIComponent("Olá! Gostava de pedir um orçamento à CLYON.")}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex h-14 items-center justify-center gap-2 rounded-xl bg-emerald-500 px-8 text-base font-semibold text-white shadow-lg shadow-emerald-500/30 transition-all hover:-translate-y-0.5 hover:bg-emerald-400 hover:shadow-xl"
