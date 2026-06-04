@@ -126,10 +126,10 @@ export default function FurnitureSeoLinks({
             <Link
               key={link.href}
               href={link.href}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 transition hover:border-cyan-200 hover:bg-cyan-50"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium transition hover:border-cyan-200 hover:bg-cyan-50"
             >
-              {link.label}
-              <ArrowRight className="h-3.5 w-3.5" />
+              <span className="text-slate-900">{link.label}</span>
+              <ArrowRight className="h-3.5 w-3.5 text-slate-400" />
             </Link>
           ))}
         </div>
