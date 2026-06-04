@@ -359,14 +359,16 @@ export default function RecolhaDeEletrodomesticosPage() {
           <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
             <Link
               href="/simulador"
-              className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-white px-6 text-base font-semibold text-cyan-600 transition hover:bg-cyan-50"
+              className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-white px-6 text-base font-semibold transition hover:bg-cyan-50"
+              style={{ color: '#0891b2' }}
             >
               Simular orçamento
               <ArrowRight className="h-4 w-4" />
             </Link>
             <a
               href={`tel:${BUSINESS_PHONE}`}
-              className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-white px-6 text-base font-semibold text-slate-900 transition hover:bg-slate-100"
+              className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-white px-6 text-base font-semibold transition hover:bg-slate-100"
+              style={{ color: '#0f172a' }}
             >
               <Phone className="h-4 w-4" />
               <span>Ligar Agora</span>
