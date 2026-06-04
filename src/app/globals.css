@@ -50,7 +50,6 @@ h6 {
 }
 
 a {
-  color: inherit;
   text-decoration: none;
 }
 
@@ -183,14 +182,20 @@ select:focus-visible {
 }
 
 /* Garantir texto visivel em links com fundo branco */
+a.bg-white,
 a.bg-white span,
-a.bg-white {
-  color: #0f172a;
+.bg-white a,
+.bg-slate-50 a.bg-white,
+[class*="bg-white"] a,
+a[class*="bg-white"] {
+  color: #0f172a !important;
 }
 
+a.bg-white:hover,
 a.bg-white:hover span,
-a.bg-white:hover {
-  color: #0f172a;
+.bg-white a:hover,
+.bg-slate-50 a.bg-white:hover {
+  color: #0f172a !important;
 }
 
 /* Footer styles - ensure text is visible */
