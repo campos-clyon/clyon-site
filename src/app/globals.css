@@ -53,6 +53,22 @@ a {
   text-decoration: none;
 }
 
+/* Footer links - forçar cor branca */
+footer a,
+footer a:visited,
+footer a:hover,
+footer a:active,
+footer span,
+footer li,
+footer p {
+  color: inherit !important;
+}
+
+footer a[style*="color: #ffffff"],
+footer a[style*="color:#ffffff"] {
+  color: #ffffff !important;
+}
+
 img {
   display: block;
   max-width: 100%;
