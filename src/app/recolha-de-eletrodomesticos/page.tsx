@@ -13,7 +13,6 @@ import {
   Users,
 } from "lucide-react";
 
-import Breadcrumb from "@/components/Breadcrumb";
 import FurnitureSeoLinks from "@/components/FurnitureSeoLinks";
 import {
   BUSINESS_NAME,
@@ -168,16 +167,9 @@ export default function RecolhaDeEletrodomesticosPage() {
 
       {/* Hero Section */}
       <section className="bg-white">
-        <div className="mx-auto max-w-7xl px-6 pb-16 pt-10 lg:px-8 lg:pb-20 lg:pt-14">
-          <Breadcrumb
-            items={[
-              { label: "Serviços", href: "/servicos" },
-              { label: "Recolha de Móveis", href: "/recolha-de-moveis" },
-              { label: "Recolha de Eletrodomésticos" },
-            ]}
-          />
+        <div className="mx-auto max-w-7xl px-6 pb-16 pt-16 lg:px-8 lg:pb-20 lg:pt-20">
 
-          <div className="mt-8 grid gap-12 lg:grid-cols-2 lg:gap-16">
+          <div className="grid gap-12 lg:grid-cols-2 lg:gap-16">
             <div>
               <h1 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl lg:text-5xl">
                 Recolha de eletrodomésticos usados em Lisboa, Margem Sul e Setúbal
@@ -372,6 +364,13 @@ export default function RecolhaDeEletrodomesticosPage() {
               Simular orçamento
               <ArrowRight className="h-4 w-4" />
             </Link>
+            <a
+              href={`tel:${BUSINESS_PHONE}`}
+              className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-white px-6 text-base font-semibold text-slate-900 transition hover:bg-slate-100"
+            >
+              <Phone className="h-4 w-4" />
+              <span>Ligar Agora</span>
+            </a>
             <a
               href="https://wa.me/351931632622?text=Ol%C3%A1!%20Preciso%20de%20recolha%20de%20eletrodom%C3%A9stico."
               target="_blank"
