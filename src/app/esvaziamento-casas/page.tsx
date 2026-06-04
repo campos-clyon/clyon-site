@@ -279,7 +279,8 @@ export default function EsvaziamentoCasasPage() {
                   <Link
                     key={city.slug}
                     href={`/${getCityServiceSlug("esvaziamento-casas", city.slug)}`}
-                    className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-900 transition-colors hover:border-violet-300 hover:bg-violet-50"
+                    className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium transition-colors hover:border-violet-300 hover:bg-violet-50"
+                    style={{ color: '#0f172a' }}
                   >
                     {city.name}
                   </Link>
@@ -297,7 +298,8 @@ export default function EsvaziamentoCasasPage() {
                   <Link
                     key={city.slug}
                     href={`/${getCityServiceSlug("esvaziamento-casas", city.slug)}`}
-                    className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-900 transition-colors hover:border-violet-300 hover:bg-violet-50"
+                    className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium transition-colors hover:border-violet-300 hover:bg-violet-50"
+                    style={{ color: '#0f172a' }}
                   >
                     {city.name}
                   </Link>
@@ -312,7 +314,8 @@ export default function EsvaziamentoCasasPage() {
                   <Link
                     key={city.slug}
                     href={`/${getCityServiceSlug("esvaziamento-casas", city.slug)}`}
-                    className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-900 transition-colors hover:border-violet-300 hover:bg-violet-50"
+                    className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium transition-colors hover:border-violet-300 hover:bg-violet-50"
+                    style={{ color: '#0f172a' }}
                   >
                     {city.name}
                   </Link>
