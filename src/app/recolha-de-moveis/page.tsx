@@ -15,7 +15,6 @@ import {
   Zap,
 } from "lucide-react";
 
-import Breadcrumb from "@/components/Breadcrumb";
 import FurnitureSeoLinks from "@/components/FurnitureSeoLinks";
 import {
   BUSINESS_NAME,
@@ -251,14 +250,7 @@ export default function RecolhaDeMoveisPage() {
         <div className="absolute inset-0 bg-gradient-to-r from-slate-900/90 via-slate-900/70 to-transparent" />
         
         {/* Content */}
-        <div className="relative z-10 mx-auto max-w-7xl px-6 pb-16 pt-10 lg:px-8 lg:pb-20 lg:pt-14">
-          <Breadcrumb
-            items={[
-              { label: "Serviços", href: "/servicos" },
-              { label: "Recolha de Móveis" },
-            ]}
-            className="mb-6 [&_a]:text-white/80 [&_a:hover]:text-white [&_span]:text-white/60 [&_svg]:text-white/40"
-          />
+        <div className="relative z-10 mx-auto max-w-7xl px-6 pb-16 pt-16 lg:px-8 lg:pb-20 lg:pt-20">
           
           <div className="max-w-2xl">
             {/* Badge */}
@@ -562,10 +554,10 @@ export default function RecolhaDeMoveisPage() {
             </Link>
             <a
               href={`tel:${BUSINESS_PHONE}`}
-              className="inline-flex h-12 items-center justify-center gap-2 rounded-lg border border-white/20 bg-white/10 px-8 font-semibold text-white transition hover:bg-white/20"
+              className="inline-flex h-12 items-center justify-center gap-2 rounded-lg bg-white px-8 font-semibold text-slate-900 transition hover:bg-slate-100"
             >
               <Phone className="h-4 w-4" />
-              Ligar Agora
+              <span>Ligar Agora</span>
             </a>
           </div>
         </div>
