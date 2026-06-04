@@ -267,7 +267,7 @@ export default function Header() {
               <Link
                 href="/contactos"
                 onClick={() => setSolucoesOpen(false)}
-                className="rounded-xl bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-slate-800"
+                className="rounded-xl bg-cyan-600 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-cyan-700"
               >
                 Contactar
               </Link>
