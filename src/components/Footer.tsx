@@ -170,7 +170,7 @@ export default function Footer() {
           </div>
 
           {/* Links Grid Mobile */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "32px" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "32px", marginBottom: "32px" }}>
             <div>
               <h3 style={{ fontSize: "12px", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.1em", color: "#94a3b8", marginBottom: "16px" }}>Serviços</h3>
               <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: "10px" }}>
@@ -188,6 +188,52 @@ export default function Footer() {
                 <li><Link href="/contactos" style={{ color: "#ffffff", fontSize: "14px", textDecoration: "none" }}>Contactos</Link></li>
                 <li><Link href="/avaliacoes" style={{ color: "#ffffff", fontSize: "14px", textDecoration: "none" }}>Avaliações</Link></li>
               </ul>
+            </div>
+          </div>
+
+          {/* Cobertura Mobile */}
+          <div style={{ marginBottom: "32px" }}>
+            <h3 style={{ fontSize: "12px", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.1em", color: "#94a3b8", marginBottom: "16px" }}>Cobertura</h3>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
+              <Link href="/recolha-moveis-lisboa" style={{ color: "#ffffff", fontSize: "13px", textDecoration: "none", padding: "4px 10px", backgroundColor: "#1e293b", borderRadius: "4px" }}>Lisboa</Link>
+              <Link href="/recolha-moveis-almada" style={{ color: "#ffffff", fontSize: "13px", textDecoration: "none", padding: "4px 10px", backgroundColor: "#1e293b", borderRadius: "4px" }}>Almada</Link>
+              <Link href="/recolha-moveis-amadora" style={{ color: "#ffffff", fontSize: "13px", textDecoration: "none", padding: "4px 10px", backgroundColor: "#1e293b", borderRadius: "4px" }}>Amadora</Link>
+              <Link href="/recolha-moveis-seixal" style={{ color: "#ffffff", fontSize: "13px", textDecoration: "none", padding: "4px 10px", backgroundColor: "#1e293b", borderRadius: "4px" }}>Seixal</Link>
+              <Link href="/recolha-moveis-setubal" style={{ color: "#ffffff", fontSize: "13px", textDecoration: "none", padding: "4px 10px", backgroundColor: "#1e293b", borderRadius: "4px" }}>Setúbal</Link>
+              <Link href="/recolha-moveis-sintra" style={{ color: "#ffffff", fontSize: "13px", textDecoration: "none", padding: "4px 10px", backgroundColor: "#1e293b", borderRadius: "4px" }}>Sintra</Link>
+              <Link href="/recolha-moveis-cascais" style={{ color: "#ffffff", fontSize: "13px", textDecoration: "none", padding: "4px 10px", backgroundColor: "#1e293b", borderRadius: "4px" }}>Cascais</Link>
+              <Link href="/recolha-moveis-oeiras" style={{ color: "#ffffff", fontSize: "13px", textDecoration: "none", padding: "4px 10px", backgroundColor: "#1e293b", borderRadius: "4px" }}>Oeiras</Link>
+            </div>
+          </div>
+
+          {/* Contacto Rápido Mobile */}
+          <div style={{ marginBottom: "16px" }}>
+            <h3 style={{ fontSize: "12px", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.1em", color: "#94a3b8", marginBottom: "16px" }}>Contacto Rápido</h3>
+            <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+              <a
+                href={urlWhatsapp}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => trackWhatsAppClick("footer-mobile")}
+                style={{ display: "flex", alignItems: "center", gap: "12px", backgroundColor: "#1e293b", padding: "12px 14px", borderRadius: "8px", color: "#ffffff", fontSize: "14px", textDecoration: "none" }}
+              >
+                <MessageCircle style={{ width: "16px", height: "16px", color: "#10b981" }} />
+                WhatsApp direto
+              </a>
+              <Link
+                href="/simulador"
+                style={{ display: "flex", alignItems: "center", gap: "12px", backgroundColor: "#1e293b", padding: "12px 14px", borderRadius: "8px", color: "#ffffff", fontSize: "14px", textDecoration: "none" }}
+              >
+                <ArrowRight style={{ width: "16px", height: "16px", color: "#0891b2" }} />
+                Pedir orçamento
+              </Link>
+              <Link
+                href="/colaboradores"
+                style={{ display: "flex", alignItems: "center", gap: "12px", backgroundColor: "#1e293b", padding: "12px 14px", borderRadius: "8px", color: "#ffffff", fontSize: "14px", textDecoration: "none" }}
+              >
+                <Lock style={{ width: "16px", height: "16px", color: "#94a3b8" }} />
+                Área de colaboradores
+              </Link>
             </div>
           </div>
         </div>
