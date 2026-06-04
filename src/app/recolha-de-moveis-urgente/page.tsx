@@ -358,7 +358,7 @@ export default function RecolhaMoveisUrgentePage() {
                 className="inline-flex h-12 items-center justify-center gap-2 rounded-lg bg-white px-6 font-semibold text-cyan-700 transition hover:bg-cyan-50"
               >
                 <Phone className="h-4 w-4" />
-                Ligar Agora
+                <span>Ligar Agora</span>
               </a>
               <a
                 href="https://wa.me/351931632622?text=Ol%C3%A1!%20Preciso%20de%20recolha%20de%20m%C3%B3veis%20urgente."
