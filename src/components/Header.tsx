@@ -121,7 +121,7 @@ export default function Header() {
         {/* Logo */}
         <Link href="/" className="flex-shrink-0">
           <Image
-            src="/logo-clyon-icon.webp"
+            src="/logo-clyon.png"
             alt="CLYON - Recolha de Móveis e Entulho"
             className="h-10 w-auto sm:h-11"
             width={205}

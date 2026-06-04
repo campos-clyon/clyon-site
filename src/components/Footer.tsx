@@ -22,11 +22,11 @@ export default function Footer() {
           <div style={{ backgroundColor: "#1e293b", borderRadius: "16px", padding: "28px" }}>
             <Link href="/">
               <Image
-                src="/logo-clyon-icon.webp"
+                src="/logo-clyon.png"
                 alt="CLYON"
                 width={120}
                 height={40}
-                style={{ height: "36px", width: "auto", filter: "brightness(0) invert(1)" }}
+                style={{ height: "36px", width: "auto" }}
               />
             </Link>
             <p style={{ marginTop: "16px", fontSize: "14px", lineHeight: "1.7", color: "#cbd5e1" }}>
@@ -138,11 +138,11 @@ export default function Footer() {
           <div style={{ textAlign: "center", marginBottom: "32px" }}>
             <Link href="/">
               <Image
-                src="/logo-clyon-icon.webp"
+                src="/logo-clyon.png"
                 alt="CLYON"
                 width={120}
                 height={40}
-                style={{ height: "36px", width: "auto", margin: "0 auto", filter: "brightness(0) invert(1)" }}
+                style={{ height: "36px", width: "auto", margin: "0 auto" }}
               />
             </Link>
             <p style={{ marginTop: "16px", fontSize: "14px", lineHeight: "1.7", color: "#cbd5e1" }}>
