@@ -17,80 +17,67 @@ import {
   Truck,
   Refrigerator,
   Zap,
+  ArrowRight,
+  Clock,
 } from "lucide-react";
 
 import { trackWhatsAppClick } from "@/lib/analytics";
 import { BUSINESS_PHONE } from "@/lib/seo-data";
 
-const solucoesMenu = [
+const solucoes = [
   {
-    title: "Serviços principais",
-    items: [
-      {
-        label: "Recolha de Móveis",
-        description: "Sofás, camas, armários, colchões e recheios.",
-        href: "/recolha-de-moveis",
-        icon: Sofa,
-      },
-      {
-        label: "Recolha de Entulho",
-        description: "Sacos de obra, restos de remodelação e resíduos.",
-        href: "/servicos#entulho",
-        icon: HardHat,
-      },
-      {
-        label: "Recolha de Monos",
-        description: "Volumes grandes, objetos antigos e acumulados.",
-        href: "/servicos#monos",
-        icon: Package,
-      },
-    ],
+    label: "Recolha de Móveis",
+    description: "Sofás, camas, armários, colchões e recheios.",
+    href: "/recolha-de-moveis",
+    icon: Sofa,
   },
   {
-    title: "Limpeza e esvaziamento",
-    items: [
-      {
-        label: "Esvaziamento de Casas",
-        description: "Retirada completa de móveis, recheios e objetos.",
-        href: "/servicos#esvaziamento",
-        icon: Home,
-      },
-      {
-        label: "Limpeza Pós-Obra",
-        description: "Apoio após remodelações, obras e mudanças.",
-        href: "/servicos#limpeza-pos-obra",
-        icon: Sparkles,
-      },
-      {
-        label: "Limpeza de Quintais",
-        description: "Lixo verde, resíduos exteriores e espaços.",
-        href: "/servicos#quintais",
-        icon: TreePine,
-      },
-    ],
+    label: "Recolha de Entulho",
+    description: "Sacos de obra, restos de remodelação e resíduos de construção.",
+    href: "/recolha-de-entulho",
+    icon: HardHat,
   },
   {
-    title: "Operações",
-    items: [
-      {
-        label: "Mudanças",
-        description: "Transporte, carga e descarga com equipa.",
-        href: "/servicos#mudancas",
-        icon: Truck,
-      },
-      {
-        label: "Eletrodomésticos",
-        description: "Recolha de máquinas, frigoríficos e equipamentos.",
-        href: "/recolha-de-eletrodomesticos",
-        icon: Refrigerator,
-      },
-      {
-        label: "Serviço Urgente",
-        description: "Pedidos rápidos em Lisboa, Margem Sul e Setúbal.",
-        href: "/recolha-de-moveis-urgente",
-        icon: Zap,
-      },
-    ],
+    label: "Recolha de Monos",
+    description: "Volumes grandes, objetos antigos e materiais acumulados.",
+    href: "/recolha-de-monos",
+    icon: Package,
+  },
+  {
+    label: "Esvaziamento de Casas",
+    description: "Retirada completa de móveis, recheios e objetos.",
+    href: "/esvaziamento-de-casas",
+    icon: Home,
+  },
+  {
+    label: "Limpeza Pós-Obra",
+    description: "Apoio após remodelações, obras e mudanças.",
+    href: "/limpeza-pos-obra",
+    icon: Sparkles,
+  },
+  {
+    label: "Limpeza de Quintais",
+    description: "Lixo verde, resíduos exteriores e limpeza de espaços.",
+    href: "/limpeza-de-quintais",
+    icon: TreePine,
+  },
+  {
+    label: "Mudanças",
+    description: "Transporte, carga e descarga com equipa.",
+    href: "/mudancas",
+    icon: Truck,
+  },
+  {
+    label: "Recolha de Eletrodomésticos",
+    description: "Máquinas, frigoríficos e equipamentos grandes.",
+    href: "/recolha-de-eletrodomesticos",
+    icon: Refrigerator,
+  },
+  {
+    label: "Serviço Urgente",
+    description: "Pedidos rápidos em Lisboa, Margem Sul e Setúbal.",
+    href: "/recolha-de-moveis-urgente",
+    icon: Zap,
   },
 ];
 
@@ -165,68 +152,6 @@ export default function Header() {
                 }`}
               />
             </button>
-
-            {/* Mega Menu Dropdown */}
-            {solucoesOpen && (
-              <div
-                ref={dropdownRef}
-                onMouseLeave={() => setSolucoesOpen(false)}
-                className="absolute left-1/2 top-full z-50 mt-2 w-[800px] -translate-x-1/2 animate-in fade-in slide-in-from-top-2 duration-200"
-              >
-                <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xl">
-                  <div className="grid grid-cols-3 gap-6">
-                    {solucoesMenu.map((column) => (
-                      <div key={column.title}>
-                        <h3 className="mb-4 text-xs font-semibold uppercase tracking-wider text-slate-400">
-                          {column.title}
-                        </h3>
-                        <div className="space-y-1">
-                          {column.items.map((item) => (
-                            <Link
-                              key={item.label}
-                              href={item.href}
-                              onClick={() => setSolucoesOpen(false)}
-                              className="group flex items-start gap-3 rounded-xl p-3 transition-colors hover:bg-cyan-50"
-                            >
-                              <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-500 transition-colors group-hover:bg-cyan-100 group-hover:text-cyan-600">
-                                <item.icon className="h-5 w-5" />
-                              </div>
-                              <div>
-                                <div className="text-sm font-semibold text-slate-800 group-hover:text-cyan-700">
-                                  {item.label}
-                                </div>
-                                <div className="mt-0.5 text-xs leading-relaxed text-slate-500">
-                                  {item.description}
-                                </div>
-                              </div>
-                            </Link>
-                          ))}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Bottom CTA */}
-                  <div className="mt-6 flex items-center justify-between rounded-xl bg-slate-50 px-4 py-3">
-                    <div>
-                      <p className="text-sm font-medium text-slate-700">
-                        Não encontra o que procura?
-                      </p>
-                      <p className="text-xs text-slate-500">
-                        Fale connosco para um orçamento personalizado.
-                      </p>
-                    </div>
-                    <Link
-                      href="/contactos"
-                      onClick={() => setSolucoesOpen(false)}
-                      className="rounded-lg bg-cyan-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-cyan-700"
-                    >
-                      Contactar
-                    </Link>
-                  </div>
-                </div>
-              </div>
-            )}
           </div>
 
           {/* Other nav links */}
@@ -271,6 +196,86 @@ export default function Header() {
         </button>
       </div>
 
+      {/* Mega Menu Dropdown - Centralized */}
+      {solucoesOpen && (
+        <div
+          ref={dropdownRef}
+          onMouseLeave={() => setSolucoesOpen(false)}
+          className="absolute left-1/2 top-full z-50 hidden w-[min(1200px,calc(100vw-48px))] -translate-x-1/2 animate-in fade-in slide-in-from-top-2 duration-200 lg:block"
+        >
+          <div className="mt-2 rounded-3xl border border-slate-200 bg-white p-8 shadow-2xl">
+            <div className="grid gap-8 lg:grid-cols-[280px_1fr]">
+              {/* Left Column - Info */}
+              <div className="flex flex-col justify-between rounded-2xl bg-gradient-to-br from-cyan-50 to-slate-50 p-6">
+                <div>
+                  <h3 className="text-lg font-bold text-slate-900">Soluções CLYON</h3>
+                  <p className="mt-2 text-sm leading-relaxed text-slate-600">
+                    Serviços profissionais de recolha, limpeza, transporte e esvaziamento em Lisboa, Margem Sul e Setúbal.
+                  </p>
+                </div>
+                <div className="mt-6 space-y-3">
+                  <Link
+                    href="/simulador"
+                    onClick={() => setSolucoesOpen(false)}
+                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-cyan-600 px-4 py-3 text-sm font-semibold text-white transition-all hover:bg-cyan-700"
+                  >
+                    Pedir orçamento
+                    <ArrowRight className="h-4 w-4" />
+                  </Link>
+                  <div className="flex items-center justify-center gap-2 rounded-xl bg-white px-4 py-2.5 text-sm text-slate-600">
+                    <Clock className="h-4 w-4 text-emerald-500" />
+                    <span>Resposta rápida em 24h</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Right Column - Solutions Grid */}
+              <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                {solucoes.map((item) => (
+                  <Link
+                    key={item.label}
+                    href={item.href}
+                    onClick={() => setSolucoesOpen(false)}
+                    className="group flex items-start gap-3 rounded-xl p-3 transition-all hover:-translate-y-0.5 hover:bg-cyan-50"
+                  >
+                    <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-500 transition-colors group-hover:bg-cyan-100 group-hover:text-cyan-600">
+                      <item.icon className="h-5 w-5" />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="text-sm font-semibold text-slate-800 group-hover:text-cyan-700">
+                        {item.label}
+                      </div>
+                      <div className="mt-0.5 line-clamp-2 text-xs leading-relaxed text-slate-500">
+                        {item.description}
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </div>
+
+            {/* Bottom CTA */}
+            <div className="mt-6 flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50 px-5 py-3">
+              <div>
+                <p className="text-sm font-medium text-slate-700">
+                  Não encontra o que procura?
+                </p>
+                <p className="text-xs text-slate-500">
+                  Fale connosco para um orçamento personalizado.
+                </p>
+              </div>
+              <Link
+                href="/contactos"
+                onClick={() => setSolucoesOpen(false)}
+                className="rounded-xl bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-slate-800"
+              >
+                Contactar
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Mobile Menu */}
       {menuOpen && (
         <div className="border-t border-slate-100 bg-white lg:hidden">
@@ -290,38 +295,29 @@ export default function Header() {
               </button>
 
               {mobileAccordionOpen && (
-                <div className="mt-1 space-y-4 rounded-xl bg-slate-50 p-4">
-                  {solucoesMenu.map((column) => (
-                    <div key={column.title}>
-                      <h4 className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-400">
-                        {column.title}
-                      </h4>
-                      <div className="space-y-1">
-                        {column.items.map((item) => (
-                          <Link
-                            key={item.label}
-                            href={item.href}
-                            onClick={() => {
-                              setMenuOpen(false);
-                              setMobileAccordionOpen(false);
-                            }}
-                            className="flex items-center gap-3 rounded-lg p-2.5 transition-colors hover:bg-white"
-                          >
-                            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white text-cyan-600">
-                              <item.icon className="h-4 w-4" />
-                            </div>
-                            <div>
-                              <div className="text-sm font-medium text-slate-700">
-                                {item.label}
-                              </div>
-                              <div className="text-xs text-slate-500">
-                                {item.description}
-                              </div>
-                            </div>
-                          </Link>
-                        ))}
+                <div className="mt-1 space-y-1 rounded-xl bg-slate-50 p-3">
+                  {solucoes.map((item) => (
+                    <Link
+                      key={item.label}
+                      href={item.href}
+                      onClick={() => {
+                        setMenuOpen(false);
+                        setMobileAccordionOpen(false);
+                      }}
+                      className="flex items-center gap-3 rounded-lg p-2.5 transition-colors hover:bg-white"
+                    >
+                      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-white text-cyan-600">
+                        <item.icon className="h-4 w-4" />
                       </div>
-                    </div>
+                      <div>
+                        <div className="text-sm font-medium text-slate-700">
+                          {item.label}
+                        </div>
+                        <div className="text-xs text-slate-500">
+                          {item.description}
+                        </div>
+                      </div>
+                    </Link>
                   ))}
                 </div>
               )}
