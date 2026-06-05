@@ -210,7 +210,7 @@ export default function Header() {
                 <div>
                   <h3 className="text-lg font-bold text-slate-900">Soluções CLYON</h3>
                   <p className="mt-2 text-sm leading-relaxed text-slate-600">
-                    Serviços profissionais de recolha, limpeza, transporte e esvaziamento em Lisboa, Margem Sul e Setúbal.
+                    Servi��os profissionais de recolha, limpeza, transporte e esvaziamento em Lisboa, Margem Sul e Setúbal.
                   </p>
                 </div>
                 <div className="mt-6 space-y-3">
@@ -238,7 +238,7 @@ export default function Header() {
                     onClick={() => setSolucoesOpen(false)}
                     className="group flex items-start gap-3 rounded-xl p-3 transition-all hover:-translate-y-0.5 hover:bg-cyan-50"
                   >
-                    <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-cyan-50 text-cyan-600 transition-colors group-hover:bg-cyan-100 group-hover:text-cyan-700">
+                    <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-cyan-100 text-cyan-700 transition-colors group-hover:bg-cyan-600 group-hover:text-white">
                       <item.icon className="h-5 w-5" />
                     </div>
                     <div className="min-w-0">

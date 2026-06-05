@@ -274,7 +274,8 @@ export default function LimpezaPosObraPage() {
                   <Link
                     key={city.slug}
                     href={`/${getCityServiceSlug("limpeza-pos-obra", city.slug)}`}
-                    className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-sm font-medium text-slate-700 transition-all hover:border-cyan-300 hover:bg-cyan-50 hover:text-cyan-700"
+                    className="rounded-full border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium shadow-sm transition-all hover:border-cyan-400 hover:bg-cyan-50 hover:shadow-md"
+                    style={{ color: '#1e293b' }}
                   >
                     {city.name}
                   </Link>
@@ -292,7 +293,8 @@ export default function LimpezaPosObraPage() {
                   <Link
                     key={city.slug}
                     href={`/${getCityServiceSlug("limpeza-pos-obra", city.slug)}`}
-                    className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-sm font-medium text-slate-700 transition-all hover:border-cyan-300 hover:bg-cyan-50 hover:text-cyan-700"
+                    className="rounded-full border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium shadow-sm transition-all hover:border-cyan-400 hover:bg-cyan-50 hover:shadow-md"
+                    style={{ color: '#1e293b' }}
                   >
                     {city.name}
                   </Link>
@@ -307,7 +309,8 @@ export default function LimpezaPosObraPage() {
                   <Link
                     key={city.slug}
                     href={`/${getCityServiceSlug("limpeza-pos-obra", city.slug)}`}
-                    className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-sm font-medium text-slate-700 transition-all hover:border-cyan-300 hover:bg-cyan-50 hover:text-cyan-700"
+                    className="rounded-full border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium shadow-sm transition-all hover:border-cyan-400 hover:bg-cyan-50 hover:shadow-md"
+                    style={{ color: '#1e293b' }}
                   >
                     {city.name}
                   </Link>
