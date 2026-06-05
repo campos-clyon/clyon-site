@@ -36,17 +36,17 @@ export default function StickyCTA({ showAfterScroll = 300 }: StickyCTAProps) {
           href={whatsappUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-emerald-500 px-4 py-3 text-sm font-semibold text-white shadow-[0_12px_28px_-12px_rgba(37,211,102,0.6)] transition hover:bg-emerald-400"
+          className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#25D366] px-4 py-3 text-sm font-semibold text-white shadow-[0_12px_28px_-12px_rgba(37,211,102,0.6)] transition hover:bg-[#20bd5a]"
         >
-          <MessageCircle className="h-5 w-5" />
-          WhatsApp
+          <MessageCircle className="h-5 w-5 text-white" />
+          <span className="text-white">WhatsApp</span>
         </a>
         <Link
           href="/contactos"
-          className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-cyan-500 px-4 py-3 text-sm font-semibold text-white shadow-[0_12px_28px_-12px_rgba(6,182,212,0.6)] transition hover:bg-cyan-400"
+          className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-cyan-600 px-4 py-3 text-sm font-semibold text-white shadow-[0_12px_28px_-12px_rgba(6,182,212,0.6)] transition hover:bg-cyan-700"
         >
-          <Phone className="h-5 w-5" />
-          Orçamento
+          <Phone className="h-5 w-5 text-white" />
+          <span className="text-white">Orçamento</span>
         </Link>
       </div>
     </div>

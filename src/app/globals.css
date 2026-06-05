@@ -140,6 +140,45 @@ img {
   background-color: #f0fdfa;
 }
 
+.site-btn-whatsapp {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 0.875rem;
+  background-color: #25D366;
+  padding: 0.875rem 1.75rem;
+  font-weight: 600;
+  font-size: 0.9375rem;
+  color: white !important;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 14px -4px rgba(37, 211, 102, 0.4);
+}
+
+.site-btn-whatsapp:hover {
+  background-color: #20bd5a;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px -4px rgba(37, 211, 102, 0.5);
+}
+
+.site-btn-whatsapp svg,
+.site-btn-whatsapp span {
+  color: white !important;
+}
+
+.site-btn-primary svg,
+.site-btn-primary span {
+  color: white !important;
+}
+
+.site-btn-secondary svg {
+  color: #334155 !important;
+}
+
+.site-btn-secondary:hover svg {
+  color: #0891b2 !important;
+}
+
 /* Card styles */
 .card-elevated {
   background: white;
@@ -180,10 +219,36 @@ img {
 a.bg-cyan-600,
 a.bg-cyan-500,
 a.bg-cyan-400,
+a[class*="bg-cyan-"] {
+  color: #ffffff !important;
+}
+
+/* WhatsApp buttons - força cor verde WhatsApp correta */
 a.bg-emerald-500,
 a.bg-emerald-400,
-a[class*="bg-cyan-"],
-a[class*="bg-emerald-"] {
+a.bg-emerald-600,
+a[class*="bg-emerald-"],
+button[class*="bg-emerald-"] {
+  background-color: #25D366 !important;
+  color: #ffffff !important;
+}
+
+a.bg-emerald-500:hover,
+a.bg-emerald-400:hover,
+a.bg-emerald-600:hover,
+a[class*="bg-emerald-"]:hover {
+  background-color: #20bd5a !important;
+}
+
+a[class*="bg-emerald-"] svg,
+button[class*="bg-emerald-"] svg,
+a[class*="bg-emerald-"] span {
+  color: #ffffff !important;
+}
+
+/* Botões cyan (primários CLYON) */
+a[class*="bg-cyan-"] svg,
+a[class*="bg-cyan-"] span {
   color: #ffffff !important;
 }
 

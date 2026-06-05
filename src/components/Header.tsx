@@ -173,16 +173,16 @@ export default function Header() {
             target="_blank"
             rel="noopener noreferrer"
             onClick={() => trackWhatsAppClick("header")}
-            className="inline-flex items-center gap-2 rounded-xl bg-emerald-500 px-4 py-2.5 text-sm font-semibold text-white transition-all hover:bg-emerald-600"
+            className="inline-flex items-center gap-2 rounded-xl bg-[#25D366] px-4 py-2.5 text-sm font-semibold text-white transition-all hover:bg-[#20bd5a]"
           >
-            <MessageCircle className="h-4 w-4" />
-            <span>WhatsApp</span>
+            <MessageCircle className="h-4 w-4 text-white" />
+            <span className="text-white">WhatsApp</span>
           </a>
           <Link
             href="/simulador"
             className="inline-flex items-center gap-2 rounded-xl bg-cyan-600 px-5 py-2.5 text-sm font-semibold text-white transition-all hover:bg-cyan-700"
           >
-            Quero contratar
+            <span className="text-white">Quero contratar</span>
           </Link>
         </div>
 
@@ -345,17 +345,17 @@ export default function Header() {
                   trackWhatsAppClick("header_mobile");
                   setMenuOpen(false);
                 }}
-                className="flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-500 px-4 py-3.5 text-base font-semibold text-white transition-all hover:bg-emerald-600"
+                className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#25D366] px-4 py-3.5 text-base font-semibold text-white transition-all hover:bg-[#20bd5a]"
               >
-                <MessageCircle className="h-5 w-5" />
-                WhatsApp
+                <MessageCircle className="h-5 w-5 text-white" />
+                <span className="text-white">WhatsApp</span>
               </a>
               <Link
                 href="/simulador"
                 onClick={() => setMenuOpen(false)}
                 className="flex w-full items-center justify-center gap-2 rounded-xl bg-cyan-600 px-4 py-3.5 text-base font-semibold text-white transition-all hover:bg-cyan-700"
               >
-                Quero contratar
+                <span className="text-white">Quero contratar</span>
               </Link>
             </div>
           </nav>

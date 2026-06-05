@@ -88,10 +88,10 @@ export default function ServiceHero({
                   href={whatsappUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex min-w-[180px] items-center justify-center gap-2 rounded-2xl bg-emerald-500 px-6 py-4 text-lg font-semibold text-white shadow-[0_18px_40px_-22px_rgba(37,211,102,0.75)] transition hover:-translate-y-0.5 hover:bg-emerald-400"
+                  className="site-btn-whatsapp site-btn-lively min-w-[180px] py-4 text-lg"
                 >
                   <MessageCircle className="h-5 w-5" />
-                  WhatsApp
+                  <span>WhatsApp</span>
                 </a>
               )}
             </div>
