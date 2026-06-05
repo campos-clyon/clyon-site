@@ -257,7 +257,7 @@ export default function LimpezaPosObraPage() {
       </section>
 
       {/* Zonas de cobertura */}
-      <section className="bg-white py-16">
+      <section className="bg-slate-50/50 py-16">
         <div className="mx-auto max-w-7xl px-6 lg:px-8">
           <h2 className="mb-4 text-center text-2xl font-bold text-slate-900 sm:text-3xl">
             Limpeza Pós-Obra por Zona
@@ -266,16 +266,15 @@ export default function LimpezaPosObraPage() {
             Clique na sua cidade para ver detalhes específicos.
           </p>
 
-          <div className="grid gap-8 md:grid-cols-3">
-            <div className="rounded-2xl border border-emerald-100 bg-white p-6 shadow-sm">
+          <div className="grid gap-6 md:grid-cols-3">
+            <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
               <h3 className="mb-4 text-lg font-bold text-slate-900">Grande Lisboa</h3>
               <div className="flex flex-wrap gap-2">
                 {lisboaCities.map((city) => (
                   <Link
                     key={city.slug}
                     href={`/${getCityServiceSlug("limpeza-pos-obra", city.slug)}`}
-                    className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium transition-colors hover:border-emerald-300 hover:bg-emerald-50"
-                    style={{ color: '#0f172a' }}
+                    className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-sm font-medium text-slate-700 transition-all hover:border-cyan-300 hover:bg-cyan-50 hover:text-cyan-700"
                   >
                     {city.name}
                   </Link>
@@ -283,18 +282,17 @@ export default function LimpezaPosObraPage() {
               </div>
             </div>
 
-            <div className="rounded-2xl border border-emerald-100 bg-white p-6 shadow-sm">
+            <div className="rounded-2xl border border-cyan-200 bg-white p-6 shadow-sm ring-1 ring-cyan-100">
               <h3 className="mb-4 flex items-center gap-2 text-lg font-bold text-slate-900">
                 Margem Sul
-                <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-700">Base CLYON</span>
+                <span className="rounded-full bg-cyan-100 px-2 py-0.5 text-xs font-medium text-cyan-700">Base CLYON</span>
               </h3>
               <div className="flex flex-wrap gap-2">
                 {margemSulCities.map((city) => (
                   <Link
                     key={city.slug}
                     href={`/${getCityServiceSlug("limpeza-pos-obra", city.slug)}`}
-                    className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium transition-colors hover:border-emerald-300 hover:bg-emerald-50"
-                    style={{ color: '#0f172a' }}
+                    className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-sm font-medium text-slate-700 transition-all hover:border-cyan-300 hover:bg-cyan-50 hover:text-cyan-700"
                   >
                     {city.name}
                   </Link>
@@ -302,15 +300,14 @@ export default function LimpezaPosObraPage() {
               </div>
             </div>
 
-            <div className="rounded-2xl border border-emerald-100 bg-white p-6 shadow-sm">
+            <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
               <h3 className="mb-4 text-lg font-bold text-slate-900">Setúbal</h3>
               <div className="flex flex-wrap gap-2">
                 {setubalCities.map((city) => (
                   <Link
                     key={city.slug}
                     href={`/${getCityServiceSlug("limpeza-pos-obra", city.slug)}`}
-                    className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium transition-colors hover:border-emerald-300 hover:bg-emerald-50"
-                    style={{ color: '#0f172a' }}
+                    className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-sm font-medium text-slate-700 transition-all hover:border-cyan-300 hover:bg-cyan-50 hover:text-cyan-700"
                   >
                     {city.name}
                   </Link>
@@ -320,7 +317,7 @@ export default function LimpezaPosObraPage() {
           </div>
 
           <div className="mt-8 text-center">
-            <Link href="/areas-de-atuacao" className="inline-flex items-center gap-2 text-emerald-600 transition-colors hover:text-emerald-700">
+            <Link href="/areas-de-atuacao" className="inline-flex items-center gap-2 text-cyan-600 transition-colors hover:text-cyan-700">
               Ver todas as áreas de atuação
               <ArrowRight className="h-4 w-4" />
             </Link>
@@ -330,20 +327,20 @@ export default function LimpezaPosObraPage() {
 
       {/* Links principais */}
       <section className="mx-auto max-w-7xl px-6 pb-16 lg:px-8">
-        <div className="rounded-[30px] border border-emerald-100 bg-emerald-50/50 p-7">
-          <h2 className="text-2xl font-bold text-slate-950">Páginas mais procuradas</h2>
+        <div className="rounded-2xl border border-slate-200 bg-white p-7 shadow-sm">
+          <h2 className="text-2xl font-bold text-slate-900">Páginas mais procuradas</h2>
           <div className="mt-6 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
             {keyCities.slice(0, 8).map((city) => (
               <Link
                 key={city.slug}
                 href={`/${getCityServiceSlug("limpeza-pos-obra", city.slug)}`}
-                className="rounded-[20px] border border-emerald-100 bg-white px-5 py-4 transition hover:-translate-y-0.5 hover:shadow-md"
+                className="group rounded-xl border border-slate-200 bg-slate-50 px-5 py-4 transition-all hover:-translate-y-0.5 hover:border-cyan-200 hover:bg-white hover:shadow-md"
               >
-                <div className="flex items-center gap-2 text-emerald-700">
+                <div className="flex items-center gap-2 text-cyan-600">
                   <MapPin className="h-4 w-4" />
                   <span className="text-sm font-semibold uppercase tracking-wide">{city.regionLabel}</span>
                 </div>
-                <h3 className="mt-2 font-bold text-slate-900">Limpeza em {city.name}</h3>
+                <h3 className="mt-2 font-bold text-slate-900 group-hover:text-cyan-700">Limpeza em {city.name}</h3>
               </Link>
             ))}
           </div>

@@ -322,9 +322,9 @@ export default function EsvaziamentoAmadoraPage() {
         </section>
 
         {/* Serviços relacionados */}
-        <section className="py-14">
+        <section className="bg-slate-50/50 py-14">
           <div className="mx-auto max-w-7xl px-6 lg:px-8">
-            <p className="text-sm font-semibold uppercase tracking-wide text-emerald-600">
+            <p className="text-sm font-semibold uppercase tracking-wide text-cyan-600">
               Serviços relacionados na Amadora
             </p>
             <h2 className="mt-2 text-2xl font-bold text-slate-900">
@@ -343,10 +343,13 @@ export default function EsvaziamentoAmadoraPage() {
                 <Link
                   key={link.href}
                   href={link.href}
-                  className="group rounded-lg border border-slate-200 bg-white p-4 transition hover:border-emerald-200 hover:bg-emerald-50"
+                  className="group flex items-center justify-between rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition-all hover:border-cyan-200 hover:shadow-md"
                 >
-                  <span className="font-semibold text-slate-900 group-hover:text-emerald-700">{link.label}</span>
-                  <p className="mt-1 text-sm text-slate-500">{link.desc}</p>
+                  <div>
+                    <span className="font-semibold text-slate-900 group-hover:text-cyan-700">{link.label}</span>
+                    <p className="mt-0.5 text-sm text-slate-500">{link.desc}</p>
+                  </div>
+                  <ArrowRight className="h-4 w-4 shrink-0 text-slate-300 transition group-hover:translate-x-0.5 group-hover:text-cyan-600" />
                 </Link>
               ))}
             </div>
