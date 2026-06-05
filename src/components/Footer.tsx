@@ -7,6 +7,10 @@ import { Instagram, MessageCircle, ArrowRight, Lock, CreditCard, Smartphone, Bui
 import { trackWhatsAppClick, trackPhoneCall } from "@/lib/analytics";
 import { BUSINESS_INSTAGRAM, BUSINESS_PHONE, BUSINESS_EMAIL } from "@/lib/seo-data";
 
+// Estilos para links com hover azul água
+const linkStyle = "text-white hover:text-cyan-400 transition-colors";
+const linkStyleInline = { color: "#ffffff", fontSize: "14px", textDecoration: "none" };
+
 export default function Footer() {
   const anoAtual = new Date().getFullYear();
   const telHref = `tel:${BUSINESS_PHONE.replace(/\s+/g, "")}`;
@@ -15,6 +19,14 @@ export default function Footer() {
 
   return (
     <footer style={{ backgroundColor: "#0f172a", color: "white" }}>
+      <style jsx>{`
+        footer a:hover {
+          color: #22d3ee !important;
+        }
+        footer button:hover {
+          color: #22d3ee !important;
+        }
+      `}</style>
       <div style={{ maxWidth: "1280px", margin: "0 auto", padding: "64px 24px" }}>
         {/* Desktop Layout */}
         <div className="hidden lg:grid lg:grid-cols-[280px_repeat(4,1fr)] lg:gap-12">
@@ -26,26 +38,26 @@ export default function Footer() {
                 alt="CLYON"
                 width={120}
                 height={40}
-                style={{ height: "36px", width: "auto" }}
+                style={{ height: "36px", width: "auto", filter: "brightness(0) invert(1)" }}
               />
             </Link>
-            <p style={{ marginTop: "16px", fontSize: "14px", lineHeight: "1.7", color: "#cbd5e1" }}>
+            <p style={{ marginTop: "16px", fontSize: "14px", lineHeight: "1.7", color: "#ffffff" }}>
               Recolha e limpeza profissional em Lisboa, Margem Sul e Setúbal com resposta rápida e execução sem stress.
             </p>
 
             <div style={{ marginTop: "24px", borderTop: "1px solid #334155", paddingTop: "20px" }}>
-              <h4 style={{ fontSize: "11px", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.1em", color: "#94a3b8", marginBottom: "14px" }}>Pagamentos</h4>
+              <h4 style={{ fontSize: "11px", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.1em", color: "rgba(255,255,255,0.7)", marginBottom: "14px" }}>Pagamentos</h4>
               <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: "10px", color: "#ffffff", fontSize: "14px" }}>
-                  <CreditCard style={{ width: "16px", height: "16px", color: "#06b6d4" }} />
+                  <CreditCard style={{ width: "16px", height: "16px", color: "#22d3ee" }} />
                   Revolut
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: "10px", color: "#ffffff", fontSize: "14px" }}>
-                  <Smartphone style={{ width: "16px", height: "16px", color: "#06b6d4" }} />
+                  <Smartphone style={{ width: "16px", height: "16px", color: "#22d3ee" }} />
                   MB WAY
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: "10px", color: "#ffffff", fontSize: "14px" }}>
-                  <Building style={{ width: "16px", height: "16px", color: "#06b6d4" }} />
+                  <Building style={{ width: "16px", height: "16px", color: "#22d3ee" }} />
                   Novo Banco
                 </div>
               </div>
@@ -54,24 +66,24 @@ export default function Footer() {
 
           {/* Serviços Column */}
           <div>
-            <h3 style={{ fontSize: "12px", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.1em", color: "#94a3b8", marginBottom: "20px" }}>Serviços</h3>
+            <h3 style={{ fontSize: "12px", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.1em", color: "rgba(255,255,255,0.7)", marginBottom: "20px" }}>Serviços</h3>
             <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: "12px" }}>
-              <li><Link href="/recolha-de-moveis" style={{ color: "#ffffff", fontSize: "14px", textDecoration: "none" }}>Recolha de Móveis</Link></li>
-              <li><Link href="/recolha-de-entulho" style={{ color: "#ffffff", fontSize: "14px", textDecoration: "none" }}>Recolha de Entulho</Link></li>
-              <li><Link href="/limpeza-pos-obra" style={{ color: "#ffffff", fontSize: "14px", textDecoration: "none" }}>Limpeza Pós-Obra</Link></li>
-              <li><Link href="/esvaziamento-de-casas" style={{ color: "#ffffff", fontSize: "14px", textDecoration: "none" }}>Esvaziamento de Casas</Link></li>
-              <li><Link href="/precos" style={{ color: "#ffffff", fontSize: "14px", textDecoration: "none" }}>Preços orientativos</Link></li>
+              <li><Link href="/recolha-de-moveis" style={linkStyleInline}>Recolha de Móveis</Link></li>
+              <li><Link href="/recolha-de-entulho" style={linkStyleInline}>Recolha de Entulho</Link></li>
+              <li><Link href="/limpeza-pos-obra" style={linkStyleInline}>Limpeza Pós-Obra</Link></li>
+              <li><Link href="/esvaziamento-de-casas" style={linkStyleInline}>Esvaziamento de Casas</Link></li>
+              <li><Link href="/precos" style={linkStyleInline}>Preços orientativos</Link></li>
             </ul>
           </div>
 
           {/* Empresa Column */}
           <div>
-            <h3 style={{ fontSize: "12px", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.1em", color: "#94a3b8", marginBottom: "20px" }}>Empresa</h3>
+            <h3 style={{ fontSize: "12px", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.1em", color: "rgba(255,255,255,0.7)", marginBottom: "20px" }}>Empresa</h3>
             <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: "12px" }}>
-              <li><Link href="/sobre-nos" style={{ color: "#ffffff", fontSize: "14px", textDecoration: "none" }}>Sobre nós</Link></li>
-              <li><Link href="/faq" style={{ color: "#ffffff", fontSize: "14px", textDecoration: "none" }}>FAQ</Link></li>
-              <li><Link href="/blog" style={{ color: "#ffffff", fontSize: "14px", textDecoration: "none" }}>Blog</Link></li>
-              <li><Link href="/contactos" style={{ color: "#ffffff", fontSize: "14px", textDecoration: "none" }}>Contactos</Link></li>
+              <li><Link href="/sobre-nos" style={linkStyleInline}>Sobre nós</Link></li>
+              <li><Link href="/faq" style={linkStyleInline}>FAQ</Link></li>
+              <li><Link href="/blog" style={linkStyleInline}>Blog</Link></li>
+              <li><Link href="/contactos" style={linkStyleInline}>Contactos</Link></li>
               <li>
                 <a href={BUSINESS_INSTAGRAM} target="_blank" rel="noopener noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: "6px", color: "#ffffff", fontSize: "14px", textDecoration: "none" }}>
                   <Instagram style={{ width: "14px", height: "14px" }} />
@@ -83,26 +95,26 @@ export default function Footer() {
 
           {/* Cobertura Column */}
           <div>
-            <h3 style={{ fontSize: "12px", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.1em", color: "#94a3b8", marginBottom: "20px" }}>Cobertura</h3>
+            <h3 style={{ fontSize: "12px", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.1em", color: "rgba(255,255,255,0.7)", marginBottom: "20px" }}>Cobertura</h3>
             <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px 20px" }}>
-              <li><Link href="/recolha-moveis-lisboa" style={{ color: "#ffffff", fontSize: "14px", textDecoration: "none" }}>Lisboa</Link></li>
-              <li><Link href="/recolha-moveis-almada" style={{ color: "#ffffff", fontSize: "14px", textDecoration: "none" }}>Almada</Link></li>
-              <li><Link href="/recolha-moveis-amadora" style={{ color: "#ffffff", fontSize: "14px", textDecoration: "none" }}>Amadora</Link></li>
-              <li><Link href="/recolha-moveis-seixal" style={{ color: "#ffffff", fontSize: "14px", textDecoration: "none" }}>Seixal</Link></li>
-              <li><Link href="/recolha-moveis-barreiro" style={{ color: "#ffffff", fontSize: "14px", textDecoration: "none" }}>Barreiro</Link></li>
-              <li><Link href="/recolha-moveis-oeiras" style={{ color: "#ffffff", fontSize: "14px", textDecoration: "none" }}>Oeiras</Link></li>
-              <li><Link href="/recolha-moveis-cascais" style={{ color: "#ffffff", fontSize: "14px", textDecoration: "none" }}>Cascais</Link></li>
-              <li><Link href="/recolha-moveis-setubal" style={{ color: "#ffffff", fontSize: "14px", textDecoration: "none" }}>Setúbal</Link></li>
-              <li><Link href="/recolha-moveis-loures" style={{ color: "#ffffff", fontSize: "14px", textDecoration: "none" }}>Loures</Link></li>
-              <li><Link href="/recolha-moveis-sintra" style={{ color: "#ffffff", fontSize: "14px", textDecoration: "none" }}>Sintra</Link></li>
-              <li><Link href="/recolha-moveis-montijo" style={{ color: "#ffffff", fontSize: "14px", textDecoration: "none" }}>Montijo</Link></li>
-              <li><Link href="/recolha-moveis-odivelas" style={{ color: "#ffffff", fontSize: "14px", textDecoration: "none" }}>Odivelas</Link></li>
+              <li><Link href="/recolha-moveis-lisboa" style={linkStyleInline}>Lisboa</Link></li>
+              <li><Link href="/recolha-moveis-almada" style={linkStyleInline}>Almada</Link></li>
+              <li><Link href="/recolha-moveis-amadora" style={linkStyleInline}>Amadora</Link></li>
+              <li><Link href="/recolha-moveis-seixal" style={linkStyleInline}>Seixal</Link></li>
+              <li><Link href="/recolha-moveis-barreiro" style={linkStyleInline}>Barreiro</Link></li>
+              <li><Link href="/recolha-moveis-oeiras" style={linkStyleInline}>Oeiras</Link></li>
+              <li><Link href="/recolha-moveis-cascais" style={linkStyleInline}>Cascais</Link></li>
+              <li><Link href="/recolha-moveis-setubal" style={linkStyleInline}>Setúbal</Link></li>
+              <li><Link href="/recolha-moveis-loures" style={linkStyleInline}>Loures</Link></li>
+              <li><Link href="/recolha-moveis-sintra" style={linkStyleInline}>Sintra</Link></li>
+              <li><Link href="/recolha-moveis-montijo" style={linkStyleInline}>Montijo</Link></li>
+              <li><Link href="/recolha-moveis-odivelas" style={linkStyleInline}>Odivelas</Link></li>
             </ul>
           </div>
 
           {/* Contacto Rápido Column */}
           <div>
-            <h3 style={{ fontSize: "12px", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.1em", color: "#94a3b8", marginBottom: "20px" }}>Contacto Rápido</h3>
+            <h3 style={{ fontSize: "12px", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.1em", color: "rgba(255,255,255,0.7)", marginBottom: "20px" }}>Contacto Rápido</h3>
             <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
               <a
                 href={urlWhatsapp}
@@ -118,7 +130,7 @@ export default function Footer() {
                 href="/simulador"
                 style={{ display: "flex", alignItems: "center", gap: "12px", backgroundColor: "#1e293b", padding: "12px 14px", borderRadius: "8px", color: "#ffffff", fontSize: "14px", textDecoration: "none" }}
               >
-                <ArrowRight style={{ width: "16px", height: "16px", color: "#0891b2" }} />
+                <ArrowRight style={{ width: "16px", height: "16px", color: "#22d3ee" }} />
                 Pedir orçamento
               </Link>
               <Link
@@ -142,28 +154,28 @@ export default function Footer() {
                 alt="CLYON"
                 width={120}
                 height={40}
-                style={{ height: "36px", width: "auto", margin: "0 auto" }}
+                style={{ height: "36px", width: "auto", margin: "0 auto", filter: "brightness(0) invert(1)" }}
               />
             </Link>
-            <p style={{ marginTop: "16px", fontSize: "14px", lineHeight: "1.7", color: "#cbd5e1" }}>
+            <p style={{ marginTop: "16px", fontSize: "14px", lineHeight: "1.7", color: "#ffffff" }}>
               Recolha e limpeza profissional em Lisboa, Margem Sul e Setúbal.
             </p>
           </div>
 
           {/* Pagamentos Mobile */}
           <div style={{ marginBottom: "32px" }}>
-            <h4 style={{ fontSize: "11px", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.1em", color: "#94a3b8", marginBottom: "14px" }}>Pagamentos</h4>
+            <h4 style={{ fontSize: "11px", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.1em", color: "rgba(255,255,255,0.7)", marginBottom: "14px" }}>Pagamentos</h4>
             <div style={{ display: "flex", gap: "20px", flexWrap: "wrap" }}>
               <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "#ffffff", fontSize: "14px" }}>
-                <CreditCard style={{ width: "16px", height: "16px", color: "#06b6d4" }} />
+                <CreditCard style={{ width: "16px", height: "16px", color: "#22d3ee" }} />
                 Revolut
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "#ffffff", fontSize: "14px" }}>
-                <Smartphone style={{ width: "16px", height: "16px", color: "#06b6d4" }} />
+                <Smartphone style={{ width: "16px", height: "16px", color: "#22d3ee" }} />
                 MB WAY
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "#ffffff", fontSize: "14px" }}>
-                <Building style={{ width: "16px", height: "16px", color: "#06b6d4" }} />
+                <Building style={{ width: "16px", height: "16px", color: "#22d3ee" }} />
                 Novo Banco
               </div>
             </div>
@@ -172,28 +184,28 @@ export default function Footer() {
           {/* Links Grid Mobile */}
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "32px", marginBottom: "32px" }}>
             <div>
-              <h3 style={{ fontSize: "12px", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.1em", color: "#94a3b8", marginBottom: "16px" }}>Serviços</h3>
+              <h3 style={{ fontSize: "12px", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.1em", color: "rgba(255,255,255,0.7)", marginBottom: "16px" }}>Serviços</h3>
               <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: "10px" }}>
-                <li><Link href="/recolha-de-moveis" style={{ color: "#ffffff", fontSize: "14px", textDecoration: "none" }}>Recolha de Móveis</Link></li>
-                <li><Link href="/recolha-de-entulho" style={{ color: "#ffffff", fontSize: "14px", textDecoration: "none" }}>Recolha de Entulho</Link></li>
-                <li><Link href="/esvaziamento-de-casas" style={{ color: "#ffffff", fontSize: "14px", textDecoration: "none" }}>Esvaziamento</Link></li>
-                <li><Link href="/precos" style={{ color: "#ffffff", fontSize: "14px", textDecoration: "none" }}>Preços</Link></li>
+                <li><Link href="/recolha-de-moveis" style={linkStyleInline}>Recolha de Móveis</Link></li>
+                <li><Link href="/recolha-de-entulho" style={linkStyleInline}>Recolha de Entulho</Link></li>
+                <li><Link href="/esvaziamento-de-casas" style={linkStyleInline}>Esvaziamento</Link></li>
+                <li><Link href="/precos" style={linkStyleInline}>Preços</Link></li>
               </ul>
             </div>
             <div>
-              <h3 style={{ fontSize: "12px", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.1em", color: "#94a3b8", marginBottom: "16px" }}>Empresa</h3>
+              <h3 style={{ fontSize: "12px", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.1em", color: "rgba(255,255,255,0.7)", marginBottom: "16px" }}>Empresa</h3>
               <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: "10px" }}>
-                <li><Link href="/sobre-nos" style={{ color: "#ffffff", fontSize: "14px", textDecoration: "none" }}>Sobre nós</Link></li>
-                <li><Link href="/faq" style={{ color: "#ffffff", fontSize: "14px", textDecoration: "none" }}>FAQ</Link></li>
-                <li><Link href="/contactos" style={{ color: "#ffffff", fontSize: "14px", textDecoration: "none" }}>Contactos</Link></li>
-                <li><Link href="/avaliacoes" style={{ color: "#ffffff", fontSize: "14px", textDecoration: "none" }}>Avaliações</Link></li>
+                <li><Link href="/sobre-nos" style={linkStyleInline}>Sobre nós</Link></li>
+                <li><Link href="/faq" style={linkStyleInline}>FAQ</Link></li>
+                <li><Link href="/contactos" style={linkStyleInline}>Contactos</Link></li>
+                <li><Link href="/avaliacoes" style={linkStyleInline}>Avaliações</Link></li>
               </ul>
             </div>
           </div>
 
           {/* Cobertura Mobile */}
           <div style={{ marginBottom: "32px" }}>
-            <h3 style={{ fontSize: "12px", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.1em", color: "#94a3b8", marginBottom: "16px" }}>Cobertura</h3>
+            <h3 style={{ fontSize: "12px", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.1em", color: "rgba(255,255,255,0.7)", marginBottom: "16px" }}>Cobertura</h3>
             <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
               <Link href="/recolha-moveis-lisboa" style={{ color: "#ffffff", fontSize: "13px", textDecoration: "none", padding: "4px 10px", backgroundColor: "#1e293b", borderRadius: "4px" }}>Lisboa</Link>
               <Link href="/recolha-moveis-almada" style={{ color: "#ffffff", fontSize: "13px", textDecoration: "none", padding: "4px 10px", backgroundColor: "#1e293b", borderRadius: "4px" }}>Almada</Link>
@@ -208,7 +220,7 @@ export default function Footer() {
 
           {/* Contacto Rápido Mobile */}
           <div style={{ marginBottom: "16px" }}>
-            <h3 style={{ fontSize: "12px", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.1em", color: "#94a3b8", marginBottom: "16px" }}>Contacto Rápido</h3>
+            <h3 style={{ fontSize: "12px", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.1em", color: "rgba(255,255,255,0.7)", marginBottom: "16px" }}>Contacto Rápido</h3>
             <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
               <a
                 href={urlWhatsapp}
@@ -224,7 +236,7 @@ export default function Footer() {
                 href="/simulador"
                 style={{ display: "flex", alignItems: "center", gap: "12px", backgroundColor: "#1e293b", padding: "12px 14px", borderRadius: "8px", color: "#ffffff", fontSize: "14px", textDecoration: "none" }}
               >
-                <ArrowRight style={{ width: "16px", height: "16px", color: "#0891b2" }} />
+                <ArrowRight style={{ width: "16px", height: "16px", color: "#22d3ee" }} />
                 Pedir orçamento
               </Link>
               <Link
@@ -243,14 +255,14 @@ export default function Footer() {
       {/* Bottom Bar */}
       <div style={{ borderTop: "1px solid #1e293b" }}>
         <div style={{ maxWidth: "1280px", margin: "0 auto", padding: "20px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "16px" }} className="flex-col sm:flex-row">
-          <p style={{ fontSize: "14px", color: "#64748b" }}>
+          <p style={{ fontSize: "14px", color: "rgba(255,255,255,0.5)" }}>
             © CLYON {anoAtual} - Todos os direitos reservados
           </p>
           <div style={{ display: "flex", flexWrap: "wrap", gap: "24px", alignItems: "center" }}>
-            <Link href="/privacidade" style={{ fontSize: "14px", color: "#64748b", textDecoration: "none" }}>
+            <Link href="/privacidade" style={{ fontSize: "14px", color: "rgba(255,255,255,0.5)", textDecoration: "none" }}>
               Política de Privacidade
             </Link>
-            <Link href="/cookies" style={{ fontSize: "14px", color: "#64748b", textDecoration: "none" }}>
+            <Link href="/cookies" style={{ fontSize: "14px", color: "rgba(255,255,255,0.5)", textDecoration: "none" }}>
               Política de Cookies
             </Link>
             <button
@@ -258,7 +270,7 @@ export default function Footer() {
               onClick={() => {
                 window.dispatchEvent(new CustomEvent("clyon-open-cookie-preferences"));
               }}
-              style={{ fontSize: "14px", color: "#64748b", background: "none", border: "none", cursor: "pointer", padding: 0 }}
+              style={{ fontSize: "14px", color: "rgba(255,255,255,0.5)", background: "none", border: "none", cursor: "pointer", padding: 0 }}
             >
               Gerir cookies
             </button>
