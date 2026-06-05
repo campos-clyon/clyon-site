@@ -121,24 +121,27 @@ export default function Footer() {
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={() => trackWhatsAppClick("footer-quick")}
-                style={{ display: "flex", alignItems: "center", gap: "12px", backgroundColor: "#1e293b", padding: "12px 14px", borderRadius: "8px", color: "#ffffff", fontSize: "14px", textDecoration: "none" }}
+                className="site-btn-footer group"
+                style={{ display: "flex", alignItems: "center", gap: "12px", backgroundColor: "#1e293b", padding: "12px 14px", borderRadius: "8px", color: "#ffffff", fontSize: "14px", textDecoration: "none", transition: "all 0.2s ease" }}
               >
-                <MessageCircle style={{ width: "16px", height: "16px", color: "#10b981" }} />
-                WhatsApp direto
+                <MessageCircle style={{ width: "16px", height: "16px", color: "#22d3ee" }} className="group-hover:text-white" />
+                <span style={{ color: "#ffffff" }}>WhatsApp direto</span>
               </a>
               <Link
                 href="/simulador"
-                style={{ display: "flex", alignItems: "center", gap: "12px", backgroundColor: "#1e293b", padding: "12px 14px", borderRadius: "8px", color: "#ffffff", fontSize: "14px", textDecoration: "none" }}
+                className="site-btn-footer group"
+                style={{ display: "flex", alignItems: "center", gap: "12px", backgroundColor: "#1e293b", padding: "12px 14px", borderRadius: "8px", color: "#ffffff", fontSize: "14px", textDecoration: "none", transition: "all 0.2s ease" }}
               >
-                <ArrowRight style={{ width: "16px", height: "16px", color: "#22d3ee" }} />
-                Pedir orçamento
+                <ArrowRight style={{ width: "16px", height: "16px", color: "#22d3ee" }} className="group-hover:text-white" />
+                <span style={{ color: "#ffffff" }}>Pedir orçamento</span>
               </Link>
               <Link
                 href="/colaboradores"
-                style={{ display: "flex", alignItems: "center", gap: "12px", backgroundColor: "#1e293b", padding: "12px 14px", borderRadius: "8px", color: "#ffffff", fontSize: "14px", textDecoration: "none" }}
+                className="site-btn-footer group"
+                style={{ display: "flex", alignItems: "center", gap: "12px", backgroundColor: "#1e293b", padding: "12px 14px", borderRadius: "8px", color: "#ffffff", fontSize: "14px", textDecoration: "none", transition: "all 0.2s ease" }}
               >
-                <Lock style={{ width: "16px", height: "16px", color: "#94a3b8" }} />
-                Área de colaboradores
+                <Lock style={{ width: "16px", height: "16px", color: "#94a3b8" }} className="group-hover:text-white" />
+                <span style={{ color: "#ffffff" }}>Área de colaboradores</span>
               </Link>
             </div>
           </div>
@@ -227,24 +230,27 @@ export default function Footer() {
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={() => trackWhatsAppClick("footer-mobile")}
-                style={{ display: "flex", alignItems: "center", gap: "12px", backgroundColor: "#1e293b", padding: "12px 14px", borderRadius: "8px", color: "#ffffff", fontSize: "14px", textDecoration: "none" }}
+                className="site-btn-footer group"
+                style={{ display: "flex", alignItems: "center", gap: "12px", backgroundColor: "#1e293b", padding: "12px 14px", borderRadius: "8px", color: "#ffffff", fontSize: "14px", textDecoration: "none", transition: "all 0.2s ease" }}
               >
-                <MessageCircle style={{ width: "16px", height: "16px", color: "#10b981" }} />
-                WhatsApp direto
+                <MessageCircle style={{ width: "16px", height: "16px", color: "#22d3ee" }} className="group-hover:text-white" />
+                <span style={{ color: "#ffffff" }}>WhatsApp direto</span>
               </a>
               <Link
                 href="/simulador"
-                style={{ display: "flex", alignItems: "center", gap: "12px", backgroundColor: "#1e293b", padding: "12px 14px", borderRadius: "8px", color: "#ffffff", fontSize: "14px", textDecoration: "none" }}
+                className="site-btn-footer group"
+                style={{ display: "flex", alignItems: "center", gap: "12px", backgroundColor: "#1e293b", padding: "12px 14px", borderRadius: "8px", color: "#ffffff", fontSize: "14px", textDecoration: "none", transition: "all 0.2s ease" }}
               >
-                <ArrowRight style={{ width: "16px", height: "16px", color: "#22d3ee" }} />
-                Pedir orçamento
+                <ArrowRight style={{ width: "16px", height: "16px", color: "#22d3ee" }} className="group-hover:text-white" />
+                <span style={{ color: "#ffffff" }}>Pedir orçamento</span>
               </Link>
               <Link
                 href="/colaboradores"
-                style={{ display: "flex", alignItems: "center", gap: "12px", backgroundColor: "#1e293b", padding: "12px 14px", borderRadius: "8px", color: "#ffffff", fontSize: "14px", textDecoration: "none" }}
+                className="site-btn-footer group"
+                style={{ display: "flex", alignItems: "center", gap: "12px", backgroundColor: "#1e293b", padding: "12px 14px", borderRadius: "8px", color: "#ffffff", fontSize: "14px", textDecoration: "none", transition: "all 0.2s ease" }}
               >
-                <Lock style={{ width: "16px", height: "16px", color: "#94a3b8" }} />
-                Área de colaboradores
+                <Lock style={{ width: "16px", height: "16px", color: "#94a3b8" }} className="group-hover:text-white" />
+                <span style={{ color: "#ffffff" }}>Área de colaboradores</span>
               </Link>
             </div>
           </div>

@@ -219,7 +219,21 @@ img {
 a.bg-cyan-600,
 a.bg-cyan-500,
 a.bg-cyan-400,
-a[class*="bg-cyan-"] {
+a[class*="bg-cyan-"],
+button[class*="bg-cyan-"],
+a.bg-\[\#0891b2\],
+a.bg-\[\#009FC2\] {
+  color: #ffffff !important;
+}
+
+a.bg-cyan-600:hover,
+a.bg-cyan-500:hover,
+a.bg-cyan-400:hover,
+a[class*="bg-cyan-"]:hover,
+button[class*="bg-cyan-"]:hover,
+a.bg-cyan-600:focus,
+a.bg-cyan-600:active,
+a.bg-cyan-600:visited {
   color: #ffffff !important;
 }
 
@@ -228,7 +242,8 @@ a.bg-emerald-500,
 a.bg-emerald-400,
 a.bg-emerald-600,
 a[class*="bg-emerald-"],
-button[class*="bg-emerald-"] {
+button[class*="bg-emerald-"],
+a.bg-\[\#25D366\] {
   background-color: #25D366 !important;
   color: #ffffff !important;
 }
@@ -236,47 +251,81 @@ button[class*="bg-emerald-"] {
 a.bg-emerald-500:hover,
 a.bg-emerald-400:hover,
 a.bg-emerald-600:hover,
-a[class*="bg-emerald-"]:hover {
+a[class*="bg-emerald-"]:hover,
+a.bg-\[\#25D366\]:hover,
+a[class*="bg-emerald-"]:focus,
+a[class*="bg-emerald-"]:active,
+a[class*="bg-emerald-"]:visited {
   background-color: #20bd5a !important;
+  color: #ffffff !important;
 }
 
 a[class*="bg-emerald-"] svg,
 button[class*="bg-emerald-"] svg,
-a[class*="bg-emerald-"] span {
+a[class*="bg-emerald-"] span,
+a.bg-\[\#25D366\] svg,
+a.bg-\[\#25D366\] span {
   color: #ffffff !important;
 }
 
-/* Botões cyan (primários CLYON) */
+/* Botões cyan (primários CLYON) - TODOS os estados */
 a[class*="bg-cyan-"] svg,
-a[class*="bg-cyan-"] span {
+a[class*="bg-cyan-"] span,
+button[class*="bg-cyan-"] svg,
+button[class*="bg-cyan-"] span,
+a.bg-\[\#0891b2\] svg,
+a.bg-\[\#0891b2\] span {
   color: #ffffff !important;
 }
 
-/* Focus states for accessibility */
-button:focus-visible,
-a:focus-visible,
-input:focus-visible,
-textarea:focus-visible,
-select:focus-visible {
-  outline: 2px solid #0891b2;
-  outline-offset: 2px;
-}
-
-/* Garantir texto visivel em links com fundo branco */
+/* Botões brancos/outline - texto escuro */
 a.bg-white,
 a.bg-white span,
-.bg-white a,
-.bg-slate-50 a.bg-white,
-[class*="bg-white"] a,
-a[class*="bg-white"] {
+a.bg-white svg,
+button.bg-white,
+button.bg-white span,
+button.bg-white svg {
   color: #0f172a !important;
 }
 
 a.bg-white:hover,
 a.bg-white:hover span,
-.bg-white a:hover,
-.bg-slate-50 a.bg-white:hover {
+a.bg-white:hover svg,
+a.bg-white:focus,
+a.bg-white:active {
   color: #0f172a !important;
+}
+
+/* Footer button styles - garantir visibilidade em todos os estados */
+footer .site-btn-footer,
+footer a[class*="bg-slate-800"],
+footer a[class*="bg-slate-700"],
+footer a[style*="background"] {
+  color: #ffffff !important;
+}
+
+footer .site-btn-footer:hover,
+footer .site-btn-footer:focus,
+footer .site-btn-footer:active,
+footer a[class*="bg-slate-"]:hover,
+footer a[class*="bg-slate-"]:focus,
+footer a[class*="bg-slate-"]:active {
+  color: #ffffff !important;
+  background-color: #334155 !important;
+}
+
+footer .site-btn-footer svg,
+footer .site-btn-footer span,
+footer a[class*="bg-slate-"] span {
+  color: #ffffff !important;
+}
+
+footer .site-btn-footer svg {
+  color: #22d3ee !important;
+}
+
+footer .site-btn-footer:hover svg {
+  color: #ffffff !important;
 }
 
 /* Footer styles - ensure text is visible */
