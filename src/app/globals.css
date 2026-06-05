@@ -328,6 +328,47 @@ footer .site-btn-footer:hover svg {
   color: #ffffff !important;
 }
 
+/* ============================================
+   GLOBAL CONTRAST FIX - Cyan elements
+   Ensures all cyan-50 backgrounds have visible text
+   ============================================ */
+
+/* Tags and badges with cyan-50 background */
+[class*="bg-cyan-50"][class*="text-cyan-"],
+.bg-cyan-50.text-cyan-600,
+.bg-cyan-50.text-cyan-700,
+div[class*="bg-cyan-50"][class*="text-cyan-"],
+span[class*="bg-cyan-50"][class*="text-cyan-"] {
+  color: #0e7490 !important; /* cyan-700 - darker for better contrast */
+}
+
+/* Links and buttons with cyan-50 background */
+a[class*="bg-cyan-50"],
+a[class*="bg-cyan-50"] span,
+button[class*="bg-cyan-50"],
+button[class*="bg-cyan-50"] span {
+  color: #0e7490 !important;
+}
+
+/* Rounded-full tags (city buttons, category pills) */
+.rounded-full[class*="bg-cyan-50"],
+.rounded-full[class*="text-cyan-"],
+a.rounded-full[class*="border-cyan"] {
+  color: #0e7490 !important;
+}
+
+/* Icons inside cyan-50 containers */
+[class*="bg-cyan-50"] svg,
+div[class*="bg-cyan-50"][class*="text-cyan-"] svg {
+  color: #0891b2 !important; /* cyan-600 for icons */
+}
+
+/* Ensure hover states maintain visibility */
+a[class*="bg-cyan-50"]:hover,
+a[class*="hover\\:bg-cyan-50"]:hover {
+  color: #0e7490 !important;
+}
+
 /* Footer styles - ensure text is visible */
 footer {
   background-color: #0f172a;
