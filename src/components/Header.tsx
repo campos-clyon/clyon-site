@@ -238,7 +238,7 @@ export default function Header() {
                     onClick={() => setSolucoesOpen(false)}
                     className="group flex items-start gap-3 rounded-xl p-3 transition-all hover:-translate-y-0.5 hover:bg-cyan-50"
                   >
-                    <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-500 transition-colors group-hover:bg-cyan-100 group-hover:text-cyan-600">
+                    <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-cyan-50 text-cyan-600 transition-colors group-hover:bg-cyan-100 group-hover:text-cyan-700">
                       <item.icon className="h-5 w-5" />
                     </div>
                     <div className="min-w-0">
