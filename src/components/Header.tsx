@@ -210,7 +210,7 @@ export default function Header() {
                 <div>
                   <h3 className="text-lg font-bold text-slate-900">Soluções CLYON</h3>
                   <p className="mt-2 text-sm leading-relaxed text-slate-600">
-                    Servi��os profissionais de recolha, limpeza, transporte e esvaziamento em Lisboa, Margem Sul e Setúbal.
+                    Servicos profissionais de recolha, limpeza, transporte e esvaziamento em Lisboa, Margem Sul e Setubal.
                   </p>
                 </div>
                 <div className="mt-6 space-y-3">
