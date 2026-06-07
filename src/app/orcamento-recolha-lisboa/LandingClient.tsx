@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import {
   ArrowRight,
@@ -210,9 +211,14 @@ function TopBar() {
     <header className="sticky top-0 z-40 border-b border-slate-100 bg-white/90 backdrop-blur">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
         <div className="flex items-center gap-3">
-          <span className="text-xl font-extrabold tracking-tight text-slate-900">
-            CLYON
-          </span>
+          <Image
+            src="/logo-clyon-landing.png"
+            alt="CLYON - Recolha de móveis e entulho em Lisboa"
+            width={150}
+            height={48}
+            priority
+            className="h-9 w-auto sm:h-10"
+          />
           <span className="hidden text-xs font-medium text-slate-500 sm:inline">
             Lisboa • Margem Sul • Setúbal
           </span>
