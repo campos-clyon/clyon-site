@@ -11,8 +11,11 @@ import {
   ChevronDown,
   Clock,
   Home,
+  Mail,
   MapPin,
   MessageCircle,
+  MessageSquare,
+  MoreHorizontal,
   Package,
   Phone,
   Quote,
@@ -28,6 +31,8 @@ import {
 
 const PHONE_DISPLAY = "+351 931 632 622";
 const PHONE_TEL = "+351931632622";
+const PHONE_SMS = "+351931632622";
+const EMAIL = "geral@clyon.pt";
 const WHATSAPP_BASE = "https://wa.me/351931632622";
 const REVIEWS_COUNT = 163;
 
@@ -52,6 +57,16 @@ function trackWhatsApp(location: string) {
 function trackCall(location: string) {
   pushDataLayer({ event: "click_call", location });
 }
+
+function trackSms(location: string) {
+  pushDataLayer({ event: "click_sms", location });
+}
+
+function trackEmail(location: string) {
+  pushDataLayer({ event: "click_email", location });
+}
+
+const EMAIL_SUBJECT = "Pedido de Orçamento - CLYON";
 
 const UTM_KEYS = [
   "utm_source",
@@ -111,6 +126,13 @@ const ACCESS_OPTIONS = [
 ];
 
 const URGENCY_OPTIONS = ["Hoje", "Amanhã", "Esta semana", "Sem urgência"];
+
+const CONTACT_PREFERENCES = [
+  { value: "WhatsApp", label: "WhatsApp", icon: MessageCircle },
+  { value: "Chamada", label: "Chamada", icon: Phone },
+  { value: "SMS/Mensagem", label: "SMS", icon: MessageSquare },
+  { value: "Email", label: "Email", icon: Mail },
+] as const;
 
 const AREAS = [
   "Lisboa",
@@ -324,6 +346,8 @@ function Hero({ heroRef }: { heroRef: React.RefObject<HTMLDivElement | null> }) 
             Pedido de orçamento gratuito. Serviço de recolha pago mediante
             avaliação.
           </p>
+
+          <DirectContactStrip />
         </div>
 
         <div className="lg:pl-4">
@@ -334,17 +358,81 @@ function Hero({ heroRef }: { heroRef: React.RefObject<HTMLDivElement | null> }) 
   );
 }
 
+/* --------------------- Direct Contact Strip --------------------- */
+function DirectContactStrip() {
+  const quickMsg = encodeURIComponent(
+    "Olá CLYON, gostaria de pedir um orçamento.",
+  );
+  const buttons = [
+    {
+      label: "WhatsApp",
+      icon: MessageCircle,
+      href: `${WHATSAPP_BASE}?text=${quickMsg}`,
+      external: true,
+      onClick: () => trackWhatsApp("hero_direct"),
+    },
+    {
+      label: "Ligar",
+      icon: Phone,
+      href: `tel:${PHONE_TEL}`,
+      external: false,
+      onClick: () => trackCall("hero_direct"),
+    },
+    {
+      label: "SMS",
+      icon: MessageSquare,
+      href: `sms:${PHONE_SMS}`,
+      external: false,
+      onClick: () => trackSms("hero_direct"),
+    },
+    {
+      label: "Email",
+      icon: Mail,
+      href: `mailto:${EMAIL}?subject=${encodeURIComponent(EMAIL_SUBJECT)}`,
+      external: false,
+      onClick: () => trackEmail("hero_direct"),
+    },
+  ];
+
+  return (
+    <div className="mt-7 rounded-2xl border border-slate-200 bg-white/70 p-4">
+      <p className="text-sm font-semibold text-slate-700">
+        Prefere falar diretamente?
+      </p>
+      <div className="mt-3 grid grid-cols-4 gap-2">
+        {buttons.map((btn) => (
+          <a
+            key={btn.label}
+            href={btn.href}
+            onClick={btn.onClick}
+            {...(btn.external
+              ? { target: "_blank", rel: "noopener noreferrer" }
+              : {})}
+            className="flex flex-col items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-2 py-2.5 text-xs font-semibold text-slate-700 shadow-sm transition hover:border-cyan-300 hover:text-cyan-700"
+          >
+            <btn.icon className="h-5 w-5 text-cyan-600" />
+            {btn.label}
+          </a>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 /* ---------------------------- Lead Form ---------------------------- */
 function LeadForm() {
   const [form, setForm] = useState({
     nome: "",
     telefone: "",
+    email: "",
     localidade: "",
     servico: "",
     acesso: "",
     urgencia: "",
     descricao: "",
+    preferencia: "",
   });
+  const [consent, setConsent] = useState(false);
   const [errors, setErrors] = useState<Record<string, boolean>>({});
   const formStarted = useRef(false);
 
@@ -361,14 +449,21 @@ function LeadForm() {
     if (value) setErrors((prev) => ({ ...prev, [field]: false }));
   }
 
+  function isValidEmail(value: string) {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
+  }
+
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
     const newErrors: Record<string, boolean> = {
       nome: !form.nome.trim(),
       telefone: !form.telefone.trim(),
+      email: !isValidEmail(form.email),
       localidade: !form.localidade.trim(),
       servico: !form.servico,
+      preferencia: !form.preferencia,
+      consent: !consent,
     };
     setErrors(newErrors);
     if (Object.values(newErrors).some(Boolean)) return;
@@ -381,26 +476,52 @@ function LeadForm() {
       location: form.localidade || undefined,
       urgency: form.urgencia || undefined,
       access_type: form.acesso || undefined,
+      contact_preference: form.preferencia || undefined,
       ...utms,
     });
 
     const message = [
       "Olá CLYON, gostaria de pedir um orçamento.",
+      "",
       `Nome: ${form.nome}`,
       `Telefone: ${form.telefone}`,
+      `Email: ${form.email}`,
       `Localidade: ${form.localidade}`,
       `Serviço: ${form.servico}`,
       `Acesso: ${form.acesso}`,
       `Urgência: ${form.urgencia}`,
+      `Preferência de contacto: ${form.preferencia}`,
       `Descrição: ${form.descricao}`,
+      "",
+      "Obrigado.",
     ].join("\n");
 
-    trackWhatsApp("lead_form");
-    window.open(
-      `${WHATSAPP_BASE}?text=${encodeURIComponent(message)}`,
-      "_blank",
-      "noopener,noreferrer",
-    );
+    const encoded = encodeURIComponent(message);
+
+    switch (form.preferencia) {
+      case "WhatsApp":
+        trackWhatsApp("hero_form");
+        window.open(
+          `${WHATSAPP_BASE}?text=${encoded}`,
+          "_blank",
+          "noopener,noreferrer",
+        );
+        break;
+      case "Chamada":
+        trackCall("hero_form");
+        window.location.href = `tel:${PHONE_TEL}`;
+        break;
+      case "SMS/Mensagem":
+        trackSms("hero_form");
+        window.location.href = `sms:${PHONE_SMS}?body=${encoded}`;
+        break;
+      case "Email":
+        trackEmail("hero_form");
+        window.location.href = `mailto:${EMAIL}?subject=${encodeURIComponent(EMAIL_SUBJECT)}&body=${encoded}`;
+        break;
+      default:
+        break;
+    }
   }
 
   const baseInput =
@@ -414,6 +535,12 @@ function LeadForm() {
   }
   const selectArrow =
     "appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2024%2024%22%20stroke%3D%22%2364748b%22%20stroke-width%3D%222%22%3E%3Cpath%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20d%3D%22M19%209l-7%207-7-7%22%2F%3E%3C%2Fsvg%3E')] bg-[length:18px] bg-[right_0.75rem_center] bg-no-repeat pr-10";
+
+  function fieldError(field: string, msg: string) {
+    return errors[field] ? (
+      <p className="mt-1 text-xs font-medium text-red-500">{msg}</p>
+    ) : null;
+  }
 
   return (
     <form
@@ -430,55 +557,84 @@ function LeadForm() {
             Peça o seu orçamento
           </h2>
           <p className="text-xs text-slate-500">
-            Resposta rápida e sem compromisso
+            Preencha os dados e escolha como prefere ser contactado.
           </p>
         </div>
       </div>
 
       <div className="mt-5 grid gap-3">
         <div className="grid gap-3 sm:grid-cols-2">
-          <input
-            type="text"
-            placeholder="Nome *"
-            aria-label="Nome"
-            value={form.nome}
-            onChange={(e) => update("nome", e.target.value)}
-            className={inputClass("nome")}
-          />
-          <input
-            type="tel"
-            placeholder="Telefone *"
-            aria-label="Telefone"
-            value={form.telefone}
-            onChange={(e) => update("telefone", e.target.value)}
-            className={inputClass("telefone")}
-          />
+          <div>
+            <input
+              type="text"
+              placeholder="Nome *"
+              aria-label="Nome"
+              value={form.nome}
+              onChange={(e) => update("nome", e.target.value)}
+              className={inputClass("nome")}
+            />
+            {fieldError("nome", "Indique o seu nome.")}
+          </div>
+          <div>
+            <input
+              type="tel"
+              placeholder="Telefone *"
+              aria-label="Telefone"
+              value={form.telefone}
+              onChange={(e) => update("telefone", e.target.value)}
+              className={inputClass("telefone")}
+            />
+            {fieldError("telefone", "Indique o seu telefone.")}
+          </div>
         </div>
 
-        <input
-          type="text"
-          placeholder="Localidade *"
-          aria-label="Localidade"
-          value={form.localidade}
-          onChange={(e) => update("localidade", e.target.value)}
-          className={inputClass("localidade")}
-        />
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div>
+            <input
+              type="email"
+              placeholder="Email *"
+              aria-label="Email"
+              value={form.email}
+              onChange={(e) => update("email", e.target.value)}
+              className={inputClass("email")}
+            />
+            {fieldError("email", "Indique um email válido.")}
+          </div>
+          <div>
+            <input
+              type="text"
+              placeholder="Localidade *"
+              aria-label="Localidade"
+              value={form.localidade}
+              onChange={(e) => update("localidade", e.target.value)}
+              className={inputClass("localidade")}
+            />
+            {fieldError("localidade", "Indique a sua localidade.")}
+          </div>
+        </div>
 
-        <select
-          aria-label="Tipo de serviço"
-          value={form.servico}
-          onChange={(e) => update("servico", e.target.value)}
-          className={`${inputClass("servico")} ${selectArrow} ${form.servico ? "text-slate-900" : "text-slate-400"}`}
-        >
-          <option value="" disabled>
-            Tipo de serviço *
-          </option>
-          {SERVICE_OPTIONS.map((opt) => (
-            <option key={opt} value={opt} className="text-slate-900">
-              {opt}
+        <p className="-mt-1 text-xs text-slate-400">
+          Usamos o email apenas para responder ao seu pedido de orçamento.
+        </p>
+
+        <div>
+          <select
+            aria-label="Tipo de serviço"
+            value={form.servico}
+            onChange={(e) => update("servico", e.target.value)}
+            className={`${inputClass("servico")} ${selectArrow} ${form.servico ? "text-slate-900" : "text-slate-400"}`}
+          >
+            <option value="" disabled>
+              Tipo de serviço *
             </option>
-          ))}
-        </select>
+            {SERVICE_OPTIONS.map((opt) => (
+              <option key={opt} value={opt} className="text-slate-900">
+                {opt}
+              </option>
+            ))}
+          </select>
+          {fieldError("servico", "Escolha o tipo de serviço.")}
+        </div>
 
         <div className="grid gap-3 sm:grid-cols-2">
           <select
@@ -515,7 +671,7 @@ function LeadForm() {
         </div>
 
         <textarea
-          placeholder="Descrição curta (o que precisa recolher?)"
+          placeholder="O que precisa recolher?"
           aria-label="Descrição"
           rows={2}
           value={form.descricao}
@@ -523,21 +679,67 @@ function LeadForm() {
           className={`${baseInput} resize-none border-slate-300 focus:border-cyan-400 focus:ring-cyan-100`}
         />
 
-        {Object.values(errors).some(Boolean) ? (
-          <p className="text-xs font-medium text-red-500">
-            Preencha nome, telefone, localidade e tipo de serviço.
-          </p>
-        ) : null}
+        <div>
+          <span className="mb-2 block text-sm font-semibold text-slate-700">
+            Como prefere ser contactado? *
+          </span>
+          <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
+            {CONTACT_PREFERENCES.map((pref) => {
+              const active = form.preferencia === pref.value;
+              return (
+                <button
+                  key={pref.value}
+                  type="button"
+                  onClick={() => update("preferencia", pref.value)}
+                  aria-pressed={active}
+                  className={`flex flex-col items-center justify-center gap-1.5 rounded-xl border px-2 py-3 text-xs font-semibold transition ${
+                    active
+                      ? "border-cyan-500 bg-cyan-50 text-cyan-700 shadow-sm ring-2 ring-cyan-100"
+                      : errors.preferencia
+                        ? "border-red-300 bg-white text-slate-600 hover:border-cyan-300"
+                        : "border-slate-300 bg-white text-slate-600 hover:border-cyan-300 hover:text-cyan-700"
+                  }`}
+                >
+                  <pref.icon className="h-5 w-5" />
+                  {pref.label}
+                </button>
+              );
+            })}
+          </div>
+          {fieldError("preferencia", "Escolha como prefere ser contactado.")}
+        </div>
+
+        <label className="mt-1 flex items-start gap-2.5 text-xs text-slate-600">
+          <input
+            type="checkbox"
+            checked={consent}
+            onChange={(e) => {
+              setConsent(e.target.checked);
+              if (e.target.checked)
+                setErrors((prev) => ({ ...prev, consent: false }));
+            }}
+            className={`mt-0.5 h-4 w-4 flex-shrink-0 rounded border-slate-300 text-cyan-600 focus:ring-cyan-400 ${
+              errors.consent ? "border-red-400" : ""
+            }`}
+          />
+          <span className={errors.consent ? "text-red-500" : ""}>
+            Autorizo a CLYON a contactar-me sobre este pedido de orçamento.
+          </span>
+        </label>
 
         <button
           type="submit"
           className="mt-1 inline-flex min-h-[56px] items-center justify-center gap-2 rounded-2xl bg-emerald-500 px-6 py-4 text-base font-semibold text-white shadow-lg shadow-emerald-500/25 transition hover:bg-emerald-600"
         >
-          <WhatsAppIcon className="h-5 w-5" />
-          Enviar Pedido pelo WhatsApp
+          <Sparkles className="h-5 w-5" />
+          Enviar Pedido de Orçamento
         </button>
         <p className="text-center text-xs text-slate-500">
-          Abre o WhatsApp com os seus dados preenchidos. Orçamento gratuito.
+          Após enviar, abrimos o canal escolhido com os seus dados preenchidos.
+        </p>
+        <p className="text-center text-xs text-slate-400">
+          O pedido de orçamento é gratuito. O serviço de recolha é pago mediante
+          avaliação.
         </p>
       </div>
     </form>
@@ -1151,30 +1353,83 @@ function FinalCTA() {
 
 /* --------------------------- Sticky Mobile CTA --------------------------- */
 function StickyMobileCTA({ visible }: { visible: boolean }) {
+  const [showMore, setShowMore] = useState(false);
+  const quickMsg = encodeURIComponent(
+    "Olá CLYON, gostaria de pedir um orçamento.",
+  );
+
   return (
     <div
-      className={`fixed inset-x-0 bottom-0 z-50 flex gap-2 border-t border-slate-200 bg-white p-3 shadow-[0_-4px_20px_-8px_rgba(0,0,0,0.2)] transition-transform duration-300 md:hidden ${
+      className={`fixed inset-x-0 bottom-0 z-50 md:hidden ${
         visible ? "translate-y-0" : "translate-y-full"
-      }`}
+      } transition-transform duration-300`}
     >
-      <a
-        href={`${WHATSAPP_BASE}?text=${encodeURIComponent("Olá CLYON, gostaria de pedir um orçamento.")}`}
-        target="_blank"
-        rel="noopener noreferrer"
-        onClick={() => trackWhatsApp("sticky_mobile")}
-        className="flex min-h-[52px] flex-1 items-center justify-center gap-2 rounded-xl bg-emerald-500 px-4 py-3 text-sm font-semibold text-white"
-      >
-        <WhatsAppIcon className="h-5 w-5" />
-        WhatsApp
-      </a>
-      <a
-        href={`tel:${PHONE_TEL}`}
-        onClick={() => trackCall("sticky_mobile")}
-        className="flex min-h-[52px] flex-1 items-center justify-center gap-2 rounded-xl bg-cyan-600 px-4 py-3 text-sm font-semibold text-white"
-      >
-        <Phone className="h-5 w-5" />
-        Ligar
-      </a>
+      {showMore ? (
+        <button
+          type="button"
+          aria-label="Fechar menu"
+          onClick={() => setShowMore(false)}
+          className="fixed inset-0 z-0 bg-slate-900/20"
+        />
+      ) : null}
+
+      {showMore ? (
+        <div className="relative z-10 mx-3 mb-2 grid grid-cols-2 gap-2 rounded-2xl border border-slate-200 bg-white p-2 shadow-xl">
+          <a
+            href={`sms:${PHONE_SMS}?body=${quickMsg}`}
+            onClick={() => {
+              trackSms("sticky_mobile");
+              setShowMore(false);
+            }}
+            className="flex min-h-[48px] items-center justify-center gap-2 rounded-xl bg-slate-100 px-4 py-3 text-sm font-semibold text-slate-700"
+          >
+            <MessageSquare className="h-5 w-5" />
+            SMS
+          </a>
+          <a
+            href={`mailto:${EMAIL}?subject=${encodeURIComponent(EMAIL_SUBJECT)}`}
+            onClick={() => {
+              trackEmail("sticky_mobile");
+              setShowMore(false);
+            }}
+            className="flex min-h-[48px] items-center justify-center gap-2 rounded-xl bg-slate-100 px-4 py-3 text-sm font-semibold text-slate-700"
+          >
+            <Mail className="h-5 w-5" />
+            Email
+          </a>
+        </div>
+      ) : null}
+
+      <div className="relative z-10 flex gap-2 border-t border-slate-200 bg-white p-3 shadow-[0_-4px_20px_-8px_rgba(0,0,0,0.2)]">
+        <a
+          href={`${WHATSAPP_BASE}?text=${quickMsg}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={() => trackWhatsApp("sticky_mobile")}
+          className="flex min-h-[52px] flex-1 items-center justify-center gap-2 rounded-xl bg-emerald-500 px-3 py-3 text-sm font-semibold text-white"
+        >
+          <WhatsAppIcon className="h-5 w-5" />
+          WhatsApp
+        </a>
+        <a
+          href={`tel:${PHONE_TEL}`}
+          onClick={() => trackCall("sticky_mobile")}
+          className="flex min-h-[52px] flex-1 items-center justify-center gap-2 rounded-xl bg-cyan-600 px-3 py-3 text-sm font-semibold text-white"
+        >
+          <Phone className="h-5 w-5" />
+          Ligar
+        </a>
+        <button
+          type="button"
+          onClick={() => setShowMore((prev) => !prev)}
+          aria-label="Mais opções de contacto"
+          aria-expanded={showMore}
+          className="flex min-h-[52px] items-center justify-center gap-1.5 rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-700"
+        >
+          <MoreHorizontal className="h-5 w-5" />
+          Mais
+        </button>
+      </div>
     </div>
   );
 }
