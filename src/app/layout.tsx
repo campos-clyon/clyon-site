@@ -2,10 +2,7 @@ import type { Metadata } from "next";
 import { Inter, Poppins } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 
-import DeferredCookieConsent from "@/components/DeferredCookieConsent";
-import Footer from "@/components/Footer";
-import Header from "@/components/Header";
-import StickyCTA from "@/components/StickyCTA";
+import SiteChrome from "@/components/SiteChrome";
 import { TrpcProvider } from "@/components/TrpcProvider";
 import {
   BUSINESS_ADDRESS,
@@ -241,11 +238,7 @@ export default function RootLayout({
       </head>
       <body className="site-aqua-shell min-h-screen bg-white text-slate-900 antialiased">
         <TrpcProvider>
-          <Header />
-          <main className="site-page-shell pt-[76px]">{children}</main>
-          <Footer />
-          <StickyCTA />
-          <DeferredCookieConsent />
+          <SiteChrome>{children}</SiteChrome>
         </TrpcProvider>
         <Analytics />
       </body>
