@@ -5,19 +5,21 @@ import { useEffect, useRef, useState } from "react";
 import {
   ArrowRight,
   BadgeCheck,
+  Building2,
   Camera,
   CheckCircle2,
   ChevronDown,
   Clock,
+  Home,
   MapPin,
   MessageCircle,
-  Minus,
   Package,
   Phone,
-  Plus,
+  Quote,
   ShieldCheck,
   Sofa,
   Sparkles,
+  Star,
   Trash2,
   Truck,
   Users,
@@ -27,6 +29,7 @@ import {
 const PHONE_DISPLAY = "+351 931 632 622";
 const PHONE_TEL = "+351931632622";
 const WHATSAPP_BASE = "https://wa.me/351931632622";
+const REVIEWS_COUNT = 163;
 
 declare global {
   interface Window {
@@ -134,31 +137,39 @@ const AREAS = [
 const FAQ_ITEMS = [
   {
     q: "Como peço orçamento?",
-    a: "Envie fotos do material, indique a morada e diga se há escadas, elevador ou acesso difícil.",
-  },
-  {
-    q: "A equipa carrega os materiais?",
-    a: "Sim. A equipa trata do carregamento e transporte, conforme o serviço contratado.",
-  },
-  {
-    q: "Fazem recolha urgente?",
-    a: "Sim, mediante disponibilidade. Serviços urgentes podem ter custo adicional.",
-  },
-  {
-    q: "Recolhem entulho de obra?",
-    a: "Sim, desde que não envolva materiais perigosos, amianto, químicos ou resíduos contaminados.",
-  },
-  {
-    q: "Posso enviar fotos pelo WhatsApp?",
-    a: "Sim. É a forma mais rápida para receber uma estimativa.",
-  },
-  {
-    q: "Quais zonas atendem?",
-    a: "Lisboa, Grande Lisboa, Margem Sul e Setúbal.",
+    a: "É simples: envie fotos do material pelo WhatsApp, indique a morada ou localidade e diga se há escadas, elevador ou acesso difícil. Com essas informações a CLYON avalia o volume e envia-lhe uma estimativa.",
   },
   {
     q: "O orçamento é gratuito?",
-    a: "Sim, o pedido de orçamento é gratuito. O serviço de recolha é pago.",
+    a: "Sim. O pedido de orçamento é totalmente gratuito e sem compromisso. Só paga se decidir avançar com o serviço de recolha.",
+  },
+  {
+    q: "O serviço de recolha é pago?",
+    a: "Sim. A recolha é um serviço privado e pago. O valor é definido conforme o volume, o peso, a localização, o acesso e o tipo de material a recolher.",
+  },
+  {
+    q: "A equipa carrega os materiais?",
+    a: "Sim. A equipa trata de todo o carregamento e transporte. Não precisa de descer nem preparar nada — fazemos o trabalho pesado por si.",
+  },
+  {
+    q: "Posso enviar fotos pelo WhatsApp?",
+    a: "Sim, e é a forma mais rápida de receber uma estimativa. As fotos ajudam a avaliar o volume e o acesso, tornando o orçamento mais certo.",
+  },
+  {
+    q: "Fazem recolha urgente?",
+    a: "Sim, mediante disponibilidade da equipa. Serviços urgentes ou no próprio dia podem ter um custo adicional. Indique a urgência no pedido.",
+  },
+  {
+    q: "Recolhem entulho de obra?",
+    a: "Sim. Recolhemos sacos de obra, restos de remodelação, madeira, tijolo, azulejo e cimento, desde que não envolvam materiais perigosos.",
+  },
+  {
+    q: "Que materiais não recolhem?",
+    a: "Não recolhemos amianto, químicos, resíduos perigosos ou contaminados, nem fazemos demolição pesada. Em caso de dúvida, envie foto para confirmarmos.",
+  },
+  {
+    q: "Quais zonas atendem?",
+    a: "Atendemos Lisboa, Grande Lisboa, Margem Sul e Setúbal. Se a sua localidade não constar da lista, envie mensagem para confirmarmos a disponibilidade.",
   },
 ];
 
@@ -190,11 +201,13 @@ export default function LandingClient() {
     <div className="bg-white text-slate-900">
       <TopBar />
       <Hero heroRef={heroRef} />
+      <TrustBar />
       <HowItWorks />
+      <SendForQuote />
       <ServicesSection />
-      <QualificationSection />
       <PricingGuide />
-      <TrustSection />
+      <WhyChooseSection />
+      <ReviewsSection />
       <AreasSection />
       <FAQSection />
       <FinalCTA />
@@ -240,39 +253,51 @@ function TopBar() {
 
 /* ------------------------------ Hero ------------------------------ */
 function Hero({ heroRef }: { heroRef: React.RefObject<HTMLDivElement | null> }) {
-  const badges = [
-    { icon: MessageCircle, label: "Orçamento rápido por WhatsApp" },
-    { icon: Truck, label: "Carregamento incluído" },
+  const bullets = [
+    { icon: Truck, label: "Carregamento feito pela equipa" },
     { icon: MapPin, label: "Lisboa, Margem Sul e Setúbal" },
+    { icon: ShieldCheck, label: "Serviço privado, rápido e profissional" },
   ];
 
   return (
-    <section ref={heroRef} className="relative overflow-hidden bg-slate-50">
-      <div className="mx-auto grid max-w-6xl gap-10 px-4 py-12 lg:grid-cols-2 lg:items-start lg:py-16">
+    <section
+      ref={heroRef}
+      className="relative overflow-hidden bg-gradient-to-b from-cyan-50/60 via-white to-white"
+    >
+      <div
+        className="pointer-events-none absolute inset-x-0 top-0 h-72 bg-gradient-to-b from-cyan-100/40 to-transparent"
+        aria-hidden="true"
+      />
+      <div className="relative mx-auto grid max-w-6xl gap-10 px-4 py-12 lg:grid-cols-2 lg:items-start lg:py-16">
         <div>
-          <span className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
-            <span className="h-2 w-2 rounded-full bg-emerald-500" />
+          <span className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700">
+            <span className="relative flex h-2 w-2">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
+            </span>
             Orçamento rápido por WhatsApp
           </span>
-          <h1 className="mt-4 text-balance text-3xl font-extrabold leading-tight text-slate-900 sm:text-4xl lg:text-5xl">
-            Recolha de Entulho, Móveis e Monos em Lisboa e Setúbal
+          <h1 className="mt-4 text-balance text-3xl font-extrabold leading-[1.1] tracking-tight text-slate-900 sm:text-4xl lg:text-5xl">
+            Recolha de Entulho, Móveis e Monos em Lisboa
           </h1>
           <p className="mt-4 text-pretty text-base leading-relaxed text-slate-600 sm:text-lg">
-            Envie fotos pelo WhatsApp, indique a morada e receba um orçamento
-            rápido para recolha, carregamento e transporte.
+            Envie fotos, indique a morada e receba uma estimativa para recolha
+            com carregamento e transporte incluídos.
           </p>
 
-          <div className="mt-6 flex flex-wrap gap-2">
-            {badges.map((badge) => (
-              <span
-                key={badge.label}
-                className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 shadow-sm"
+          <ul className="mt-6 space-y-3">
+            {bullets.map((bullet) => (
+              <li
+                key={bullet.label}
+                className="flex items-center gap-3 text-sm font-medium text-slate-700 sm:text-base"
               >
-                <badge.icon className="h-4 w-4 text-cyan-600" />
-                {badge.label}
-              </span>
+                <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-cyan-50 text-cyan-600">
+                  <bullet.icon className="h-4 w-4" />
+                </span>
+                {bullet.label}
+              </li>
             ))}
-          </div>
+          </ul>
 
           <div className="mt-7 flex flex-col gap-3 sm:flex-row">
             <a
@@ -280,7 +305,7 @@ function Hero({ heroRef }: { heroRef: React.RefObject<HTMLDivElement | null> }) 
               target="_blank"
               rel="noopener noreferrer"
               onClick={() => trackWhatsApp("hero")}
-              className="inline-flex items-center justify-center gap-2 rounded-2xl bg-emerald-500 px-6 py-4 text-base font-semibold text-white shadow-md transition hover:bg-emerald-600"
+              className="inline-flex min-h-[56px] items-center justify-center gap-2 rounded-2xl bg-emerald-500 px-6 py-4 text-base font-semibold text-white shadow-lg shadow-emerald-500/25 transition hover:bg-emerald-600"
             >
               <WhatsAppIcon className="h-5 w-5" />
               Enviar Fotos no WhatsApp
@@ -288,7 +313,7 @@ function Hero({ heroRef }: { heroRef: React.RefObject<HTMLDivElement | null> }) 
             <a
               href={`tel:${PHONE_TEL}`}
               onClick={() => trackCall("hero")}
-              className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-300 bg-white px-6 py-4 text-base font-semibold text-slate-800 shadow-sm transition hover:border-cyan-300 hover:text-cyan-700"
+              className="inline-flex min-h-[56px] items-center justify-center gap-2 rounded-2xl border border-slate-300 bg-white px-6 py-4 text-base font-semibold text-slate-800 shadow-sm transition hover:border-cyan-300 hover:text-cyan-700"
             >
               <Phone className="h-5 w-5" />
               Ligar Agora
@@ -296,8 +321,8 @@ function Hero({ heroRef }: { heroRef: React.RefObject<HTMLDivElement | null> }) 
           </div>
 
           <p className="mt-3 text-xs text-slate-500">
-            Resposta mediante disponibilidade da equipa. Envie fotos para uma
-            estimativa mais precisa.
+            Pedido de orçamento gratuito. Serviço de recolha pago mediante
+            avaliação.
           </p>
         </div>
 
@@ -320,6 +345,7 @@ function LeadForm() {
     urgencia: "",
     descricao: "",
   });
+  const [errors, setErrors] = useState<Record<string, boolean>>({});
   const formStarted = useRef(false);
 
   function handleFirstInteraction() {
@@ -332,17 +358,29 @@ function LeadForm() {
   function update(field: keyof typeof form, value: string) {
     handleFirstInteraction();
     setForm((prev) => ({ ...prev, [field]: value }));
+    if (value) setErrors((prev) => ({ ...prev, [field]: false }));
   }
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+
+    const newErrors: Record<string, boolean> = {
+      nome: !form.nome.trim(),
+      telefone: !form.telefone.trim(),
+      localidade: !form.localidade.trim(),
+      servico: !form.servico,
+    };
+    setErrors(newErrors);
+    if (Object.values(newErrors).some(Boolean)) return;
 
     const utms = getStoredUtms();
     pushDataLayer({
       event: "lead_form_submit",
       form_name: "orcamento_recolha",
       service_type: form.servico || undefined,
+      location: form.localidade || undefined,
       urgency: form.urgencia || undefined,
+      access_type: form.acesso || undefined,
       ...utms,
     });
 
@@ -365,24 +403,35 @@ function LeadForm() {
     );
   }
 
-  const inputClass =
-    "w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 shadow-sm transition focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-100";
-  const selectClass = `${inputClass} appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2024%2024%22%20stroke%3D%22%2364748b%22%20stroke-width%3D%222%22%3E%3Cpath%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20d%3D%22M19%209l-7%207-7-7%22%2F%3E%3C%2Fsvg%3E')] bg-[length:18px] bg-[right_0.75rem_center] bg-no-repeat pr-10`;
+  const baseInput =
+    "w-full rounded-xl border bg-white px-3.5 py-3 text-sm text-slate-900 placeholder:text-slate-400 shadow-sm transition focus:outline-none focus:ring-2";
+  function inputClass(field: string) {
+    return `${baseInput} ${
+      errors[field]
+        ? "border-red-400 focus:border-red-400 focus:ring-red-100"
+        : "border-slate-300 focus:border-cyan-400 focus:ring-cyan-100"
+    }`;
+  }
+  const selectArrow =
+    "appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2024%2024%22%20stroke%3D%22%2364748b%22%20stroke-width%3D%222%22%3E%3Cpath%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20d%3D%22M19%209l-7%207-7-7%22%2F%3E%3C%2Fsvg%3E')] bg-[length:18px] bg-[right_0.75rem_center] bg-no-repeat pr-10";
 
   return (
     <form
       onSubmit={handleSubmit}
-      className="rounded-3xl border border-slate-200 bg-white p-6 shadow-xl shadow-slate-200/50"
+      noValidate
+      className="rounded-3xl border border-slate-200 bg-white p-6 shadow-2xl shadow-slate-300/40 sm:p-7"
     >
-      <div className="flex items-center gap-2">
-        <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-cyan-50 text-cyan-600">
+      <div className="flex items-center gap-3">
+        <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600">
           <Camera className="h-5 w-5" />
         </span>
         <div>
           <h2 className="text-lg font-bold text-slate-900">
             Peça o seu orçamento
           </h2>
-          <p className="text-xs text-slate-500">Resposta rápida por WhatsApp</p>
+          <p className="text-xs text-slate-500">
+            Resposta rápida e sem compromisso
+          </p>
         </div>
       </div>
 
@@ -390,43 +439,39 @@ function LeadForm() {
         <div className="grid gap-3 sm:grid-cols-2">
           <input
             type="text"
-            required
-            placeholder="Nome"
+            placeholder="Nome *"
             aria-label="Nome"
             value={form.nome}
             onChange={(e) => update("nome", e.target.value)}
-            className={inputClass}
+            className={inputClass("nome")}
           />
           <input
             type="tel"
-            required
-            placeholder="Telefone"
+            placeholder="Telefone *"
             aria-label="Telefone"
             value={form.telefone}
             onChange={(e) => update("telefone", e.target.value)}
-            className={inputClass}
+            className={inputClass("telefone")}
           />
         </div>
 
         <input
           type="text"
-          required
-          placeholder="Localidade"
+          placeholder="Localidade *"
           aria-label="Localidade"
           value={form.localidade}
           onChange={(e) => update("localidade", e.target.value)}
-          className={inputClass}
+          className={inputClass("localidade")}
         />
 
         <select
-          required
           aria-label="Tipo de serviço"
           value={form.servico}
           onChange={(e) => update("servico", e.target.value)}
-          className={`${selectClass} ${form.servico ? "text-slate-900" : "text-slate-400"}`}
+          className={`${inputClass("servico")} ${selectArrow} ${form.servico ? "text-slate-900" : "text-slate-400"}`}
         >
           <option value="" disabled>
-            Tipo de serviço
+            Tipo de serviço *
           </option>
           {SERVICE_OPTIONS.map((opt) => (
             <option key={opt} value={opt} className="text-slate-900">
@@ -435,21 +480,12 @@ function LeadForm() {
           ))}
         </select>
 
-        <textarea
-          placeholder="O que precisa recolher?"
-          aria-label="Descrição"
-          rows={2}
-          value={form.descricao}
-          onChange={(e) => update("descricao", e.target.value)}
-          className={`${inputClass} resize-none`}
-        />
-
         <div className="grid gap-3 sm:grid-cols-2">
           <select
             aria-label="Tipo de acesso"
             value={form.acesso}
             onChange={(e) => update("acesso", e.target.value)}
-            className={`${selectClass} ${form.acesso ? "text-slate-900" : "text-slate-400"}`}
+            className={`${baseInput} border-slate-300 focus:border-cyan-400 focus:ring-cyan-100 ${selectArrow} ${form.acesso ? "text-slate-900" : "text-slate-400"}`}
           >
             <option value="" disabled>
               Tipo de acesso
@@ -465,7 +501,7 @@ function LeadForm() {
             aria-label="Urgência"
             value={form.urgencia}
             onChange={(e) => update("urgencia", e.target.value)}
-            className={`${selectClass} ${form.urgencia ? "text-slate-900" : "text-slate-400"}`}
+            className={`${baseInput} border-slate-300 focus:border-cyan-400 focus:ring-cyan-100 ${selectArrow} ${form.urgencia ? "text-slate-900" : "text-slate-400"}`}
           >
             <option value="" disabled>
               Urgência
@@ -478,18 +514,79 @@ function LeadForm() {
           </select>
         </div>
 
+        <textarea
+          placeholder="Descrição curta (o que precisa recolher?)"
+          aria-label="Descrição"
+          rows={2}
+          value={form.descricao}
+          onChange={(e) => update("descricao", e.target.value)}
+          className={`${baseInput} resize-none border-slate-300 focus:border-cyan-400 focus:ring-cyan-100`}
+        />
+
+        {Object.values(errors).some(Boolean) ? (
+          <p className="text-xs font-medium text-red-500">
+            Preencha nome, telefone, localidade e tipo de serviço.
+          </p>
+        ) : null}
+
         <button
           type="submit"
-          className="mt-1 inline-flex items-center justify-center gap-2 rounded-2xl bg-emerald-500 px-6 py-3.5 text-base font-semibold text-white shadow-md transition hover:bg-emerald-600"
+          className="mt-1 inline-flex min-h-[56px] items-center justify-center gap-2 rounded-2xl bg-emerald-500 px-6 py-4 text-base font-semibold text-white shadow-lg shadow-emerald-500/25 transition hover:bg-emerald-600"
         >
           <WhatsAppIcon className="h-5 w-5" />
-          Receber Orçamento
+          Enviar Pedido pelo WhatsApp
         </button>
         <p className="text-center text-xs text-slate-500">
-          Ao enviar, abre o WhatsApp com os seus dados preenchidos.
+          Abre o WhatsApp com os seus dados preenchidos. Orçamento gratuito.
         </p>
       </div>
     </form>
+  );
+}
+
+/* --------------------------- Trust Bar --------------------------- */
+function TrustBar() {
+  const items = [
+    {
+      icon: Star,
+      title: `${REVIEWS_COUNT} avaliações 5 estrelas`,
+      highlight: true,
+    },
+    { icon: BadgeCheck, title: "Orçamento gratuito" },
+    { icon: Clock, title: "Resposta rápida" },
+    { icon: Truck, title: "Carregamento incluído" },
+    { icon: MapPin, title: "Lisboa, Margem Sul e Setúbal" },
+  ];
+
+  return (
+    <section className="border-y border-slate-100 bg-white">
+      <div className="mx-auto max-w-6xl px-4 py-6">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+          {items.map((item) => (
+            <div
+              key={item.title}
+              className="flex items-center gap-2.5 rounded-2xl border border-slate-200 bg-white px-3.5 py-3 shadow-sm"
+            >
+              <span
+                className={`flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl ${
+                  item.highlight
+                    ? "bg-amber-50 text-amber-500"
+                    : "bg-cyan-50 text-cyan-600"
+                }`}
+              >
+                <item.icon
+                  className="h-5 w-5"
+                  fill={item.highlight ? "currentColor" : "none"}
+                />
+              </span>
+              <span className="text-xs font-semibold leading-tight text-slate-700">
+                {item.title}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
   );
 }
 
@@ -498,23 +595,31 @@ function SectionTitle({
   eyebrow,
   title,
   subtitle,
+  dark = false,
 }: {
   eyebrow?: string;
   title: string;
   subtitle?: string;
+  dark?: boolean;
 }) {
   return (
     <div className="mx-auto max-w-2xl text-center">
       {eyebrow ? (
-        <span className="text-xs font-bold uppercase tracking-[0.18em] text-cyan-600">
+        <span
+          className={`text-xs font-bold uppercase tracking-[0.18em] ${dark ? "text-cyan-400" : "text-cyan-600"}`}
+        >
           {eyebrow}
         </span>
       ) : null}
-      <h2 className="mt-2 text-balance text-2xl font-extrabold text-slate-900 sm:text-3xl">
+      <h2
+        className={`mt-2 text-balance text-2xl font-extrabold tracking-tight sm:text-3xl ${dark ? "text-white" : "text-slate-900"}`}
+      >
         {title}
       </h2>
       {subtitle ? (
-        <p className="mt-3 text-pretty text-base leading-relaxed text-slate-600">
+        <p
+          className={`mt-3 text-pretty text-base leading-relaxed ${dark ? "text-slate-300" : "text-slate-600"}`}
+        >
           {subtitle}
         </p>
       ) : null}
@@ -528,12 +633,12 @@ function HowItWorks() {
     {
       icon: Camera,
       title: "Envie fotos",
-      text: "Mostre o volume e o tipo de material.",
+      text: "Mostre o volume e o tipo de material pelo WhatsApp.",
     },
     {
       icon: MapPin,
       title: "Informe a morada",
-      text: "Diga a localidade e o tipo de acesso.",
+      text: "Diga a localidade e o tipo de acesso ao local.",
     },
     {
       icon: BadgeCheck,
@@ -543,20 +648,20 @@ function HowItWorks() {
     {
       icon: Truck,
       title: "Agende a recolha",
-      text: "A equipa vai ao local, carrega e transporta.",
+      text: "A equipa vai ao local, carrega e transporta tudo.",
     },
   ];
 
   return (
-    <section className="mx-auto max-w-6xl px-4 py-14">
+    <section className="mx-auto max-w-6xl px-4 py-14 sm:py-16">
       <SectionTitle eyebrow="Simples e rápido" title="Como funciona" />
       <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
         {steps.map((step, index) => (
           <div
             key={step.title}
-            className="relative rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"
+            className="relative rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition hover:shadow-md"
           >
-            <span className="absolute right-5 top-5 text-3xl font-extrabold text-slate-100">
+            <span className="absolute right-5 top-4 text-4xl font-extrabold text-slate-100">
               {index + 1}
             </span>
             <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-cyan-50 text-cyan-600">
@@ -575,33 +680,110 @@ function HowItWorks() {
   );
 }
 
+/* --------------------------- Send For Quote --------------------------- */
+function SendForQuote() {
+  const cards = [
+    {
+      icon: Camera,
+      title: "Fotos do material",
+      text: "Imagens claras do que precisa recolher.",
+    },
+    {
+      icon: MapPin,
+      title: "Morada ou localidade",
+      text: "Onde está o material a recolher.",
+    },
+    {
+      icon: Building2,
+      title: "Escadas ou elevador",
+      text: "Informação sobre o acesso ao local.",
+    },
+    {
+      icon: Clock,
+      title: "Urgência do serviço",
+      text: "Quando precisa que a recolha aconteça.",
+    },
+  ];
+
+  return (
+    <section className="bg-slate-50 py-14 sm:py-16">
+      <div className="mx-auto max-w-6xl px-4">
+        <SectionTitle
+          eyebrow="Pré-qualificação"
+          title="Para receber um orçamento mais certo, envie:"
+          subtitle="Com estas informações, a CLYON consegue avaliar volume, acesso e logística com mais precisão."
+        />
+        <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          {cards.map((card) => (
+            <div
+              key={card.title}
+              className="rounded-2xl border border-slate-200 bg-white p-6 text-center shadow-sm"
+            >
+              <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600">
+                <card.icon className="h-6 w-6" />
+              </span>
+              <h3 className="mt-4 text-base font-bold text-slate-900">
+                {card.title}
+              </h3>
+              <p className="mt-1.5 text-sm leading-relaxed text-slate-600">
+                {card.text}
+              </p>
+            </div>
+          ))}
+        </div>
+        <div className="mt-8 flex justify-center">
+          <a
+            href={`${WHATSAPP_BASE}?text=${encodeURIComponent("Olá CLYON, gostaria de um orçamento. Vou enviar fotos do material.")}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={() => trackWhatsApp("send_for_quote")}
+            className="inline-flex min-h-[52px] items-center justify-center gap-2 rounded-2xl bg-emerald-500 px-6 py-3.5 text-base font-semibold text-white shadow-md transition hover:bg-emerald-600"
+          >
+            <WhatsAppIcon className="h-5 w-5" />
+            Enviar Fotos Agora
+          </a>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 /* --------------------------- Services --------------------------- */
 function ServicesSection() {
   const services = [
     {
       icon: Trash2,
       title: "Recolha de Entulho",
-      text: "Remoção de sacos de obra, restos de remodelação, madeira, tijolo, azulejo, cimento e materiais semelhantes.",
+      text: "Remoção de resíduos de obra e remodelação.",
+      examples: ["Sacos de obra", "Madeira e tijolo", "Azulejo e cimento"],
     },
     {
       icon: Sofa,
       title: "Recolha de Móveis",
-      text: "Retirada de sofás, camas, colchões, armários, mesas, cadeiras e móveis usados.",
+      text: "Retirada de mobiliário usado de qualquer divisão.",
+      examples: ["Sofás e camas", "Armários e mesas", "Colchões e cadeiras"],
     },
     {
       icon: Package,
       title: "Recolha de Monos",
-      text: "Remoção de objectos volumosos, tralha acumulada, materiais de garagem, arrecadação ou apartamento.",
+      text: "Remoção de objetos volumosos e tralha acumulada.",
+      examples: [
+        "Eletrodomésticos",
+        "Materiais de garagem",
+        "Arrecadações cheias",
+      ],
     },
     {
-      icon: Truck,
+      icon: Home,
       title: "Esvaziamento de Casas",
-      text: "Ideal para heranças, mudanças, imóveis para venda, apartamentos acumulados ou limpezas completas.",
+      text: "Limpeza completa de imóveis e espaços.",
+      examples: ["Heranças", "Mudanças", "Imóveis para venda"],
     },
     {
       icon: Sparkles,
       title: "Limpeza Pós-Obra",
-      text: "Apoio na remoção de resíduos e limpeza após remodelações, obras e intervenções.",
+      text: "Remoção de resíduos e limpeza após obras.",
+      examples: ["Restos de obra", "Pó e detritos", "Espaços remodelados"],
     },
   ];
 
@@ -611,105 +793,50 @@ function ServicesSection() {
   }
 
   return (
-    <section className="bg-slate-50 py-14">
-      <div className="mx-auto max-w-6xl px-4">
-        <SectionTitle
-          eyebrow="O que recolhemos"
-          title="Serviços de recolha e esvaziamento"
-        />
-        <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {services.map((service) => (
-            <div
-              key={service.title}
-              className="flex flex-col rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition hover:shadow-md"
-            >
-              <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-cyan-50 text-cyan-600">
-                <service.icon className="h-6 w-6" />
-              </span>
-              <h3 className="mt-4 text-lg font-bold text-slate-900">
-                {service.title}
-              </h3>
-              <p className="mt-1.5 flex-1 text-sm leading-relaxed text-slate-600">
-                {service.text}
-              </p>
-              <a
-                href={`${WHATSAPP_BASE}?text=${encodeURIComponent(`Olá CLYON, gostaria de um orçamento para ${service.title}.`)}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={() => handleCardCta(service.title)}
-                className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-cyan-700 transition hover:gap-2.5"
-              >
-                Pedir orçamento
-                <ArrowRight className="h-4 w-4" />
-              </a>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-/* --------------------------- Qualification --------------------------- */
-function QualificationSection() {
-  const included = [
-    "Recolha no local",
-    "Carregamento pela equipa",
-    "Transporte",
-    "Orçamento mediante fotos",
-    "Atendimento em Lisboa, Margem Sul e Setúbal",
-  ];
-  const notIncluded = [
-    "Amianto",
-    "Químicos",
-    "Resíduos perigosos",
-    "Materiais contaminados",
-    "Demolição pesada",
-    "Lixo doméstico misturado sem triagem",
-  ];
-
-  return (
-    <section className="mx-auto max-w-6xl px-4 py-14">
+    <section className="mx-auto max-w-6xl px-4 py-14 sm:py-16">
       <SectionTitle
-        eyebrow="Pré-qualificação"
-        title="Para um orçamento mais preciso, envie fotos"
-        subtitle="O preço depende do volume, peso, localização, distância até à carrinha, necessidade de desmontagem, urgência e tipo de acesso."
+        eyebrow="O que recolhemos"
+        title="Serviços de recolha e esvaziamento"
+        subtitle="Soluções para particulares e empresas em toda a região de Lisboa, Margem Sul e Setúbal."
       />
-      <div className="mt-10 grid gap-5 md:grid-cols-2">
-        <div className="rounded-2xl border border-emerald-200 bg-emerald-50/50 p-6">
-          <h3 className="flex items-center gap-2 text-lg font-bold text-slate-900">
-            <CheckCircle2 className="h-5 w-5 text-emerald-600" />
-            Incluído
-          </h3>
-          <ul className="mt-4 space-y-2.5">
-            {included.map((item) => (
-              <li
-                key={item}
-                className="flex items-start gap-2.5 text-sm text-slate-700"
-              >
-                <CheckCircle2 className="mt-0.5 h-4 w-4 flex-shrink-0 text-emerald-600" />
-                {item}
-              </li>
-            ))}
-          </ul>
-        </div>
-        <div className="rounded-2xl border border-red-200 bg-red-50/50 p-6">
-          <h3 className="flex items-center gap-2 text-lg font-bold text-slate-900">
-            <XCircle className="h-5 w-5 text-red-500" />
-            Não recolhemos
-          </h3>
-          <ul className="mt-4 space-y-2.5">
-            {notIncluded.map((item) => (
-              <li
-                key={item}
-                className="flex items-start gap-2.5 text-sm text-slate-700"
-              >
-                <XCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-red-400" />
-                {item}
-              </li>
-            ))}
-          </ul>
-        </div>
+      <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        {services.map((service) => (
+          <div
+            key={service.title}
+            className="group flex flex-col rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition hover:-translate-y-0.5 hover:border-cyan-200 hover:shadow-lg"
+          >
+            <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-cyan-50 text-cyan-600 transition group-hover:bg-cyan-100">
+              <service.icon className="h-6 w-6" />
+            </span>
+            <h3 className="mt-4 text-lg font-bold text-slate-900">
+              {service.title}
+            </h3>
+            <p className="mt-1.5 text-sm leading-relaxed text-slate-600">
+              {service.text}
+            </p>
+            <ul className="mt-4 space-y-2">
+              {service.examples.map((ex) => (
+                <li
+                  key={ex}
+                  className="flex items-center gap-2 text-sm text-slate-600"
+                >
+                  <CheckCircle2 className="h-4 w-4 flex-shrink-0 text-emerald-500" />
+                  {ex}
+                </li>
+              ))}
+            </ul>
+            <a
+              href={`${WHATSAPP_BASE}?text=${encodeURIComponent(`Olá CLYON, gostaria de um orçamento para ${service.title}.`)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => handleCardCta(service.title)}
+              className="mt-5 inline-flex items-center gap-1.5 text-sm font-semibold text-cyan-700 transition group-hover:gap-2.5"
+            >
+              Pedir orçamento
+              <ArrowRight className="h-4 w-4" />
+            </a>
+          </div>
+        ))}
       </div>
     </section>
   );
@@ -720,39 +847,39 @@ function PricingGuide() {
   const cards = [
     {
       title: "Entulho",
-      text: "Valor sob avaliação por volume e acesso.",
+      text: "Avaliado por volume, peso e acesso ao local.",
       icon: Trash2,
     },
     {
       title: "Móveis e monos",
-      text: "Orçamento conforme quantidade e transporte.",
+      text: "Avaliado por quantidade e tipo de material.",
       icon: Sofa,
     },
     {
       title: "Esvaziamento",
-      text: "Ideal para casas, garagens e arrecadações.",
-      icon: Truck,
+      text: "Avaliado conforme número de divisões e volume.",
+      icon: Home,
     },
     {
       title: "Pós-obra",
-      text: "Avaliação conforme área e resíduos.",
+      text: "Avaliado conforme área, resíduos e limpeza necessária.",
       icon: Sparkles,
     },
   ];
 
   return (
-    <section className="bg-slate-50 py-14">
+    <section className="bg-slate-50 py-14 sm:py-16">
       <div className="mx-auto max-w-6xl px-4">
         <SectionTitle
           eyebrow="Valores orientativos"
           title="Quanto custa a recolha?"
-          subtitle="Cada serviço é avaliado conforme volume, localização e acesso. Envie fotos para receber um orçamento ajustado ao seu caso."
+          subtitle="O valor depende do volume, peso, localização, acesso, distância até à carrinha, necessidade de desmontagem e urgência."
         />
         <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
           {cards.map((card) => (
             <div
               key={card.title}
-              className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"
+              className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition hover:shadow-md"
             >
               <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-cyan-50 text-cyan-600">
                 <card.icon className="h-5 w-5" />
@@ -766,50 +893,50 @@ function PricingGuide() {
             </div>
           ))}
         </div>
-        <p className="mx-auto mt-6 max-w-2xl text-center text-xs text-slate-500">
-          Os valores apresentados em orçamento podem não incluir IVA, quando
-          aplicável.
-        </p>
         <div className="mt-8 flex justify-center">
           <a
-            href={`${WHATSAPP_BASE}?text=${encodeURIComponent("Olá CLYON, gostaria de um orçamento. Vou enviar fotos.")}`}
+            href={`${WHATSAPP_BASE}?text=${encodeURIComponent("Olá CLYON, gostaria de uma estimativa. Vou enviar fotos.")}`}
             target="_blank"
             rel="noopener noreferrer"
             onClick={() => trackWhatsApp("pricing")}
-            className="inline-flex items-center justify-center gap-2 rounded-2xl bg-emerald-500 px-6 py-3.5 text-base font-semibold text-white shadow-md transition hover:bg-emerald-600"
+            className="inline-flex min-h-[52px] items-center justify-center gap-2 rounded-2xl bg-emerald-500 px-6 py-3.5 text-base font-semibold text-white shadow-md transition hover:bg-emerald-600"
           >
             <WhatsAppIcon className="h-5 w-5" />
-            Enviar Fotos para Orçamento
+            Enviar fotos para estimativa
           </a>
         </div>
+        <p className="mx-auto mt-5 max-w-2xl text-center text-xs text-slate-500">
+          O pedido de orçamento é gratuito. O serviço de recolha é pago mediante
+          avaliação. Valores podem não incluir IVA, quando aplicável.
+        </p>
       </div>
     </section>
   );
 }
 
-/* --------------------------- Trust --------------------------- */
-function TrustSection() {
+/* --------------------------- Why Choose --------------------------- */
+function WhyChooseSection() {
   const items = [
     { icon: MapPin, label: "Empresa local" },
-    { icon: Clock, label: "Atendimento rápido" },
-    { icon: Users, label: "Equipa profissional" },
-    { icon: Truck, label: "Serviço com carregamento" },
-    { icon: MessageCircle, label: "WhatsApp direto" },
-    { icon: ShieldCheck, label: "Cobertura Lisboa, Margem Sul e Setúbal" },
+    { icon: Users, label: "Equipa preparada para carregar" },
+    { icon: MessageCircle, label: "Atendimento por WhatsApp" },
+    { icon: Building2, label: "Serviço para particulares e empresas" },
+    { icon: ShieldCheck, label: "Cobertura em Lisboa, Margem Sul e Setúbal" },
+    { icon: Camera, label: "Orçamento simples mediante fotos" },
   ];
 
   return (
-    <section className="mx-auto max-w-6xl px-4 py-14">
+    <section className="mx-auto max-w-6xl px-4 py-14 sm:py-16">
       <SectionTitle
         eyebrow="Confiança"
-        title="Recolha profissional com orçamento simples"
-        subtitle="A CLYON ajuda particulares e empresas a libertar espaço com recolha profissional e orçamento simples."
+        title="Porque escolher a CLYON?"
+        subtitle="Ajudamos particulares e empresas a libertar espaço com recolha profissional e orçamento simples."
       />
       <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {items.map((item) => (
           <div
             key={item.label}
-            className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
+            className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:shadow-md"
           >
             <span className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-cyan-50 text-cyan-600">
               <item.icon className="h-5 w-5" />
@@ -824,10 +951,84 @@ function TrustSection() {
   );
 }
 
+/* --------------------------- Reviews --------------------------- */
+function ReviewsSection() {
+  const reviews = [
+    {
+      text: "Serviço de recolha rápido e a equipa tratou de todo o carregamento. Recomendo.",
+      name: "Cliente CLYON",
+      detail: "Avaliação real do Google",
+    },
+    {
+      text: "Pedi orçamento por WhatsApp com fotos e tive resposta no próprio dia. Muito prático.",
+      name: "Cliente CLYON",
+      detail: "Serviço de recolha em Lisboa",
+    },
+    {
+      text: "Esvaziamento de casa feito com profissionalismo e sem complicações. Bom atendimento.",
+      name: "Cliente CLYON",
+      detail: "Avaliação real do Google",
+    },
+  ];
+
+  return (
+    <section className="bg-slate-50 py-14 sm:py-16">
+      <div className="mx-auto max-w-6xl px-4">
+        <SectionTitle
+          eyebrow="Testemunhos"
+          title="O que dizem os clientes"
+        />
+        <div className="mt-5 flex items-center justify-center gap-2">
+          <div className="flex">
+            {[...Array(5)].map((_, i) => (
+              <Star
+                key={i}
+                className="h-5 w-5 text-amber-400"
+                fill="currentColor"
+              />
+            ))}
+          </div>
+          <span className="text-sm font-semibold text-slate-700">
+            {REVIEWS_COUNT} avaliações 5 estrelas
+          </span>
+        </div>
+        <div className="mt-10 grid gap-5 md:grid-cols-3">
+          {reviews.map((review, index) => (
+            <div
+              key={index}
+              className="flex flex-col rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"
+            >
+              <Quote className="h-7 w-7 text-cyan-200" />
+              <div className="mt-3 flex">
+                {[...Array(5)].map((_, i) => (
+                  <Star
+                    key={i}
+                    className="h-4 w-4 text-amber-400"
+                    fill="currentColor"
+                  />
+                ))}
+              </div>
+              <p className="mt-3 flex-1 text-sm leading-relaxed text-slate-700">
+                {review.text}
+              </p>
+              <div className="mt-5 border-t border-slate-100 pt-4">
+                <p className="text-sm font-bold text-slate-900">
+                  {review.name}
+                </p>
+                <p className="text-xs text-slate-500">{review.detail}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 /* --------------------------- Areas --------------------------- */
 function AreasSection() {
   return (
-    <section className="bg-slate-900 py-14">
+    <section className="bg-slate-900 py-14 sm:py-16">
       <div className="mx-auto max-w-5xl px-4 text-center">
         <span className="text-xs font-bold uppercase tracking-[0.18em] text-cyan-400">
           Áreas atendidas
@@ -870,7 +1071,7 @@ function FAQSection() {
   }
 
   return (
-    <section className="mx-auto max-w-3xl px-4 py-14">
+    <section className="mx-auto max-w-3xl px-4 py-14 sm:py-16">
       <SectionTitle eyebrow="Dúvidas frequentes" title="Perguntas e respostas" />
       <div className="mt-8 space-y-3">
         {FAQ_ITEMS.map((item, index) => {
@@ -893,11 +1094,15 @@ function FAQSection() {
                   className={`h-5 w-5 flex-shrink-0 text-cyan-600 transition-transform ${isOpen ? "rotate-180" : ""}`}
                 />
               </button>
-              {isOpen ? (
-                <p className="px-5 pb-4 text-sm leading-relaxed text-slate-600">
-                  {item.a}
-                </p>
-              ) : null}
+              <div
+                className={`grid transition-all duration-200 ${isOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}
+              >
+                <div className="overflow-hidden">
+                  <p className="px-5 pb-4 text-sm leading-relaxed text-slate-600">
+                    {item.a}
+                  </p>
+                </div>
+              </div>
             </div>
           );
         })}
@@ -909,9 +1114,9 @@ function FAQSection() {
 /* --------------------------- Final CTA --------------------------- */
 function FinalCTA() {
   return (
-    <section className="bg-slate-900 py-16">
+    <section className="bg-slate-900 py-16 sm:py-20">
       <div className="mx-auto max-w-3xl px-4 text-center">
-        <h2 className="text-balance text-3xl font-extrabold text-white sm:text-4xl">
+        <h2 className="text-balance text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
           Precisa libertar espaço?
         </h2>
         <p className="mx-auto mt-4 max-w-xl text-pretty text-base leading-relaxed text-slate-300">
@@ -924,7 +1129,7 @@ function FinalCTA() {
             target="_blank"
             rel="noopener noreferrer"
             onClick={() => trackWhatsApp("final_cta")}
-            className="inline-flex items-center justify-center gap-2 rounded-2xl bg-emerald-500 px-6 py-4 text-base font-semibold text-white shadow-lg transition hover:bg-emerald-600"
+            className="inline-flex min-h-[56px] items-center justify-center gap-2 rounded-2xl bg-emerald-500 px-6 py-4 text-base font-semibold text-white shadow-lg shadow-emerald-500/25 transition hover:bg-emerald-600"
           >
             <WhatsAppIcon className="h-5 w-5" />
             Enviar Fotos no WhatsApp
@@ -932,7 +1137,7 @@ function FinalCTA() {
           <a
             href={`tel:${PHONE_TEL}`}
             onClick={() => trackCall("final_cta")}
-            className="inline-flex items-center justify-center gap-2 rounded-2xl border border-white/20 bg-white/5 px-6 py-4 text-base font-semibold text-white transition hover:bg-white/10"
+            className="inline-flex min-h-[56px] items-center justify-center gap-2 rounded-2xl border border-white/20 bg-white/5 px-6 py-4 text-base font-semibold text-white transition hover:bg-white/10"
           >
             <Phone className="h-5 w-5" />
             Ligar para a CLYON
@@ -957,7 +1162,7 @@ function StickyMobileCTA({ visible }: { visible: boolean }) {
         target="_blank"
         rel="noopener noreferrer"
         onClick={() => trackWhatsApp("sticky_mobile")}
-        className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-emerald-500 px-4 py-3 text-sm font-semibold text-white"
+        className="flex min-h-[52px] flex-1 items-center justify-center gap-2 rounded-xl bg-emerald-500 px-4 py-3 text-sm font-semibold text-white"
       >
         <WhatsAppIcon className="h-5 w-5" />
         WhatsApp
@@ -965,7 +1170,7 @@ function StickyMobileCTA({ visible }: { visible: boolean }) {
       <a
         href={`tel:${PHONE_TEL}`}
         onClick={() => trackCall("sticky_mobile")}
-        className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-cyan-600 px-4 py-3 text-sm font-semibold text-white"
+        className="flex min-h-[52px] flex-1 items-center justify-center gap-2 rounded-xl bg-cyan-600 px-4 py-3 text-sm font-semibold text-white"
       >
         <Phone className="h-5 w-5" />
         Ligar
