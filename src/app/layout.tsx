@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter, Poppins } from "next/font/google";
+import Script from "next/script";
 import { Analytics } from "@vercel/analytics/next";
 
 import SiteChrome from "@/components/SiteChrome";
@@ -207,6 +208,8 @@ const websiteSchema = {
   inLanguage: "pt-PT",
 };
 
+const GOOGLE_ADS_ID = "AW-18221538324";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -237,6 +240,19 @@ export default function RootLayout({
         />
       </head>
       <body className="site-aqua-shell min-h-screen bg-white text-slate-900 antialiased">
+        <Script
+          id="gtag-src"
+          strategy="afterInteractive"
+          src={`https://www.googletagmanager.com/gtag/js?id=${GOOGLE_ADS_ID}`}
+        />
+        <Script id="gtag-init" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', '${GOOGLE_ADS_ID}');
+          `}
+        </Script>
         <TrpcProvider>
           <SiteChrome>{children}</SiteChrome>
         </TrpcProvider>
