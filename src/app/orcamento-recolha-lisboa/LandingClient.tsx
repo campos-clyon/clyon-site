@@ -44,7 +44,7 @@ declare global {
 
 type DataLayerEvent = Record<string, unknown>;
 
-const GOOGLE_ADS_CONVERSION = "AW-18221538324/ca-PCL7j3rocEJ342vBD";
+const GOOGLE_ADS_CONVERSION = "AW-18221538324/UOx5CO2e87ocEJS42vBD";
 
 function pushDataLayer(event: DataLayerEvent) {
   if (typeof window === "undefined") return;
@@ -52,33 +52,29 @@ function pushDataLayer(event: DataLayerEvent) {
   window.dataLayer.push(event);
 }
 
-function trackConversion() {
+function trackLeadConversion() {
   if (typeof window === "undefined" || typeof window.gtag !== "function") return;
   window.gtag("event", "conversion", {
     send_to: GOOGLE_ADS_CONVERSION,
-    value: 1.0,
+    value: 10.0,
     currency: "EUR",
   });
 }
 
 function trackWhatsApp(location: string) {
   pushDataLayer({ event: "click_whatsapp", location });
-  trackConversion();
 }
 
 function trackCall(location: string) {
   pushDataLayer({ event: "click_call", location });
-  trackConversion();
 }
 
 function trackSms(location: string) {
   pushDataLayer({ event: "click_sms", location });
-  trackConversion();
 }
 
 function trackEmail(location: string) {
   pushDataLayer({ event: "click_email", location });
-  trackConversion();
 }
 
 const EMAIL_SUBJECT = "Pedido de Orçamento - CLYON";
@@ -494,6 +490,8 @@ function LeadForm() {
       contact_preference: form.preferencia || undefined,
       ...utms,
     });
+
+    trackLeadConversion();
 
     const message = [
       "Olá CLYON, gostaria de pedir um orçamento.",
