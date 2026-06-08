@@ -119,6 +119,15 @@ function getStoredUtms(): Record<string, string> {
   }
 }
 
+function isFromAd(utms: Record<string, string>): boolean {
+  if (utms.gclid) return true;
+  const medium = (utms.utm_medium || "").toLowerCase();
+  if (["cpc", "ppc", "paid", "ads", "paidsearch"].includes(medium)) return true;
+  const source = (utms.utm_source || "").toLowerCase();
+  if (source === "google" && medium) return true;
+  return false;
+}
+
 const SERVICE_OPTIONS = [
   "Recolha de entulho",
   "Recolha de móveis",
@@ -493,6 +502,8 @@ function LeadForm() {
 
     trackLeadConversion();
 
+    const fromAd = isFromAd(utms);
+
     const message = [
       "Olá CLYON, gostaria de pedir um orçamento.",
       "",
@@ -506,8 +517,11 @@ function LeadForm() {
       `Preferência de contacto: ${form.preferencia}`,
       `Descrição: ${form.descricao}`,
       "",
+      fromAd ? "(via AD)" : null,
       "Obrigado.",
-    ].join("\n");
+    ]
+      .filter((line) => line !== null)
+      .join("\n");
 
     const encoded = encodeURIComponent(message);
 
@@ -707,7 +721,7 @@ function LeadForm() {
                   aria-pressed={active}
                   className={`flex flex-col items-center justify-center gap-1.5 rounded-xl border px-2 py-3 text-xs font-semibold transition ${
                     active
-                      ? "border-cyan-500 bg-cyan-50 text-cyan-700 shadow-sm ring-2 ring-cyan-100"
+                      ? "border-cyan-500 bg-[#ecfeff] text-cyan-700 shadow-sm ring-2 ring-cyan-100"
                       : errors.preferencia
                         ? "border-red-300 bg-white text-slate-600 hover:border-cyan-300"
                         : "border-slate-300 bg-white text-slate-600 hover:border-cyan-300 hover:text-cyan-700"
