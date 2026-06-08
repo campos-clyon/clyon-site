@@ -240,7 +240,7 @@ export default function LandingClient() {
   }, []);
 
   return (
-    <div className="bg-white text-slate-900">
+    <div className="bg-white text-slate-900" style={{ zoom: 0.95 }}>
       <TopBar />
       <Hero heroRef={heroRef} />
       <TrustBar />
