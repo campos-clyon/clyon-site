@@ -71,6 +71,25 @@ const categorias: Categoria[] = [
 
 const categoriaIds = new Set<CategoriaId>(["moveis", "monos", "entulho", "mudancas", "limpeza"]);
 
+type CountryOption = { code: string; dial: string; flag: string; label: string };
+
+const COUNTRY_OPTIONS: CountryOption[] = [
+  { code: "PT", dial: "+351", flag: "🇵🇹", label: "Portugal" },
+  { code: "ES", dial: "+34", flag: "🇪🇸", label: "Espanha" },
+  { code: "FR", dial: "+33", flag: "🇫🇷", label: "França" },
+  { code: "GB", dial: "+44", flag: "🇬🇧", label: "Reino Unido" },
+  { code: "DE", dial: "+49", flag: "🇩🇪", label: "Alemanha" },
+  { code: "IT", dial: "+39", flag: "🇮🇹", label: "Itália" },
+  { code: "CH", dial: "+41", flag: "🇨🇭", label: "Suíça" },
+  { code: "NL", dial: "+31", flag: "🇳🇱", label: "Países Baixos" },
+  { code: "BE", dial: "+32", flag: "🇧🇪", label: "Bélgica" },
+  { code: "LU", dial: "+352", flag: "🇱🇺", label: "Luxemburgo" },
+  { code: "IE", dial: "+353", flag: "🇮🇪", label: "Irlanda" },
+];
+
+// Número de WhatsApp dedicado para o simulador de mudanças.
+const MUDANCAS_WHATSAPP_PHONE = "+351924370335";
+
 const simulatorPrimaryButtonClass =
   "bg-cyan-600 text-white border-2 border-cyan-600 hover:bg-cyan-700";
 
@@ -110,6 +129,9 @@ export default function SimuladorClient({ initialCategoriaId = null }: Simulador
   const [highlightBudget, setHighlightBudget] = useState(false);
   const [telemovel, setTelemovel] = useState("");
   const [telemovelError, setTelemovelError] = useState("");
+  const [countryDial, setCountryDial] = useState("+351");
+  const [customDial, setCustomDial] = useState("");
+  const [showCustomDial, setShowCustomDial] = useState(false);
 
   const categoria = categorias.find((item) => item.id === categoriaId) ?? null;
   const origemValida = categoria?.trajeto === "base" || origem.trim().length >= 3;
@@ -209,6 +231,9 @@ export default function SimuladorClient({ initialCategoriaId = null }: Simulador
     setPessoasManual(false);
     setTelemovel("");
     setTelemovelError("");
+    setCountryDial("+351");
+    setCustomDial("");
+    setShowCustomDial(false);
   };
 
   useEffect(() => {
@@ -390,15 +415,17 @@ export default function SimuladorClient({ initialCategoriaId = null }: Simulador
 
   const validateTelemovel = (phone: string): boolean => {
     const cleaned = phone.replace(/\D/g, "");
-    return /^9[1236]\d{7}$/.test(cleaned);
+    // Aceita qualquer número internacional plausível (mínimo de dígitos).
+    return cleaned.length >= 6 && cleaned.length <= 15;
   };
 
   const formatTelemovel = (phone: string): string => {
-    const cleaned = phone.replace(/\D/g, "");
-    if (cleaned.length <= 3) return cleaned;
-    if (cleaned.length <= 6) return `${cleaned.slice(0, 3)} ${cleaned.slice(3)}`;
-    return `${cleaned.slice(0, 3)} ${cleaned.slice(3, 6)} ${cleaned.slice(6, 9)}`;
+    // Mantém apenas dígitos e espaços simples a cada 3 dígitos para legibilidade.
+    const cleaned = phone.replace(/\D/g, "").slice(0, 15);
+    return cleaned.replace(/(\d{3})(?=\d)/g, "$1 ").trim();
   };
+
+  const activeDial = showCustomDial ? customDial.trim() : countryDial;
 
   const handleTelemovelChange = (value: string) => {
     const formatted = formatTelemovel(value);
@@ -406,9 +433,26 @@ export default function SimuladorClient({ initialCategoriaId = null }: Simulador
     setTelemovelError("");
   };
 
+  const handleCountryChange = (value: string) => {
+    if (value === "custom") {
+      setShowCustomDial(true);
+      setCustomDial(countryDial);
+      return;
+    }
+    setShowCustomDial(false);
+    setCountryDial(value);
+  };
+
   const confirmarPedido = () => {
     if (!categoria || km === null || orcamento === null) return;
-    
+
+    // Validate dial code
+    const cleanedDial = activeDial.replace(/[^\d+]/g, "");
+    if (!cleanedDial || !/^\+?\d{1,4}$/.test(cleanedDial)) {
+      setTelemovelError("Indique um código de país válido (ex.: +351)");
+      return;
+    }
+
     // Validate phone
     const cleanedPhone = telemovel.replace(/\D/g, "");
     if (!cleanedPhone) {
@@ -416,9 +460,12 @@ export default function SimuladorClient({ initialCategoriaId = null }: Simulador
       return;
     }
     if (!validateTelemovel(cleanedPhone)) {
-      setTelemovelError("Introduza um número de telemóvel válido (9 dígitos)");
+      setTelemovelError("Introduza um número de telemóvel válido");
       return;
     }
+
+    const dialNormalized = cleanedDial.startsWith("+") ? cleanedDial : `+${cleanedDial}`;
+    const telemovelCompleto = `${dialNormalized} ${telemovel}`.trim();
 
     setHighlightBudget(false);
     trackSimulatorWhatsApp(categoria.id, orcamento, true);
@@ -430,7 +477,7 @@ export default function SimuladorClient({ initialCategoriaId = null }: Simulador
       categoria.trajeto === "custom" ? `*Origem:* ${origem}` : "*Origem:* Base CLYON",
       `*Destino:* ${destino}`,
       `*Distância:* ${km.toFixed(1)} km`,
-      `*Telemóvel:* ${telemovel}`,
+      `*Telemóvel:* ${telemovelCompleto}`,
       "",
       `*Tipo de acesso:* ${tipoAcesso || "-"}`,
       tipoAcesso === "apartamento" ? `*Andares:* ${numeroAndares || "0"}` : null,
@@ -454,7 +501,9 @@ export default function SimuladorClient({ initialCategoriaId = null }: Simulador
     ].filter(Boolean);
 
     const mensagem = encodeURIComponent(linhas.join("\n"));
-    window.location.href = `https://wa.me/${BUSINESS_PHONE.replace(/\D/g, "")}?text=${mensagem}`;
+    const destinoWhatsApp =
+      categoria.id === "mudancas" ? MUDANCAS_WHATSAPP_PHONE : BUSINESS_PHONE;
+    window.location.href = `https://wa.me/${destinoWhatsApp.replace(/\D/g, "")}?text=${mensagem}`;
   };
 
   if (!categoria) {
@@ -875,26 +924,69 @@ export default function SimuladorClient({ initialCategoriaId = null }: Simulador
                       <p className="mt-1 text-sm leading-6 text-slate-300">
                         Deixe o seu contacto e respondemos em minutos.
                       </p>
-                      <div className="mt-3">
+                      <div className="mt-3 space-y-2">
                         <label htmlFor="telemovel-simulador" className="sr-only">
                           Telemóvel
                         </label>
-                        <Input
-                          id="telemovel-simulador"
-                          type="tel"
-                          value={telemovel}
-                          onChange={(e) => handleTelemovelChange(e.target.value)}
-                          placeholder="912 345 678"
-                          maxLength={11}
-                          className={cn(
-                            "h-12 rounded-[14px] bg-white/10 border text-white placeholder:text-slate-400",
-                            telemovelError
-                              ? "border-red-400 ring-2 ring-red-400/30"
-                              : "border-white/20 focus:border-cyan-400"
+                        <div className="flex gap-2">
+                          {showCustomDial ? (
+                            <Input
+                              type="tel"
+                              inputMode="tel"
+                              value={customDial}
+                              onChange={(e) => {
+                                setCustomDial(e.target.value);
+                                setTelemovelError("");
+                              }}
+                              placeholder="+000"
+                              aria-label="Código do país"
+                              className="h-12 w-24 rounded-[14px] border border-white/20 bg-white/10 text-center text-white placeholder:text-slate-400 transition-colors focus:border-cyan-400"
+                            />
+                          ) : (
+                            <select
+                              value={countryDial}
+                              onChange={(e) => handleCountryChange(e.target.value)}
+                              aria-label="Código do país"
+                              className="h-12 w-28 rounded-[14px] border border-white/20 bg-white/10 px-2 text-sm text-white transition-colors focus:border-cyan-400 focus:outline-none [&>option]:text-slate-900"
+                            >
+                              {COUNTRY_OPTIONS.map((country) => (
+                                <option key={country.code} value={country.dial}>
+                                  {country.flag} {country.dial}
+                                </option>
+                              ))}
+                              <option value="custom">Outro…</option>
+                            </select>
                           )}
-                        />
+                          <Input
+                            id="telemovel-simulador"
+                            type="tel"
+                            inputMode="tel"
+                            value={telemovel}
+                            onChange={(e) => handleTelemovelChange(e.target.value)}
+                            placeholder="912 345 678"
+                            maxLength={18}
+                            className={cn(
+                              "h-12 flex-1 rounded-[14px] border bg-white/10 text-white placeholder:text-slate-400 transition-colors",
+                              telemovelError
+                                ? "border-red-400 ring-2 ring-red-400/30"
+                                : "border-white/20 focus:border-cyan-400",
+                            )}
+                          />
+                        </div>
+                        {showCustomDial ? (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setShowCustomDial(false);
+                              setTelemovelError("");
+                            }}
+                            className="text-xs font-semibold text-cyan-200 underline-offset-2 hover:underline"
+                          >
+                            Escolher da lista de países
+                          </button>
+                        ) : null}
                         {telemovelError && (
-                          <p className="mt-2 text-sm text-red-300">{telemovelError}</p>
+                          <p className="text-sm text-red-300">{telemovelError}</p>
                         )}
                       </div>
                     </div>
@@ -984,15 +1076,15 @@ function getFieldTone({
 
 function fieldToneClass(tone: FieldTone) {
   if (tone === "error") {
-    return "border-red-300 ring-4 ring-red-100";
+    return "border-red-400 ring-4 ring-red-100 transition-colors hover:border-red-500";
   }
   if (tone === "warning") {
-    return "border-amber-300 ring-4 ring-amber-100";
+    return "border-amber-400 ring-4 ring-amber-100 transition-colors hover:border-amber-500";
   }
   if (tone === "next") {
-    return "border-cyan-300 ring-4 ring-cyan-100 shadow-[0_0_0_1px_rgba(34,211,238,0.15)]";
+    return "border-cyan-400 ring-4 ring-cyan-100 shadow-[0_0_0_1px_rgba(34,211,238,0.15)] transition-colors hover:border-cyan-600";
   }
-  return "border-cyan-100";
+  return "border-cyan-300 transition-colors hover:border-cyan-600 focus:border-cyan-600";
 }
 
 function fieldToneRingClass(tone: FieldTone) {
