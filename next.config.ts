@@ -18,6 +18,22 @@ const nextConfig: NextConfig = {
   },
   async redirects() {
     return [
+      // Páginas de orçamento da recolha
+      {
+        source: "/recolha/orcamento",
+        destination: "/orcamento-recolha-lisboa",
+        permanent: true,
+      },
+      {
+        source: "/recolha/orçamento",
+        destination: "/orcamento-recolha-lisboa",
+        permanent: true,
+      },
+      {
+        source: "/recolha",
+        destination: "/recolha-de-moveis",
+        permanent: true,
+      },
       // Redirect orçamento para simulador
       {
         source: "/orcamento",
