@@ -17,6 +17,13 @@ interface ImageCarouselProps {
   autoPlayInterval?: number;
   showIndicators?: boolean;
   showArrows?: boolean;
+  /**
+   * Marca a primeira imagem como prioritária (preload). Desligar quando o
+   * carrossel está oculto em mobile para não pré-carregar bytes invisíveis.
+   */
+  priorityFirst?: boolean;
+  /** Atributo sizes responsivo para o next/image. */
+  sizes?: string;
 }
 
 export default function ImageCarousel({
@@ -25,6 +32,8 @@ export default function ImageCarousel({
   autoPlayInterval = 5000,
   showIndicators = true,
   showArrows = true,
+  priorityFirst = true,
+  sizes = "(max-width: 767px) calc(100vw - 3rem), (max-width: 1279px) 50vw, 620px",
 }: ImageCarouselProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPending, setIsPending] = useState(false);
@@ -149,10 +158,11 @@ export default function ImageCarousel({
         src={currentImage.url}
         alt={currentImage.alt}
         fill
-        priority={currentIndex === 0}
-        fetchPriority={currentIndex === 0 ? "high" : "auto"}
+        priority={priorityFirst && currentIndex === 0}
+        fetchPriority={priorityFirst && currentIndex === 0 ? "high" : "auto"}
+        loading={priorityFirst && currentIndex === 0 ? "eager" : "lazy"}
         quality={60}
-        sizes="(max-width: 767px) calc(100vw - 3rem), (max-width: 1279px) 50vw, 620px"
+        sizes={sizes}
         className="object-cover object-center"
         onLoad={() => {
           loadedUrlsRef.current.add(currentImage.url);

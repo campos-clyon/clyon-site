@@ -281,7 +281,11 @@ export default async function HomePage() {
             <div className="relative hidden lg:block">
               <div className="overflow-hidden rounded-2xl shadow-xl">
                 <div className="aspect-[4/3]">
-                  <ImageCarousel images={workImages} autoPlayInterval={5000} />
+                  <ImageCarousel
+                    images={workImages}
+                    autoPlayInterval={5000}
+                    sizes="(max-width: 1023px) 0px, (max-width: 1279px) 50vw, 620px"
+                  />
                 </div>
               </div>
               {/* Badge: Equipa Profissional */}
