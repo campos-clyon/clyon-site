@@ -61,7 +61,7 @@ const localBusinessSchema = {
   },
   contactPoint: {
     "@type": "ContactPoint",
-    telephone: "+351931632622",
+    telephone: "+351965785395",
     email: "geral@clyon.pt",
     contactType: "customer service",
     areaServed: "PT",
