@@ -557,8 +557,6 @@ export default function ColaboradorAdminClient() {
     }));
   }, [simulatorSettings]);
 
-  const latestRecords = useMemo(() => todosRegistros.slice(0, 5), [todosRegistros]);
-
   // ---- Núcleo operacional: semana selecionada (segunda -> domingo) ----
   const weekRange = useMemo(() => getWeekRange(weekOffset), [weekOffset]);
 
@@ -569,6 +567,17 @@ export default function ColaboradorAdminClient() {
   }, [weekRange]);
 
   const today = useMemo(() => new Date(), []);
+
+  const hojeLabel = useMemo(
+    () =>
+      new Intl.DateTimeFormat("pt-PT", {
+        weekday: "long",
+        day: "2-digit",
+        month: "long",
+        year: "numeric",
+      }).format(new Date()),
+    [],
+  );
 
   // Colaboradores com registos na semana selecionada (respeitando filtro de função).
   const weekCollaborators = useMemo(() => {
@@ -830,81 +839,6 @@ export default function ColaboradorAdminClient() {
     [collaboratorHourReports],
   );
 
-  const overviewBars = useMemo(
-    () => [
-      {
-        label: "Hoje",
-        hours: dashboardStats.hoje.horas,
-        jobs: dashboardStats.hoje.trabalhos,
-      },
-      {
-        label: "Semana",
-        hours: dashboardStats.semana.horas,
-        jobs: dashboardStats.semana.trabalhos,
-      },
-      {
-        label: "15 dias",
-        hours: dashboardStats.ultimos15.horas,
-        jobs: dashboardStats.ultimos15.trabalhos,
-      },
-      {
-        label: "Mes",
-        hours: dashboardStats.mes.horas,
-        jobs: dashboardStats.mes.trabalhos,
-      },
-    ],
-    [dashboardStats],
-  );
-
-  const chartMax = useMemo(() => {
-    const maxHours = Math.max(...overviewBars.map((item) => item.hours), 1);
-    const maxJobs = Math.max(...overviewBars.map((item) => item.jobs), 1);
-    return { maxHours, maxJobs };
-  }, [overviewBars]);
-
-  const teamComposition = useMemo(() => {
-    const counts = [
-      {
-        label: "Ajudantes",
-        value: colaboradores.filter((item) => item.funcao === "ajudante").length,
-        color: "#22d3ee",
-      },
-      {
-        label: "Motoristas",
-        value: colaboradores.filter((item) => item.funcao === "motorista").length,
-        color: "#0ea5e9",
-      },
-      {
-        label: "Admins",
-        value: colaboradores.filter((item) => item.isAdmin === 1).length,
-        color: "#34d399",
-      },
-    ];
-
-    const total = counts.reduce((acc, item) => acc + item.value, 0);
-
-    return counts.map((item) => ({
-      ...item,
-      percent: total > 0 ? (item.value / total) * 100 : 0,
-    }));
-  }, [colaboradores]);
-
-  const donutStyle = useMemo(() => {
-    const activeSegments = teamComposition.filter((item) => item.percent > 0);
-    if (activeSegments.length === 0) {
-      return "conic-gradient(#17324a 0deg 360deg)";
-    }
-
-    let current = 0;
-    return `conic-gradient(${activeSegments
-      .map((item) => {
-        const start = current;
-        current += item.percent * 3.6;
-        return `${item.color} ${start}deg ${current}deg`;
-      })
-      .join(", ")})`;
-  }, [teamComposition]);
-
   const handleLogout = () => {
     localStorage.removeItem("colaborador_token");
     localStorage.removeItem("colaborador_nome");
@@ -1152,6 +1086,7 @@ export default function ColaboradorAdminClient() {
                   Backoffice CLYON
                 </p>
                 <h2 className="mt-1 text-[1.5rem] font-semibold text-white">Painel administrativo</h2>
+                <p className="mt-1 text-xs capitalize text-slate-400">{hojeLabel}</p>
               </div>
             </div>
 
@@ -1252,7 +1187,10 @@ export default function ColaboradorAdminClient() {
 
                   <Button
                     type="button"
-                    onClick={() => setCriarNovoVisivel(true) || setActiveSection("team")}
+                    onClick={() => {
+                      setCriarNovoVisivel(true);
+                      setActiveSection("team");
+                    }}
                     className="h-11 rounded-[14px] bg-cyan-400 px-4 text-slate-950 hover:bg-cyan-300"
                   >
                     <UserPlus className="mr-2 h-4 w-4" />
@@ -1441,272 +1379,6 @@ export default function ColaboradorAdminClient() {
                   </div>
                 )}
               </ActionCard>
-            </>
-          )}
-
-          {false && (
-            <>
-              <section className="grid gap-4 xl:grid-cols-[0.82fr_1.45fr_1fr]">
-                <ActionCard
-                    title="Sessão ativa"
-                    description="Resumo do utilizador e do estado atual do painel."
-                >
-                  <div className="flex flex-col items-center text-center">
-                    <div className="flex h-28 w-28 items-center justify-center rounded-full bg-cyan-400 text-3xl font-semibold text-slate-950">
-                      {getInitials(adminNome)}
-                    </div>
-                    <h3 className="mt-4 text-[1.55rem] font-semibold text-white">{adminNome}</h3>
-                    <p className="mt-1 text-sm text-slate-400">Administrador principal</p>
-                  </div>
-
-                  <div className="grid gap-3">
-                    <RecordMeta label="Último registo" value={formatDateTime(dashboardStats.ultimoRegisto)} icon={CalendarClock} />
-                    <RecordMeta label="Média/hora" value={money(dashboardStats.mediaHora)} icon={Euro} />
-                    <RecordMeta label="Ativos" value={`${dashboardStats.ativos} colaboradores`} icon={Users} />
-                  </div>
-
-                  <Button
-                    type="button"
-                    onClick={() => setActiveSection("team")}
-                    className="h-11 rounded-[16px] bg-cyan-400 text-slate-950 hover:bg-cyan-300"
-                  >
-                    Editar equipa
-                  </Button>
-                </ActionCard>
-
-                <ActionCard
-                    title="Gráfico de atividade"
-                    description="Comparação rápida entre horas e trabalhos por período."
-                >
-                  <div className="flex gap-2">
-                    {["Semana", "Mês", "Ano"].map((item) => (
-                      <div
-                        key={item}
-                        className={`rounded-[14px] px-3 py-2 text-xs font-semibold ${
-                          item === "Semana"
-                            ? "bg-cyan-400 text-slate-950"
-                            : "bg-white/[0.03] text-slate-300"
-                        }`}
-                      >
-                        {item}
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className="grid h-[240px] grid-cols-4 items-end gap-5">
-                    {overviewBars.map((item) => {
-                      const hourHeight = `${Math.max((item.hours / chartMax.maxHours) * 100, item.hours > 0 ? 12 : 4)}%`;
-                      const jobHeight = `${Math.max((item.jobs / chartMax.maxJobs) * 100, item.jobs > 0 ? 10 : 4)}%`;
-
-                      return (
-                        <div key={item.label} className="flex h-full flex-col justify-end gap-3">
-                          <div className="flex h-full items-end justify-center gap-3 rounded-[20px] border border-white/10 bg-white/[0.03] p-4">
-                            <div className="flex h-full flex-col justify-end">
-                              <div className="w-7 rounded-full bg-cyan-400" style={{ height: hourHeight }} />
-                            </div>
-                            <div className="flex h-full flex-col justify-end">
-                              <div className="w-7 rounded-full bg-emerald-400" style={{ height: jobHeight }} />
-                            </div>
-                          </div>
-                          <div className="text-center">
-                            <p className="text-sm font-semibold text-white">{item.label}</p>
-                            <p className="text-xs text-slate-400">
-                              {decimal(item.hours)}h | {item.jobs} trabalhos
-                            </p>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-
-                  <div className="flex flex-wrap gap-5 text-sm text-slate-300">
-                    <div className="flex items-center gap-2">
-                      <span className="h-3 w-3 rounded-full bg-cyan-400" />
-                      Horas
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="h-3 w-3 rounded-full bg-emerald-400" />
-                      Trabalhos
-                    </div>
-                  </div>
-                </ActionCard>
-
-                <ActionCard
-                  title="Desempenho da equipa"
-                  description="Distribuicao atual da estrutura operacional."
-                >
-                  <div className="flex flex-col items-center gap-5">
-                    <div
-                      className="relative h-52 w-52 rounded-full border border-white/10"
-                      style={{ background: donutStyle }}
-                    >
-                      <div className="absolute inset-[27%] rounded-full bg-slate-950/95" />
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="text-center">
-                          <p className="text-xs uppercase tracking-[0.24em] text-cyan-100">Equipa</p>
-                          <p className="mt-2 text-3xl font-semibold text-white">{dashboardStats.ativos}</p>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="w-full space-y-3">
-                      {teamComposition.map((item) => (
-                        <div key={item.label} className="rounded-[18px] border border-white/10 bg-white/[0.03] p-3">
-                          <div className="mb-2 flex items-center justify-between gap-3">
-                            <div className="flex items-center gap-2">
-                              <span className="h-3 w-3 rounded-full" style={{ backgroundColor: item.color }} />
-                              <span className="text-sm font-semibold text-white">{item.label}</span>
-                            </div>
-                            <span className="text-sm text-slate-300">
-                              {item.value} | {decimal(item.percent)}%
-                            </span>
-                          </div>
-                          <div className="h-3 overflow-hidden rounded-full bg-slate-950/70">
-                            <div
-                              className="h-full rounded-full"
-                              style={{
-                                width: `${Math.max(item.percent, item.value > 0 ? 8 : 0)}%`,
-                                backgroundColor: item.color,
-                              }}
-                            />
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </ActionCard>
-              </section>
-
-              <section className="grid gap-4 xl:grid-cols-[1.55fr_1fr]">
-                <ActionCard
-                  title="Ultimos registos"
-                  description="Turnos recentes da equipa para consulta rapida."
-                >
-                  <div className="space-y-3">
-                    {latestRecords.length === 0 && (
-                      <div className="rounded-2xl border border-dashed border-white/10 px-4 py-6 text-sm text-slate-400">
-                        Ainda nao existem registos suficientes para mostrar atividade recente.
-                      </div>
-                    )}
-
-                    {latestRecords.map((registro) => (
-                      <div
-                        key={registro.id}
-                        className="grid gap-4 rounded-[20px] border border-white/10 bg-white/[0.03] px-4 py-4 lg:grid-cols-[1.2fr_0.8fr_0.7fr_0.7fr_auto]"
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className="flex h-11 w-11 items-center justify-center rounded-full bg-cyan-400 text-sm font-semibold text-slate-950">
-                            {getInitials(registro.colaboradorNome)}
-                          </div>
-                          <div>
-                            <p className="font-semibold text-white">{registro.colaboradorNome}</p>
-                            <p className="text-sm text-slate-400">{formatDate(registro.data)}</p>
-                          </div>
-                        </div>
-                        <div>
-                          <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Turno</p>
-                          <p className="mt-1 text-sm font-semibold text-white">
-                            {registro.horaEntrada || "--"} - {registro.horaSaida || "--"}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Horas</p>
-                          <p className="mt-1 text-sm font-semibold text-white">
-                            {decimal(parseFloat(registro.horasTrabalhadas || "0"))}h
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Trabalhos</p>
-                          <p className="mt-1 text-sm font-semibold text-white">{registro.numeroTrabalhos}</p>
-                        </div>
-                        <div className="text-left lg:text-right">
-                          <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Valor</p>
-                          <p className="mt-1 text-sm font-semibold text-white">
-                            {money(parseFloat(registro.valorTotal || "0"))}
-                          </p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </ActionCard>
-
-                <div className="space-y-4">
-                  <ActionCard
-                    title="Atalhos do painel"
-                    description="Acoes mais usadas no dia a dia."
-                    compact
-                  >
-                    <button
-                      type="button"
-                      onClick={() => setActiveSection("team")}
-                      className="flex w-full items-center justify-between gap-3 rounded-[18px] border border-white/10 bg-white/[0.03] px-4 py-4 text-left transition hover:bg-white/[0.06]"
-                    >
-                      <div>
-                        <p className="text-sm font-semibold text-white">Gerir equipa</p>
-                        <p className="text-xs text-slate-400">Atualizar acessos e valores por hora.</p>
-                      </div>
-                      <ArrowRight className="h-5 w-5 text-cyan-100" />
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => setActiveSection("hours")}
-                      className="flex w-full items-center justify-between gap-3 rounded-[18px] border border-white/10 bg-white/[0.03] px-4 py-4 text-left transition hover:bg-white/[0.06]"
-                    >
-                      <div>
-                        <p className="text-sm font-semibold text-white">Corrigir horarios</p>
-                        <p className="text-xs text-slate-400">Editar pausas, turnos e valores finais.</p>
-                      </div>
-                      <ArrowRight className="h-5 w-5 text-cyan-100" />
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => setActiveSection("site")}
-                      className="flex w-full items-center justify-between gap-3 rounded-[18px] border border-white/10 bg-white/[0.03] px-4 py-4 text-left transition hover:bg-white/[0.06]"
-                    >
-                      <div>
-                        <p className="text-sm font-semibold text-white">Gestão do site</p>
-                        <p className="text-xs text-slate-400">Media e simulador num único fluxo.</p>
-                      </div>
-                      <ArrowRight className="h-5 w-5 text-cyan-100" />
-                    </button>
-                  </ActionCard>
-
-                  <ActionCard
-                    title="Melhor desempenho do mês"
-                    description="Ranking atual por faturação."
-                    compact
-                  >
-                    <div className="space-y-3">
-                      {topColaboradores.map((colaborador, index) => (
-                        <div
-                          key={colaborador.id}
-                          className="rounded-[18px] border border-white/10 bg-white/[0.03] px-4 py-4"
-                        >
-                          <div className="flex items-center justify-between gap-3">
-                            <div>
-                              <p className="text-xs uppercase tracking-[0.18em] text-cyan-200">
-                                Top {index + 1}
-                              </p>
-                              <p className="mt-1 text-sm font-semibold text-white">{colaborador.nome}</p>
-                              <p className="text-xs text-slate-400 capitalize">{colaborador.funcao}</p>
-                            </div>
-                            <div className="text-right">
-                              <p className="text-sm font-semibold text-white">
-                                {money(parseFloat(colaborador.estatisticas.mes.valor || "0"))}
-                              </p>
-                              <p className="text-xs text-slate-400">
-                                {decimal(parseFloat(colaborador.estatisticas.mes.horas || "0"))}h
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </ActionCard>
-                </div>
-              </section>
             </>
           )}
 
@@ -2452,7 +2124,258 @@ export default function ColaboradorAdminClient() {
           )}
         </main>
       </div>
+
+      {/* Drawer lateral: histórico semanal do colaborador */}
+      {drawerColaborador && (
+        <div className="fixed inset-0 z-50 flex justify-end">
+          <button
+            type="button"
+            aria-label="Fechar histórico"
+            onClick={() => setColaboradorDrawerId(null)}
+            className="absolute inset-0 bg-slate-950/70 backdrop-blur-sm"
+          />
+          <aside className="relative flex h-full w-full max-w-xl flex-col overflow-y-auto border-l border-cyan-300/20 bg-[linear-gradient(180deg,rgba(9,27,43,0.99)_0%,rgba(7,20,33,0.99)_100%)] shadow-[-30px_0_80px_rgba(3,10,18,0.5)]">
+            <div className="sticky top-0 z-10 flex items-start justify-between gap-4 border-b border-white/10 bg-[rgba(9,27,43,0.96)] px-6 py-5 backdrop-blur">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-cyan-200">
+                  Histórico semanal
+                </p>
+                <h3 className="mt-1 text-xl font-semibold text-white">{drawerColaborador.nome}</h3>
+                <p className="mt-1 text-sm capitalize text-slate-400">
+                  {formatRoleLabel(drawerColaborador.funcao)} • <span className="capitalize">{weekLabel}</span>
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setColaboradorDrawerId(null)}
+                className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/[0.04] text-white transition hover:bg-white/[0.1]"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="flex-1 space-y-3 px-6 py-5">
+              {drawerDias.map((dia) => {
+                const trabalhou = dia.registros.length > 0;
+                return (
+                  <div
+                    key={dia.label}
+                    className={`rounded-[18px] border px-4 py-3 ${
+                      trabalhou
+                        ? "border-white/10 bg-white/[0.04]"
+                        : "border-white/5 bg-white/[0.015]"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-semibold text-white">{dia.label}</span>
+                        <span className="text-xs text-slate-500">{formatShortDate(dia.dia.toISOString())}</span>
+                      </div>
+                      {trabalhou ? (
+                        <StatusBadge status={getRecordStatus(dia.registros[0]) === "validado" ? "validado" : getRecordStatus(dia.registros[0]) === "incompleto" ? "incompleto" : "pendente"} />
+                      ) : (
+                        <span className="text-xs font-medium text-slate-500">Sem registo</span>
+                      )}
+                    </div>
+
+                    {trabalhou &&
+                      dia.registros.map((r) => (
+                        <div
+                          key={r.id}
+                          className="mt-3 grid grid-cols-2 gap-2 rounded-[14px] border border-white/10 bg-white/[0.03] px-3 py-2 text-sm sm:grid-cols-4"
+                        >
+                          <div>
+                            <p className="text-[11px] uppercase tracking-wide text-slate-500">Entrada</p>
+                            <p className="font-medium text-white">{r.horaEntrada || "—"}</p>
+                          </div>
+                          <div>
+                            <p className="text-[11px] uppercase tracking-wide text-slate-500">Saída</p>
+                            <p className="font-medium text-white">{r.horaSaida || "—"}</p>
+                          </div>
+                          <div>
+                            <p className="text-[11px] uppercase tracking-wide text-slate-500">Horas</p>
+                            <p className="font-medium text-white">{decimal(parseFloat(r.horasTrabalhadas || "0"))}h</p>
+                          </div>
+                          <div>
+                            <p className="text-[11px] uppercase tracking-wide text-slate-500">Valor</p>
+                            <p className="font-medium text-cyan-200">{money(parseFloat(r.valorTotal || "0"))}</p>
+                          </div>
+                        </div>
+                      ))}
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="sticky bottom-0 space-y-4 border-t border-white/10 bg-[rgba(9,27,43,0.96)] px-6 py-5 backdrop-blur">
+              <div className="grid grid-cols-3 gap-3">
+                <div className="rounded-[16px] border border-white/10 bg-white/[0.04] px-3 py-3 text-center">
+                  <p className="text-[11px] uppercase tracking-wide text-slate-500">Horas</p>
+                  <p className="mt-1 text-lg font-semibold text-white">{decimal(drawerColaborador.horas)}h</p>
+                </div>
+                <div className="rounded-[16px] border border-white/10 bg-white/[0.04] px-3 py-3 text-center">
+                  <p className="text-[11px] uppercase tracking-wide text-slate-500">Dias</p>
+                  <p className="mt-1 text-lg font-semibold text-white">{drawerColaborador.diasTrabalhados}</p>
+                </div>
+                <div className="rounded-[16px] border border-emerald-300/20 bg-emerald-400/[0.08] px-3 py-3 text-center">
+                  <p className="text-[11px] uppercase tracking-wide text-emerald-200/80">A pagar</p>
+                  <p className="mt-1 text-lg font-semibold text-emerald-100">{money(drawerColaborador.valor)}</p>
+                </div>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  type="button"
+                  onClick={() => {
+                    setFiltroColaborador(String(drawerColaborador.id));
+                    setColaboradorDrawerId(null);
+                    setActiveSection("hours");
+                  }}
+                  className="h-11 flex-1 rounded-[14px] bg-cyan-400 text-slate-950 hover:bg-cyan-300"
+                >
+                  <History className="mr-2 h-4 w-4" />
+                  Ver histórico completo
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setFiltroColaborador(String(drawerColaborador.id));
+                    setColaboradorDrawerId(null);
+                    setActiveSection("hours");
+                  }}
+                  className="h-11 rounded-[14px] border-white/10 bg-white/[0.03] px-4 text-white hover:bg-white/[0.08]"
+                >
+                  <Pencil className="mr-2 h-4 w-4" />
+                  Corrigir registo
+                </Button>
+              </div>
+            </div>
+          </aside>
+        </div>
+      )}
     </div>
+  );
+}
+
+function SummaryStat({
+  icon: Icon,
+  label,
+  value,
+  helper,
+  tone = "slate",
+}: {
+  icon: ComponentType<{ className?: string }>;
+  label: string;
+  value: string;
+  helper: string;
+  tone?: "slate" | "cyan" | "emerald" | "amber";
+}) {
+  const toneClass = {
+    slate: "border-white/10 text-cyan-100",
+    cyan: "border-cyan-300/25 text-cyan-100",
+    emerald: "border-emerald-300/25 text-emerald-100",
+    amber: "border-amber-300/25 text-amber-100",
+  }[tone];
+
+  return (
+    <Card className={`rounded-[20px] border bg-[linear-gradient(180deg,rgba(12,34,52,0.96)_0%,rgba(9,27,43,0.94)_100%)] text-white shadow-[0_16px_50px_rgba(15,23,42,0.22)] ${toneClass}`}>
+      <CardContent className="p-4">
+        <div className="flex items-center gap-2">
+          <Icon className="h-4 w-4" />
+          <p className="text-[11px] font-semibold uppercase tracking-[0.16em]">{label}</p>
+        </div>
+        <p className="mt-3 text-2xl font-semibold text-white">{value}</p>
+        <p className="mt-1 text-xs text-slate-400">{helper}</p>
+      </CardContent>
+    </Card>
+  );
+}
+
+function CellStat({ label, value, accent = false }: { label: string; value: string; accent?: boolean }) {
+  return (
+    <div className="min-w-0">
+      <p className="text-[11px] uppercase tracking-wide text-slate-500">{label}</p>
+      <p className={`mt-0.5 truncate text-sm font-semibold ${accent ? "text-cyan-200" : "text-white"}`}>{value}</p>
+    </div>
+  );
+}
+
+function StatusBadge({ status }: { status: "ativo" | "inativo" | "pendente" | "validado" | "incompleto" }) {
+  const config = {
+    ativo: { label: "Ativo hoje", className: "border-emerald-300/30 bg-emerald-400/[0.12] text-emerald-100" },
+    validado: { label: "Validado", className: "border-emerald-300/30 bg-emerald-400/[0.12] text-emerald-100" },
+    pendente: { label: "Pendente", className: "border-amber-300/30 bg-amber-400/[0.12] text-amber-100" },
+    incompleto: { label: "Incompleto", className: "border-rose-300/30 bg-rose-400/[0.12] text-rose-100" },
+    inativo: { label: "Sem atividade hoje", className: "border-white/15 bg-white/[0.05] text-slate-300" },
+  }[status];
+
+  return (
+    <span className={`inline-flex items-center whitespace-nowrap rounded-full border px-2.5 py-1 text-[11px] font-semibold ${config.className}`}>
+      {config.label}
+    </span>
+  );
+}
+
+function PendingRow({
+  icon: Icon,
+  tone,
+  label,
+  count,
+  detail,
+}: {
+  icon: ComponentType<{ className?: string }>;
+  tone: "rose" | "amber" | "cyan";
+  label: string;
+  count: number;
+  detail: string[];
+}) {
+  const toneClass = {
+    rose: "border-rose-300/25 bg-rose-400/[0.08] text-rose-100",
+    amber: "border-amber-300/25 bg-amber-400/[0.08] text-amber-100",
+    cyan: "border-cyan-300/25 bg-cyan-400/[0.08] text-cyan-100",
+  }[tone];
+
+  return (
+    <div className={`rounded-[16px] border px-4 py-3 ${toneClass}`}>
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <Icon className="h-4 w-4" />
+          <span className="text-sm font-semibold text-white">{label}</span>
+        </div>
+        <span className="rounded-full bg-white/[0.08] px-2.5 py-0.5 text-xs font-semibold text-white">{count}</span>
+      </div>
+      {detail.length > 0 && (
+        <ul className="mt-2 space-y-0.5 text-xs text-slate-300">
+          {detail.map((item, index) => (
+            <li key={index} className="truncate">{item}</li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+function QuickAction({
+  icon: Icon,
+  label,
+  onClick,
+}: {
+  icon: ComponentType<{ className?: string }>;
+  label: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="flex w-full items-center justify-between gap-3 rounded-[16px] border border-white/10 bg-white/[0.03] px-4 py-3 text-left transition hover:border-cyan-400/40 hover:bg-white/[0.06]"
+    >
+      <div className="flex items-center gap-2">
+        <Icon className="h-4 w-4 text-cyan-200" />
+        <span className="text-sm font-semibold text-white">{label}</span>
+      </div>
+      <ArrowRight className="h-4 w-4 text-cyan-100" />
+    </button>
   );
 }
 
