@@ -481,38 +481,6 @@ export default function ColaboradorAdminClient() {
     [colaboradoresFiltrados],
   );
 
-  // Registos do filtro atual com função do colaborador e estado calculado, aplicando filtros de função e estado.
-  const hoursRecords = useMemo(() => {
-    const funcaoById = new Map(colaboradores.map((c) => [c.id, c.funcao]));
-    return todosRegistros
-      .map((registro) => {
-        const status = getRecordStatus(registro);
-        return {
-          ...registro,
-          funcao: funcaoById.get(registro.colaboradorId) || "ajudante",
-          status,
-          statusLabel: status === "incompleto" ? "incompleto" : status === "alerta" ? "pendente" : "validado",
-        } as RegistroComColaborador & {
-          funcao: Colaborador["funcao"];
-          status: RecordStatus;
-          statusLabel: "incompleto" | "pendente" | "validado";
-        };
-      })
-      .filter((registro) => (hoursFuncao === "todas" ? true : registro.funcao === hoursFuncao))
-      .filter((registro) => (hoursStatus === "todos" ? true : registro.statusLabel === hoursStatus));
-  }, [todosRegistros, colaboradores, hoursFuncao, hoursStatus]);
-
-  // Cards de topo da página Horários.
-  const hoursSummary = useMemo(() => {
-    const colaboradoresComRegisto = new Set(hoursRecords.map((r) => r.colaboradorId)).size;
-    const totalHoras = hoursRecords.reduce((sum, r) => sum + parseFloat(r.horasTrabalhadas || "0"), 0);
-    const totalValor = hoursRecords.reduce((sum, r) => sum + parseFloat(r.valorTotal || "0"), 0);
-    const pendentes = hoursRecords.filter((r) => r.statusLabel === "pendente").length;
-    const incompletos = hoursRecords.filter((r) => r.statusLabel === "incompleto").length;
-    const mediaHoras = colaboradoresComRegisto > 0 ? totalHoras / colaboradoresComRegisto : 0;
-    return { colaboradoresComRegisto, totalHoras, totalValor, pendentes, incompletos, mediaHoras };
-  }, [hoursRecords]);
-
   const dashboardStats = useMemo(() => {
     const hoje = new Date().toISOString().split("T")[0];
 
@@ -713,14 +681,22 @@ export default function ColaboradorAdminClient() {
     const funcaoById = new Map(colaboradores.map((c) => [c.id, c.funcao]));
     return colaboradores
       .flatMap((colaborador) =>
-        (colaborador.registros || []).map((registro) => ({
-          ...registro,
-          colaboradorId: colaborador.id,
-          colaboradorNome: colaborador.nome,
-          colaboradorValorHora: colaborador.valorHora,
-          funcao: colaborador.funcao,
-          status: getRecordStatus(registro),
-        })),
+        (colaborador.registros || []).map((registro) => {
+          const status = getRecordStatus(registro);
+          return {
+            ...registro,
+            colaboradorId: colaborador.id,
+            colaboradorNome: colaborador.nome,
+            colaboradorValorHora: colaborador.valorHora,
+            funcao: colaborador.funcao,
+            status,
+            statusLabel: (status === "incompleto"
+              ? "incompleto"
+              : status === "alerta"
+                ? "pendente"
+                : "validado") as "incompleto" | "pendente" | "validado",
+          };
+        }),
       )
       .filter((r) => isBetweenDates(r.data, hoursRange.start, hoursRange.end))
       .filter((r) => (filtroColaborador === "todos" ? true : r.colaboradorId === Number(filtroColaborador)))
