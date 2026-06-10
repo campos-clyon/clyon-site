@@ -2101,50 +2101,53 @@ export default function ColaboradorAdminClient() {
               <div className="flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-[0.24em] text-cyan-200">
-                    Gestão do site
+                    Configurações
                   </p>
                   <h2 className="mt-2 text-[1.85rem] font-semibold text-white">
-                    Imagens do site e valores do simulador
+                    Valores, simulador, permissões e dados da empresa
                   </h2>
                   <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-300">
-                    O gestor de imagens continua separado. Aqui passa a controlar os parâmetros do simulador um a
-                    um, com gravação individual por campo.
+                    Faça a gestão dos parâmetros do portal organizados por separadores.
                   </p>
                 </div>
-                <div className="flex flex-col items-start gap-3 xl:items-end">
-                  <div className="rounded-2xl border border-cyan-300/20 bg-cyan-400/[0.08] px-4 py-3 text-sm text-cyan-100">
-                    Cada valor do simulador pode ser revisto e ajustado individualmente.
-                  </div>
-                  <Button
-                    type="button"
-                    onClick={() => router.push("/colaboradores/admin/imagens")}
-                    className="h-11 rounded-2xl bg-cyan-400 px-5 text-slate-950 hover:bg-cyan-300"
-                  >
-                    Abrir gestor de imagens
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Button>
-                </div>
+                <Button
+                  type="button"
+                  onClick={() => router.push("/colaboradores/admin/imagens")}
+                  className="h-11 rounded-2xl bg-cyan-400 px-5 text-slate-950 hover:bg-cyan-300"
+                >
+                  Abrir gestor de imagens
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
               </div>
 
-              <div className="grid gap-4 lg:grid-cols-3">
-                {siteModules.map((module) => (
-                  <ActionCard key={module.title} title={module.title} description={module.description} compact>
-                    <div className="flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-cyan-400 text-slate-950">
-                          <module.icon className="h-5 w-5" />
-                        </div>
-                        <div>
-                          <p className="text-sm font-semibold text-white">{module.status}</p>
-                          <p className="text-xs text-slate-400">Módulo pronto para evoluir no painel</p>
-                        </div>
-                      </div>
-                      <ArrowRight className="h-5 w-5 text-cyan-200" />
-                    </div>
-                  </ActionCard>
+              {/* Navegação por abas */}
+              <div className="flex flex-wrap gap-2 rounded-[20px] border border-white/10 bg-white/[0.02] p-2">
+                {(
+                  [
+                    { id: "simulador", label: "Valores do simulador", icon: Euro },
+                    { id: "funcoes", label: "Colaboradores e funções", icon: Users },
+                    { id: "imagens", label: "Imagens do site", icon: ImagePlus },
+                    { id: "seguranca", label: "Segurança", icon: ShieldCheck },
+                    { id: "empresa", label: "Dados da empresa", icon: Building2 },
+                  ] as const
+                ).map((tab) => (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    onClick={() => setSettingsTab(tab.id)}
+                    className={`flex items-center gap-2 rounded-[14px] px-4 py-2.5 text-sm font-semibold transition ${
+                      settingsTab === tab.id
+                        ? "bg-cyan-400 text-slate-950"
+                        : "text-slate-300 hover:bg-white/[0.06]"
+                    }`}
+                  >
+                    <tab.icon className="h-4 w-4" />
+                    {tab.label}
+                  </button>
                 ))}
               </div>
 
+              {settingsTab === "simulador" && (
               <ActionCard
                 title="Valores do simulador"
                 description="Todos os valores do simulador estão visíveis abaixo, separados por categoria operacional para facilitar a gestão."
