@@ -532,18 +532,6 @@ export default function ColaboradorAdminClient() {
     };
   }, [colaboradores, colaboradoresFiltrados, todosRegistros]);
 
-  const topColaboradores = useMemo(
-    () =>
-      [...colaboradores]
-        .sort(
-          (a, b) =>
-            parseFloat(b.estatisticas?.mes?.valor || "0") -
-            parseFloat(a.estatisticas?.mes?.valor || "0"),
-        )
-        .slice(0, 3),
-    [colaboradores],
-  );
-
   const simulatorGroups = useMemo(() => {
     const settingsMap = new Map(simulatorSettings.map((setting) => [setting.key, setting]));
 
