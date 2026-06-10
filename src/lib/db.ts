@@ -8,7 +8,7 @@ import { defaultSimulatorSettings } from "@/lib/simulator-settings";
 let dbInstance: ReturnType<typeof drizzle<typeof import('../../drizzle/schema')>> | null = null;
 let poolInstance: mysql.Pool | null = null;
 
-async function getPool() {
+export async function getPool() {
   if (!process.env.DATABASE_URL) {
     console.warn("[Database] DATABASE_URL not set");
     return null;

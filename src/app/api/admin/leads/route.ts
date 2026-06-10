@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyColaboradorAuthHeader } from "@/lib/colaborador-auth";
-import { getDb } from "@/lib/db";
+import { getPool } from "@/lib/db";
 
 export const runtime = "nodejs";
 
@@ -11,16 +11,14 @@ async function requireAdmin(request: NextRequest) {
   return { colaborador };
 }
 
-// Calcular data de início dado um período (hora de Lisboa UTC+1)
 function getPeriodStart(periodo: string): string {
-  // Usar UTC. Lisboa é UTC+1 (UTC+2 no verão) mas para simplicidade usamos UTC.
   const now = new Date();
   if (periodo === "hoje") {
     return `${now.toISOString().slice(0, 10)} 00:00:00`;
   }
   if (periodo === "semana") {
     const day = now.getDay();
-    const diff = day === 0 ? 6 : day - 1; // Segunda-feira
+    const diff = day === 0 ? 6 : day - 1;
     const d = new Date(now);
     d.setDate(d.getDate() - diff);
     return `${d.toISOString().slice(0, 10)} 00:00:00`;
@@ -30,7 +28,6 @@ function getPeriodStart(periodo: string): string {
     d.setDate(d.getDate() - 7);
     return `${d.toISOString().slice(0, 10)} 00:00:00`;
   }
-  // 30d (default)
   const d = new Date(now);
   d.setDate(d.getDate() - 30);
   return `${d.toISOString().slice(0, 10)} 00:00:00`;
@@ -44,9 +41,9 @@ export async function GET(request: NextRequest) {
   console.log("[api/admin/leads] GET chamado");
 
   try {
-    const db = await getDb();
-    if (!db) {
-      console.error("[api/admin/leads] Base de dados indisponível");
+    const pool = await getPool();
+    if (!pool) {
+      console.error("[api/admin/leads] Pool indisponível (DATABASE_URL não definido?)");
       return NextResponse.json({ leads: [], totals: {}, error: "Base de dados indisponível" }, { status: 503 });
     }
 
@@ -54,12 +51,11 @@ export async function GET(request: NextRequest) {
     const periodo = searchParams.get("periodo") || "30d";
     const status = searchParams.get("status") || "";
     const startDate = getPeriodStart(periodo);
-
     const hoje = new Date().toISOString().slice(0, 10);
     const semanaStart = getPeriodStart("semana");
 
     // Garantir que a tabela existe
-    await (db as any).execute(`
+    await pool.execute(`
       CREATE TABLE IF NOT EXISTS leads (
         id int NOT NULL AUTO_INCREMENT PRIMARY KEY,
         nome varchar(160) NOT NULL,
@@ -82,7 +78,6 @@ export async function GET(request: NextRequest) {
       )
     `);
 
-    // Construir query parametrizada
     const conditions: string[] = ["createdAt >= ?"];
     const params: unknown[] = [startDate];
     if (status) {
@@ -91,7 +86,7 @@ export async function GET(request: NextRequest) {
     }
     const where = `WHERE ${conditions.join(" AND ")}`;
 
-    const [leads] = await (db as any).execute(
+    const [leads] = await pool.execute(
       `SELECT id, nome, telefone, email, localidade, tipoServico, preferenciaContacto,
               pagePath, utmSource, utmMedium, utmCampaign, gclid, status, notasInternas,
               createdAt
@@ -101,7 +96,7 @@ export async function GET(request: NextRequest) {
       params,
     );
 
-    const [[totals]] = await (db as any).execute(
+    const [[totals]] = await pool.execute(
       `SELECT
         SUM(CASE WHEN DATE(createdAt) = ? THEN 1 ELSE 0 END) AS hoje,
         SUM(CASE WHEN createdAt >= ? THEN 1 ELSE 0 END) AS semana,
@@ -110,7 +105,7 @@ export async function GET(request: NextRequest) {
         COUNT(*) AS total
        FROM leads`,
       [hoje, semanaStart],
-    );
+    ) as any;
 
     const leadsArr = Array.isArray(leads) ? leads : [];
     console.log("[api/admin/leads] Devolvidos:", leadsArr.length, "leads. Totais:", totals);
@@ -136,19 +131,18 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: "Status inválido" }, { status: 400 });
     }
 
-    const db = await getDb();
-    if (!db) return NextResponse.json({ error: "DB indisponível" }, { status: 503 });
+    const pool = await getPool();
+    if (!pool) return NextResponse.json({ error: "DB indisponível" }, { status: 503 });
 
-    // Usar queries parametrizadas
     if (status && notasInternas !== undefined) {
-      await (db as any).execute(
+      await pool.execute(
         "UPDATE leads SET status = ?, notasInternas = ? WHERE id = ?",
         [status, String(notasInternas), Number(id)],
       );
     } else if (status) {
-      await (db as any).execute("UPDATE leads SET status = ? WHERE id = ?", [status, Number(id)]);
+      await pool.execute("UPDATE leads SET status = ? WHERE id = ?", [status, Number(id)]);
     } else if (notasInternas !== undefined) {
-      await (db as any).execute("UPDATE leads SET notasInternas = ? WHERE id = ?", [String(notasInternas), Number(id)]);
+      await pool.execute("UPDATE leads SET notasInternas = ? WHERE id = ?", [String(notasInternas), Number(id)]);
     }
 
     console.log("[api/admin/leads] Lead atualizado:", id, status);
