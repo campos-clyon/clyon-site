@@ -89,8 +89,8 @@ export default function ContactosPage() {
                       <p className="text-sm font-semibold uppercase tracking-[0.12em] text-cyan-700">
                         Telefone
                       </p>
-                      <a href="tel:+351931632622" className="mt-2 block text-xl font-bold text-slate-950">
-                        +351 931 632 622
+                      <a href="tel:+351965785395" className="mt-2 block text-xl font-bold text-slate-950">
+                        +351 965 785 395
                       </a>
                       <p className="mt-1 text-sm leading-7 text-slate-600">
                         Ideal para pedidos rápidos, validações e marcações.
@@ -150,14 +150,14 @@ export default function ContactosPage() {
 
                 <div className="mt-8 flex flex-col gap-3 sm:flex-row">
                   <a
-                    href="tel:+351931632622"
+                    href="tel:+351965785395"
                     className="inline-flex items-center justify-center rounded-2xl bg-cyan-500 px-6 py-3.5 text-base font-semibold text-white shadow-[0_18px_40px_-22px_rgba(6,182,212,0.75)] transition hover:-translate-y-0.5 hover:bg-cyan-400"
                   >
                     <Phone className="mr-2 h-5 w-5" />
                     <span className="text-white">Ligar agora</span>
                   </a>
                   <a
-                    href="https://wa.me/351931632622?text=Ol%C3%A1!%20Gostava%20de%20pedir%20um%20or%C3%A7amento%20%C3%A0%20CLYON."
+                    href="https://wa.me/351965785395?text=Ol%C3%A1!%20Gostava%20de%20pedir%20um%20or%C3%A7amento%20%C3%A0%20CLYON."
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center justify-center rounded-2xl bg-emerald-500 px-6 py-3.5 text-base font-semibold text-white shadow-[0_18px_40px_-22px_rgba(37,211,102,0.75)] transition hover:-translate-y-0.5 hover:bg-emerald-400"

@@ -27,7 +27,6 @@ import {
   trackSimulatorWhatsApp,
 } from "@/lib/analytics";
 import { BASE_ADDRESS } from "@/lib/maps-config";
-import { BUSINESS_PHONE } from "@/lib/seo-data";
 import { createSimulatorSettingsMap } from "@/lib/simulator-settings";
 import { cn } from "@/lib/utils";
 
@@ -89,6 +88,10 @@ const COUNTRY_OPTIONS: CountryOption[] = [
 
 // Número de WhatsApp dedicado para o simulador de mudanças.
 const MUDANCAS_WHATSAPP_PHONE = "+351924370335";
+
+// Número de WhatsApp do simulador para as restantes categorias.
+// Mantido fixo aqui para que o simulador permaneça inalterado.
+const SIMULADOR_WHATSAPP_PHONE = "+351931632622";
 
 const simulatorPrimaryButtonClass =
   "bg-cyan-600 text-white border-2 border-cyan-600 hover:bg-cyan-700";
@@ -502,7 +505,7 @@ export default function SimuladorClient({ initialCategoriaId = null }: Simulador
 
     const mensagem = encodeURIComponent(linhas.join("\n"));
     const destinoWhatsApp =
-      categoria.id === "mudancas" ? MUDANCAS_WHATSAPP_PHONE : BUSINESS_PHONE;
+      categoria.id === "mudancas" ? MUDANCAS_WHATSAPP_PHONE : SIMULADOR_WHATSAPP_PHONE;
     window.location.href = `https://wa.me/${destinoWhatsApp.replace(/\D/g, "")}?text=${mensagem}`;
   };
 
