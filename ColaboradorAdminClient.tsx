@@ -2271,6 +2271,192 @@ export default function ColaboradorAdminClient() {
                   </div>
                 )}
               </ActionCard>
+              )}
+
+              {/* Aba: Funções e colaboradores */}
+              {settingsTab === "funcoes" && (
+                <ActionCard
+                  title="Funções e colaboradores"
+                  description="Defina quais as funções disponíveis e consulte os colaboradores por função. A criação e edição de colaboradores está disponível na página Equipa."
+                >
+                  <div className="space-y-4">
+                    <div className="rounded-[20px] border border-white/10 bg-white/[0.03] p-5">
+                      <h3 className="mb-4 text-base font-semibold text-white">Funções disponíveis no sistema</h3>
+                      <div className="grid gap-3 sm:grid-cols-3">
+                        {functionOptions.map((funcao) => {
+                          const count = colaboradores.filter((c) => c.funcao === funcao).length;
+                          return (
+                            <div key={funcao} className="rounded-[16px] border border-white/10 bg-white/[0.04] px-4 py-4">
+                              <p className="text-sm font-semibold capitalize text-white">{formatRoleLabel(funcao)}</p>
+                              <p className="mt-1 text-2xl font-semibold text-cyan-200">{count}</p>
+                              <p className="mt-0.5 text-xs text-slate-400">
+                                {count === 1 ? "colaborador" : "colaboradores"}
+                              </p>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                    <div className="rounded-[16px] border border-cyan-300/20 bg-cyan-400/[0.06] px-4 py-3 text-sm text-cyan-100">
+                      Para adicionar, editar ou remover colaboradores, vá à página <strong>Equipa</strong>. Para alterar permissões de administrador, edite o colaborador diretamente.
+                    </div>
+                    <div className="overflow-x-auto rounded-[20px] border border-white/10">
+                      <table className="w-full min-w-[500px] border-collapse text-sm">
+                        <thead>
+                          <tr className="border-b border-white/10 bg-white/[0.03] text-left text-[11px] uppercase tracking-wide text-slate-400">
+                            <th className="px-4 py-3 font-semibold">Nome</th>
+                            <th className="px-4 py-3 font-semibold">Função</th>
+                            <th className="px-4 py-3 font-semibold">Acesso</th>
+                            <th className="px-4 py-3 font-semibold">Valor/hora</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {colaboradores
+                            .slice()
+                            .sort((a, b) => a.nome.localeCompare(b.nome))
+                            .map((colaborador) => (
+                              <tr key={colaborador.id} className="border-b border-white/5 hover:bg-white/[0.02]">
+                                <td className="px-4 py-3 font-semibold text-white">{colaborador.nome}</td>
+                                <td className="px-4 py-3 capitalize text-slate-300">{formatRoleLabel(colaborador.funcao)}</td>
+                                <td className="px-4 py-3">
+                                  {colaborador.isAdmin === 1 ? (
+                                    <span className="rounded-full border border-cyan-300/30 bg-cyan-400/[0.14] px-2.5 py-1 text-[11px] font-semibold text-cyan-100">
+                                      Administrador
+                                    </span>
+                                  ) : (
+                                    <span className="rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[11px] text-slate-400">
+                                      Colaborador
+                                    </span>
+                                  )}
+                                </td>
+                                <td className="px-4 py-3 text-white">{money(parseFloat(colaborador.valorHora || "0"))}</td>
+                              </tr>
+                            ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </ActionCard>
+              )}
+
+              {/* Aba: Imagens do site */}
+              {settingsTab === "imagens" && (
+                <ActionCard
+                  title="Imagens do site"
+                  description="Gira o carrossel da homepage e a galeria de trabalhos. Use o painel dedicado para fazer upload, substituir ou apagar imagens."
+                >
+                  <div className="space-y-4">
+                    <div className="rounded-[16px] border border-amber-300/20 bg-amber-400/[0.07] px-4 py-3 text-sm text-amber-100">
+                      Em produção no Vercel, ficheiros guardados apenas no disco local podem ser perdidos. Use sempre o upload pelo painel ou indique um URL público estável.
+                    </div>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <div className="rounded-[20px] border border-white/10 bg-white/[0.03] p-5">
+                        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-cyan-400/20">
+                          <ImagePlus className="h-5 w-5 text-cyan-200" />
+                        </div>
+                        <h3 className="mt-3 text-base font-semibold text-white">Carrossel topo</h3>
+                        <p className="mt-1 text-xs text-slate-400">Imagens em destaque na homepage. Recomendado: 1800px largura máxima.</p>
+                      </div>
+                      <div className="rounded-[20px] border border-white/10 bg-white/[0.03] p-5">
+                        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-400/20">
+                          <ImagePlus className="h-5 w-5 text-emerald-200" />
+                        </div>
+                        <h3 className="mt-3 text-base font-semibold text-white">Galeria de trabalhos</h3>
+                        <p className="mt-1 text-xs text-slate-400">Casos reais com grupos e fases (antes, durante, depois). Recomendado: 1600px.</p>
+                      </div>
+                    </div>
+                    <Button
+                      type="button"
+                      onClick={() => router.push("/colaboradores/admin/imagens")}
+                      className="h-11 w-full rounded-2xl bg-cyan-400 text-slate-950 hover:bg-cyan-300"
+                    >
+                      <ImagePlus className="mr-2 h-4 w-4" />
+                      Abrir o gestor de imagens completo
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    </Button>
+                  </div>
+                </ActionCard>
+              )}
+
+              {/* Aba: Segurança */}
+              {settingsTab === "seguranca" && (
+                <ActionCard
+                  title="Segurança do portal"
+                  description="Altere a palavra-passe da sua conta de administrador. Utilize uma palavra-passe forte com pelo menos 8 caracteres."
+                >
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <Field label="Nova palavra-passe">
+                      <div className="relative">
+                        <input
+                          type={mostrarSenha ? "text" : "password"}
+                          value={editSenha}
+                          onChange={(event) => setEditSenha(event.target.value)}
+                          placeholder="Mínimo 8 caracteres"
+                          className="h-12 w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 pr-12 text-white outline-none transition focus:border-cyan-300"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setMostrarSenha((s) => !s)}
+                          className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
+                        >
+                          {mostrarSenha ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                        </button>
+                      </div>
+                    </Field>
+                    <div className="flex items-end">
+                      <Button
+                        type="button"
+                        disabled={!editSenha || editSenha.length < 8 || loadingEdicao}
+                        onClick={() => {
+                          const adminColaborador = colaboradores.find((c) => c.isAdmin === 1 || c.funcao === "admin");
+                          if (adminColaborador) editarUsuario(adminColaborador.id);
+                        }}
+                        className="h-12 w-full rounded-2xl bg-cyan-400 px-6 text-slate-950 hover:bg-cyan-300 disabled:opacity-50"
+                      >
+                        {loadingEdicao ? "A guardar..." : "Guardar palavra-passe"}
+                      </Button>
+                    </div>
+                  </div>
+                  <div className="rounded-[16px] border border-white/10 bg-white/[0.02] px-4 py-4 text-sm text-slate-400">
+                    <p className="font-semibold text-slate-300">Boas práticas de segurança</p>
+                    <ul className="mt-2 list-inside list-disc space-y-1">
+                      <li>Use uma palavra-passe com pelo menos 8 caracteres, com letras, números e símbolos.</li>
+                      <li>Não partilhe as credenciais de administrador com colaboradores sem permissão.</li>
+                      <li>Termine sempre a sessão quando não estiver a usar o portal.</li>
+                    </ul>
+                  </div>
+                </ActionCard>
+              )}
+
+              {/* Aba: Dados da empresa */}
+              {settingsTab === "empresa" && (
+                <ActionCard
+                  title="Dados da empresa"
+                  description="Informações institucionais da CLYON utilizadas no portal e nos documentos gerados."
+                >
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="rounded-[20px] border border-white/10 bg-white/[0.03] px-5 py-4">
+                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Nome</p>
+                      <p className="mt-1.5 text-lg font-semibold text-white">CLYON</p>
+                    </div>
+                    <div className="rounded-[20px] border border-white/10 bg-white/[0.03] px-5 py-4">
+                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Setor</p>
+                      <p className="mt-1.5 text-base text-white">Recolha de móveis e serviços de transporte</p>
+                    </div>
+                    <div className="rounded-[20px] border border-white/10 bg-white/[0.03] px-5 py-4">
+                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Portal</p>
+                      <p className="mt-1.5 text-base text-white">clyon.pt</p>
+                    </div>
+                    <div className="rounded-[20px] border border-white/10 bg-white/[0.03] px-5 py-4">
+                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Gestor de conteúdo</p>
+                      <p className="mt-1.5 text-base text-white">Portal interno de colaboradores</p>
+                    </div>
+                  </div>
+                  <div className="rounded-[16px] border border-cyan-300/20 bg-cyan-400/[0.06] px-4 py-3 text-sm text-cyan-100">
+                    Para alterar os dados da empresa (nome legal, NIF, morada), contacte o administrador do sistema ou atualize diretamente no código-fonte.
+                  </div>
+                </ActionCard>
+              )}
             </section>
           )}
         </main>
