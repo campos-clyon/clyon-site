@@ -239,6 +239,33 @@ const getCurrentWeekRange = () => {
   return { start, end };
 };
 
+// Semana operacional CLYON: começa sempre segunda 00:00 e termina domingo 23:59.
+// O offset permite navegar entre semanas (0 = atual, -1 = anterior).
+const getWeekRange = (offset = 0) => {
+  const today = new Date();
+  const start = new Date(today);
+  const day = start.getDay();
+  const diffToMonday = day === 0 ? -6 : 1 - day;
+  start.setDate(start.getDate() + diffToMonday + offset * 7);
+  start.setHours(0, 0, 0, 0);
+
+  const end = new Date(start);
+  end.setDate(end.getDate() + 6);
+  end.setHours(23, 59, 59, 999);
+
+  return { start, end };
+};
+
+const WEEK_DAY_LABELS = [
+  "Segunda",
+  "Terça",
+  "Quarta",
+  "Quinta",
+  "Sexta",
+  "Sábado",
+  "Domingo",
+];
+
 const getCurrentMonthRange = () => {
   const today = new Date();
   const start = new Date(today.getFullYear(), today.getMonth(), 1);
@@ -253,6 +280,32 @@ const getCurrentMonthRange = () => {
 const isBetweenDates = (value: string, start: Date, end: Date) => {
   const date = new Date(value);
   return date >= start && date <= end;
+};
+
+const isSameDay = (value: string, reference: Date) => {
+  const date = new Date(value);
+  return (
+    date.getFullYear() === reference.getFullYear() &&
+    date.getMonth() === reference.getMonth() &&
+    date.getDate() === reference.getDate()
+  );
+};
+
+// Estado derivado do registo (não há campo dedicado na BD, por isso é calculado).
+// incompleto: falta hora de saída | alerta: horas anómalas | validado: registo fechado normal.
+const HIGH_HOURS_THRESHOLD = 16;
+
+type RecordStatus = "incompleto" | "alerta" | "validado";
+
+const getRecordStatus = (registro: Registro): RecordStatus => {
+  if (!registro.horaSaida) return "incompleto";
+  if (parseFloat(registro.horasTrabalhadas || "0") > HIGH_HOURS_THRESHOLD) return "alerta";
+  return "validado";
+};
+
+const formatShortDate = (value?: string) => {
+  if (!value) return "—";
+  return new Intl.DateTimeFormat("pt-PT", { day: "2-digit", month: "2-digit" }).format(new Date(value));
 };
 
 const formatSimulatorUnit = (unit: SimulatorSetting["unit"]) =>
@@ -505,6 +558,139 @@ export default function ColaboradorAdminClient() {
   }, [simulatorSettings]);
 
   const latestRecords = useMemo(() => todosRegistros.slice(0, 5), [todosRegistros]);
+
+  // ---- Núcleo operacional: semana selecionada (segunda -> domingo) ----
+  const weekRange = useMemo(() => getWeekRange(weekOffset), [weekOffset]);
+
+  const weekLabel = useMemo(() => {
+    const fmt = (date: Date) =>
+      new Intl.DateTimeFormat("pt-PT", { weekday: "long", day: "2-digit", month: "2-digit" }).format(date);
+    return `${fmt(weekRange.start)} até ${fmt(weekRange.end)}`;
+  }, [weekRange]);
+
+  const today = useMemo(() => new Date(), []);
+
+  // Colaboradores com registos na semana selecionada (respeitando filtro de função).
+  const weekCollaborators = useMemo(() => {
+    const base =
+      funcaoFilter === "todas"
+        ? colaboradores
+        : colaboradores.filter((c) => c.funcao === funcaoFilter);
+
+    return base
+      .map((colaborador) => {
+        const registrosSemana = (colaborador.registros || [])
+          .filter((registro) => isBetweenDates(registro.data, weekRange.start, weekRange.end))
+          .sort((a, b) => new Date(b.data).getTime() - new Date(a.data).getTime());
+
+        const horas = registrosSemana.reduce((sum, r) => sum + parseFloat(r.horasTrabalhadas || "0"), 0);
+        const valor = registrosSemana.reduce((sum, r) => sum + parseFloat(r.valorTotal || "0"), 0);
+        const trabalhos = registrosSemana.reduce((sum, r) => sum + (r.numeroTrabalhos || 0), 0);
+        const diasTrabalhados = new Set(
+          registrosSemana.map((r) => new Date(r.data).toISOString().split("T")[0]),
+        ).size;
+        const ultimoDia = registrosSemana[0]?.data || "";
+        const ativoHoje = registrosSemana.some((r) => isSameDay(r.data, today));
+        const temPendencia = registrosSemana.some((r) => getRecordStatus(r) !== "validado");
+
+        return {
+          ...colaborador,
+          registrosSemana,
+          horas,
+          valor,
+          trabalhos,
+          diasTrabalhados,
+          ultimoDia,
+          ativoHoje,
+          temPendencia,
+        };
+      })
+      .filter((c) => c.registrosSemana.length > 0)
+      .sort((a, b) => b.horas - a.horas);
+  }, [colaboradores, funcaoFilter, weekRange, today]);
+
+  // Cards de topo da semana.
+  const weekSummary = useMemo(() => {
+    const totalHoras = weekCollaborators.reduce((sum, c) => sum + c.horas, 0);
+    const totalValor = weekCollaborators.reduce((sum, c) => sum + c.valor, 0);
+    const totalRegistos = weekCollaborators.reduce((sum, c) => sum + c.registrosSemana.length, 0);
+    const pendentes = weekCollaborators.reduce(
+      (sum, c) => sum + c.registrosSemana.filter((r) => getRecordStatus(r) !== "validado").length,
+      0,
+    );
+    const ativosHoje = weekCollaborators.filter((c) => c.ativoHoje).length;
+
+    return {
+      colaboradores: weekCollaborators.length,
+      totalHoras,
+      totalValor,
+      totalRegistos,
+      pendentes,
+      ativosHoje,
+    };
+  }, [weekCollaborators]);
+
+  // Registos da semana com colaborador, ordenados (pendentes primeiro, depois recentes).
+  const weekRecords = useMemo(() => {
+    const rows = weekCollaborators.flatMap((colaborador) =>
+      colaborador.registrosSemana.map((registro) => ({
+        ...registro,
+        colaboradorId: colaborador.id,
+        colaboradorNome: colaborador.nome,
+        colaboradorValorHora: colaborador.valorHora,
+        status: getRecordStatus(registro),
+      })),
+    );
+
+    return rows.sort((a, b) => {
+      const aPend = a.status !== "validado" ? 0 : 1;
+      const bPend = b.status !== "validado" ? 0 : 1;
+      if (aPend !== bPend) return aPend - bPend;
+      return new Date(b.data).getTime() - new Date(a.data).getTime();
+    });
+  }, [weekCollaborators]);
+
+  // Pendências operacionais derivadas dos registos da semana.
+  const pendencias = useMemo(() => {
+    const semSaida: Array<{ id: number; nome: string; data: string }> = [];
+    const horasAltas: Array<{ id: number; nome: string; data: string; horas: number }> = [];
+    const naoValidados: number[] = [];
+
+    weekCollaborators.forEach((colaborador) => {
+      colaborador.registrosSemana.forEach((registro) => {
+        if (!registro.horaSaida) {
+          semSaida.push({ id: registro.id, nome: colaborador.nome, data: registro.data });
+        } else if (parseFloat(registro.horasTrabalhadas || "0") > HIGH_HOURS_THRESHOLD) {
+          horasAltas.push({
+            id: registro.id,
+            nome: colaborador.nome,
+            data: registro.data,
+            horas: parseFloat(registro.horasTrabalhadas || "0"),
+          });
+        }
+        if (getRecordStatus(registro) !== "validado") naoValidados.push(registro.id);
+      });
+    });
+
+    return { semSaida, horasAltas, totalNaoValidados: naoValidados.length };
+  }, [weekCollaborators]);
+
+  // Dados do colaborador aberto no drawer de histórico semanal.
+  const drawerColaborador = useMemo(() => {
+    if (colaboradorDrawerId === null) return null;
+    return weekCollaborators.find((c) => c.id === colaboradorDrawerId) || null;
+  }, [colaboradorDrawerId, weekCollaborators]);
+
+  // Histórico dia-a-dia (segunda -> domingo) para o drawer.
+  const drawerDias = useMemo(() => {
+    if (!drawerColaborador) return [];
+    return WEEK_DAY_LABELS.map((label, index) => {
+      const dia = new Date(weekRange.start);
+      dia.setDate(dia.getDate() + index);
+      const registros = drawerColaborador.registrosSemana.filter((r) => isSameDay(r.data, dia));
+      return { label, dia, registros };
+    });
+  }, [drawerColaborador, weekRange]);
 
   const sortCollaboratorsByHoursReport = <
     T extends {
@@ -1019,75 +1205,246 @@ export default function ColaboradorAdminClient() {
             </div>
           )}
 
-          <section className="grid gap-4 xl:grid-cols-[1.45fr_repeat(4,minmax(0,0.82fr))]">
-            <Card className="rounded-[28px] border border-cyan-400/15 bg-[linear-gradient(135deg,rgba(15,23,42,0.95),rgba(17,39,54,0.95))] text-white shadow-[0_24px_80px_rgba(4,11,20,0.3)]">
-              <CardContent className="flex h-full flex-col justify-between gap-5 p-6">
-                <div>
-                  <p className="text-sm font-semibold uppercase tracking-[0.28em] text-cyan-100">
-                    Central de gestão
-                  </p>
-                  <h1 className="mt-3 max-w-3xl text-[clamp(2rem,4vw,3.3rem)] font-semibold leading-[1.06] text-white">
-                    Bem-vindo, {adminNome.split(" ")[0] || adminNome}.
-                  </h1>
-                  <p className="mt-4 max-w-2xl text-base leading-7 text-slate-300">
-                    Um dashboard com a estrutura mais próxima da referência visual, mas usando as cores da
-                    CLYON e mantendo as funções operacionais do painel.
-                  </p>
+          {activeSection === "overview" && (
+            <>
+              {/* Barra de semana + filtros operacionais */}
+              <section className="flex flex-col gap-4 rounded-[24px] border border-cyan-300/16 bg-[linear-gradient(135deg,rgba(9,27,43,0.96)_0%,rgba(12,34,52,0.94)_100%)] p-5 shadow-[0_20px_70px_rgba(3,10,18,0.24)] xl:flex-row xl:items-center xl:justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-cyan-400 text-slate-950">
+                    <CalendarDays className="h-6 w-6" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.24em] text-cyan-200">
+                      {weekOffset === 0 ? "Semana atual" : weekOffset === -1 ? "Semana anterior" : "Semana selecionada"}
+                    </p>
+                    <p className="mt-1 text-lg font-semibold capitalize text-white">{weekLabel}</p>
+                  </div>
                 </div>
 
-                <div className="flex flex-wrap gap-3">
+                <div className="flex flex-wrap items-center gap-2">
+                  <div className="flex rounded-[16px] border border-white/10 bg-white/[0.03] p-1">
+                    <button
+                      type="button"
+                      onClick={() => setWeekOffset(0)}
+                      className={`rounded-[12px] px-3 py-2 text-sm font-semibold transition ${weekOffset === 0 ? "bg-cyan-400 text-slate-950" : "text-slate-200 hover:bg-white/[0.06]"}`}
+                    >
+                      Atual
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setWeekOffset(-1)}
+                      className={`rounded-[12px] px-3 py-2 text-sm font-semibold transition ${weekOffset === -1 ? "bg-cyan-400 text-slate-950" : "text-slate-200 hover:bg-white/[0.06]"}`}
+                    >
+                      Anterior
+                    </button>
+                  </div>
+
+                  <select
+                    value={funcaoFilter}
+                    onChange={(e) => setFuncaoFilter(e.target.value as typeof funcaoFilter)}
+                    className="h-11 rounded-[14px] border border-white/10 bg-white/[0.04] px-3 text-sm font-medium text-white outline-none focus:border-cyan-400"
+                  >
+                    <option value="todas">Todas as funções</option>
+                    <option value="admin">Administradores</option>
+                    <option value="motorista">Motoristas</option>
+                    <option value="ajudante">Ajudantes</option>
+                  </select>
+
                   <Button
                     type="button"
-                    onClick={() => setActiveSection("team")}
-                    className="h-11 rounded-[16px] bg-cyan-400 px-5 text-slate-950 hover:bg-cyan-300"
+                    onClick={() => setCriarNovoVisivel(true) || setActiveSection("team")}
+                    className="h-11 rounded-[14px] bg-cyan-400 px-4 text-slate-950 hover:bg-cyan-300"
                   >
-                    <Users className="mr-2 h-4 w-4" />
-                    Abrir equipa
+                    <UserPlus className="mr-2 h-4 w-4" />
+                    Adicionar registo
                   </Button>
                   <Button
                     type="button"
                     variant="outline"
                     onClick={() => setActiveSection("hours")}
-                    className="h-11 rounded-[16px] border-white/10 bg-white/[0.03] px-5 text-white hover:bg-white/[0.08]"
+                    className="h-11 rounded-[14px] border-white/10 bg-white/[0.03] px-4 text-white hover:bg-white/[0.08]"
                   >
-                    <CalendarClock className="mr-2 h-4 w-4" />
-                    Abrir horários
+                    <ListChecks className="mr-2 h-4 w-4" />
+                    Validar pendências
                   </Button>
                 </div>
-              </CardContent>
-            </Card>
+              </section>
 
-            <QuickStat
-              title="Colaboradores"
-              hours={String(dashboardStats.ativos)}
-               value="Equipa ativa"
-              helper={`${dashboardStats.admins} administrador(es) no painel`}
-              tone="cyan"
-            />
-            <QuickStat
-              title="Registos hoje"
-              hours={String(dashboardStats.hoje.trabalhos)}
-              value={`${decimal(dashboardStats.hoje.horas)}h`}
-              helper="Turnos do dia"
-              tone="blue"
-            />
-            <QuickStat
-              title="Semana"
-              hours={`${decimal(dashboardStats.semana.horas)}h`}
-              value={money(dashboardStats.semana.valor)}
-              helper={`${dashboardStats.semana.trabalhos} trabalhos`}
-              tone="violet"
-            />
-            <QuickStat
-              title="Valor/hora"
-              hours={money(dashboardStats.mediaHora)}
-               value="Média geral"
-               helper="Referência da equipa"
-              tone="emerald"
-            />
-          </section>
+              {/* Cards de resumo da semana */}
+              <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-6">
+                <SummaryStat icon={Users} label="Colaboradores" value={String(weekSummary.colaboradores)} helper="ativos na semana" />
+                <SummaryStat icon={Clock3} label="Horas da semana" value={`${decimal(weekSummary.totalHoras)}h`} helper="total da equipa" />
+                <SummaryStat icon={Euro} label="A pagar (estimado)" value={money(weekSummary.totalValor)} helper="valor da semana" tone="emerald" />
+                <SummaryStat icon={Briefcase} label="Registos" value={String(weekSummary.totalRegistos)} helper="turnos da semana" />
+                <SummaryStat icon={AlertTriangle} label="Pendentes" value={String(weekSummary.pendentes)} helper="por validar" tone="amber" />
+                <SummaryStat icon={CheckCircle2} label="Ativos hoje" value={String(weekSummary.ativosHoje)} helper="com registo hoje" tone="cyan" />
+              </section>
 
-          {activeSection === "overview" && (
+              {/* Layout principal: colaboradores + lateral de pendências */}
+              <section className="grid gap-4 xl:grid-cols-[1.6fr_1fr]">
+                <ActionCard
+                  title="Colaboradores que trabalharam esta semana"
+                  description="Clique num colaborador para abrir o histórico semanal detalhado."
+                >
+                  {weekCollaborators.length === 0 ? (
+                    <div className="rounded-2xl border border-dashed border-white/10 px-4 py-10 text-center text-sm text-slate-400">
+                      Sem registos de colaboradores nesta semana.
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      {weekCollaborators.map((colaborador) => (
+                        <button
+                          key={colaborador.id}
+                          type="button"
+                          onClick={() => setColaboradorDrawerId(colaborador.id)}
+                          className="grid w-full items-center gap-3 rounded-[18px] border border-white/10 bg-white/[0.03] px-4 py-3 text-left transition hover:border-cyan-400/40 hover:bg-white/[0.06] md:grid-cols-[1.6fr_repeat(4,minmax(0,1fr))_auto]"
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-cyan-400 text-sm font-semibold text-slate-950">
+                              {getInitials(colaborador.nome)}
+                            </div>
+                            <div className="min-w-0">
+                              <p className="truncate font-semibold text-white">{colaborador.nome}</p>
+                              <p className="text-xs capitalize text-slate-400">{formatRoleLabel(colaborador.funcao)}</p>
+                            </div>
+                          </div>
+                          <CellStat label="Dias" value={String(colaborador.diasTrabalhados)} />
+                          <CellStat label="Horas" value={`${decimal(colaborador.horas)}h`} />
+                          <CellStat label="A receber" value={money(colaborador.valor)} accent />
+                          <CellStat label="Último dia" value={formatShortDate(colaborador.ultimoDia)} />
+                          <div className="flex items-center justify-between gap-2 md:justify-end">
+                            <StatusBadge
+                              status={
+                                colaborador.temPendencia
+                                  ? "pendente"
+                                  : colaborador.ativoHoje
+                                    ? "ativo"
+                                    : "inativo"
+                              }
+                            />
+                            <ChevronRight className="hidden h-4 w-4 text-slate-500 md:block" />
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </ActionCard>
+
+                <div className="space-y-4">
+                  {/* Pendências */}
+                  <ActionCard title="Pendências" description="Alertas operacionais desta semana." compact>
+                    <div className="space-y-3">
+                      <PendingRow
+                        icon={TimerReset}
+                        tone="rose"
+                        label="Sem hora de saída"
+                        count={pendencias.semSaida.length}
+                        detail={pendencias.semSaida.slice(0, 3).map((p) => `${p.nome} · ${formatShortDate(p.data)}`)}
+                      />
+                      <PendingRow
+                        icon={AlertTriangle}
+                        tone="amber"
+                        label="Horas muito altas"
+                        count={pendencias.horasAltas.length}
+                        detail={pendencias.horasAltas
+                          .slice(0, 3)
+                          .map((p) => `${p.nome} · ${decimal(p.horas)}h`)}
+                      />
+                      <PendingRow
+                        icon={ListChecks}
+                        tone="cyan"
+                        label="Registos por validar"
+                        count={pendencias.totalNaoValidados}
+                        detail={[]}
+                      />
+                      {pendencias.semSaida.length === 0 &&
+                        pendencias.horasAltas.length === 0 &&
+                        pendencias.totalNaoValidados === 0 && (
+                          <div className="flex items-center gap-2 rounded-[16px] border border-emerald-300/20 bg-emerald-400/[0.08] px-4 py-3 text-sm text-emerald-100">
+                            <CheckCircle2 className="h-4 w-4" />
+                            Tudo em dia esta semana.
+                          </div>
+                        )}
+                    </div>
+                  </ActionCard>
+
+                  {/* Ações rápidas */}
+                  <ActionCard title="Ações rápidas" description="Atalhos operacionais." compact>
+                    <QuickAction icon={CalendarClock} label="Abrir histórico e horários" onClick={() => setActiveSection("hours")} />
+                    <QuickAction icon={Users} label="Ver colaboradores" onClick={() => setActiveSection("team")} />
+                    <QuickAction icon={Settings2} label="Gestão do site" onClick={() => setActiveSection("site")} />
+                  </ActionCard>
+                </div>
+              </section>
+
+              {/* Registos recentes da semana */}
+              <ActionCard
+                title="Registos recentes"
+                description="Pendentes primeiro, depois os mais recentes da semana."
+              >
+                {weekRecords.length === 0 ? (
+                  <div className="rounded-2xl border border-dashed border-white/10 px-4 py-8 text-center text-sm text-slate-400">
+                    Sem registos nesta semana.
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full text-sm">
+                      <thead>
+                        <tr className="text-left text-slate-400">
+                          <th className="px-3 py-2 font-medium">Colaborador</th>
+                          <th className="px-3 py-2 font-medium">Data</th>
+                          <th className="px-3 py-2 font-medium">Entrada</th>
+                          <th className="px-3 py-2 font-medium">Saída</th>
+                          <th className="px-3 py-2 font-medium">Horas</th>
+                          <th className="px-3 py-2 font-medium">Valor</th>
+                          <th className="px-3 py-2 font-medium">Estado</th>
+                          <th className="px-3 py-2 font-medium text-right">Ação</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {weekRecords.slice(0, 12).map((registro) => (
+                          <tr key={registro.id} className="border-t border-white/10 text-slate-200">
+                            <td className="px-3 py-3 font-medium text-white">{registro.colaboradorNome}</td>
+                            <td className="px-3 py-3">{formatShortDate(registro.data)}</td>
+                            <td className="px-3 py-3">{registro.horaEntrada || "—"}</td>
+                            <td className="px-3 py-3">{registro.horaSaida || "—"}</td>
+                            <td className="px-3 py-3 font-medium text-white">
+                              {decimal(parseFloat(registro.horasTrabalhadas || "0"))}h
+                            </td>
+                            <td className="px-3 py-3 font-medium text-cyan-200">
+                              {money(parseFloat(registro.valorTotal || "0"))}
+                            </td>
+                            <td className="px-3 py-3">
+                              <StatusBadge
+                                status={
+                                  registro.status === "incompleto"
+                                    ? "incompleto"
+                                    : registro.status === "alerta"
+                                      ? "pendente"
+                                      : "validado"
+                                }
+                              />
+                            </td>
+                            <td className="px-3 py-3 text-right">
+                              <button
+                                type="button"
+                                onClick={() => setColaboradorDrawerId(registro.colaboradorId)}
+                                className="rounded-[10px] border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs font-medium text-cyan-100 transition hover:bg-white/[0.08]"
+                              >
+                                Ver
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </ActionCard>
+            </>
+          )}
+
+          {false && (
             <>
               <section className="grid gap-4 xl:grid-cols-[0.82fr_1.45fr_1fr]">
                 <ActionCard
