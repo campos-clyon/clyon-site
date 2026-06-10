@@ -44,10 +44,19 @@ export async function withConnection<T>(
   fn: (conn: mysql.Connection) => Promise<T>,
 ): Promise<T> {
   if (!process.env.DATABASE_URL) throw new Error("DATABASE_URL not set");
-  const conn = await mysql.createConnection({
-    uri: process.env.DATABASE_URL,
-    connectTimeout: 20000,
-  });
+  console.log("[v0] withConnection: a criar conexão...");
+  let conn: mysql.Connection;
+  try {
+    conn = await mysql.createConnection({
+      uri: process.env.DATABASE_URL,
+      ssl: { rejectUnauthorized: false },
+      connectTimeout: 20000,
+    });
+    console.log("[v0] withConnection: conexão criada com sucesso");
+  } catch (connErr) {
+    console.error("[v0] withConnection: FALHA ao criar conexão:", (connErr as Error)?.message);
+    throw connErr;
+  }
   try {
     return await fn(conn);
   } finally {

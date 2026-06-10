@@ -38,7 +38,9 @@ function getPeriodStart(periodo: string): string {
 
 // GET /api/admin/leads
 export async function GET(request: NextRequest) {
+  console.log("[v0] admin/leads GET iniciado");
   const auth = await requireAdmin(request);
+  console.log("[v0] admin/leads auth result:", auth.error ? "erro" : "ok", "isAdmin:", (auth as any).colaborador?.isAdmin);
   if (auth.error) return auth.error;
 
   try {
@@ -46,6 +48,7 @@ export async function GET(request: NextRequest) {
     const periodo = searchParams.get("periodo") || "30d";
     const status = searchParams.get("status") || "";
     const startDate = getPeriodStart(periodo);
+    console.log("[v0] admin/leads params:", { periodo, status, startDate });
     const hoje = new Date().toISOString().slice(0, 10);
     const semanaStart = getPeriodStart("semana");
 
@@ -57,7 +60,9 @@ export async function GET(request: NextRequest) {
     }
     const where = `WHERE ${conditions.join(" AND ")}`;
 
+    console.log("[v0] admin/leads a ligar à BD...");
     const { leads, totals } = await withConnection(async (conn) => {
+      console.log("[v0] admin/leads conexão estabelecida");
       const [leadsRows] = await conn.execute(
         `SELECT id, nome, telefone, email, localidade, tipoServico, preferenciaContacto,
                 pagePath, utmSource, utmMedium, utmCampaign, gclid, status, notasInternas, createdAt
@@ -86,7 +91,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ leads, totals });
   } catch (error) {
-    console.error("[api/admin/leads] GET error:", error);
+    console.error("[v0] admin/leads GET error:", (error as Error)?.message, (error as Error)?.stack?.split("\n").slice(0, 3).join(" | "));
     return NextResponse.json({ leads: [], totals: {}, error: "Erro ao carregar leads" }, { status: 500 });
   }
 }
