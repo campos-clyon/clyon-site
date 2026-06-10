@@ -2349,6 +2349,18 @@ export default function ColaboradorAdminClient() {
                     <div className="rounded-[16px] border border-amber-300/20 bg-amber-400/[0.07] px-4 py-3 text-sm text-amber-100">
                       Em produção no Vercel, ficheiros guardados apenas no disco local podem ser perdidos. Use sempre o upload pelo painel ou indique um URL público estável.
                     </div>
+                    {loadingImageStats ? (
+                      <div className="rounded-[16px] border border-white/10 bg-white/[0.03] px-4 py-6 text-center text-sm text-slate-400">
+                        A carregar estatísticas das imagens…
+                      </div>
+                    ) : imageStats ? (
+                      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+                        <SummaryStat icon={ImagePlus} label="Total" value={String(imageStats.total)} helper="Imagens geridas" tone="cyan" />
+                        <SummaryStat icon={CheckCircle2} label="Ativas" value={String(imageStats.ativas)} helper="Visíveis no site" tone="emerald" />
+                        <SummaryStat icon={ImagePlus} label="Carrossel" value={String(imageStats.hero)} helper="Secção topo" tone="slate" />
+                        <SummaryStat icon={ImagePlus} label="Galeria" value={String(imageStats.showcase)} helper="Trabalhos" tone="slate" />
+                      </div>
+                    ) : null}
                     <div className="grid gap-3 sm:grid-cols-2">
                       <div className="rounded-[20px] border border-white/10 bg-white/[0.03] p-5">
                         <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-cyan-400/20">

@@ -4,23 +4,24 @@ import type { ReactNode } from "react";
 import { ChangeEvent, FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
+  ArrowLeft,
+  ChevronDown,
+  ChevronUp,
+  Eye,
+  EyeOff,
   ImagePlus,
   Images,
   LayoutGrid,
   Loader2,
-  LogOut,
   RefreshCcw,
   Save,
   Trash2,
   UploadCloud,
 } from "lucide-react";
 
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 
 type GallerySection = "hero" | "showcase";
@@ -66,24 +67,6 @@ const defaultForm: GalleryFormState = {
   isActive: true,
 };
 
-const sectionMeta: Record<
-  GallerySection,
-  { label: string; description: string; accent: string; empty: string }
-> = {
-  hero: {
-    label: "Carrossel topo",
-    description: "Imagens do destaque principal da homepage.",
-    accent: "from-cyan-500/15 to-sky-500/5",
-    empty: "Ainda não existem imagens no carrossel topo.",
-  },
-  showcase: {
-    label: "Galeria de trabalhos",
-    description: "Casos reais da página de trabalhos, com grupos e fases.",
-    accent: "from-emerald-500/15 to-cyan-500/5",
-    empty: "Ainda não existem trabalhos reais nesta galeria.",
-  },
-};
-
 const uploadTargets: Record<GallerySection, { maxDimension: number; quality: number }> = {
   hero: { maxDimension: 1800, quality: 0.8 },
   showcase: { maxDimension: 1600, quality: 0.78 },
@@ -91,29 +74,21 @@ const uploadTargets: Record<GallerySection, { maxDimension: number; quality: num
 
 async function readResponsePayload(response: Response) {
   const text = await response.text();
-
-  if (!text) {
-    return {};
-  }
-
-  try {
-    return JSON.parse(text);
-  } catch {
-    return { error: text };
-  }
+  if (!text) return {};
+  try { return JSON.parse(text); } catch { return { error: text }; }
 }
 
 function phaseLabel(phase?: GalleryPhase) {
   if (phase === "before") return "Antes";
   if (phase === "during") return "Durante";
   if (phase === "after") return "Depois";
-  return "Sem fase";
+  return "—";
 }
 
 function previewLabel(value: string) {
   if (!value) return "Sem imagem definida";
-  if (value.startsWith("data:image/")) return "Imagem interna guardada no sistema";
-  if (value.length > 84) return `${value.slice(0, 81)}...`;
+  if (value.startsWith("data:image/")) return "Imagem interna (base64)";
+  if (value.length > 80) return `${value.slice(0, 77)}...`;
   return value;
 }
 
@@ -123,16 +98,13 @@ function canOptimizeFile(file: File) {
 
 async function loadImageElement(file: File) {
   const objectUrl = URL.createObjectURL(file);
-
   try {
     const image = await new Promise<HTMLImageElement>((resolve, reject) => {
       const nextImage = new window.Image();
-
       nextImage.onload = () => resolve(nextImage);
       nextImage.onerror = () => reject(new Error("Não foi possível ler a imagem."));
       nextImage.src = objectUrl;
     });
-
     return image;
   } finally {
     URL.revokeObjectURL(objectUrl);
@@ -140,48 +112,27 @@ async function loadImageElement(file: File) {
 }
 
 async function optimizeImageFile(file: File, section: GallerySection) {
-  if (typeof window === "undefined" || !canOptimizeFile(file)) {
-    return file;
-  }
-
+  if (typeof window === "undefined" || !canOptimizeFile(file)) return file;
   const { maxDimension, quality } = uploadTargets[section];
   const image = await loadImageElement(file);
   const largestSide = Math.max(image.naturalWidth, image.naturalHeight);
   const scale = largestSide > maxDimension ? maxDimension / largestSide : 1;
   const targetWidth = Math.max(1, Math.round(image.naturalWidth * scale));
   const targetHeight = Math.max(1, Math.round(image.naturalHeight * scale));
-
   const canvas = document.createElement("canvas");
   canvas.width = targetWidth;
   canvas.height = targetHeight;
-
   const context = canvas.getContext("2d");
-
-  if (!context) {
-    return file;
-  }
-
+  if (!context) return file;
   context.drawImage(image, 0, 0, targetWidth, targetHeight);
-
   const blob = await new Promise<Blob | null>((resolve) => {
     canvas.toBlob(resolve, "image/webp", quality);
   });
-
-  if (!blob) {
-    return file;
-  }
-
+  if (!blob) return file;
   const shouldKeepOriginal = blob.size >= file.size * 0.95 && scale === 1;
-
-  if (shouldKeepOriginal) {
-    return file;
-  }
-
+  if (shouldKeepOriginal) return file;
   const baseName = file.name.replace(/\.[^.]+$/, "") || "imagem";
-  return new File([blob], `${baseName}.webp`, {
-    type: "image/webp",
-    lastModified: Date.now(),
-  });
+  return new File([blob], `${baseName}.webp`, { type: "image/webp", lastModified: Date.now() });
 }
 
 export default function ImageManagerClient() {
@@ -193,47 +144,36 @@ export default function ImageManagerClient() {
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [optimizingUpload, setOptimizingUpload] = useState(false);
-  const [activeSection, setActiveSection] = useState<GallerySection>("hero");
+  const [filterSection, setFilterSection] = useState<"all" | GallerySection>("all");
+  const [filterActive, setFilterActive] = useState<"all" | "active" | "hidden">("all");
+  const [showForm, setShowForm] = useState(false);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
   const [newItem, setNewItem] = useState<GalleryFormState>(defaultForm);
   const [newFile, setNewFile] = useState<File | null>(null);
   const [replacementFiles, setReplacementFiles] = useState<Record<string, File | null>>({});
 
   useEffect(() => {
     const token = localStorage.getItem("colaborador_token");
-
-    if (!token) {
-      router.push("/colaboradores");
-      return;
-    }
-
+    if (!token) { router.push("/colaboradores"); return; }
     void loadGallery(token);
   }, [router]);
 
   async function loadGallery(token: string) {
     setLoading(true);
     setError("");
-
     try {
       const response = await fetch(`/api/media/gallery?_=${Date.now()}`, {
         cache: "no-store",
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await readResponsePayload(response);
-
-      if (!response.ok) {
-        throw new Error(data.error || "Não foi possível carregar a galeria.");
-      }
-
+      if (!response.ok) throw new Error(data.error || "Não foi possível carregar a galeria.");
       setItems(data.items || []);
     } catch (err) {
       const nextError = err instanceof Error ? err.message : "Erro ao carregar a galeria.";
       setError(nextError);
-
       if (nextError.includes("Não autorizado") || nextError.includes("Acesso negado")) {
         localStorage.removeItem("colaborador_token");
-        localStorage.removeItem("colaborador_nome");
-        localStorage.removeItem("colaborador_id");
-        localStorage.removeItem("colaborador_isAdmin");
         router.push("/colaboradores");
       }
     } finally {
@@ -248,30 +188,10 @@ export default function ImageManagerClient() {
 
   async function handleRefresh() {
     const token = localStorage.getItem("colaborador_token");
-
-    if (!token) {
-      router.push("/colaboradores");
-      return;
-    }
-
-    setRefreshing(true);
-    setMessage("");
-    setError("");
-
-    try {
-      await reloadAfterMutation(token);
-      setMessage("Galeria atualizada.");
-    } finally {
-      setRefreshing(false);
-    }
-  }
-
-  function handleLogout() {
-    localStorage.removeItem("colaborador_token");
-    localStorage.removeItem("colaborador_nome");
-    localStorage.removeItem("colaborador_id");
-    localStorage.removeItem("colaborador_isAdmin");
-    router.push("/colaboradores");
+    if (!token) { router.push("/colaboradores"); return; }
+    setRefreshing(true); setMessage(""); setError("");
+    try { await reloadAfterMutation(token); setMessage("Galeria atualizada."); }
+    finally { setRefreshing(false); }
   }
 
   function updateNewItem<Field extends keyof GalleryFormState>(field: Field, value: GalleryFormState[Field]) {
@@ -279,30 +199,17 @@ export default function ImageManagerClient() {
   }
 
   function updateItem(id: string, field: keyof GalleryItem, value: string | boolean | number) {
-    setItems((current) =>
-      current.map((item) => (item.id === id ? { ...item, [field]: value } : item)),
-    );
+    setItems((current) => current.map((item) => (item.id === id ? { ...item, [field]: value } : item)));
   }
 
   async function handleNewFileChange(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0] || null;
-
-    if (!file) {
-      setNewFile(null);
-      return;
-    }
-
-    setOptimizingUpload(true);
-    setError("");
-
+    if (!file) { setNewFile(null); return; }
+    setOptimizingUpload(true); setError("");
     try {
       const optimizedFile = await optimizeImageFile(file, newItem.section);
       setNewFile(optimizedFile);
-      setMessage(
-        optimizedFile === file
-          ? "Imagem pronta para upload."
-          : "Imagem otimizada antes do upload para carregar mais rápido no site.",
-      );
+      setMessage(optimizedFile === file ? "Imagem pronta para upload." : "Imagem otimizada antes do upload.");
     } catch (err) {
       setNewFile(file);
       setError(err instanceof Error ? err.message : "Não foi possível otimizar a imagem.");
@@ -315,24 +222,11 @@ export default function ImageManagerClient() {
   async function handleCreate(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const token = localStorage.getItem("colaborador_token");
-
-    if (!token) {
-      router.push("/colaboradores");
-      return;
-    }
-
-    if (!newFile && !newItem.imageUrl.trim()) {
-      setError("Escolha uma imagem ou indique um URL publico.");
-      return;
-    }
-
-    setSaving(true);
-    setError("");
-    setMessage("");
-
+    if (!token) { router.push("/colaboradores"); return; }
+    if (!newFile && !newItem.imageUrl.trim()) { setError("Escolha uma imagem ou indique um URL público."); return; }
+    setSaving(true); setError(""); setMessage("");
     try {
       let response: Response;
-
       if (newFile) {
         const formData = new FormData();
         formData.append("file", newFile);
@@ -345,44 +239,20 @@ export default function ImageManagerClient() {
         formData.append("projectKey", newItem.projectKey);
         formData.append("phase", newItem.phase);
         formData.append("isActive", String(newItem.isActive));
-
-        response = await fetch("/api/media/gallery", {
-          method: "POST",
-          headers: { Authorization: `Bearer ${token}` },
-          body: formData,
-        });
+        response = await fetch("/api/media/gallery", { method: "POST", headers: { Authorization: `Bearer ${token}` }, body: formData });
       } else {
         response = await fetch("/api/media/gallery", {
           method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            section: newItem.section,
-            title: newItem.title,
-            subtitle: newItem.subtitle,
-            description: newItem.description,
-            alt: newItem.alt,
-            imageUrl: newItem.imageUrl,
-            order: Number(newItem.order || "1"),
-            projectKey: newItem.projectKey,
-            phase: newItem.phase,
-            isActive: newItem.isActive,
-          }),
+          headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+          body: JSON.stringify({ section: newItem.section, title: newItem.title, subtitle: newItem.subtitle, description: newItem.description, alt: newItem.alt, imageUrl: newItem.imageUrl, order: Number(newItem.order || "1"), projectKey: newItem.projectKey, phase: newItem.phase, isActive: newItem.isActive }),
         });
       }
-
       const data = await readResponsePayload(response);
-
-      if (!response.ok) {
-        throw new Error(data.error || "Não foi possível guardar a imagem.");
-      }
-
+      if (!response.ok) throw new Error(data.error || "Não foi possível guardar a imagem.");
       setMessage("Imagem adicionada com sucesso.");
       setNewItem(defaultForm);
       setNewFile(null);
-      setActiveSection(newItem.section);
+      setShowForm(false);
       await reloadAfterMutation(token);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao criar imagem.");
@@ -393,20 +263,11 @@ export default function ImageManagerClient() {
 
   async function handleSaveItem(item: GalleryItem) {
     const token = localStorage.getItem("colaborador_token");
-
-    if (!token) {
-      router.push("/colaboradores");
-      return;
-    }
-
-    setSaving(true);
-    setError("");
-    setMessage("");
-
+    if (!token) { router.push("/colaboradores"); return; }
+    setSaving(true); setError(""); setMessage("");
     try {
       const replacementFile = replacementFiles[item.id];
       let response: Response;
-
       if (replacementFile) {
         const formData = new FormData();
         formData.append("file", replacementFile);
@@ -419,42 +280,19 @@ export default function ImageManagerClient() {
         formData.append("projectKey", item.projectKey || "");
         formData.append("phase", item.phase || "");
         formData.append("isActive", String(item.isActive));
-
-        response = await fetch(`/api/media/gallery/${item.id}`, {
-          method: "PUT",
-          headers: { Authorization: `Bearer ${token}` },
-          body: formData,
-        });
+        response = await fetch(`/api/media/gallery/${item.id}`, { method: "PUT", headers: { Authorization: `Bearer ${token}` }, body: formData });
       } else {
         response = await fetch(`/api/media/gallery/${item.id}`, {
           method: "PUT",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            section: item.section,
-            title: item.title,
-            subtitle: item.subtitle || "",
-            description: item.description || "",
-            alt: item.alt,
-            imageUrl: item.imageUrl,
-            order: item.order,
-            projectKey: item.projectKey || "",
-            phase: item.phase || "",
-            isActive: item.isActive,
-          }),
+          headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+          body: JSON.stringify({ section: item.section, title: item.title, subtitle: item.subtitle || "", description: item.description || "", alt: item.alt, imageUrl: item.imageUrl, order: item.order, projectKey: item.projectKey || "", phase: item.phase || "", isActive: item.isActive }),
         });
       }
-
       const data = await readResponsePayload(response);
-
-      if (!response.ok) {
-        throw new Error(data.error || "Não foi possível guardar as alteracoes.");
-      }
-
+      if (!response.ok) throw new Error(data.error || "Não foi possível guardar as alterações.");
       setReplacementFiles((current) => ({ ...current, [item.id]: null }));
       setMessage("Imagem atualizada com sucesso.");
+      setExpandedId(null);
       await reloadAfterMutation(token);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao atualizar imagem.");
@@ -465,32 +303,15 @@ export default function ImageManagerClient() {
 
   async function handleDeleteItem(id: string) {
     const token = localStorage.getItem("colaborador_token");
-
-    if (!token) {
-      router.push("/colaboradores");
-      return;
-    }
-
-    if (!window.confirm("Apagar esta imagem da galeria?")) {
-      return;
-    }
-
-    setSaving(true);
-    setError("");
-    setMessage("");
-
+    if (!token) { router.push("/colaboradores"); return; }
+    if (!window.confirm("Apagar esta imagem da galeria?")) return;
+    setSaving(true); setError(""); setMessage("");
     try {
-      const response = await fetch(`/api/media/gallery/${id}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const response = await fetch(`/api/media/gallery/${id}`, { method: "DELETE", headers: { Authorization: `Bearer ${token}` } });
       const data = await readResponsePayload(response);
-
-      if (!response.ok) {
-        throw new Error(data.error || "Não foi possível apagar a imagem.");
-      }
-
+      if (!response.ok) throw new Error(data.error || "Não foi possível apagar a imagem.");
       setMessage("Imagem apagada com sucesso.");
+      setExpandedId(null);
       await reloadAfterMutation(token);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao apagar imagem.");
@@ -499,29 +320,14 @@ export default function ImageManagerClient() {
     }
   }
 
-  async function onReplacementChange(
-    id: string,
-    section: GallerySection,
-    event: ChangeEvent<HTMLInputElement>,
-  ) {
+  async function onReplacementChange(id: string, section: GallerySection, event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0] || null;
-
-    if (!file) {
-      setReplacementFiles((current) => ({ ...current, [id]: null }));
-      return;
-    }
-
-    setOptimizingUpload(true);
-    setError("");
-
+    if (!file) { setReplacementFiles((current) => ({ ...current, [id]: null })); return; }
+    setOptimizingUpload(true); setError("");
     try {
       const optimizedFile = await optimizeImageFile(file, section);
       setReplacementFiles((current) => ({ ...current, [id]: optimizedFile }));
-      setMessage(
-        optimizedFile === file
-          ? "Nova imagem pronta para guardar."
-          : "Nova imagem otimizada antes da substituicao.",
-      );
+      setMessage(optimizedFile === file ? "Nova imagem pronta para guardar." : "Nova imagem otimizada.");
     } catch (err) {
       setReplacementFiles((current) => ({ ...current, [id]: file }));
       setError(err instanceof Error ? err.message : "Não foi possível otimizar a imagem.");
@@ -531,395 +337,414 @@ export default function ImageManagerClient() {
     }
   }
 
-  const heroItems = items.filter((item) => item.section === "hero");
-  const showcaseItems = items.filter((item) => item.section === "showcase");
-  const activeCount = items.filter((item) => item.isActive).length;
+  const heroItems = items.filter((i) => i.section === "hero");
+  const showcaseItems = items.filter((i) => i.section === "showcase");
+  const activeCount = items.filter((i) => i.isActive).length;
+
+  const filteredItems = items.filter((i) => {
+    if (filterSection !== "all" && i.section !== filterSection) return false;
+    if (filterActive === "active" && !i.isActive) return false;
+    if (filterActive === "hidden" && i.isActive) return false;
+    return true;
+  });
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,#d9fbff_0%,#f7fbfc_38%,#eef6f8_100%)] px-4 py-10 md:px-6 md:py-12">
-      <div className="mx-auto max-w-7xl space-y-6">
-        <Card className="overflow-hidden border-cyan-100 bg-white shadow-[0_30px_90px_-55px_rgba(14,116,144,0.45)]">
-          <CardContent className="grid gap-6 p-6 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-start">
-            <div className="space-y-4">
-              <div className="inline-flex rounded-full border border-cyan-200 bg-cyan-50 px-4 py-1 text-xs font-semibold uppercase tracking-[0.28em] text-cyan-700">
-                Painel de imagens
-              </div>
-              <div className="space-y-2">
-                <h1 className="text-3xl font-bold tracking-tight text-slate-950 md:text-4xl">
-                  Gestor de media mais simples e rápido
-                </h1>
-                <p className="max-w-3xl text-sm leading-7 text-slate-600 md:text-base">
-                  O carrossel da homepage e a galeria de trabalhos leem esta lista.
-                  Pode carregar, substituir, ordenar, esconder e apagar imagens sem editar o codigo.
-                </p>
-              </div>
-            </div>
+    <div className="min-h-screen bg-[linear-gradient(180deg,#060f1a_0%,#07111c_100%)] px-4 py-8 md:px-6 md:py-10">
+      <div className="mx-auto max-w-7xl space-y-5">
 
-            <div className="flex flex-wrap gap-3 lg:justify-end">
-              <Button
-                variant="outline"
-                onClick={() => void handleRefresh()}
-                disabled={loading || refreshing || saving}
-              >
-                <RefreshCcw className={refreshing ? "animate-spin" : ""} />
-                {refreshing ? "A atualizar..." : "Atualizar"}
-              </Button>
-              <Button variant="outline" onClick={handleLogout}>
-                <LogOut />
-                Sair
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-
-        <div className="grid gap-4 md:grid-cols-3">
-          <StatCard icon={LayoutGrid} label="Carrossel topo" value={heroItems.length} />
-          <StatCard icon={Images} label="Galeria de trabalhos" value={showcaseItems.length} />
-          <StatCard icon={UploadCloud} label="Imagens ativas" value={activeCount} />
+        {/* Cabeçalho */}
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <button
+              type="button"
+              onClick={() => router.push("/colaboradores/admin")}
+              className="mb-3 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.2em] text-cyan-400 hover:text-cyan-300"
+            >
+              <ArrowLeft className="h-3.5 w-3.5" />
+              Voltar ao painel
+            </button>
+            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-cyan-200">Gestor de imagens</p>
+            <h1 className="mt-1.5 text-3xl font-semibold text-white">
+              Carrossel e galeria de trabalhos
+            </h1>
+            <p className="mt-1.5 max-w-2xl text-sm leading-6 text-slate-300">
+              Carregue, substitua, ordene e oculte imagens do site sem editar código.
+            </p>
+          </div>
+          <div className="flex gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => void handleRefresh()}
+              disabled={loading || refreshing || saving}
+              className="h-11 rounded-2xl border-white/15 bg-white/[0.04] text-white hover:bg-white/[0.08]"
+            >
+              <RefreshCcw className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`} />
+              {refreshing ? "A atualizar..." : "Atualizar"}
+            </Button>
+            <Button
+              type="button"
+              onClick={() => setShowForm((s) => !s)}
+              className="h-11 rounded-2xl bg-cyan-400 px-5 text-slate-950 hover:bg-cyan-300"
+            >
+              <ImagePlus className="mr-1.5 h-4 w-4" />
+              Nova imagem
+            </Button>
+          </div>
         </div>
 
-        {error ? <Feedback tone="error">{error}</Feedback> : null}
-        {message ? <Feedback tone="success">{message}</Feedback> : null}
+        {/* Cards de resumo */}
+        <div className="grid gap-3 sm:grid-cols-3">
+          <SummaryCard icon={LayoutGrid} label="Carrossel topo" value={heroItems.length} tone="cyan" />
+          <SummaryCard icon={Images} label="Galeria de trabalhos" value={showcaseItems.length} tone="emerald" />
+          <SummaryCard icon={UploadCloud} label="Imagens ativas" value={activeCount} tone="slate" />
+        </div>
 
-        <Feedback tone="warning">
-          Em producao no Vercel, ficheiros guardados apenas no disco local podem voltar ao estado anterior.
-          Para uma troca estavel no site publicado, use o upload do painel ou preencha tambem a URL publica da imagem.
-        </Feedback>
+        {/* Alertas */}
+        {error && (
+          <div className="rounded-2xl border border-rose-300/30 bg-rose-400/[0.1] px-4 py-3 text-sm text-rose-100">
+            {error}
+          </div>
+        )}
+        {message && (
+          <div className="rounded-2xl border border-emerald-300/30 bg-emerald-400/[0.1] px-4 py-3 text-sm text-emerald-100">
+            {message}
+          </div>
+        )}
+        <div className="rounded-2xl border border-amber-300/20 bg-amber-400/[0.07] px-4 py-3 text-sm text-amber-100">
+          Em produção no Vercel, ficheiros guardados apenas no disco local podem ser perdidos. Use o upload ou indique um URL público estável.
+        </div>
 
-        <div className="grid gap-6 xl:grid-cols-[360px_minmax(0,1fr)]">
-          <Card className="border-cyan-100 bg-white xl:sticky xl:top-28">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-slate-950">
-                <ImagePlus className="h-5 w-5 text-cyan-600" />
-                Nova imagem
-              </CardTitle>
-              <CardDescription>
-                Adicione uma nova entrada ao carrossel do topo ou aos trabalhos.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <form className="space-y-4" onSubmit={handleCreate}>
-                <div className="space-y-2">
-                  <Label htmlFor="section">Secao</Label>
+        {/* Formulário nova imagem */}
+        {showForm && (
+          <div className="rounded-[28px] border border-cyan-300/16 bg-[linear-gradient(180deg,rgba(9,25,40,0.96)_0%,rgba(11,30,47,0.94)_100%)] p-6 shadow-[0_20px_70px_rgba(3,10,18,0.22)]">
+            <div className="mb-5 flex items-center justify-between gap-3">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-cyan-200">Nova entrada</p>
+                <h2 className="mt-1 text-xl font-semibold text-white">Adicionar imagem</h2>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowForm(false)}
+                className="flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/[0.04] text-white hover:bg-white/[0.1]"
+              >
+                <ChevronUp className="h-4 w-4" />
+              </button>
+            </div>
+            <form className="space-y-5" onSubmit={handleCreate}>
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                <DField label="Secção">
                   <select
-                    id="section"
                     value={newItem.section}
                     onChange={(event) => updateNewItem("section", event.target.value as GallerySection)}
-                    className="flex h-12 w-full rounded-[18px] border border-slate-200 bg-white px-4 text-sm text-slate-950"
+                    className="h-11 w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 text-sm text-white outline-none transition focus:border-cyan-300"
                   >
                     <option value="hero">Carrossel topo</option>
                     <option value="showcase">Galeria de trabalhos</option>
                   </select>
-                </div>
-
-                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-1">
-                  <Field label="Titulo" value={newItem.title} onChange={(value) => updateNewItem("title", value)} required />
-                  <Field label="Subtitulo" value={newItem.subtitle} onChange={(value) => updateNewItem("subtitle", value)} />
-                  <Field label="Alt" value={newItem.alt} onChange={(value) => updateNewItem("alt", value)} required />
-                  <Field label="URL da imagem" value={newItem.imageUrl} onChange={(value) => updateNewItem("imageUrl", value)} placeholder="https://..." />
-                  <Field label="Ordem" value={newItem.order} onChange={(value) => updateNewItem("order", value)} type="number" min="1" />
-                  <Field label="Grupo do trabalho" value={newItem.projectKey} onChange={(value) => updateNewItem("projectKey", value)} placeholder="ex: recolha-monos" />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="phase">Fase</Label>
-                  <select
-                    id="phase"
-                    value={newItem.phase}
-                    onChange={(event) => updateNewItem("phase", event.target.value as GalleryPhase)}
-                    className="flex h-12 w-full rounded-[18px] border border-slate-200 bg-white px-4 text-sm text-slate-950"
-                  >
+                </DField>
+                <DField label="Título">
+                  <input type="text" required value={newItem.title} onChange={(e) => updateNewItem("title", e.target.value)} className="h-11 w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 text-sm text-white outline-none transition focus:border-cyan-300" />
+                </DField>
+                <DField label="Alt (acessibilidade)">
+                  <input type="text" required value={newItem.alt} onChange={(e) => updateNewItem("alt", e.target.value)} className="h-11 w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 text-sm text-white outline-none transition focus:border-cyan-300" />
+                </DField>
+                <DField label="Ordem">
+                  <input type="number" min="1" value={newItem.order} onChange={(e) => updateNewItem("order", e.target.value)} className="h-11 w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 text-sm text-white outline-none transition focus:border-cyan-300" />
+                </DField>
+                <DField label="Subtítulo">
+                  <input type="text" value={newItem.subtitle} onChange={(e) => updateNewItem("subtitle", e.target.value)} className="h-11 w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 text-sm text-white outline-none transition focus:border-cyan-300" />
+                </DField>
+                <DField label="Grupo do trabalho">
+                  <input type="text" placeholder="ex: recolha-monos" value={newItem.projectKey} onChange={(e) => updateNewItem("projectKey", e.target.value)} className="h-11 w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 text-sm text-white outline-none transition focus:border-cyan-300" />
+                </DField>
+                <DField label="Fase">
+                  <select value={newItem.phase} onChange={(e) => updateNewItem("phase", e.target.value as GalleryPhase)} className="h-11 w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 text-sm text-white outline-none transition focus:border-cyan-300">
                     <option value="">Sem fase</option>
                     <option value="before">Antes</option>
                     <option value="during">Durante</option>
                     <option value="after">Depois</option>
                   </select>
-                </div>
+                </DField>
+                <DField label="URL da imagem (alternativo)">
+                  <input type="text" placeholder="https://..." value={newItem.imageUrl} onChange={(e) => updateNewItem("imageUrl", e.target.value)} className="h-11 w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 text-sm text-white outline-none transition focus:border-cyan-300" />
+                </DField>
+              </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="description">Descricao</Label>
-                  <Textarea
-                    id="description"
-                    value={newItem.description}
-                    onChange={(event) => updateNewItem("description", event.target.value)}
-                    className="min-h-28 rounded-[18px] border-slate-200 bg-white"
-                  />
-                </div>
+              <DField label="Descrição">
+                <Textarea value={newItem.description} onChange={(e) => updateNewItem("description", e.target.value)} className="min-h-24 rounded-2xl border-white/10 bg-white/[0.04] text-white" />
+              </DField>
 
-                <div className="space-y-2">
-                  <Label htmlFor="file">Imagem do computador</Label>
-                  <Input
-                    id="file"
-                    type="file"
-                    accept="image/*"
-                    onChange={(event) => void handleNewFileChange(event)}
-                    className="h-12 rounded-[18px] border-slate-200 bg-white"
-                  />
-                  <p className="text-xs text-slate-500">
-                    O upload comprime e redimensiona a imagem para o site abrir mais rápido.
-                  </p>
-                </div>
-
-                <label className="flex items-center gap-3 rounded-[18px] border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-700">
-                  <input
-                    type="checkbox"
-                    checked={newItem.isActive}
-                    onChange={(event) => updateNewItem("isActive", event.target.checked)}
-                  />
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
+                <DField label="Carregar ficheiro">
+                  <Input type="file" accept="image/*" onChange={(e) => void handleNewFileChange(e)} className="h-11 rounded-2xl border-white/10 bg-white/[0.04] text-slate-300" />
+                </DField>
+                <label className="flex shrink-0 cursor-pointer items-center gap-2.5 rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm font-medium text-slate-300">
+                  <input type="checkbox" checked={newItem.isActive} onChange={(e) => updateNewItem("isActive", e.target.checked)} className="h-4 w-4" />
                   Ativa no site
                 </label>
-
-                <Button type="submit" disabled={saving || loading || optimizingUpload} className="w-full">
-                  {saving || optimizingUpload ? <Loader2 className="animate-spin" /> : <UploadCloud />}
+                <Button type="submit" disabled={saving || loading || optimizingUpload} className="h-11 rounded-2xl bg-cyan-400 px-6 text-slate-950 hover:bg-cyan-300">
+                  {saving || optimizingUpload ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <UploadCloud className="mr-2 h-4 w-4" />}
                   Guardar imagem
                 </Button>
-              </form>
-            </CardContent>
-          </Card>
+              </div>
+            </form>
+          </div>
+        )}
 
-          <Tabs value={activeSection} onValueChange={(value) => setActiveSection(value as GallerySection)} className="gap-4">
-            <TabsList className="h-auto w-full justify-start rounded-[24px] border border-cyan-100 bg-white p-2">
-              <TabsTrigger value="hero" className="min-h-11 rounded-[18px] px-4">
-                Carrossel topo ({heroItems.length})
-              </TabsTrigger>
-              <TabsTrigger value="showcase" className="min-h-11 rounded-[18px] px-4">
-                Galeria de trabalhos ({showcaseItems.length})
-              </TabsTrigger>
-            </TabsList>
+        {/* Filtros */}
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Filtros:</span>
+          {(["all", "hero", "showcase"] as const).map((s) => (
+            <button
+              key={s}
+              type="button"
+              onClick={() => setFilterSection(s)}
+              className={`rounded-[12px] px-3 py-1.5 text-xs font-semibold transition ${
+                filterSection === s ? "bg-cyan-400 text-slate-950" : "border border-white/10 bg-white/[0.04] text-slate-300 hover:bg-white/[0.08]"
+              }`}
+            >
+              {s === "all" ? "Todos" : s === "hero" ? "Carrossel topo" : "Galeria de trabalhos"}
+            </button>
+          ))}
+          <span className="mx-1 text-slate-600">|</span>
+          {(["all", "active", "hidden"] as const).map((a) => (
+            <button
+              key={a}
+              type="button"
+              onClick={() => setFilterActive(a)}
+              className={`rounded-[12px] px-3 py-1.5 text-xs font-semibold transition ${
+                filterActive === a ? "bg-cyan-400 text-slate-950" : "border border-white/10 bg-white/[0.04] text-slate-300 hover:bg-white/[0.08]"
+              }`}
+            >
+              {a === "all" ? "Todos" : a === "active" ? "Ativos" : "Ocultos"}
+            </button>
+          ))}
+          <span className="ml-auto text-xs text-slate-400">{filteredItems.length} item(s)</span>
+        </div>
 
-            <TabsContent value="hero">
-              <GallerySectionPanel
-                title={sectionMeta.hero.label}
-                description={sectionMeta.hero.description}
-                accent={sectionMeta.hero.accent}
-                empty={sectionMeta.hero.empty}
-                items={heroItems}
-                saving={saving}
-                onChange={updateItem}
-                onSave={handleSaveItem}
-                onDelete={handleDeleteItem}
-                onReplacementChange={onReplacementChange}
-              />
-            </TabsContent>
+        {/* Lista de imagens */}
+        <div className="rounded-[28px] border border-cyan-300/14 bg-[linear-gradient(180deg,rgba(9,25,40,0.96)_0%,rgba(11,30,47,0.94)_100%)] shadow-[0_20px_70px_rgba(3,10,18,0.22)]">
+          {loading ? (
+            <div className="flex items-center justify-center py-20 text-sm text-slate-400">
+              <Loader2 className="mr-3 h-5 w-5 animate-spin text-cyan-400" />
+              A carregar galeria...
+            </div>
+          ) : filteredItems.length === 0 ? (
+            <div className="px-6 py-16 text-center text-sm text-slate-400">
+              Nenhuma imagem corresponde aos filtros selecionados.
+            </div>
+          ) : (
+            <div className="divide-y divide-white/[0.06]">
+              {filteredItems
+                .slice()
+                .sort((a, b) => a.section.localeCompare(b.section) || a.order - b.order)
+                .map((item) => {
+                  const isExpanded = expandedId === item.id;
+                  return (
+                    <div key={item.id}>
+                      {/* Linha compacta */}
+                      <div className="flex items-center gap-3 px-5 py-3 hover:bg-white/[0.02]">
+                        {/* Thumbnail */}
+                        <div className="h-12 w-16 shrink-0 overflow-hidden rounded-[10px] border border-white/10 bg-white/[0.04]">
+                          {item.imageUrl ? (
+                            <img src={item.imageUrl} alt={item.alt} className="h-full w-full object-cover" />
+                          ) : (
+                            <div className="flex h-full w-full items-center justify-center text-slate-600">
+                              <ImagePlus className="h-5 w-5" />
+                            </div>
+                          )}
+                        </div>
+                        {/* Info principal */}
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2">
+                            <span className="truncate text-sm font-semibold text-white">{item.title || "Sem título"}</span>
+                            <span className={`shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-semibold ${
+                              item.section === "hero"
+                                ? "border-cyan-300/30 bg-cyan-400/[0.12] text-cyan-100"
+                                : "border-emerald-300/30 bg-emerald-400/[0.12] text-emerald-100"
+                            }`}>
+                              {item.section === "hero" ? "Carrossel" : "Trabalho"}
+                            </span>
+                            {!item.isActive && (
+                              <span className="shrink-0 rounded-full border border-white/15 bg-white/[0.06] px-2 py-0.5 text-[10px] text-slate-400">
+                                Oculta
+                              </span>
+                            )}
+                          </div>
+                          <div className="mt-0.5 flex items-center gap-3 text-xs text-slate-400">
+                            <span>Ordem: {item.order}</span>
+                            {item.projectKey && <span>Grupo: {item.projectKey}</span>}
+                            {item.phase && <span>Fase: {phaseLabel(item.phase)}</span>}
+                            <span className="hidden truncate sm:inline" title={item.imageUrl}>{previewLabel(item.imageUrl)}</span>
+                          </div>
+                        </div>
+                        {/* Ações rápidas */}
+                        <div className="flex shrink-0 items-center gap-2">
+                          <button
+                            type="button"
+                            title={item.isActive ? "Ocultar" : "Mostrar"}
+                            onClick={() => {
+                              updateItem(item.id, "isActive", !item.isActive);
+                              const updatedItem = { ...item, isActive: !item.isActive };
+                              void handleSaveItem(updatedItem);
+                            }}
+                            className="flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/[0.04] text-slate-300 hover:bg-white/[0.1]"
+                          >
+                            {item.isActive ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+                          </button>
+                          <button
+                            type="button"
+                            title="Expandir / Editar"
+                            onClick={() => setExpandedId(isExpanded ? null : item.id)}
+                            className="flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/[0.04] text-slate-300 hover:bg-white/[0.1]"
+                          >
+                            {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                          </button>
+                        </div>
+                      </div>
 
-            <TabsContent value="showcase">
-              <GallerySectionPanel
-                title={sectionMeta.showcase.label}
-                description={sectionMeta.showcase.description}
-                accent={sectionMeta.showcase.accent}
-                empty={sectionMeta.showcase.empty}
-                items={showcaseItems}
-                saving={saving}
-                onChange={updateItem}
-                onSave={handleSaveItem}
-                onDelete={handleDeleteItem}
-                onReplacementChange={onReplacementChange}
-              />
-            </TabsContent>
-          </Tabs>
+                      {/* Painel de edição expansível */}
+                      {isExpanded && (
+                        <div className="border-t border-white/[0.06] bg-white/[0.015] px-5 py-5">
+                          <div className="grid gap-5 lg:grid-cols-[180px_minmax(0,1fr)]">
+                            {/* Pré-visualização + substituição */}
+                            <div className="space-y-3">
+                              <div className="overflow-hidden rounded-[18px] border border-white/10 bg-white/[0.04]">
+                                {item.imageUrl ? (
+                                  <img src={item.imageUrl} alt={item.alt} className="aspect-[4/3] h-full w-full object-cover" />
+                                ) : (
+                                  <div className="flex aspect-[4/3] items-center justify-center text-slate-600">
+                                    <ImagePlus className="h-8 w-8" />
+                                  </div>
+                                )}
+                              </div>
+                              <DField label="Substituir imagem">
+                                <Input
+                                  type="file"
+                                  accept="image/*"
+                                  onChange={(e) => void onReplacementChange(item.id, item.section, e)}
+                                  className="h-10 rounded-[14px] border-white/10 bg-white/[0.04] text-slate-300 text-xs"
+                                />
+                              </DField>
+                              <button
+                                type="button"
+                                title="Apagar imagem"
+                                onClick={() => void handleDeleteItem(item.id)}
+                                disabled={saving}
+                                className="flex w-full items-center justify-center gap-2 rounded-[14px] border border-rose-300/20 bg-rose-400/[0.08] px-3 py-2.5 text-xs font-semibold text-rose-100 hover:bg-rose-400/[0.14] disabled:opacity-50"
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                                Apagar imagem
+                              </button>
+                            </div>
+
+                            {/* Campos de edição */}
+                            <div className="space-y-4">
+                              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                                <DField label="Título">
+                                  <input value={item.title} onChange={(e) => updateItem(item.id, "title", e.target.value)} className="h-10 w-full rounded-[14px] border border-white/10 bg-white/[0.04] px-3 text-sm text-white outline-none transition focus:border-cyan-300" />
+                                </DField>
+                                <DField label="Subtítulo">
+                                  <input value={item.subtitle || ""} onChange={(e) => updateItem(item.id, "subtitle", e.target.value)} className="h-10 w-full rounded-[14px] border border-white/10 bg-white/[0.04] px-3 text-sm text-white outline-none transition focus:border-cyan-300" />
+                                </DField>
+                                <DField label="Alt">
+                                  <input value={item.alt} onChange={(e) => updateItem(item.id, "alt", e.target.value)} className="h-10 w-full rounded-[14px] border border-white/10 bg-white/[0.04] px-3 text-sm text-white outline-none transition focus:border-cyan-300" />
+                                </DField>
+                                <DField label="Ordem">
+                                  <input type="number" min="1" value={String(item.order)} onChange={(e) => updateItem(item.id, "order", Number(e.target.value || 1))} className="h-10 w-full rounded-[14px] border border-white/10 bg-white/[0.04] px-3 text-sm text-white outline-none transition focus:border-cyan-300" />
+                                </DField>
+                                <DField label="URL da imagem">
+                                  <input value={item.imageUrl} onChange={(e) => updateItem(item.id, "imageUrl", e.target.value)} className="h-10 w-full rounded-[14px] border border-white/10 bg-white/[0.04] px-3 text-sm text-white outline-none transition focus:border-cyan-300" />
+                                </DField>
+                                <DField label="Grupo do trabalho">
+                                  <input value={item.projectKey || ""} onChange={(e) => updateItem(item.id, "projectKey", e.target.value)} className="h-10 w-full rounded-[14px] border border-white/10 bg-white/[0.04] px-3 text-sm text-white outline-none transition focus:border-cyan-300" />
+                                </DField>
+                                <DField label="Secção">
+                                  <select value={item.section} onChange={(e) => updateItem(item.id, "section", e.target.value as GallerySection)} className="h-10 w-full rounded-[14px] border border-white/10 bg-[#0a1a28] px-3 text-sm text-white outline-none transition focus:border-cyan-300">
+                                    <option value="hero">Carrossel topo</option>
+                                    <option value="showcase">Galeria de trabalhos</option>
+                                  </select>
+                                </DField>
+                                <DField label="Fase">
+                                  <select value={item.phase || ""} onChange={(e) => updateItem(item.id, "phase", e.target.value)} className="h-10 w-full rounded-[14px] border border-white/10 bg-[#0a1a28] px-3 text-sm text-white outline-none transition focus:border-cyan-300">
+                                    <option value="">Sem fase</option>
+                                    <option value="before">Antes</option>
+                                    <option value="during">Durante</option>
+                                    <option value="after">Depois</option>
+                                  </select>
+                                </DField>
+                              </div>
+
+                              <DField label="Descrição">
+                                <Textarea value={item.description || ""} onChange={(e) => updateItem(item.id, "description", e.target.value)} className="min-h-20 rounded-[14px] border-white/10 bg-white/[0.04] text-white" />
+                              </DField>
+
+                              <div className="flex flex-wrap items-center gap-3">
+                                <label className="flex cursor-pointer items-center gap-2 text-sm text-slate-300">
+                                  <input type="checkbox" checked={item.isActive} onChange={(e) => updateItem(item.id, "isActive", e.target.checked)} className="h-4 w-4" />
+                                  Ativa no site
+                                </label>
+                                <Button
+                                  type="button"
+                                  onClick={() => void handleSaveItem(item)}
+                                  disabled={saving}
+                                  className="ml-auto h-10 rounded-[14px] bg-cyan-400 px-5 text-slate-950 hover:bg-cyan-300"
+                                >
+                                  {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                                  Guardar alterações
+                                </Button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+            </div>
+          )}
         </div>
       </div>
     </div>
   );
 }
 
-type StatCardProps = {
+function SummaryCard({
+  icon: Icon,
+  label,
+  value,
+  tone = "slate",
+}: {
   icon: typeof LayoutGrid;
   label: string;
   value: number;
-};
-
-function StatCard({ icon: Icon, label, value }: StatCardProps) {
-  return (
-    <Card className="border-cyan-100 bg-white">
-      <CardContent className="flex items-center gap-4 p-5">
-        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-cyan-50 text-cyan-600">
-          <Icon className="h-5 w-5" />
-        </div>
-        <div>
-          <p className="text-sm text-slate-500">{label}</p>
-          <p className="text-2xl font-bold text-slate-950">{value}</p>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
-type FeedbackProps = {
-  tone: "success" | "error" | "warning";
-  children: ReactNode;
-};
-
-function Feedback({ tone, children }: FeedbackProps) {
-  const styles = {
-    success: "border-emerald-200 bg-emerald-50 text-emerald-800",
-    error: "border-red-200 bg-red-50 text-red-700",
-    warning: "border-amber-200 bg-amber-50 text-amber-800",
+  tone?: "cyan" | "emerald" | "slate";
+}) {
+  const toneClass = {
+    cyan: "border-cyan-300/20 text-cyan-100",
+    emerald: "border-emerald-300/20 text-emerald-100",
+    slate: "border-white/10 text-white",
   }[tone];
 
-  return <div className={`rounded-[22px] border px-4 py-3 text-sm ${styles}`}>{children}</div>;
-}
-
-type FieldProps = {
-  label: string;
-  value: string;
-  onChange: (value: string) => void;
-  placeholder?: string;
-  type?: string;
-  min?: string;
-  required?: boolean;
-};
-
-function Field({ label, value, onChange, placeholder, type = "text", min, required }: FieldProps) {
   return (
-    <div className="space-y-2">
-      <Label>{label}</Label>
-      <Input
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        placeholder={placeholder}
-        type={type}
-        min={min}
-        required={required}
-        className="h-12 rounded-[18px] border-slate-200 bg-white"
-      />
+    <div className={`flex items-center gap-4 rounded-[20px] border bg-[linear-gradient(180deg,rgba(12,34,52,0.96)_0%,rgba(9,27,43,0.94)_100%)] px-5 py-4 ${toneClass}`}>
+      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-cyan-400/15">
+        <Icon className="h-5 w-5 text-cyan-300" />
+      </div>
+      <div>
+        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">{label}</p>
+        <p className="mt-1 text-2xl font-semibold text-white">{value}</p>
+      </div>
     </div>
   );
 }
 
-type GallerySectionPanelProps = {
-  title: string;
-  description: string;
-  accent: string;
-  empty: string;
-  items: GalleryItem[];
-  saving: boolean;
-  onChange: (id: string, field: keyof GalleryItem, value: string | boolean | number) => void;
-  onSave: (item: GalleryItem) => Promise<void>;
-  onDelete: (id: string) => Promise<void>;
-  onReplacementChange: (
-    id: string,
-    section: GallerySection,
-    event: ChangeEvent<HTMLInputElement>,
-  ) => Promise<void>;
-};
-
-function GallerySectionPanel({
-  title,
-  description,
-  accent,
-  empty,
-  items,
-  saving,
-  onChange,
-  onSave,
-  onDelete,
-  onReplacementChange,
-}: GallerySectionPanelProps) {
+function DField({ label, children }: { label: string; children: ReactNode }) {
   return (
-    <Card className="overflow-hidden border-cyan-100 bg-white">
-      <div className={`border-b border-cyan-100 bg-gradient-to-r ${accent} px-6 py-5`}>
-        <h2 className="text-2xl font-bold text-slate-950">{title}</h2>
-        <p className="mt-2 text-sm text-slate-600">{description}</p>
-      </div>
-      <CardContent className="space-y-5 p-6">
-        {items.length === 0 ? (
-          <div className="rounded-[24px] border border-dashed border-slate-200 bg-slate-50 px-6 py-10 text-center text-sm text-slate-500">
-            {empty}
-          </div>
-        ) : (
-          items.map((item) => (
-            <article key={item.id} className="grid gap-5 rounded-[28px] border border-slate-200 p-5 lg:grid-cols-[260px_minmax(0,1fr)]">
-              <div className="space-y-3">
-                <div className="overflow-hidden rounded-[22px] border border-slate-200 bg-slate-50">
-                  <img src={item.imageUrl} alt={item.alt} className="aspect-[4/3] h-full w-full object-cover" />
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  <Badge variant="outline" className="border-cyan-200 bg-cyan-50 text-cyan-700">{item.section === "hero" ? "Carrossel" : "Trabalho"}</Badge>
-                  <Badge variant="outline" className="border-slate-200 bg-slate-50 text-slate-600">{phaseLabel(item.phase)}</Badge>
-                  <Badge variant="outline" className={item.isActive ? "border-emerald-200 bg-emerald-50 text-emerald-700" : "border-slate-200 bg-slate-100 text-slate-500"}>
-                    {item.isActive ? "Ativa no site" : "Oculta"}
-                  </Badge>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor={`replace-${item.id}`}>Substituir imagem</Label>
-                  <Input id={`replace-${item.id}`} type="file" accept="image/*" onChange={(event) => void onReplacementChange(item.id, item.section, event)} className="h-12 rounded-[18px] border-slate-200 bg-white" />
-                </div>
-                <p className="text-xs text-slate-500" title={item.imageUrl}>{previewLabel(item.imageUrl)}</p>
-              </div>
-
-              <div className="space-y-4">
-                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-                  <Field label="Titulo" value={item.title} onChange={(value) => onChange(item.id, "title", value)} />
-                  <Field label="Subtitulo" value={item.subtitle || ""} onChange={(value) => onChange(item.id, "subtitle", value)} />
-                  <Field label="Alt" value={item.alt} onChange={(value) => onChange(item.id, "alt", value)} />
-                  <Field label="Ordem" value={String(item.order)} onChange={(value) => onChange(item.id, "order", Number(value || 1))} type="number" min="1" />
-                </div>
-
-                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-                  <Field label="URL da imagem" value={item.imageUrl} onChange={(value) => onChange(item.id, "imageUrl", value)} />
-                  <Field label="Grupo do trabalho" value={item.projectKey || ""} onChange={(value) => onChange(item.id, "projectKey", value)} />
-
-                  <div className="space-y-2">
-                    <Label>Secao</Label>
-                    <select
-                      value={item.section}
-                      onChange={(event) => onChange(item.id, "section", event.target.value as GallerySection)}
-                      className="flex h-12 w-full rounded-[18px] border border-slate-200 bg-white px-4 text-sm text-slate-950"
-                    >
-                      <option value="hero">Carrossel topo</option>
-                      <option value="showcase">Galeria de trabalhos</option>
-                    </select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label>Fase</Label>
-                    <select
-                      value={item.phase || ""}
-                      onChange={(event) => onChange(item.id, "phase", event.target.value)}
-                      className="flex h-12 w-full rounded-[18px] border border-slate-200 bg-white px-4 text-sm text-slate-950"
-                    >
-                      <option value="">Sem fase</option>
-                      <option value="before">Antes</option>
-                      <option value="during">Durante</option>
-                      <option value="after">Depois</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Descricao</Label>
-                  <Textarea
-                    value={item.description || ""}
-                    onChange={(event) => onChange(item.id, "description", event.target.value)}
-                    className="min-h-28 rounded-[18px] border-slate-200 bg-white"
-                  />
-                </div>
-
-                <label className="flex items-center gap-3 rounded-[18px] border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-700">
-                  <input
-                    type="checkbox"
-                    checked={item.isActive}
-                    onChange={(event) => onChange(item.id, "isActive", event.target.checked)}
-                  />
-                  Ativa no site
-                </label>
-
-                <div className="flex flex-wrap gap-3">
-                  <Button type="button" onClick={() => void onSave(item)} disabled={saving}>
-                    {saving ? <Loader2 className="animate-spin" /> : <Save />}
-                    Guardar alteracoes
-                  </Button>
-                  <Button type="button" variant="outline" onClick={() => void onDelete(item.id)} disabled={saving} className="border-red-200 text-red-700 hover:bg-red-50 hover:text-red-700">
-                    <Trash2 />
-                    Apagar
-                  </Button>
-                </div>
-              </div>
-            </article>
-          ))
-        )}
-      </CardContent>
-    </Card>
+    <div className="space-y-1.5">
+      <Label className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">{label}</Label>
+      {children}
+    </div>
   );
 }
