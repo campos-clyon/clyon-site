@@ -2456,12 +2456,40 @@ export default function ColaboradorAdminClient() {
                       <p className="mt-1.5 text-base text-white">Recolha de móveis e serviços de transporte</p>
                     </div>
                     <div className="rounded-[20px] border border-white/10 bg-white/[0.03] px-5 py-4">
-                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Portal</p>
-                      <p className="mt-1.5 text-base text-white">clyon.pt</p>
+                      <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
+                        <Mail className="h-3.5 w-3.5" />
+                        Email
+                      </p>
+                      <a href="mailto:geral@clyon.pt" className="mt-1.5 block text-base text-cyan-200 hover:text-cyan-100">
+                        geral@clyon.pt
+                      </a>
                     </div>
                     <div className="rounded-[20px] border border-white/10 bg-white/[0.03] px-5 py-4">
-                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Gestor de conteúdo</p>
-                      <p className="mt-1.5 text-base text-white">Portal interno de colaboradores</p>
+                      <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
+                        <Phone className="h-3.5 w-3.5" />
+                        Telefone
+                      </p>
+                      <a href="tel:+351965785395" className="mt-1.5 block text-base text-cyan-200 hover:text-cyan-100">
+                        +351 965 785 395
+                      </a>
+                    </div>
+                    <div className="rounded-[20px] border border-white/10 bg-white/[0.03] px-5 py-4">
+                      <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
+                        <MessageCircle className="h-3.5 w-3.5" />
+                        WhatsApp
+                      </p>
+                      <a
+                        href="https://wa.me/351965785395"
+                        target="_blank"
+                        rel="noreferrer"
+                        className="mt-1.5 block text-base text-cyan-200 hover:text-cyan-100"
+                      >
+                        +351 965 785 395
+                      </a>
+                    </div>
+                    <div className="rounded-[20px] border border-white/10 bg-white/[0.03] px-5 py-4">
+                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Portal</p>
+                      <p className="mt-1.5 text-base text-white">clyon.pt</p>
                     </div>
                   </div>
                   <div className="rounded-[16px] border border-cyan-300/20 bg-cyan-400/[0.06] px-4 py-3 text-sm text-cyan-100">
