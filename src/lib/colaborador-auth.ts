@@ -8,12 +8,19 @@ export type ColaboradorTokenPayload = {
 
 const JWT_SECRET = process.env.JWT_SECRET || "clyon-secret-2026";
 
+/**
+ * Fonte única de verdade para o segredo JWT dos colaboradores.
+ * Garante que assinatura (login) e verificação usam exatamente a mesma chave.
+ */
+export function getColaboradorSecretKey() {
+  return new TextEncoder().encode(JWT_SECRET);
+}
+
 export async function verifyColaboradorToken(token?: string | null) {
   if (!token) return null;
 
   try {
-    const secretKey = new TextEncoder().encode(JWT_SECRET);
-    const { payload } = await jose.jwtVerify(token, secretKey);
+    const { payload } = await jose.jwtVerify(token, getColaboradorSecretKey());
     return payload as unknown as ColaboradorTokenPayload;
   } catch {
     return null;

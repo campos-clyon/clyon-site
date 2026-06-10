@@ -1,20 +1,25 @@
-﻿"use client";
+"use client";
 
 import type { ComponentType, ReactNode } from "react";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
+  AlertTriangle,
   ArrowRight,
   Briefcase,
   CalendarClock,
   CalendarDays,
   CheckCircle2,
+  ChevronRight,
   Clock3,
+  Download,
   Euro,
   Eye,
   EyeOff,
+  History,
   ImagePlus,
   LayoutDashboard,
+  ListChecks,
   LogOut,
   Pencil,
   ReceiptText,
@@ -277,6 +282,9 @@ export default function ColaboradorAdminClient() {
   const [error, setError] = useState("");
   const [activeSection, setActiveSection] = useState<AdminSection>("overview");
   const [filtroColaborador, setFiltroColaborador] = useState("todos");
+  const [weekOffset, setWeekOffset] = useState(0);
+  const [funcaoFilter, setFuncaoFilter] = useState<"todas" | Colaborador["funcao"]>("todas");
+  const [colaboradorDrawerId, setColaboradorDrawerId] = useState<number | null>(null);
 
   const [criarNovoVisivel, setCriarNovoVisivel] = useState(false);
   const [loadingCriar, setLoadingCriar] = useState(false);
