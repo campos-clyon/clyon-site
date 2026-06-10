@@ -88,3 +88,30 @@ export type SimulatorSetting = typeof simulatorSettings.$inferSelect;
 export type InsertSimulatorSetting = typeof simulatorSettings.$inferInsert;
 export type GalleryMedia = typeof galleryMedia.$inferSelect;
 export type InsertGalleryMedia = typeof galleryMedia.$inferInsert;
+
+// Tabela de leads (pedidos de contacto vindos do site)
+export const leads = mysqlTable("leads", {
+  id: int("id").autoincrement().primaryKey(),
+  nome: varchar("nome", { length: 160 }).notNull(),
+  telefone: varchar("telefone", { length: 30 }).notNull(),
+  email: varchar("email", { length: 320 }).notNull(),
+  localidade: varchar("localidade", { length: 120 }).notNull(),
+  tipoServico: varchar("tipoServico", { length: 80 }).notNull(),
+  preferenciaContacto: varchar("preferenciaContacto", { length: 30 }).notNull(),
+  mensagem: text("mensagem"),
+  status: mysqlEnum("status", ["novo", "contactado", "fechado", "perdido"]).notNull().default("novo"),
+  // tracking UTM e página de origem
+  pagePath: varchar("pagePath", { length: 255 }),
+  pageUrl: varchar("pageUrl", { length: 500 }),
+  utmSource: varchar("utmSource", { length: 120 }),
+  utmMedium: varchar("utmMedium", { length: 120 }),
+  utmCampaign: varchar("utmCampaign", { length: 120 }),
+  gclid: varchar("gclid", { length: 255 }),
+  // notas internas
+  notasInternas: text("notasInternas"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Lead = typeof leads.$inferSelect;
+export type InsertLead = typeof leads.$inferInsert;

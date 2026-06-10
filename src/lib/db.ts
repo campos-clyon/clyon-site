@@ -1,8 +1,8 @@
 import { drizzle } from "drizzle-orm/mysql2";
 import mysql from "mysql2/promise";
 import { eq, desc, inArray } from "drizzle-orm";
-import { users, colaboradores, registrosHoras, simulatorSettings, galleryMedia } from "../../drizzle/schema";
-import type { InsertUser } from "../../drizzle/schema";
+import { users, colaboradores, registrosHoras, simulatorSettings, galleryMedia, leads } from "../../drizzle/schema";
+import type { InsertUser, InsertLead } from "../../drizzle/schema";
 import { defaultSimulatorSettings } from "@/lib/simulator-settings";
 
 let dbInstance: ReturnType<typeof drizzle<typeof import('../../drizzle/schema')>> | null = null;
@@ -360,6 +360,64 @@ export async function updateRegistroHoras(
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   await db.update(registrosHoras).set(data).where(eq(registrosHoras.id, id));
+}
+
+// ─── Leads helpers ───────────────────────────────────────────────────────────
+
+let leadsTableEnsured = false;
+
+export async function ensureLeadsTable() {
+  if (leadsTableEnsured) return;
+  const pool = await getPool();
+  if (!pool) throw new Error("Database not available");
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS leads (
+      id int NOT NULL AUTO_INCREMENT PRIMARY KEY,
+      nome varchar(160) NOT NULL,
+      telefone varchar(30) NOT NULL,
+      email varchar(320) NOT NULL,
+      localidade varchar(120) NOT NULL,
+      tipoServico varchar(80) NOT NULL,
+      preferenciaContacto varchar(30) NOT NULL,
+      mensagem text NULL,
+      status enum('novo','contactado','fechado','perdido') NOT NULL DEFAULT 'novo',
+      pagePath varchar(255) NULL,
+      pageUrl varchar(500) NULL,
+      utmSource varchar(120) NULL,
+      utmMedium varchar(120) NULL,
+      utmCampaign varchar(120) NULL,
+      gclid varchar(255) NULL,
+      notasInternas text NULL,
+      createdAt timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updatedAt timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    )
+  `);
+  leadsTableEnsured = true;
+}
+
+export async function createLead(data: Omit<InsertLead, "id" | "createdAt" | "updatedAt" | "status">) {
+  await ensureLeadsTable();
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.insert(leads).values({ ...data, status: "novo" });
+}
+
+export async function getAllLeads() {
+  await ensureLeadsTable();
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(leads).orderBy(desc(leads.createdAt));
+}
+
+export async function updateLeadStatus(
+  id: number,
+  status: "novo" | "contactado" | "fechado" | "perdido",
+  notasInternas?: string
+) {
+  await ensureLeadsTable();
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.update(leads).set({ status, ...(notasInternas !== undefined ? { notasInternas } : {}) }).where(eq(leads.id, id));
 }
 
 export async function getTodayRegistroByColaborador(colaboradorId: number) {
