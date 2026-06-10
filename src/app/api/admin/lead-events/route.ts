@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyColaboradorAuthHeader } from "@/lib/colaborador-auth";
-import { getPool } from "@/lib/db";
+import { withConnection } from "@/lib/db";
 
 export const runtime = "nodejs";
 
@@ -13,22 +13,27 @@ async function requireAdmin(request: NextRequest) {
 
 function getPeriodStart(periodo: string): string {
   const now = new Date();
-  if (periodo === "hoje") return `${now.toISOString().slice(0, 10)} 00:00:00`;
-  if (periodo === "semana") {
-    const day = now.getDay();
-    const diff = day === 0 ? 6 : day - 1;
-    const d = new Date(now);
-    d.setDate(d.getDate() - diff);
-    return `${d.toISOString().slice(0, 10)} 00:00:00`;
+  switch (periodo) {
+    case "hoje":
+      return `${now.toISOString().slice(0, 10)} 00:00:00`;
+    case "semana": {
+      const day = now.getDay();
+      const diff = day === 0 ? 6 : day - 1;
+      const d = new Date(now);
+      d.setDate(d.getDate() - diff);
+      return `${d.toISOString().slice(0, 10)} 00:00:00`;
+    }
+    case "7d": {
+      const d = new Date(now);
+      d.setDate(d.getDate() - 7);
+      return `${d.toISOString().slice(0, 10)} 00:00:00`;
+    }
+    default: {
+      const d = new Date(now);
+      d.setDate(d.getDate() - 30);
+      return `${d.toISOString().slice(0, 10)} 00:00:00`;
+    }
   }
-  if (periodo === "7d") {
-    const d = new Date(now);
-    d.setDate(d.getDate() - 7);
-    return `${d.toISOString().slice(0, 10)} 00:00:00`;
-  }
-  const d = new Date(now);
-  d.setDate(d.getDate() - 30);
-  return `${d.toISOString().slice(0, 10)} 00:00:00`;
 }
 
 // GET /api/admin/lead-events
@@ -36,38 +41,12 @@ export async function GET(request: NextRequest) {
   const auth = await requireAdmin(request);
   if (auth.error) return auth.error;
 
-  console.log("[api/admin/lead-events] GET chamado");
-
   try {
-    const pool = await getPool();
-    if (!pool) {
-      console.error("[api/admin/lead-events] Pool indisponível");
-      return NextResponse.json({ events: [], totals: {}, error: "Base de dados indisponível" }, { status: 503 });
-    }
-
     const { searchParams } = new URL(request.url);
     const periodo = searchParams.get("periodo") || "7d";
     const eventType = searchParams.get("eventType") || "";
     const startDate = getPeriodStart(periodo);
     const hoje = new Date().toISOString().slice(0, 10);
-
-    // Garantir que a tabela leadEvents existe
-    await pool.execute(`
-      CREATE TABLE IF NOT EXISTS leadEvents (
-        id int NOT NULL AUTO_INCREMENT PRIMARY KEY,
-        eventType varchar(80) NOT NULL,
-        pagePath varchar(255) NULL,
-        pageUrl varchar(500) NULL,
-        serviceType varchar(80) NULL,
-        location varchar(120) NULL,
-        contactPreference varchar(30) NULL,
-        utmSource varchar(120) NULL,
-        utmMedium varchar(120) NULL,
-        utmCampaign varchar(120) NULL,
-        gclid varchar(255) NULL,
-        createdAt timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
-      )
-    `);
 
     const conditions: string[] = ["createdAt >= ?"];
     const params: unknown[] = [startDate];
@@ -77,31 +56,35 @@ export async function GET(request: NextRequest) {
     }
     const where = `WHERE ${conditions.join(" AND ")}`;
 
-    const [events] = await pool.execute(
-      `SELECT id, eventType, pagePath, serviceType, location, contactPreference,
-              utmSource, utmMedium, utmCampaign, createdAt
-       FROM leadEvents ${where}
-       ORDER BY createdAt DESC
-       LIMIT 500`,
-      params,
-    );
+    const { events, totals } = await withConnection(async (conn) => {
+      const [eventsRows] = await conn.execute(
+        `SELECT id, eventType, pagePath, serviceType, location, contactPreference,
+                utmSource, utmMedium, utmCampaign, createdAt
+         FROM leadEvents ${where}
+         ORDER BY createdAt DESC
+         LIMIT 500`,
+        params,
+      );
 
-    const [[totals]] = await pool.execute(
-      `SELECT
-        SUM(CASE WHEN eventType LIKE '%whatsapp%' AND DATE(createdAt) = ? THEN 1 ELSE 0 END) AS whatsappHoje,
-        SUM(CASE WHEN (eventType LIKE '%call%' OR eventType LIKE '%ligar%') AND DATE(createdAt) = ? THEN 1 ELSE 0 END) AS ligarHoje,
-        SUM(CASE WHEN eventType LIKE '%cta%' AND DATE(createdAt) = ? THEN 1 ELSE 0 END) AS ctaHoje,
-        SUM(CASE WHEN eventType LIKE '%form_submit%' AND DATE(createdAt) = ? THEN 1 ELSE 0 END) AS formHoje,
-        SUM(CASE WHEN eventType LIKE '%email%' AND DATE(createdAt) = ? THEN 1 ELSE 0 END) AS emailHoje,
-        COUNT(*) AS total
-       FROM leadEvents`,
-      [hoje, hoje, hoje, hoje, hoje],
-    ) as any;
+      const [totalsRows] = await conn.execute(
+        `SELECT
+          SUM(CASE WHEN eventType = 'click_whatsapp'  AND DATE(createdAt) = ? THEN 1 ELSE 0 END) AS whatsappHoje,
+          SUM(CASE WHEN eventType = 'click_call'      AND DATE(createdAt) = ? THEN 1 ELSE 0 END) AS ligarHoje,
+          SUM(CASE WHEN eventType LIKE 'click_cta%'   AND DATE(createdAt) = ? THEN 1 ELSE 0 END) AS ctaHoje,
+          SUM(CASE WHEN eventType LIKE 'form_submit%' AND DATE(createdAt) = ? THEN 1 ELSE 0 END) AS formHoje,
+          SUM(CASE WHEN eventType = 'click_email'     AND DATE(createdAt) = ? THEN 1 ELSE 0 END) AS emailHoje,
+          COUNT(*) AS total
+         FROM leadEvents`,
+        [hoje, hoje, hoje, hoje, hoje],
+      );
 
-    const eventsArr = Array.isArray(events) ? events : [];
-    console.log("[api/admin/lead-events] Devolvidos:", eventsArr.length, "eventos. Totais:", totals);
+      return {
+        events: Array.isArray(eventsRows) ? eventsRows : [],
+        totals: Array.isArray(totalsRows) ? (totalsRows as any[])[0] : {},
+      };
+    });
 
-    return NextResponse.json({ events: eventsArr, totals });
+    return NextResponse.json({ events, totals });
   } catch (error) {
     console.error("[api/admin/lead-events] GET error:", error);
     return NextResponse.json({ events: [], totals: {}, error: "Erro ao carregar eventos" }, { status: 500 });

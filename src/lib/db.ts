@@ -14,7 +14,15 @@ export async function getPool() {
     return null;
   }
   if (!poolInstance) {
-    poolInstance = mysql.createPool(process.env.DATABASE_URL);
+    poolInstance = mysql.createPool({
+      uri: process.env.DATABASE_URL,
+      waitForConnections: true,
+      connectionLimit: 5,
+      queueLimit: 0,
+      enableKeepAlive: true,
+      keepAliveInitialDelay: 10000,
+      connectTimeout: 20000,
+    });
   }
   return poolInstance;
 }
@@ -26,6 +34,25 @@ export async function getDb() {
     dbInstance = drizzle(pool) as any;
   }
   return dbInstance;
+}
+
+/**
+ * Cria uma conexão MySQL2 fresca (não reutiliza singleton) para cada request.
+ * Usar nos endpoints API admin para evitar erros de "Connection lost" com Railway.
+ */
+export async function withConnection<T>(
+  fn: (conn: mysql.Connection) => Promise<T>,
+): Promise<T> {
+  if (!process.env.DATABASE_URL) throw new Error("DATABASE_URL not set");
+  const conn = await mysql.createConnection({
+    uri: process.env.DATABASE_URL,
+    connectTimeout: 20000,
+  });
+  try {
+    return await fn(conn);
+  } finally {
+    await conn.end().catch(() => {});
+  }
 }
 
 let simulatorTableEnsured = false;
@@ -364,33 +391,6 @@ export async function updateRegistroHoras(
 
 // ─── Leads helpers ───────────────────────────────────────────────────────────
 
-async function ensureLeadsTable() {
-  const pool = await getPool();
-  if (!pool) return;
-  await pool.execute(`
-    CREATE TABLE IF NOT EXISTS leads (
-      id int NOT NULL AUTO_INCREMENT PRIMARY KEY,
-      nome varchar(160) NOT NULL,
-      telefone varchar(30) NOT NULL,
-      email varchar(320) NOT NULL,
-      localidade varchar(120) NOT NULL,
-      tipoServico varchar(80) NOT NULL,
-      preferenciaContacto varchar(30) NOT NULL,
-      mensagem text NULL,
-      pagePath varchar(255) NULL,
-      pageUrl varchar(500) NULL,
-      utmSource varchar(120) NULL,
-      utmMedium varchar(120) NULL,
-      utmCampaign varchar(120) NULL,
-      gclid varchar(255) NULL,
-      status varchar(30) NOT NULL DEFAULT 'novo',
-      notasInternas text NULL,
-      createdAt timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-      updatedAt timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-    )
-  `);
-}
-
 export async function createLead(data: {
   nome: string; telefone: string; email: string; localidade: string;
   tipoServico: string; preferenciaContacto: string; mensagem?: string | null;
@@ -399,22 +399,18 @@ export async function createLead(data: {
   gclid?: string | null;
 }) {
   console.log("[db/createLead] A criar lead:", data.nome, data.tipoServico);
-  await ensureLeadsTable();
-  const pool = await getPool();
-  if (!pool) {
-    console.error("[db/createLead] Pool indisponível — lead não foi gravado");
-    return;
-  }
   try {
-    await pool.execute(
-      `INSERT INTO leads (nome, telefone, email, localidade, tipoServico, preferenciaContacto,
-                          mensagem, pagePath, pageUrl, utmSource, utmMedium, utmCampaign, gclid)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [data.nome, data.telefone, data.email, data.localidade, data.tipoServico,
-       data.preferenciaContacto, data.mensagem ?? null, data.pagePath ?? null,
-       data.pageUrl ?? null, data.utmSource ?? null, data.utmMedium ?? null,
-       data.utmCampaign ?? null, data.gclid ?? null],
-    );
+    await withConnection(async (conn) => {
+      await conn.execute(
+        `INSERT INTO leads (nome, telefone, email, localidade, tipoServico, preferenciaContacto,
+                            mensagem, pagePath, pageUrl, utmSource, utmMedium, utmCampaign, gclid)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [data.nome, data.telefone, data.email, data.localidade, data.tipoServico,
+         data.preferenciaContacto, data.mensagem ?? null, data.pagePath ?? null,
+         data.pageUrl ?? null, data.utmSource ?? null, data.utmMedium ?? null,
+         data.utmCampaign ?? null, data.gclid ?? null],
+      );
+    });
     console.log("[db/createLead] Lead gravado com sucesso:", data.nome);
   } catch (err) {
     console.error("[db/createLead] Erro ao inserir lead:", err);
@@ -423,27 +419,26 @@ export async function createLead(data: {
 }
 
 export async function getAllLeads() {
-  await ensureLeadsTable();
-  const pool = await getPool();
-  if (!pool) return [];
-  const [rows] = await pool.execute(
-    `SELECT id, nome, telefone, email, localidade, tipoServico, preferenciaContacto,
-            mensagem, pagePath, pageUrl, utmSource, utmMedium, utmCampaign, gclid,
-            status, notasInternas, createdAt
-     FROM leads ORDER BY createdAt DESC LIMIT 500`
-  );
+  const rows = await withConnection(async (conn) => {
+    const [r] = await conn.execute(
+      `SELECT id, nome, telefone, email, localidade, tipoServico, preferenciaContacto,
+              mensagem, pagePath, pageUrl, utmSource, utmMedium, utmCampaign, gclid,
+              status, notasInternas, createdAt
+       FROM leads ORDER BY createdAt DESC LIMIT 500`,
+    );
+    return r;
+  });
   return rows as Record<string, unknown>[];
 }
 
 export async function updateLeadStatus(id: number, status: string, notasInternas?: string) {
-  await ensureLeadsTable();
-  const pool = await getPool();
-  if (!pool) return;
-  if (notasInternas !== undefined) {
-    await pool.execute(`UPDATE leads SET status = ?, notasInternas = ? WHERE id = ?`, [status, notasInternas, id]);
-  } else {
-    await pool.execute(`UPDATE leads SET status = ? WHERE id = ?`, [status, id]);
-  }
+  await withConnection(async (conn) => {
+    if (notasInternas !== undefined) {
+      await conn.execute(`UPDATE leads SET status = ?, notasInternas = ? WHERE id = ?`, [status, notasInternas, id]);
+    } else {
+      await conn.execute(`UPDATE leads SET status = ? WHERE id = ?`, [status, id]);
+    }
+  });
 }
 
 export async function createLeadEvent(data: {
@@ -458,45 +453,29 @@ export async function createLeadEvent(data: {
   utmCampaign?: string | null;
   gclid?: string | null;
 }) {
-  const pool = await getPool();
-  if (!pool) {
-    console.warn("[db/createLeadEvent] Pool indisponível, evento ignorado:", data.eventType);
-    return;
+  try {
+    await withConnection(async (conn) => {
+      await conn.execute(
+        `INSERT INTO leadEvents (eventType, pagePath, pageUrl, serviceType, location, contactPreference, utmSource, utmMedium, utmCampaign, gclid)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          String(data.eventType).slice(0, 80),
+          data.pagePath ?? null,
+          data.pageUrl ?? null,
+          data.serviceType ?? null,
+          data.location ?? null,
+          data.contactPreference ?? null,
+          data.utmSource ?? null,
+          data.utmMedium ?? null,
+          data.utmCampaign ?? null,
+          data.gclid ?? null,
+        ],
+      );
+    });
+    console.log("[db/createLeadEvent] Evento gravado:", data.eventType);
+  } catch (err) {
+    console.warn("[db/createLeadEvent] Erro ao gravar evento:", data.eventType, err);
   }
-  // Garantir que a tabela existe (idempotente)
-  await pool.execute(`
-    CREATE TABLE IF NOT EXISTS leadEvents (
-      id int NOT NULL AUTO_INCREMENT PRIMARY KEY,
-      eventType varchar(80) NOT NULL,
-      pagePath varchar(255) NULL,
-      pageUrl varchar(500) NULL,
-      serviceType varchar(80) NULL,
-      location varchar(120) NULL,
-      contactPreference varchar(30) NULL,
-      utmSource varchar(120) NULL,
-      utmMedium varchar(120) NULL,
-      utmCampaign varchar(120) NULL,
-      gclid varchar(255) NULL,
-      createdAt timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
-    )
-  `);
-  await pool.execute(
-    `INSERT INTO leadEvents (eventType, pagePath, pageUrl, serviceType, location, contactPreference, utmSource, utmMedium, utmCampaign, gclid)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    [
-      String(data.eventType).slice(0, 80),
-      data.pagePath ?? null,
-      data.pageUrl ?? null,
-      data.serviceType ?? null,
-      data.location ?? null,
-      data.contactPreference ?? null,
-      data.utmSource ?? null,
-      data.utmMedium ?? null,
-      data.utmCampaign ?? null,
-      data.gclid ?? null,
-    ],
-  );
-  console.log("[db/createLeadEvent] Evento gravado:", data.eventType);
 }
 
 // ─── Leads helpers END ───────────────────────────────────────────────────────
