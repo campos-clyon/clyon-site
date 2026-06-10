@@ -340,6 +340,11 @@ export default function ColaboradorAdminClient() {
   const [funcaoFilter, setFuncaoFilter] = useState<"todas" | Colaborador["funcao"]>("todas");
   const [colaboradorDrawerId, setColaboradorDrawerId] = useState<number | null>(null);
 
+  // Aba ativa da página Configurações
+  const [settingsTab, setSettingsTab] = useState<
+    "simulador" | "funcoes" | "imagens" | "seguranca" | "empresa"
+  >("simulador");
+
   // Filtros da página Equipa
   const [teamSearch, setTeamSearch] = useState("");
   const [teamFuncao, setTeamFuncao] = useState<"todas" | Colaborador["funcao"]>("todas");
@@ -480,70 +485,6 @@ export default function ColaboradorAdminClient() {
         .sort((a, b) => new Date(b.data).getTime() - new Date(a.data).getTime()),
     [colaboradoresFiltrados],
   );
-
-  const dashboardStats = useMemo(() => {
-    const hoje = new Date().toISOString().split("T")[0];
-
-    const totalHoje = todosRegistros.reduce(
-      (acc, registro) => {
-        if (!registro.data.startsWith(hoje)) return acc;
-        acc.horas += parseFloat(registro.horasTrabalhadas || "0");
-        acc.valor += parseFloat(registro.valorTotal || "0");
-        acc.trabalhos += registro.numeroTrabalhos || 0;
-        return acc;
-      },
-      { horas: 0, valor: 0, trabalhos: 0 },
-    );
-
-    const semana = colaboradoresFiltrados.reduce(
-      (acc, colaborador) => {
-        acc.horas += parseFloat(colaborador.estatisticas?.semana?.horas || "0");
-        acc.valor += parseFloat(colaborador.estatisticas?.semana?.valor || "0");
-        acc.trabalhos += colaborador.estatisticas?.semana?.trabalhos || 0;
-        return acc;
-      },
-      { horas: 0, valor: 0, trabalhos: 0 },
-    );
-
-    const ultimos15 = colaboradoresFiltrados.reduce(
-      (acc, colaborador) => {
-        acc.horas += parseFloat(colaborador.estatisticas?.ultimos15Dias?.horas || "0");
-        acc.valor += parseFloat(colaborador.estatisticas?.ultimos15Dias?.valor || "0");
-        acc.trabalhos += colaborador.estatisticas?.ultimos15Dias?.trabalhos || 0;
-        return acc;
-      },
-      { horas: 0, valor: 0, trabalhos: 0 },
-    );
-
-    const mes = colaboradoresFiltrados.reduce(
-      (acc, colaborador) => {
-        acc.horas += parseFloat(colaborador.estatisticas?.mes?.horas || "0");
-        acc.valor += parseFloat(colaborador.estatisticas?.mes?.valor || "0");
-        acc.trabalhos += colaborador.estatisticas?.mes?.trabalhos || 0;
-        return acc;
-      },
-      { horas: 0, valor: 0, trabalhos: 0 },
-    );
-
-    const mediaHora =
-      colaboradores.length > 0
-        ? colaboradores.reduce((acc, item) => acc + parseFloat(item.valorHora || "0"), 0) /
-          colaboradores.length
-        : 0;
-
-    const admins = colaboradores.filter((item) => item.isAdmin === 1).length;
-
-    return {
-      hoje: totalHoje,
-      semana,
-      ultimos15,
-      mes,
-      ativos: colaboradores.length,
-      mediaHora,
-      admins,
-      ultimoRegisto: todosRegistros[0]?.data || "",
-    };
-  }, [colaboradores, colaboradoresFiltrados, todosRegistros]);
 
   const simulatorGroups = useMemo(() => {
     const settingsMap = new Map(simulatorSettings.map((setting) => [setting.key, setting]));
@@ -722,7 +663,7 @@ export default function ColaboradorAdminClient() {
     const pendentes = hoursRecords.filter((r) => r.status === "alerta").length;
     const incompletos = hoursRecords.filter((r) => r.status === "incompleto").length;
     return {
-      colaboradores: colaboradoresComRegisto,
+      colaboradoresComRegisto,
       totalHoras,
       totalValor,
       pendentes,
@@ -957,21 +898,6 @@ export default function ColaboradorAdminClient() {
 
     return sortCollaboratorsByHoursReport(reports);
   }, [colaboradores]);
-
-  const reportTotals = useMemo(
-    () =>
-      collaboratorHourReports.reduce(
-        (acc, colaborador) => {
-          acc.semanaHoras += colaborador.relatorio.semana.horas;
-          acc.semanaValor += colaborador.relatorio.semana.valor;
-          acc.mesHoras += colaborador.relatorio.mes.horas;
-          acc.mesValor += colaborador.relatorio.mes.valor;
-          return acc;
-        },
-        { semanaHoras: 0, semanaValor: 0, mesHoras: 0, mesValor: 0 },
-      ),
-    [collaboratorHourReports],
-  );
 
   const handleLogout = () => {
     localStorage.removeItem("colaborador_token");
@@ -1513,7 +1439,6 @@ export default function ColaboradorAdminClient() {
                   </div>
                 )}
               </ActionCard>
-            </section>
             </>
           )}
 
@@ -2602,33 +2527,6 @@ function StatSurface({
   );
 }
 
-function MiniStat({
-  label,
-  value,
-  helper,
-  accent,
-}: {
-  label: string;
-  value: string;
-  helper: string;
-  accent: "cyan" | "emerald" | "violet";
-}) {
-  const accentClass =
-    {
-      cyan: "border-cyan-300/20 bg-cyan-400/[0.08] text-cyan-100",
-      emerald: "border-emerald-300/20 bg-emerald-400/[0.08] text-emerald-100",
-      violet: "border-violet-300/20 bg-violet-400/[0.08] text-violet-100",
-    }[accent];
-
-  return (
-    <div className={`rounded-[22px] border px-4 py-3.5 ${accentClass}`}>
-      <p className="text-xs uppercase tracking-[0.22em]">{label}</p>
-      <p className="mt-2 text-[1.55rem] font-semibold text-white">{value}</p>
-      <p className="mt-1 text-sm text-slate-300">{helper}</p>
-    </div>
-  );
-}
-
 function FilterPill({
   active,
   onClick,
@@ -2650,129 +2548,6 @@ function FilterPill({
     >
       {label}
     </button>
-  );
-}
-
-function RecordMeta({
-  label,
-  value,
-  icon: Icon,
-}: {
-  label: string;
-  value: string;
-  icon: ComponentType<{ className?: string }>;
-}) {
-  return (
-    <div className="rounded-2xl border border-cyan-300/14 bg-white/[0.04] px-4 py-3">
-      <div className="flex items-center gap-2 text-slate-400">
-        <Icon className="h-4 w-4" />
-        <span className="text-xs uppercase tracking-[0.2em] text-cyan-100/90">{label}</span>
-      </div>
-      <p className="mt-2 text-base font-semibold text-white">{value}</p>
-    </div>
-  );
-}
-
-function SummaryCard({
-  icon: Icon,
-  title,
-  value,
-  subtitle,
-}: {
-  icon: ComponentType<{ className?: string }>;
-  title: string;
-  value: string;
-  subtitle: string;
-}) {
-  return (
-    <div className="rounded-[20px] border border-cyan-300/14 bg-white/[0.04] p-4">
-      <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-cyan-200">
-        <Icon className="h-4 w-4" />
-        {title}
-      </div>
-      <p className="mt-3 text-[1.8rem] font-semibold text-white">{value}</p>
-      <p className="mt-1 text-sm text-slate-400">{subtitle}</p>
-    </div>
-  );
-}
-
-function MiniReportCard({
-  title,
-  hours,
-  amount,
-  jobs,
-}: {
-  title: string;
-  hours: string;
-  amount: string;
-  jobs: string;
-}) {
-  return (
-    <div className="rounded-[20px] border border-cyan-300/18 bg-[linear-gradient(180deg,rgba(34,211,238,0.1)_0%,rgba(8,145,178,0.08)_100%)] p-4">
-      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-cyan-200">{title}</p>
-      <p className="mt-2 text-2xl font-semibold text-white">{hours}</p>
-      <p className="mt-1 text-sm font-medium text-cyan-100">{amount} a receber</p>
-      <p className="mt-1 text-xs text-slate-400">{jobs}</p>
-    </div>
-  );
-}
-
-function HistoryBlock({
-  title,
-  period,
-  rows,
-}: {
-  title: string;
-  period?: string;
-  rows: Registro[];
-}) {
-  return (
-    <div className="rounded-[20px] border border-cyan-300/14 bg-white/[0.04]">
-      <div className="border-b border-white/10 px-4 py-4">
-        <h4 className="text-base font-semibold text-white">{title}</h4>
-        {period ? <p className="mt-1 text-sm text-slate-300">{period}</p> : null}
-      </div>
-
-      {rows.length === 0 ? (
-        <div className="px-4 py-8 text-sm text-slate-400">Sem registros neste período.</div>
-      ) : (
-        <div className="overflow-x-auto">
-          <table className="min-w-full text-sm">
-            <thead>
-              <tr className="text-left text-slate-400">
-                <th className="px-4 py-3 font-medium">Data</th>
-                <th className="px-4 py-3 font-medium">Entrada</th>
-                <th className="px-4 py-3 font-medium">Pausa</th>
-                <th className="px-4 py-3 font-medium">Saída</th>
-                <th className="px-4 py-3 font-medium">Horas</th>
-                <th className="px-4 py-3 font-medium">Trabalhos</th>
-                <th className="px-4 py-3 font-medium">Valor</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((row) => (
-                <tr key={row.id} className="border-t border-white/10 text-slate-200">
-                  <td className="px-4 py-3">
-                    <div className="font-medium text-white">{formatDate(row.data)}</div>
-                    <div className="text-xs text-slate-500">{formatDayName(row.data)}</div>
-                  </td>
-                  <td className="px-4 py-3">{row.horaEntrada || "—"}</td>
-                  <td className="px-4 py-3">{row.horaPausa || "—"}</td>
-                  <td className="px-4 py-3">{row.horaSaida || "—"}</td>
-                  <td className="px-4 py-3 font-medium text-white">
-                    {`${decimal(parseFloat(row.horasTrabalhadas || "0"))}h`}
-                  </td>
-                  <td className="px-4 py-3">{row.numeroTrabalhos || 0}</td>
-                  <td className="px-4 py-3 font-medium text-cyan-200">
-                    {money(parseFloat(row.valorTotal || "0"))}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-    </div>
   );
 }
 
