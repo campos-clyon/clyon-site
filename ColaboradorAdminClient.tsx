@@ -1412,7 +1412,7 @@ export default function ColaboradorAdminClient() {
                   <ActionCard title="Ações rápidas" description="Atalhos operacionais." compact>
                     <QuickAction icon={CalendarClock} label="Abrir histórico e horários" onClick={() => setActiveSection("hours")} />
                     <QuickAction icon={Users} label="Ver colaboradores" onClick={() => setActiveSection("team")} />
-                    <QuickAction icon={Settings2} label="Gestão do site" onClick={() => setActiveSection("site")} />
+                    <QuickAction icon={Settings2} label="Configurações" onClick={() => setActiveSection("site")} />
                   </ActionCard>
                 </div>
               </section>
