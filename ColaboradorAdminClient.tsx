@@ -23,6 +23,7 @@ import {
   LogOut,
   Pencil,
   ReceiptText,
+  Search,
   Settings2,
   ShieldCheck,
   Sparkles,
@@ -339,6 +340,18 @@ export default function ColaboradorAdminClient() {
   const [funcaoFilter, setFuncaoFilter] = useState<"todas" | Colaborador["funcao"]>("todas");
   const [colaboradorDrawerId, setColaboradorDrawerId] = useState<number | null>(null);
 
+  // Filtros da página Equipa
+  const [teamSearch, setTeamSearch] = useState("");
+  const [teamFuncao, setTeamFuncao] = useState<"todas" | Colaborador["funcao"]>("todas");
+  const [teamStatus, setTeamStatus] = useState<"todos" | "ativo" | "inativo">("todos");
+
+  // Filtros da página Horários
+  const [hoursFuncao, setHoursFuncao] = useState<"todas" | Colaborador["funcao"]>("todas");
+  const [hoursStatus, setHoursStatus] = useState<"todos" | "validado" | "pendente" | "incompleto">("todos");
+  const [hoursPeriodo, setHoursPeriodo] = useState<"semana" | "anterior" | "personalizado">("semana");
+  const [hoursDe, setHoursDe] = useState("");
+  const [hoursAte, setHoursAte] = useState("");
+
   const [criarNovoVisivel, setCriarNovoVisivel] = useState(false);
   const [loadingCriar, setLoadingCriar] = useState(false);
   const [novoNome, setNovoNome] = useState("");
@@ -467,6 +480,38 @@ export default function ColaboradorAdminClient() {
         .sort((a, b) => new Date(b.data).getTime() - new Date(a.data).getTime()),
     [colaboradoresFiltrados],
   );
+
+  // Registos do filtro atual com função do colaborador e estado calculado, aplicando filtros de função e estado.
+  const hoursRecords = useMemo(() => {
+    const funcaoById = new Map(colaboradores.map((c) => [c.id, c.funcao]));
+    return todosRegistros
+      .map((registro) => {
+        const status = getRecordStatus(registro);
+        return {
+          ...registro,
+          funcao: funcaoById.get(registro.colaboradorId) || "ajudante",
+          status,
+          statusLabel: status === "incompleto" ? "incompleto" : status === "alerta" ? "pendente" : "validado",
+        } as RegistroComColaborador & {
+          funcao: Colaborador["funcao"];
+          status: RecordStatus;
+          statusLabel: "incompleto" | "pendente" | "validado";
+        };
+      })
+      .filter((registro) => (hoursFuncao === "todas" ? true : registro.funcao === hoursFuncao))
+      .filter((registro) => (hoursStatus === "todos" ? true : registro.statusLabel === hoursStatus));
+  }, [todosRegistros, colaboradores, hoursFuncao, hoursStatus]);
+
+  // Cards de topo da página Horários.
+  const hoursSummary = useMemo(() => {
+    const colaboradoresComRegisto = new Set(hoursRecords.map((r) => r.colaboradorId)).size;
+    const totalHoras = hoursRecords.reduce((sum, r) => sum + parseFloat(r.horasTrabalhadas || "0"), 0);
+    const totalValor = hoursRecords.reduce((sum, r) => sum + parseFloat(r.valorTotal || "0"), 0);
+    const pendentes = hoursRecords.filter((r) => r.statusLabel === "pendente").length;
+    const incompletos = hoursRecords.filter((r) => r.statusLabel === "incompleto").length;
+    const mediaHoras = colaboradoresComRegisto > 0 ? totalHoras / colaboradoresComRegisto : 0;
+    return { colaboradoresComRegisto, totalHoras, totalValor, pendentes, incompletos, mediaHoras };
+  }, [hoursRecords]);
 
   const dashboardStats = useMemo(() => {
     const hoje = new Date().toISOString().split("T")[0];
@@ -647,6 +692,75 @@ export default function ColaboradorAdminClient() {
     });
   }, [weekCollaborators]);
 
+  // ---- Página Horários: registos filtrados por período/status/função ----
+  const hoursRange = useMemo(() => {
+    if (hoursPeriodo === "anterior") {
+      const start = new Date(weekRange.start);
+      start.setDate(start.getDate() - 7);
+      const end = new Date(weekRange.end);
+      end.setDate(end.getDate() - 7);
+      return { start, end };
+    }
+    if (hoursPeriodo === "personalizado" && hoursDe && hoursAte) {
+      const start = new Date(`${hoursDe}T00:00:00`);
+      const end = new Date(`${hoursAte}T23:59:59`);
+      return { start, end };
+    }
+    return weekRange;
+  }, [hoursPeriodo, hoursDe, hoursAte, weekRange]);
+
+  const hoursRecords = useMemo(() => {
+    const funcaoById = new Map(colaboradores.map((c) => [c.id, c.funcao]));
+    return colaboradores
+      .flatMap((colaborador) =>
+        (colaborador.registros || []).map((registro) => ({
+          ...registro,
+          colaboradorId: colaborador.id,
+          colaboradorNome: colaborador.nome,
+          colaboradorValorHora: colaborador.valorHora,
+          funcao: colaborador.funcao,
+          status: getRecordStatus(registro),
+        })),
+      )
+      .filter((r) => isBetweenDates(r.data, hoursRange.start, hoursRange.end))
+      .filter((r) => (filtroColaborador === "todos" ? true : r.colaboradorId === Number(filtroColaborador)))
+      .filter((r) => (hoursFuncao === "todas" ? true : funcaoById.get(r.colaboradorId) === hoursFuncao))
+      .filter((r) => {
+        if (hoursStatus === "todos") return true;
+        if (hoursStatus === "validado") return r.status === "validado";
+        if (hoursStatus === "incompleto") return r.status === "incompleto";
+        return r.status === "alerta"; // pendente
+      })
+      .sort((a, b) => {
+        const aPend = a.status !== "validado" ? 0 : 1;
+        const bPend = b.status !== "validado" ? 0 : 1;
+        if (aPend !== bPend) return aPend - bPend;
+        return new Date(b.data).getTime() - new Date(a.data).getTime();
+      });
+  }, [colaboradores, hoursRange, filtroColaborador, hoursFuncao, hoursStatus]);
+
+  const hoursSummary = useMemo(() => {
+    const colaboradoresComRegisto = new Set(hoursRecords.map((r) => r.colaboradorId)).size;
+    const totalHoras = hoursRecords.reduce((s, r) => s + parseFloat(r.horasTrabalhadas || "0"), 0);
+    const totalValor = hoursRecords.reduce((s, r) => s + parseFloat(r.valorTotal || "0"), 0);
+    const pendentes = hoursRecords.filter((r) => r.status === "alerta").length;
+    const incompletos = hoursRecords.filter((r) => r.status === "incompleto").length;
+    return {
+      colaboradores: colaboradoresComRegisto,
+      totalHoras,
+      totalValor,
+      pendentes,
+      incompletos,
+      mediaHoras: colaboradoresComRegisto > 0 ? totalHoras / colaboradoresComRegisto : 0,
+    };
+  }, [hoursRecords]);
+
+  const hoursPeriodLabel = useMemo(() => {
+    const fmt = (d: Date) =>
+      d.toLocaleDateString("pt-PT", { day: "2-digit", month: "2-digit" });
+    return `${fmt(hoursRange.start)} a ${fmt(hoursRange.end)}`;
+  }, [hoursRange]);
+
   // Pendências operacionais derivadas dos registos da semana.
   const pendencias = useMemo(() => {
     const semSaida: Array<{ id: number; nome: string; data: string }> = [];
@@ -688,6 +802,62 @@ export default function ColaboradorAdminClient() {
       return { label, dia, registros };
     });
   }, [drawerColaborador, weekRange]);
+
+  // ---- Página Equipa: dados derivados por colaborador (estado = atividade real) ----
+  const teamRows = useMemo(() => {
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+    return colaboradores.map((colaborador) => {
+      const registros = colaborador.registros || [];
+      const ultimoRegistro = [...registros].sort(
+        (a, b) => new Date(b.data).getTime() - new Date(a.data).getTime(),
+      )[0];
+
+      const horasSemana = registros
+        .filter((r) => isBetweenDates(r.data, weekRange.start, weekRange.end))
+        .reduce((sum, r) => sum + parseFloat(r.horasTrabalhadas || "0"), 0);
+
+      const horas30 = registros
+        .filter((r) => new Date(r.data) >= thirtyDaysAgo)
+        .reduce((sum, r) => sum + parseFloat(r.horasTrabalhadas || "0"), 0);
+
+      const trabalhouSemana = horasSemana > 0;
+      const ativoHoje = registros.some((r) => isSameDay(r.data, today));
+
+      return {
+        ...colaborador,
+        ultimoRegistro,
+        horasSemana,
+        horas30,
+        valorMes: parseFloat(colaborador.estatisticas?.mes?.valor || "0"),
+        trabalhouSemana,
+        ativoHoje,
+        // "ativo" = trabalhou esta semana (estado derivado, sem campo na BD)
+        estadoAtividade: (trabalhouSemana ? "ativo" : "inativo") as "ativo" | "inativo",
+      };
+    });
+  }, [colaboradores, weekRange, today]);
+
+  const teamRowsFiltered = useMemo(() => {
+    const term = teamSearch.trim().toLowerCase();
+    return teamRows
+      .filter((row) => (term ? row.nome.toLowerCase().includes(term) : true))
+      .filter((row) => (teamFuncao === "todas" ? true : row.funcao === teamFuncao))
+      .filter((row) => (teamStatus === "todos" ? true : row.estadoAtividade === teamStatus))
+      .sort((a, b) => a.nome.localeCompare(b.nome));
+  }, [teamRows, teamSearch, teamFuncao, teamStatus]);
+
+  const teamStats = useMemo(() => {
+    return {
+      total: colaboradores.length,
+      ativos: teamRows.filter((r) => r.estadoAtividade === "ativo").length,
+      inativos: teamRows.filter((r) => r.estadoAtividade === "inativo").length,
+      motoristas: colaboradores.filter((c) => c.funcao === "motorista").length,
+      ajudantes: colaboradores.filter((c) => c.funcao === "ajudante").length,
+      admins: colaboradores.filter((c) => c.isAdmin === 1 || c.funcao === "admin").length,
+    };
+  }, [colaboradores, teamRows]);
 
   const sortCollaboratorsByHoursReport = <
     T extends {
@@ -1367,7 +1537,7 @@ export default function ColaboradorAdminClient() {
                   </div>
                 )}
               </ActionCard>
-            </>
+            </section>
           )}
 
           {activeSection === "hours" && (
@@ -1381,321 +1551,308 @@ export default function ColaboradorAdminClient() {
                     Horários, pausas e valores por registo
                   </h2>
                   <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-300">
-                    Pode editar horas, pausa, quantidade de trabalhos, valor/hora, valor final e apagar qualquer registo
-                    individual sem sair do painel.
+                    Valide entradas, saídas, horas trabalhadas e valores estimados da equipa.
                   </p>
                 </div>
-
-                <div className="rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-slate-300">
-                  Último registo:{" "}
-                  <span className="font-medium text-white">{formatDateTime(dashboardStats.ultimoRegisto)}</span>
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setWeekOffset((v) => v - 1)}
+                    className="h-11 rounded-2xl border-white/10 bg-white/[0.03] text-white hover:bg-white/[0.08]"
+                  >
+                    Semana anterior
+                  </Button>
+                  <Button
+                    type="button"
+                    onClick={() => setWeekOffset(0)}
+                    className={`h-11 rounded-2xl px-5 ${
+                      weekOffset === 0
+                        ? "bg-cyan-400 text-slate-950 hover:bg-cyan-300"
+                        : "border border-white/10 bg-white/[0.03] text-white hover:bg-white/[0.08]"
+                    }`}
+                  >
+                    Semana atual
+                  </Button>
                 </div>
               </div>
 
-              <div className="flex flex-wrap gap-2">
-                <FilterPill
-                  active={filtroColaborador === "todos"}
-                  onClick={() => setFiltroColaborador("todos")}
-                  label="Toda a equipa"
-                />
-                {collaboratorHoursFilters.map((colaborador) => (
+              {/* Filtros */}
+              <div className="flex flex-col gap-3 rounded-[20px] border border-white/10 bg-white/[0.02] p-4 lg:flex-row lg:flex-wrap lg:items-center">
+                <div className="flex flex-wrap gap-2">
                   <FilterPill
-                    key={colaborador.id}
-                    active={filtroColaborador === String(colaborador.id)}
-                    onClick={() => setFiltroColaborador(String(colaborador.id))}
-                    label={colaborador.nome}
+                    active={filtroColaborador === "todos"}
+                    onClick={() => setFiltroColaborador("todos")}
+                    label="Toda a equipa"
                   />
-                ))}
+                  {collaboratorHoursFilters.map((colaborador) => (
+                    <FilterPill
+                      key={colaborador.id}
+                      active={filtroColaborador === String(colaborador.id)}
+                      onClick={() => setFiltroColaborador(String(colaborador.id))}
+                      label={colaborador.nome}
+                    />
+                  ))}
+                </div>
+                <span className="hidden h-6 w-px bg-white/10 lg:block" />
+                <div className="flex flex-wrap gap-2">
+                  {(["todas", "motorista", "ajudante", "admin"] as const).map((funcao) => (
+                    <button
+                      key={funcao}
+                      type="button"
+                      onClick={() => setHoursFuncao(funcao)}
+                      className={`rounded-full border px-3.5 py-1.5 text-xs font-semibold capitalize transition ${
+                        hoursFuncao === funcao
+                          ? "border-cyan-300 bg-cyan-400 text-slate-950"
+                          : "border-white/10 bg-white/[0.03] text-slate-300 hover:bg-white/[0.07]"
+                      }`}
+                    >
+                      {funcao === "todas" ? "Todas" : formatRoleLabel(funcao)}
+                    </button>
+                  ))}
+                </div>
+                <span className="hidden h-6 w-px bg-white/10 lg:block" />
+                <div className="flex flex-wrap gap-2">
+                  {(["todos", "validado", "pendente", "incompleto"] as const).map((status) => (
+                    <button
+                      key={status}
+                      type="button"
+                      onClick={() => setHoursStatus(status)}
+                      className={`rounded-full border px-3.5 py-1.5 text-xs font-semibold capitalize transition ${
+                        hoursStatus === status
+                          ? "border-cyan-300 bg-cyan-400 text-slate-950"
+                          : "border-white/10 bg-white/[0.03] text-slate-300 hover:bg-white/[0.07]"
+                      }`}
+                    >
+                      {status === "todos" ? "Todos" : status}
+                    </button>
+                  ))}
+                </div>
               </div>
 
-              <Card className="rounded-[24px] border-cyan-300/14 bg-[linear-gradient(180deg,rgba(12,34,52,0.96)_0%,rgba(9,27,43,0.94)_100%)] text-white shadow-[0_18px_60px_rgba(15,23,42,0.25)]">
-                <CardHeader>
+              {/* Cards de resumo */}
+              <div className="grid grid-cols-2 gap-3 lg:grid-cols-3 xl:grid-cols-6">
+                <SummaryStat icon={Users} label="Com registo" value={String(hoursSummary.colaboradoresComRegisto)} helper="Colaboradores" tone="cyan" />
+                <SummaryStat icon={TimerReset} label="Horas" value={`${decimal(hoursSummary.totalHoras)}h`} helper="No filtro atual" tone="slate" />
+                <SummaryStat icon={Wallet} label="A pagar" value={money(hoursSummary.totalValor)} helper="Estimado" tone="emerald" />
+                <SummaryStat icon={AlertTriangle} label="Pendentes" value={String(hoursSummary.pendentes)} helper="Por validar" tone="amber" />
+                <SummaryStat icon={Clock3} label="Incompletos" value={String(hoursSummary.incompletos)} helper="Sem saída" tone="amber" />
+                <SummaryStat icon={CalendarDays} label="Média" value={`${decimal(hoursSummary.mediaHoras)}h`} helper="Por colaborador" tone="slate" />
+              </div>
+
+              {/* Painel de edição de registo */}
+              {editandoRegistroId !== null && (
+                <Card className="rounded-[24px] border-cyan-300/20 bg-[linear-gradient(180deg,rgba(12,34,52,0.96)_0%,rgba(9,27,43,0.94)_100%)] text-white">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-xl text-white">Corrigir registo</CardTitle>
+                    <CardDescription className="text-slate-400">
+                      As horas e valores são recalculados pelo sistema com base nos horários introduzidos.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                    <Field label="Data">
+                      <input
+                        type="date"
+                        value={registroForm.data}
+                        onChange={(event) => setRegistroForm((state) => ({ ...state, data: event.target.value }))}
+                        className="h-11 w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 text-white outline-none transition focus:border-cyan-300"
+                      />
+                    </Field>
+                    <Field label="Hora entrada">
+                      <input
+                        type="time"
+                        value={registroForm.horaEntrada}
+                        onChange={(event) => setRegistroForm((state) => ({ ...state, horaEntrada: event.target.value }))}
+                        className="h-11 w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 text-white outline-none transition focus:border-cyan-300"
+                      />
+                    </Field>
+                    <Field label="Pausa">
+                      <input
+                        type="time"
+                        value={registroForm.horaPausa}
+                        onChange={(event) => setRegistroForm((state) => ({ ...state, horaPausa: event.target.value }))}
+                        className="h-11 w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 text-white outline-none transition focus:border-cyan-300"
+                      />
+                    </Field>
+                    <Field label="Hora saída">
+                      <input
+                        type="time"
+                        value={registroForm.horaSaida}
+                        onChange={(event) => setRegistroForm((state) => ({ ...state, horaSaida: event.target.value }))}
+                        className="h-11 w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 text-white outline-none transition focus:border-cyan-300"
+                      />
+                    </Field>
+                    <Field label="Número de trabalhos">
+                      <input
+                        type="number"
+                        min="0"
+                        value={registroForm.numeroTrabalhos}
+                        onChange={(event) => setRegistroForm((state) => ({ ...state, numeroTrabalhos: event.target.value }))}
+                        className="h-11 w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 text-white outline-none transition focus:border-cyan-300"
+                      />
+                    </Field>
+                    <Field label="Valor/hora">
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={registroForm.valorHora}
+                        onChange={(event) => setRegistroForm((state) => ({ ...state, valorHora: event.target.value }))}
+                        className="h-11 w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 text-white outline-none transition focus:border-cyan-300"
+                      />
+                    </Field>
+                    <Field label="Valor final">
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={registroForm.valorTotal}
+                        onChange={(event) => setRegistroForm((state) => ({ ...state, valorTotal: event.target.value }))}
+                        className="h-11 w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 text-white outline-none transition focus:border-cyan-300"
+                      />
+                    </Field>
+                    <div className="flex flex-wrap items-end justify-end gap-3 md:col-span-2 xl:col-span-3">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => setEditandoRegistroId(null)}
+                        className="h-11 rounded-2xl border-white/10 bg-white/[0.03] text-white hover:bg-white/[0.08]"
+                      >
+                        Cancelar
+                      </Button>
+                      <Button
+                        type="button"
+                        disabled={savingRegistro}
+                        onClick={() => editandoRegistroId !== null && guardarRegistro(editandoRegistroId)}
+                        className="h-11 rounded-2xl bg-cyan-400 px-5 text-slate-950 hover:bg-cyan-300"
+                      >
+                        {savingRegistro ? "A guardar..." : "Guardar registo"}
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Tabela de registos */}
+              <div className="overflow-x-auto rounded-[20px] border border-white/10">
+                <table className="w-full min-w-[880px] border-collapse text-sm">
+                  <thead>
+                    <tr className="border-b border-white/10 bg-white/[0.03] text-left text-[11px] uppercase tracking-wide text-slate-400">
+                      <th className="px-4 py-3 font-semibold">Data</th>
+                      <th className="px-4 py-3 font-semibold">Colaborador</th>
+                      <th className="px-4 py-3 font-semibold">Função</th>
+                      <th className="px-4 py-3 font-semibold">Entrada</th>
+                      <th className="px-4 py-3 font-semibold">Pausa</th>
+                      <th className="px-4 py-3 font-semibold">Saída</th>
+                      <th className="px-4 py-3 font-semibold">Horas</th>
+                      <th className="px-4 py-3 font-semibold">Valor</th>
+                      <th className="px-4 py-3 font-semibold">Estado</th>
+                      <th className="px-4 py-3 text-right font-semibold">Ações</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {hoursRecords.length === 0 && (
+                      <tr>
+                        <td colSpan={10} className="px-4 py-10 text-center text-slate-400">
+                          Ainda não existem registos para os filtros escolhidos.
+                        </td>
+                      </tr>
+                    )}
+                    {hoursRecords.map((registro) => (
+                      <tr key={registro.id} className="border-b border-white/5 transition hover:bg-white/[0.03]">
+                        <td className="px-4 py-3 text-slate-300">{formatShortDate(registro.data)}</td>
+                        <td className="px-4 py-3 font-semibold text-white">{registro.colaboradorNome}</td>
+                        <td className="px-4 py-3 capitalize text-slate-400">{formatRoleLabel(registro.funcao)}</td>
+                        <td className="px-4 py-3 text-slate-300">{registro.horaEntrada || "—"}</td>
+                        <td className="px-4 py-3 text-slate-300">{registro.horaPausa || "—"}</td>
+                        <td className="px-4 py-3 text-slate-300">{registro.horaSaida || "—"}</td>
+                        <td className="px-4 py-3 font-semibold text-white">{decimal(parseFloat(registro.horasTrabalhadas || "0"))}h</td>
+                        <td className="px-4 py-3 font-semibold text-cyan-200">{money(parseFloat(registro.valorTotal || "0"))}</td>
+                        <td className="px-4 py-3">
+                          <StatusBadge status={registro.statusLabel} />
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex items-center justify-end gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => setColaboradorDrawerId(registro.colaboradorId)}
+                              title="Ver histórico"
+                              className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/10 bg-white/[0.03] text-slate-200 transition hover:bg-white/[0.08]"
+                            >
+                              <Eye className="h-4 w-4" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => abrirEdicaoRegistro(registro)}
+                              title="Corrigir"
+                              className="flex h-9 w-9 items-center justify-center rounded-xl border border-cyan-300/20 bg-cyan-400/[0.1] text-cyan-100 transition hover:bg-cyan-400/[0.2]"
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => apagarRegistro(registro.id)}
+                              title="Excluir"
+                              className="flex h-9 w-9 items-center justify-center rounded-xl border border-rose-300/20 bg-rose-400/[0.08] text-rose-100 transition hover:bg-rose-400/[0.16]"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Resumo por colaborador */}
+              <Card className="rounded-[24px] border-cyan-300/14 bg-[linear-gradient(180deg,rgba(12,34,52,0.96)_0%,rgba(9,27,43,0.94)_100%)] text-white">
+                <CardHeader className="pb-3">
                   <CardTitle className="flex items-center gap-2 text-white">
                     <ReceiptText className="h-5 w-5 text-cyan-300" />
-                    Relatório profissional de horas
+                    Resumo por colaborador
                   </CardTitle>
                   <CardDescription className="text-slate-400">
-                    Resumo por colaborador com total semanal, mensal e histórico detalhado. A semana é fechada de segunda a domingo.
+                    Total semanal e mensal por colaborador. A semana fecha de segunda a domingo.
                   </CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-5">
-                  <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-                    <SummaryCard
-                      icon={Users}
-                      title="Colaboradores"
-                      value={String(collaboratorHourReports.length)}
-                      subtitle="Incluídos no filtro"
-                    />
-                    <SummaryCard
-                      icon={TimerReset}
-                      title="Semana"
-                      value={`${decimal(reportTotals.semanaHoras)}h`}
-                      subtitle={money(reportTotals.semanaValor)}
-                    />
-                    <SummaryCard
-                      icon={CalendarDays}
-                      title="Mês"
-                      value={`${decimal(reportTotals.mesHoras)}h`}
-                      subtitle={money(reportTotals.mesValor)}
-                    />
-                    <SummaryCard
-                      icon={Wallet}
-                      title="A receber"
-                      value={money(reportTotals.mesValor)}
-                      subtitle="Total mensal atual"
-                    />
-                  </div>
-
-                  <div className="space-y-4">
-                    {collaboratorHourReports.length === 0 ? (
-                      <div className="rounded-[22px] border border-dashed border-white/10 px-4 py-8 text-sm text-slate-400">
-                        Ainda não existem colaboradores para o filtro selecionado.
-                      </div>
-                    ) : (
-                      collaboratorHourReports.map((colaborador) => (
-                        <div
-                          key={colaborador.id}
-                          className="rounded-[22px] border border-white/10 bg-white/[0.03] p-4"
-                        >
-                          <div className="flex flex-col gap-4 border-b border-white/10 pb-4 xl:flex-row xl:items-start xl:justify-between">
-                            <div>
-                              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-cyan-200">
-                                Colaborador
-                              </p>
-                              <h3 className="mt-2 text-xl font-semibold text-white">{colaborador.nome}</h3>
-                              <p className="mt-1 text-sm text-slate-400">
-                                {formatRoleLabel(colaborador.funcao)} • Valor/hora {money(parseFloat(colaborador.valorHora || "0"))}
-                              </p>
-                            </div>
-
-                            <div className="grid gap-3 sm:grid-cols-2 xl:min-w-[420px]">
-                              <MiniReportCard
-                                title="Semana"
-                                hours={`${decimal(colaborador.relatorio.semana.horas)}h`}
-                                amount={money(colaborador.relatorio.semana.valor)}
-                                jobs={`${colaborador.relatorio.semana.trabalhos} trabalho(s)`}
-                              />
-                              <MiniReportCard
-                                title="Mês"
-                                hours={`${decimal(colaborador.relatorio.mes.horas)}h`}
-                                amount={money(colaborador.relatorio.mes.valor)}
-                                jobs={`${colaborador.relatorio.mes.trabalhos} trabalho(s)`}
-                              />
-                            </div>
-                          </div>
-
-                          <div className="mt-4 grid gap-4 xl:grid-cols-2">
-                            <HistoryBlock
-                              title="Histórico da semana"
-                              period={colaborador.relatorio.semana.periodo}
-                              rows={colaborador.relatorio.semana.historico}
-                            />
-                            <HistoryBlock
-                              title="Histórico do mês"
-                              period={colaborador.relatorio.mes.periodo}
-                              rows={colaborador.relatorio.mes.historico}
-                            />
-                          </div>
-                        </div>
-                      ))
-                    )}
+                <CardContent>
+                  <div className="overflow-x-auto rounded-[16px] border border-white/10">
+                    <table className="w-full min-w-[640px] border-collapse text-sm">
+                      <thead>
+                        <tr className="border-b border-white/10 bg-white/[0.03] text-left text-[11px] uppercase tracking-wide text-slate-400">
+                          <th className="px-4 py-3 font-semibold">Colaborador</th>
+                          <th className="px-4 py-3 font-semibold">Horas semana</th>
+                          <th className="px-4 py-3 font-semibold">Valor semana</th>
+                          <th className="px-4 py-3 font-semibold">Horas mês</th>
+                          <th className="px-4 py-3 font-semibold">Valor mês</th>
+                          <th className="px-4 py-3 text-right font-semibold">Histórico</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {collaboratorHourReports.map((colaborador) => (
+                          <tr key={colaborador.id} className="border-b border-white/5 transition hover:bg-white/[0.03]">
+                            <td className="px-4 py-3 font-semibold text-white">{colaborador.nome}</td>
+                            <td className="px-4 py-3 text-white">{decimal(colaborador.relatorio.semana.horas)}h</td>
+                            <td className="px-4 py-3 text-cyan-200">{money(colaborador.relatorio.semana.valor)}</td>
+                            <td className="px-4 py-3 text-white">{decimal(colaborador.relatorio.mes.horas)}h</td>
+                            <td className="px-4 py-3 font-semibold text-emerald-200">{money(colaborador.relatorio.mes.valor)}</td>
+                            <td className="px-4 py-3 text-right">
+                              <button
+                                type="button"
+                                onClick={() => setColaboradorDrawerId(colaborador.id)}
+                                className="rounded-[10px] border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs font-medium text-cyan-100 transition hover:bg-white/[0.08]"
+                              >
+                                Ver semana
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
                 </CardContent>
               </Card>
-
-              <div className="grid gap-4 xl:grid-cols-2">
-                {todosRegistros.length === 0 && (
-                  <div className="rounded-[24px] border border-dashed border-white/10 px-5 py-10 text-sm text-slate-400 xl:col-span-2">
-                    Ainda não existem registos para o filtro escolhido.
-                  </div>
-                )}
-                {todosRegistros.map((registro) => {
-                  const emEdicao = editandoRegistroId === registro.id;
-
-                  return (
-                    <Card
-                      key={registro.id}
-                      className="rounded-[24px] border-cyan-300/14 bg-[linear-gradient(180deg,rgba(12,34,52,0.96)_0%,rgba(9,27,43,0.94)_100%)] text-white shadow-[0_18px_60px_rgba(15,23,42,0.25)]"
-                    >
-                      <CardHeader className="pb-3">
-                        <div className="flex items-start justify-between gap-4">
-                          <div>
-                            <CardTitle className="text-lg text-white">{registro.colaboradorNome}</CardTitle>
-                            <CardDescription className="mt-1 text-slate-400">
-                              {formatDateTime(registro.data)}
-                            </CardDescription>
-                          </div>
-                          <div className="rounded-2xl bg-cyan-400/[0.12] px-3 py-2 text-right">
-                            <p className="text-[11px] uppercase tracking-[0.2em] text-cyan-200">Valor</p>
-                            <p className="text-base font-semibold text-white">
-                              {money(parseFloat(registro.valorTotal || "0"))}
-                            </p>
-                          </div>
-                        </div>
-                      </CardHeader>
-                      <CardContent className="space-y-4">
-                        {emEdicao ? (
-                          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-                            <Field label="Data">
-                              <input
-                                type="date"
-                                value={registroForm.data}
-                                onChange={(event) =>
-                                  setRegistroForm((state) => ({ ...state, data: event.target.value }))
-                                }
-                                className="h-11 w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 text-white outline-none transition focus:border-cyan-300"
-                              />
-                            </Field>
-                            <Field label="Hora entrada">
-                              <input
-                                type="time"
-                                value={registroForm.horaEntrada}
-                                onChange={(event) =>
-                                  setRegistroForm((state) => ({ ...state, horaEntrada: event.target.value }))
-                                }
-                                className="h-11 w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 text-white outline-none transition focus:border-cyan-300"
-                              />
-                            </Field>
-                            <Field label="Pausa">
-                              <input
-                                type="time"
-                                value={registroForm.horaPausa}
-                                onChange={(event) =>
-                                  setRegistroForm((state) => ({ ...state, horaPausa: event.target.value }))
-                                }
-                                className="h-11 w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 text-white outline-none transition focus:border-cyan-300"
-                              />
-                            </Field>
-                            <Field label="Hora saída">
-                              <input
-                                type="time"
-                                value={registroForm.horaSaida}
-                                onChange={(event) =>
-                                  setRegistroForm((state) => ({ ...state, horaSaida: event.target.value }))
-                                }
-                                className="h-11 w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 text-white outline-none transition focus:border-cyan-300"
-                              />
-                            </Field>
-                            <Field label="Número de trabalhos">
-                              <input
-                                type="number"
-                                min="0"
-                                value={registroForm.numeroTrabalhos}
-                                onChange={(event) =>
-                                  setRegistroForm((state) => ({
-                                    ...state,
-                                    numeroTrabalhos: event.target.value,
-                                  }))
-                                }
-                                className="h-11 w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 text-white outline-none transition focus:border-cyan-300"
-                              />
-                            </Field>
-                            <Field label="Valor/hora">
-                              <input
-                                type="number"
-                                min="0"
-                                step="0.01"
-                                value={registroForm.valorHora}
-                                onChange={(event) =>
-                                  setRegistroForm((state) => ({ ...state, valorHora: event.target.value }))
-                                }
-                                className="h-11 w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 text-white outline-none transition focus:border-cyan-300"
-                              />
-                            </Field>
-                            <Field label="Valor final">
-                              <input
-                                type="number"
-                                min="0"
-                                step="0.01"
-                                value={registroForm.valorTotal}
-                                onChange={(event) =>
-                                  setRegistroForm((state) => ({ ...state, valorTotal: event.target.value }))
-                                }
-                                className="h-11 w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 text-white outline-none transition focus:border-cyan-300"
-                              />
-                            </Field>
-                            <div className="flex flex-wrap items-end justify-end gap-3 md:col-span-2 xl:col-span-3">
-                              <Button
-                                type="button"
-                                variant="outline"
-                                onClick={() => setEditandoRegistroId(null)}
-                                className="h-11 rounded-2xl border-white/10 bg-white/[0.03] text-white hover:bg-white/[0.08]"
-                              >
-                                Cancelar
-                              </Button>
-                              <Button
-                                type="button"
-                                variant="outline"
-                                onClick={() => apagarRegistro(registro.id)}
-                                className="h-11 rounded-2xl border-rose-300/20 bg-rose-400/[0.08] text-rose-100 hover:bg-rose-400/[0.14]"
-                              >
-                                <Trash2 className="mr-2 h-4 w-4" />
-                                Apagar
-                              </Button>
-                              <Button
-                                type="button"
-                                disabled={savingRegistro}
-                                onClick={() => guardarRegistro(registro.id)}
-                                className="h-11 rounded-2xl bg-cyan-400 px-5 text-slate-950 hover:bg-cyan-300"
-                              >
-                                {savingRegistro ? "A guardar..." : "Guardar registo"}
-                              </Button>
-                            </div>
-                          </div>
-                        ) : (
-                          <>
-                            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                              <RecordMeta label="Entrada" value={registro.horaEntrada || "—"} icon={Clock3} />
-                              <RecordMeta label="Pausa" value={registro.horaPausa || "—"} icon={CalendarClock} />
-                              <RecordMeta label="Saída" value={registro.horaSaida || "—"} icon={CheckCircle2} />
-                              <RecordMeta
-                                label="Horas"
-                                value={`${decimal(parseFloat(registro.horasTrabalhadas || "0"))}h`}
-                                icon={Briefcase}
-                              />
-                            </div>
-                            <div className="grid gap-3 md:grid-cols-2">
-                              <div className="rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-slate-300">
-                                <span className="font-medium text-white">{registro.numeroTrabalhos}</span> trabalho(s)
-                                registado(s) neste turno.
-                              </div>
-                              <div className="rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-slate-300">
-                                Valor/hora atual do colaborador:{" "}
-                                <span className="font-medium text-white">
-                                  {money(parseFloat(registro.colaboradorValorHora || "0"))}
-                                </span>
-                              </div>
-                              <div className="rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-slate-300">
-                                O total das horas continua a ser recalculado pelo sistema com base nos horários
-                                editados e no valor/hora do colaborador.
-                              </div>
-                            </div>
-                            <div className="flex flex-wrap gap-3">
-                              <Button
-                                type="button"
-                                onClick={() => abrirEdicaoRegistro(registro)}
-                                className="h-11 rounded-2xl bg-cyan-400 px-5 text-slate-950 hover:bg-cyan-300"
-                              >
-                                <Pencil className="mr-2 h-4 w-4" />
-                                Editar horas
-                              </Button>
-                              <Button
-                                type="button"
-                                variant="outline"
-                                onClick={() => apagarRegistro(registro.id)}
-                                className="h-11 rounded-2xl border-rose-300/20 bg-rose-400/[0.08] px-5 text-rose-100 hover:bg-rose-400/[0.14]"
-                              >
-                                <Trash2 className="mr-2 h-4 w-4" />
-                                Apagar registo
-                              </Button>
-                            </div>
-                          </>
-                        )}
-                      </CardContent>
-                    </Card>
-                  );
-                })}
-              </div>
             </section>
           )}
 
@@ -1704,11 +1861,11 @@ export default function ColaboradorAdminClient() {
               <div className="flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-[0.24em] text-cyan-200">
-                    Estrutura da equipa
+                    Gestão da equipa
                   </p>
-                  <h2 className="mt-2 text-[1.85rem] font-semibold text-white">Gestão completa de colaboradores</h2>
-                  <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-300">
-                    Centraliza acessos, funções, valores/hora e futuras permissões de gestão para cada membro.
+                  <h2 className="mt-2 text-[1.6rem] font-semibold text-white">Gestão da equipa</h2>
+                  <p className="mt-1 max-w-2xl text-sm leading-6 text-slate-300">
+                    Consulte, edite e acompanhe os colaboradores da CLYON.
                   </p>
                 </div>
                 <Button
@@ -1818,157 +1975,216 @@ export default function ColaboradorAdminClient() {
                 </Card>
               )}
 
-              <div className="grid gap-4 xl:grid-cols-2">
-                {colaboradores.map((colaborador) => {
-                  const emEdicao = editandoId === colaborador.id;
-                  return (
-                    <Card
-                      key={colaborador.id}
-                      className="rounded-[30px] border-cyan-300/14 bg-[linear-gradient(180deg,rgba(12,34,52,0.96)_0%,rgba(9,27,43,0.94)_100%)] text-white shadow-[0_18px_60px_rgba(15,23,42,0.25)]"
-                    >
-                      <CardHeader className="pb-4">
-                        <div className="flex items-start justify-between gap-4">
-                          <div>
-                            <CardTitle className="text-2xl text-white">{colaborador.nome}</CardTitle>
-                            <CardDescription className="mt-2 flex flex-wrap gap-2 text-slate-300">
-                              <span className="rounded-full border border-white/10 bg-white/[0.03] px-3 py-1 capitalize">
-                                {formatRoleLabel(colaborador.funcao)}
-                              </span>
-                              {colaborador.isAdmin === 1 && (
-                                <span className="rounded-full border border-cyan-300/30 bg-cyan-400/[0.14] px-3 py-1 text-cyan-100">
-                                  Administrador
-                                </span>
-                              )}
-                            </CardDescription>
-                          </div>
-                          <div className="rounded-2xl bg-cyan-400/[0.12] px-3 py-2 text-right">
-                            <p className="text-xs uppercase tracking-[0.2em] text-cyan-200">Valor/hora</p>
-                            <p className="text-lg font-semibold text-white">
-                              {money(parseFloat(colaborador.valorHora || "0"))}
-                            </p>
-                          </div>
-                        </div>
-                      </CardHeader>
-                      <CardContent className="space-y-4">
-                        <div className="grid gap-3 sm:grid-cols-3">
-                          <MiniStat
-                            label="Semana"
-                            value={`${decimal(parseFloat(colaborador.estatisticas.semana.horas || "0"))}h`}
-                            helper={`${colaborador.estatisticas.semana.trabalhos} trabalhos`}
-                            accent="cyan"
-                          />
-                          <MiniStat
-                            label="Últimos 15 dias"
-                            value={`${decimal(parseFloat(colaborador.estatisticas.ultimos15Dias.horas || "0"))}h`}
-                            helper={`${colaborador.estatisticas.ultimos15Dias.trabalhos} trabalhos`}
-                            accent="violet"
-                          />
-                          <MiniStat
-                            label="Este mês"
-                            value={`${decimal(parseFloat(colaborador.estatisticas.mes.horas || "0"))}h`}
-                            helper={money(parseFloat(colaborador.estatisticas.mes.valor || "0"))}
-                            accent="emerald"
-                          />
-                        </div>
+              {/* Cards de resumo da equipa */}
+              <div className="grid gap-3 sm:grid-cols-3 xl:grid-cols-6">
+                <SummaryStat icon={Users} label="Colaboradores" value={String(teamStats.total)} helper="no total" />
+                <SummaryStat icon={CheckCircle2} label="Ativos" value={String(teamStats.ativos)} helper="trabalharam esta semana" tone="emerald" />
+                <SummaryStat icon={TimerReset} label="Inativos" value={String(teamStats.inativos)} helper="sem registo esta semana" tone="amber" />
+                <SummaryStat icon={Briefcase} label="Motoristas" value={String(teamStats.motoristas)} helper="na equipa" />
+                <SummaryStat icon={Users} label="Ajudantes" value={String(teamStats.ajudantes)} helper="na equipa" />
+                <SummaryStat icon={ShieldCheck} label="Administradores" value={String(teamStats.admins)} helper="com acesso total" tone="cyan" />
+              </div>
 
-                        {emEdicao ? (
-                          <div className="grid gap-4 md:grid-cols-2">
-                            <Field label="Nome">
-                              <input
-                                value={editNome}
-                                onChange={(event) => setEditNome(event.target.value)}
-                                className="h-12 w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 text-white outline-none transition focus:border-cyan-300"
-                              />
-                            </Field>
-                            <Field label="Valor por hora">
-                              <input
-                                type="number"
-                                step="0.01"
-                                value={editValorHora}
-                                onChange={(event) => setEditValorHora(event.target.value)}
-                                className="h-12 w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 text-white outline-none transition focus:border-cyan-300"
-                              />
-                            </Field>
-                            <Field label="Função">
-                              <div className="grid gap-2 sm:grid-cols-3">
-                                {functionOptions.map((funcao) => (
-                                  <button
-                                    key={funcao}
-                                    type="button"
-                                    onClick={() => setEditFuncao(funcao)}
-                                    className={`rounded-2xl border px-4 py-3 text-sm font-medium transition ${
-                                      editFuncao === funcao
-                                        ? "border-cyan-300 bg-cyan-400 text-slate-950"
-                                        : "border-white/10 bg-white/[0.03] text-white hover:bg-white/[0.06]"
-                                    }`}
-                                  >
-                                    {formatRoleLabel(funcao)}
-                                  </button>
-                                ))}
-                              </div>
-                            </Field>
-                            <Field label="Nova palavra-passe (opcional)">
-                              <div className="relative">
-                                <input
-                                  type={mostrarSenha ? "text" : "password"}
-                                  value={editSenha}
-                                  onChange={(event) => setEditSenha(event.target.value)}
-                                  className="h-12 w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 pr-12 text-white outline-none transition focus:border-cyan-300"
-                                  placeholder="Deixe vazio para manter"
-                                />
-                                <button
-                                  type="button"
-                                  onClick={() => setMostrarSenha((state) => !state)}
-                                  className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 transition hover:text-white"
-                                >
-                                  {mostrarSenha ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                                </button>
-                              </div>
-                            </Field>
-                            <div className="flex items-end justify-end gap-3 md:col-span-2">
-                              <Button
+              {/* Filtros */}
+              <div className="flex flex-wrap items-center gap-2">
+                <input
+                  value={teamSearch}
+                  onChange={(event) => setTeamSearch(event.target.value)}
+                  placeholder="Pesquisar colaborador..."
+                  className="h-11 min-w-[200px] flex-1 rounded-[14px] border border-white/10 bg-white/[0.04] px-4 text-sm text-white outline-none transition focus:border-cyan-300"
+                />
+                <select
+                  value={teamFuncao}
+                  onChange={(event) => setTeamFuncao(event.target.value as typeof teamFuncao)}
+                  className="h-11 rounded-[14px] border border-white/10 bg-white/[0.04] px-3 text-sm font-medium text-white outline-none focus:border-cyan-400"
+                >
+                  <option value="todas">Todas as funções</option>
+                  <option value="admin">Administradores</option>
+                  <option value="motorista">Motoristas</option>
+                  <option value="ajudante">Ajudantes</option>
+                </select>
+                <select
+                  value={teamStatus}
+                  onChange={(event) => setTeamStatus(event.target.value as typeof teamStatus)}
+                  className="h-11 rounded-[14px] border border-white/10 bg-white/[0.04] px-3 text-sm font-medium text-white outline-none focus:border-cyan-400"
+                >
+                  <option value="todos">Todos os estados</option>
+                  <option value="ativo">Trabalhou esta semana</option>
+                  <option value="inativo">Sem atividade esta semana</option>
+                </select>
+              </div>
+
+              {/* Formulário de edição (aparece ao editar) */}
+              {editandoId !== null && (
+                <Card className="rounded-[24px] border-cyan-300/20 bg-[linear-gradient(180deg,rgba(12,34,52,0.96)_0%,rgba(9,27,43,0.94)_100%)] text-white">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-xl text-white">Editar colaborador</CardTitle>
+                    <CardDescription className="text-slate-400">
+                      A editar {colaboradores.find((c) => c.id === editandoId)?.nome}.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="grid gap-4 md:grid-cols-2">
+                    <Field label="Nome">
+                      <input
+                        value={editNome}
+                        onChange={(event) => setEditNome(event.target.value)}
+                        className="h-12 w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 text-white outline-none transition focus:border-cyan-300"
+                      />
+                    </Field>
+                    <Field label="Valor por hora">
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={editValorHora}
+                        onChange={(event) => setEditValorHora(event.target.value)}
+                        className="h-12 w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 text-white outline-none transition focus:border-cyan-300"
+                      />
+                    </Field>
+                    <Field label="Função">
+                      <div className="grid gap-2 sm:grid-cols-3">
+                        {functionOptions.map((funcao) => (
+                          <button
+                            key={funcao}
+                            type="button"
+                            onClick={() => setEditFuncao(funcao)}
+                            className={`rounded-2xl border px-4 py-3 text-sm font-medium transition ${
+                              editFuncao === funcao
+                                ? "border-cyan-300 bg-cyan-400 text-slate-950"
+                                : "border-white/10 bg-white/[0.03] text-white hover:bg-white/[0.06]"
+                            }`}
+                          >
+                            {formatRoleLabel(funcao)}
+                          </button>
+                        ))}
+                      </div>
+                    </Field>
+                    <Field label="Nova palavra-passe (opcional)">
+                      <div className="relative">
+                        <input
+                          type={mostrarSenha ? "text" : "password"}
+                          value={editSenha}
+                          onChange={(event) => setEditSenha(event.target.value)}
+                          className="h-12 w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 pr-12 text-white outline-none transition focus:border-cyan-300"
+                          placeholder="Deixe vazio para manter"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setMostrarSenha((state) => !state)}
+                          className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 transition hover:text-white"
+                        >
+                          {mostrarSenha ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                        </button>
+                      </div>
+                    </Field>
+                    <div className="flex items-end justify-end gap-3 md:col-span-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => setEditandoId(null)}
+                        className="h-12 rounded-2xl border-white/10 bg-white/[0.03] text-white hover:bg-white/[0.08]"
+                      >
+                        Cancelar
+                      </Button>
+                      <Button
+                        type="button"
+                        disabled={loadingEdicao}
+                        onClick={() => editarUsuario(editandoId)}
+                        className="h-12 rounded-2xl bg-cyan-400 px-6 text-slate-950 hover:bg-cyan-300"
+                      >
+                        {loadingEdicao ? "A guardar..." : "Guardar alterações"}
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Tabela compacta de colaboradores */}
+              <div className="overflow-x-auto rounded-[20px] border border-white/10 bg-white/[0.02]">
+                <table className="min-w-full text-sm">
+                  <thead>
+                    <tr className="text-left text-slate-400">
+                      <th className="px-3 py-3 font-medium">Nome</th>
+                      <th className="px-3 py-3 font-medium">Função</th>
+                      <th className="px-3 py-3 font-medium">Estado</th>
+                      <th className="px-3 py-3 font-medium">Valor/hora</th>
+                      <th className="px-3 py-3 font-medium">Horas semana</th>
+                      <th className="px-3 py-3 font-medium">Horas 30 dias</th>
+                      <th className="px-3 py-3 font-medium">Valor mês</th>
+                      <th className="px-3 py-3 font-medium">Último registo</th>
+                      <th className="px-3 py-3 text-right font-medium">Ações</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {teamRowsFiltered.length === 0 ? (
+                      <tr>
+                        <td colSpan={9} className="px-3 py-8 text-center text-slate-400">
+                          Nenhum colaborador corresponde aos filtros.
+                        </td>
+                      </tr>
+                    ) : (
+                      teamRowsFiltered.map((row) => (
+                        <tr key={row.id} className="border-t border-white/10 text-slate-200">
+                          <td className="px-3 py-3">
+                            <button
+                              type="button"
+                              onClick={() => setColaboradorDrawerId(row.id)}
+                              className="flex items-center gap-2 text-left font-medium text-white transition hover:text-cyan-200"
+                            >
+                              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-cyan-400 text-xs font-semibold text-slate-950">
+                                {getInitials(row.nome)}
+                              </span>
+                              {row.nome}
+                            </button>
+                          </td>
+                          <td className="px-3 py-3 capitalize">
+                            {formatRoleLabel(row.funcao)}
+                            {row.isAdmin === 1 && (
+                              <span className="ml-2 rounded-full border border-cyan-300/30 bg-cyan-400/[0.14] px-2 py-0.5 text-[10px] text-cyan-100">
+                                Admin
+                              </span>
+                            )}
+                          </td>
+                          <td className="px-3 py-3">
+                            <StatusBadge status={row.ativoHoje ? "ativo" : row.estadoAtividade === "ativo" ? "validado" : "inativo"} />
+                          </td>
+                          <td className="px-3 py-3 font-medium text-white">{money(parseFloat(row.valorHora || "0"))}</td>
+                          <td className="px-3 py-3">{decimal(row.horasSemana)}h</td>
+                          <td className="px-3 py-3">{decimal(row.horas30)}h</td>
+                          <td className="px-3 py-3 font-medium text-cyan-200">{money(row.valorMes)}</td>
+                          <td className="px-3 py-3">{row.ultimoRegistro ? formatShortDate(row.ultimoRegistro.data) : "—"}</td>
+                          <td className="px-3 py-3">
+                            <div className="flex items-center justify-end gap-1">
+                              <button
                                 type="button"
-                                variant="outline"
-                                onClick={() => setEditandoId(null)}
-                                className="h-12 rounded-2xl border-white/10 bg-white/[0.03] text-white hover:bg-white/[0.08]"
+                                onClick={() => setColaboradorDrawerId(row.id)}
+                                title="Ver histórico"
+                                className="rounded-[10px] border border-white/10 bg-white/[0.04] p-2 text-cyan-100 transition hover:bg-white/[0.08]"
                               >
-                                Cancelar
-                              </Button>
-                              <Button
+                                <History className="h-4 w-4" />
+                              </button>
+                              <button
                                 type="button"
-                                disabled={loadingEdicao}
-                                onClick={() => editarUsuario(colaborador.id)}
-                                className="h-12 rounded-2xl bg-cyan-400 px-6 text-slate-950 hover:bg-cyan-300"
+                                onClick={() => abrirEdicao(row)}
+                                title="Editar"
+                                className="rounded-[10px] border border-white/10 bg-white/[0.04] p-2 text-white transition hover:bg-white/[0.08]"
                               >
-                                {loadingEdicao ? "A guardar..." : "Guardar alterações"}
-                              </Button>
+                                <Pencil className="h-4 w-4" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => deletarUsuario(row.id, row.nome)}
+                                title="Remover"
+                                className="rounded-[10px] border border-rose-300/20 bg-rose-400/[0.08] p-2 text-rose-100 transition hover:bg-rose-400/[0.14]"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </button>
                             </div>
-                          </div>
-                        ) : (
-                          <div className="flex flex-wrap gap-3">
-                            <Button
-                              type="button"
-                              onClick={() => abrirEdicao(colaborador)}
-                              className="h-11 rounded-2xl bg-cyan-400 px-5 text-slate-950 hover:bg-cyan-300"
-                            >
-                              <Pencil className="mr-2 h-4 w-4" />
-                              Editar colaborador
-                            </Button>
-                            <Button
-                              type="button"
-                              variant="outline"
-                              onClick={() => deletarUsuario(colaborador.id, colaborador.nome)}
-                              className="h-11 rounded-2xl border-rose-300/20 bg-rose-400/[0.08] px-5 text-rose-100 hover:bg-rose-400/[0.14]"
-                            >
-                              <Trash2 className="mr-2 h-4 w-4" />
-                              Remover
-                            </Button>
-                          </div>
-                        )}
-                      </CardContent>
-                    </Card>
-                  );
-                })}
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
               </div>
             </section>
           )}
