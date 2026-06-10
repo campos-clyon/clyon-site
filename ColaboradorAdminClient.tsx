@@ -2367,41 +2367,6 @@ function QuickAction({
   );
 }
 
-function QuickStat({
-  title,
-  hours,
-  value,
-  helper,
-  tone,
-}: {
-  title: string;
-  hours: string;
-  value: string;
-  helper: string;
-  tone: "cyan" | "blue" | "violet" | "emerald";
-}) {
-  const toneClass =
-    {
-      cyan: "from-cyan-400/28 via-cyan-400/10 to-transparent border-cyan-300/18",
-      blue: "from-blue-500/26 via-blue-500/10 to-transparent border-blue-300/18",
-      violet: "from-violet-500/24 via-violet-500/10 to-transparent border-violet-300/18",
-      emerald: "from-emerald-500/24 via-emerald-500/10 to-transparent border-emerald-300/18",
-    }[tone];
-
-  return (
-    <Card
-      className={`rounded-[24px] border bg-[linear-gradient(180deg,_rgba(255,255,255,0.05),_rgba(255,255,255,0.01))] p-1 text-white shadow-[0_18px_60px_rgba(15,23,42,0.25)] ${toneClass}`}
-    >
-      <CardContent className="rounded-[20px] bg-[linear-gradient(180deg,rgba(12,34,52,0.96)_0%,rgba(9,27,43,0.94)_100%)] p-4">
-        <p className="text-xs uppercase tracking-[0.22em] text-cyan-100/90">{title}</p>
-        <p className="mt-3 text-[2rem] font-semibold text-white">{hours}</p>
-        <p className="mt-1 text-sm text-slate-300">{value}</p>
-        <p className="mt-4 text-sm text-slate-200">{helper}</p>
-      </CardContent>
-    </Card>
-  );
-}
-
 function ActionCard({
   title,
   description,
