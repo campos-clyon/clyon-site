@@ -428,6 +428,7 @@ export default function ColaboradorAdminClient() {
     setAdminNome(storedNome || "Administração");
     void carregarDados(storedToken);
     void carregarSimulatorSettings(storedToken);
+    void carregarImageStats(storedToken);
 
     return () => {
       document.head.removeChild(metaRobots);
