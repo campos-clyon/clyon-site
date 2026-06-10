@@ -17,6 +17,8 @@ import {
   Euro,
   Eye,
   EyeOff,
+  ExternalLink,
+  Filter,
   History,
   ImagePlus,
   LayoutDashboard,
@@ -25,15 +27,18 @@ import {
   Mail,
   MapPin,
   MessageCircle,
+  MousePointerClick,
   Pencil,
   Phone,
   ReceiptText,
+  RefreshCw,
   Search,
   Settings2,
   ShieldCheck,
   Sparkles,
   TimerReset,
   Trash2,
+  TrendingUp,
   UserPlus,
   Users,
   Wallet,
@@ -91,7 +96,56 @@ type SimulatorSetting = {
   description?: string | null;
 };
 
-type AdminSection = "overview" | "team" | "hours" | "site";
+type AdminSection = "overview" | "team" | "hours" | "leads" | "site";
+
+type Lead = {
+  id: number;
+  nome: string;
+  telefone: string;
+  email: string;
+  localidade: string;
+  tipoServico: string;
+  preferenciaContacto: string;
+  mensagem?: string | null;
+  pagePath?: string | null;
+  utmSource?: string | null;
+  utmMedium?: string | null;
+  utmCampaign?: string | null;
+  gclid?: string | null;
+  status: "novo" | "contactado" | "orcamento_enviado" | "fechado" | "perdido";
+  notasInternas?: string | null;
+  createdAt: string;
+};
+
+type LeadEvent = {
+  id: number;
+  eventType: string;
+  pagePath?: string | null;
+  serviceType?: string | null;
+  location?: string | null;
+  contactPreference?: string | null;
+  utmSource?: string | null;
+  utmMedium?: string | null;
+  utmCampaign?: string | null;
+  createdAt: string;
+};
+
+type LeadTotals = {
+  hoje?: number;
+  semana?: number;
+  novos?: number;
+  fechados?: number;
+  total?: number;
+};
+
+type EventTotals = {
+  whatsappHoje?: number;
+  ligarHoje?: number;
+  ctaHoje?: number;
+  formHoje?: number;
+  emailHoje?: number;
+  total?: number;
+};
 
 const functionOptions: Array<Colaborador["funcao"]> = ["admin", "motorista", "ajudante"];
 
@@ -102,6 +156,7 @@ const adminNavItems: Array<{
   { id: "overview", icon: LayoutDashboard },
   { id: "team", icon: Users },
   { id: "hours", icon: CalendarClock },
+  { id: "leads", icon: TrendingUp },
   { id: "site", icon: Settings2 },
 ];
 
@@ -109,6 +164,7 @@ const sectionLabels: Record<AdminSection, string> = {
   overview: "Início",
   team: "Equipa",
   hours: "Horários",
+  leads: "Leads",
   site: "Configurações",
 };
 
@@ -404,6 +460,23 @@ export default function ColaboradorAdminClient() {
   } | null>(null);
   const [loadingImageStats, setLoadingImageStats] = useState(false);
 
+  // ── Leads state ──────────────────────────────────────────────────────────
+  const [leads, setLeads] = useState<Lead[]>([]);
+  const [leadEvents, setLeadEvents] = useState<LeadEvent[]>([]);
+  const [leadTotals, setLeadTotals] = useState<LeadTotals>({});
+  const [eventTotals, setEventTotals] = useState<EventTotals>({});
+  const [loadingLeads, setLoadingLeads] = useState(false);
+  const [leadPeriodo, setLeadPeriodo] = useState("7d");
+  const [leadStatusFilter, setLeadStatusFilter] = useState("");
+  const [leadEventTypeFilter, setLeadEventTypeFilter] = useState("");
+  const [leadSearch, setLeadSearch] = useState("");
+  const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
+  const [leadNotas, setLeadNotas] = useState("");
+  const [savingLeadStatus, setSavingLeadStatus] = useState(false);
+  const [leadsLastUpdate, setLeadsLastUpdate] = useState<Date | null>(null);
+  const [activeLeadsTab, setActiveLeadsTab] = useState<"leads" | "eventos">("leads");
+  // ────────────────────────────────────────────────────────────────────────
+
   useEffect(() => {
     const metaRobots = document.createElement("meta");
     metaRobots.name = "robots";
@@ -507,6 +580,63 @@ export default function ColaboradorAdminClient() {
       setLoadingImageStats(false);
     }
   };
+
+  const carregarLeads = async (authToken: string, periodo = leadPeriodo, status = leadStatusFilter) => {
+    if (!authToken) return;
+    try {
+      setLoadingLeads(true);
+      const [leadsRes, eventsRes] = await Promise.all([
+        fetch(`/api/admin/leads?periodo=${periodo}&status=${status}&_=${Date.now()}`, {
+          cache: "no-store",
+          headers: { Authorization: `Bearer ${authToken}` },
+        }),
+        fetch(`/api/admin/lead-events?periodo=${periodo}&eventType=${leadEventTypeFilter}&_=${Date.now()}`, {
+          cache: "no-store",
+          headers: { Authorization: `Bearer ${authToken}` },
+        }),
+      ]);
+      if (leadsRes.ok) {
+        const data = await leadsRes.json();
+        setLeads(data.leads || []);
+        setLeadTotals(data.totals || {});
+      }
+      if (eventsRes.ok) {
+        const data = await eventsRes.json();
+        setLeadEvents(data.events || []);
+        setEventTotals(data.totals || {});
+      }
+      setLeadsLastUpdate(new Date());
+    } catch {
+      // Falha silenciosa — painel mantém dados anteriores
+    } finally {
+      setLoadingLeads(false);
+    }
+  };
+
+  const atualizarStatusLead = async (id: number, status: Lead["status"], notas?: string) => {
+    if (!token) return;
+    try {
+      setSavingLeadStatus(true);
+      await fetch("/api/admin/leads", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ id, status, notasInternas: notas }),
+      });
+      setLeads((prev) => prev.map((l) => (l.id === id ? { ...l, status, notasInternas: notas ?? l.notasInternas } : l)));
+      if (selectedLead?.id === id) setSelectedLead((prev) => (prev ? { ...prev, status, notasInternas: notas ?? prev.notasInternas } : prev));
+    } finally {
+      setSavingLeadStatus(false);
+    }
+  };
+
+  // Polling a cada 15 segundos quando a aba Leads está ativa
+  useEffect(() => {
+    if (activeSection !== "leads" || !token) return;
+    carregarLeads(token, leadPeriodo, leadStatusFilter);
+    const interval = setInterval(() => carregarLeads(token, leadPeriodo, leadStatusFilter), 15000);
+    return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeSection, token, leadPeriodo, leadStatusFilter, leadEventTypeFilter]);
 
   const colaboradoresFiltrados = useMemo(() => {
     if (filtroColaborador === "todos") return colaboradores;
@@ -1279,7 +1409,7 @@ export default function ColaboradorAdminClient() {
                   <select
                     value={funcaoFilter}
                     onChange={(e) => setFuncaoFilter(e.target.value as typeof funcaoFilter)}
-                    className="h-11 rounded-[14px] border border-white/10 bg-white/[0.04] px-3 text-sm font-medium text-white outline-none focus:border-cyan-400"
+                    className="h-11 rounded-[14px] border border-cyan-300/20 bg-[#0d1f35] px-3 text-sm font-medium text-white outline-none focus:border-cyan-400 [color-scheme:dark]"
                   >
                     <option value="todas">Todas as funções</option>
                     <option value="admin">Administradores</option>
@@ -1408,10 +1538,51 @@ export default function ColaboradorAdminClient() {
                     </div>
                   </ActionCard>
 
+                  {/* Leads e contactos do site */}
+                  <ActionCard title="Leads e contactos do site" description="Resumo de hoje e últimos contactos.">
+                    <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                      {[
+                        { label: "Leads hoje", value: leadTotals.hoje ?? "—" },
+                        { label: "Esta semana", value: leadTotals.semana ?? "—" },
+                        { label: "WhatsApp hoje", value: eventTotals.whatsappHoje ?? "—" },
+                        { label: "Ligar hoje", value: eventTotals.ligarHoje ?? "—" },
+                      ].map((stat) => (
+                        <div key={stat.label} className="rounded-[14px] border border-white/10 bg-white/[0.03] p-3 text-center">
+                          <p className="text-xl font-semibold text-white">{stat.value}</p>
+                          <p className="mt-0.5 text-[11px] text-slate-400">{stat.label}</p>
+                        </div>
+                      ))}
+                    </div>
+                    {leads.length > 0 && (
+                      <div className="mt-3 space-y-1.5">
+                        {leads.slice(0, 5).map((lead) => (
+                          <div key={lead.id} className="flex items-center justify-between gap-3 rounded-[12px] border border-white/5 bg-white/[0.02] px-3 py-2">
+                            <div>
+                              <p className="text-sm font-medium text-white">{lead.nome}</p>
+                              <p className="text-[11px] text-slate-400">{lead.tipoServico} · {lead.localidade}</p>
+                            </div>
+                            <span className="text-[11px] text-slate-500">
+                              {new Date(lead.createdAt).toLocaleDateString("pt-PT", { day: "2-digit", month: "2-digit" })}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => setActiveSection("leads")}
+                      className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl border border-cyan-300/20 bg-cyan-400/[0.07] py-2.5 text-sm font-semibold text-cyan-100 transition hover:bg-cyan-400/[0.14]"
+                    >
+                      <TrendingUp className="h-4 w-4" />
+                      Ver todos os leads
+                    </button>
+                  </ActionCard>
+
                   {/* Ações rápidas */}
                   <ActionCard title="Ações rápidas" description="Atalhos operacionais." compact>
                     <QuickAction icon={CalendarClock} label="Abrir histórico e horários" onClick={() => setActiveSection("hours")} />
                     <QuickAction icon={Users} label="Ver colaboradores" onClick={() => setActiveSection("team")} />
+                    <QuickAction icon={TrendingUp} label="Ver leads e contactos" onClick={() => setActiveSection("leads")} />
                     <QuickAction icon={Settings2} label="Configurações" onClick={() => setActiveSection("site")} />
                   </ActionCard>
                 </div>
@@ -1940,7 +2111,7 @@ export default function ColaboradorAdminClient() {
                 <select
                   value={teamFuncao}
                   onChange={(event) => setTeamFuncao(event.target.value as typeof teamFuncao)}
-                  className="h-11 rounded-[14px] border border-white/10 bg-white/[0.04] px-3 text-sm font-medium text-white outline-none focus:border-cyan-400"
+                  className="h-11 rounded-[14px] border border-cyan-300/20 bg-[#0d1f35] px-3 text-sm font-medium text-white outline-none focus:border-cyan-400 [color-scheme:dark]"
                 >
                   <option value="todas">Todas as funções</option>
                   <option value="admin">Administradores</option>
@@ -1950,7 +2121,7 @@ export default function ColaboradorAdminClient() {
                 <select
                   value={teamStatus}
                   onChange={(event) => setTeamStatus(event.target.value as typeof teamStatus)}
-                  className="h-11 rounded-[14px] border border-white/10 bg-white/[0.04] px-3 text-sm font-medium text-white outline-none focus:border-cyan-400"
+                  className="h-11 rounded-[14px] border border-cyan-300/20 bg-[#0d1f35] px-3 text-sm font-medium text-white outline-none focus:border-cyan-400 [color-scheme:dark]"
                 >
                   <option value="todos">Todos os estados</option>
                   <option value="ativo">Trabalhou esta semana</option>
@@ -2132,6 +2303,326 @@ export default function ColaboradorAdminClient() {
               </div>
             </section>
           )}
+
+          {/* ═══════════════════════════ LEADS ═══════════════════════════ */}
+          {activeSection === "leads" && (
+            <section className="space-y-4 rounded-[28px] border border-cyan-300/16 bg-[linear-gradient(180deg,rgba(9,25,40,0.94)_0%,rgba(11,30,47,0.92)_100%)] p-5 shadow-[0_20px_70px_rgba(3,10,18,0.22)]">
+              {/* Header */}
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <h2 className="text-xl font-semibold text-white">Leads e contactos</h2>
+                  <p className="mt-0.5 text-sm text-slate-400">
+                    Formulários, cliques e interações captadas no site.
+                    {leadsLastUpdate && (
+                      <span className="ml-2 text-slate-500">
+                        Atualizado: {leadsLastUpdate.toLocaleTimeString("pt-PT", { hour: "2-digit", minute: "2-digit" })}
+                      </span>
+                    )}
+                  </p>
+                </div>
+                <Button
+                  type="button"
+                  onClick={() => carregarLeads(token, leadPeriodo, leadStatusFilter)}
+                  disabled={loadingLeads}
+                  variant="outline"
+                  className="h-10 rounded-2xl border-white/10 bg-white/[0.04] text-white hover:bg-white/[0.08]"
+                >
+                  <RefreshCw className={`mr-2 h-4 w-4 ${loadingLeads ? "animate-spin" : ""}`} />
+                  Atualizar
+                </Button>
+              </div>
+
+              {/* Cards de resumo */}
+              <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+                {[
+                  { label: "Formulários hoje", value: leadTotals.hoje ?? 0, icon: ListChecks, tone: "cyan" },
+                  { label: "Leads esta semana", value: leadTotals.semana ?? 0, icon: TrendingUp, tone: "cyan" },
+                  { label: "Por responder", value: leadTotals.novos ?? 0, icon: AlertTriangle, tone: "amber" },
+                  { label: "Fechados", value: leadTotals.fechados ?? 0, icon: CheckCircle2, tone: "emerald" },
+                ].map((stat) => {
+                  const Icon = stat.icon;
+                  const toneClass =
+                    stat.tone === "cyan"
+                      ? "border-cyan-300/20 bg-cyan-400/[0.08] text-cyan-100"
+                      : stat.tone === "amber"
+                        ? "border-amber-300/20 bg-amber-400/[0.08] text-amber-100"
+                        : "border-emerald-300/20 bg-emerald-400/[0.08] text-emerald-100";
+                  return (
+                    <div key={stat.label} className={`rounded-[20px] border px-4 py-3.5 ${toneClass}`}>
+                      <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wide opacity-70">
+                        <Icon className="h-3.5 w-3.5" />
+                        {stat.label}
+                      </div>
+                      <p className="mt-2 text-3xl font-semibold text-white">{loadingLeads ? "—" : stat.value}</p>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Cards de eventos */}
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
+                {[
+                  { label: "WhatsApp hoje", value: eventTotals.whatsappHoje ?? 0, icon: MessageCircle },
+                  { label: "Ligar hoje", value: eventTotals.ligarHoje ?? 0, icon: Phone },
+                  { label: "CTA hoje", value: eventTotals.ctaHoje ?? 0, icon: MousePointerClick },
+                  { label: "Forms hoje", value: eventTotals.formHoje ?? 0, icon: ReceiptText },
+                  { label: "Email hoje", value: eventTotals.emailHoje ?? 0, icon: Mail },
+                ].map((stat) => {
+                  const Icon = stat.icon;
+                  return (
+                    <div key={stat.label} className="rounded-[16px] border border-white/10 bg-white/[0.03] px-3 py-3">
+                      <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+                        <Icon className="h-3 w-3" />
+                        {stat.label}
+                      </div>
+                      <p className="mt-1.5 text-2xl font-semibold text-white">{loadingLeads ? "—" : stat.value}</p>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Tabs leads / eventos */}
+              <div className="flex gap-1 rounded-2xl border border-white/10 bg-white/[0.03] p-1">
+                {(["leads", "eventos"] as const).map((tab) => (
+                  <button
+                    key={tab}
+                    type="button"
+                    onClick={() => setActiveLeadsTab(tab)}
+                    className={`flex-1 rounded-[14px] py-2 text-sm font-semibold transition ${
+                      activeLeadsTab === tab
+                        ? "bg-cyan-400 text-slate-950"
+                        : "text-slate-400 hover:text-white"
+                    }`}
+                  >
+                    {tab === "leads" ? "Últimos leads" : "Eventos de contacto"}
+                  </button>
+                ))}
+              </div>
+
+              {/* Filtros */}
+              <div className="flex flex-wrap gap-2">
+                <select
+                  value={leadPeriodo}
+                  onChange={(e) => setLeadPeriodo(e.target.value)}
+                  className="h-10 rounded-[14px] border border-cyan-300/20 bg-[#0d1f35] px-3 text-sm text-white outline-none focus:border-cyan-400 [color-scheme:dark]"
+                >
+                  <option value="hoje">Hoje</option>
+                  <option value="semana">Esta semana</option>
+                  <option value="7d">Últimos 7 dias</option>
+                  <option value="30d">Últimos 30 dias</option>
+                </select>
+                {activeLeadsTab === "leads" && (
+                  <select
+                    value={leadStatusFilter}
+                    onChange={(e) => setLeadStatusFilter(e.target.value)}
+                    className="h-10 rounded-[14px] border border-cyan-300/20 bg-[#0d1f35] px-3 text-sm text-white outline-none focus:border-cyan-400 [color-scheme:dark]"
+                  >
+                    <option value="">Todos os estados</option>
+                    <option value="novo">Novo</option>
+                    <option value="contactado">Contactado</option>
+                    <option value="orcamento_enviado">Orçamento enviado</option>
+                    <option value="fechado">Fechado</option>
+                    <option value="perdido">Perdido</option>
+                  </select>
+                )}
+                {activeLeadsTab === "eventos" && (
+                  <select
+                    value={leadEventTypeFilter}
+                    onChange={(e) => setLeadEventTypeFilter(e.target.value)}
+                    className="h-10 rounded-[14px] border border-cyan-300/20 bg-[#0d1f35] px-3 text-sm text-white outline-none focus:border-cyan-400 [color-scheme:dark]"
+                  >
+                    <option value="">Todos os eventos</option>
+                    <option value="click_whatsapp">WhatsApp</option>
+                    <option value="click_call">Ligar</option>
+                    <option value="click_email">Email</option>
+                    <option value="click_sms">SMS</option>
+                    <option value="click_cta_quero_contratar">Quero contratar</option>
+                    <option value="form_submit_quero_contratar">Form enviado</option>
+                    <option value="click_cta_ligar_agora">Ligar agora</option>
+                  </select>
+                )}
+                {activeLeadsTab === "leads" && (
+                  <div className="relative flex-1 min-w-[180px]">
+                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                    <input
+                      type="text"
+                      value={leadSearch}
+                      onChange={(e) => setLeadSearch(e.target.value)}
+                      placeholder="Pesquisar nome, email, telefone..."
+                      className="h-10 w-full rounded-[14px] border border-white/10 bg-white/[0.04] pl-9 pr-3 text-sm text-white outline-none focus:border-cyan-300"
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* Tabela de leads */}
+              {activeLeadsTab === "leads" && (
+                <div className="overflow-x-auto rounded-[16px] border border-white/10">
+                  {leads.length === 0 && !loadingLeads ? (
+                    <div className="px-6 py-10 text-center text-sm text-slate-400">
+                      Nenhum lead encontrado para o período selecionado.
+                    </div>
+                  ) : (
+                    <table className="w-full min-w-[900px] border-collapse text-sm">
+                      <thead>
+                        <tr className="border-b border-white/10 bg-white/[0.03] text-left text-[11px] uppercase tracking-wide text-slate-400">
+                          <th className="px-4 py-3 font-semibold">Data</th>
+                          <th className="px-4 py-3 font-semibold">Nome</th>
+                          <th className="px-4 py-3 font-semibold">Contacto</th>
+                          <th className="px-4 py-3 font-semibold">Localidade</th>
+                          <th className="px-4 py-3 font-semibold">Serviço</th>
+                          <th className="px-4 py-3 font-semibold">Origem</th>
+                          <th className="px-4 py-3 font-semibold">Estado</th>
+                          <th className="px-4 py-3 font-semibold">Ações</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {leads
+                          .filter((l) =>
+                            !leadSearch ||
+                            l.nome.toLowerCase().includes(leadSearch.toLowerCase()) ||
+                            l.email.toLowerCase().includes(leadSearch.toLowerCase()) ||
+                            l.telefone.includes(leadSearch)
+                          )
+                          .map((lead) => {
+                            const statusColors: Record<string, string> = {
+                              novo: "border-cyan-300/30 bg-cyan-400/[0.12] text-cyan-100",
+                              contactado: "border-amber-300/30 bg-amber-400/[0.12] text-amber-100",
+                              orcamento_enviado: "border-violet-300/30 bg-violet-400/[0.12] text-violet-100",
+                              fechado: "border-emerald-300/30 bg-emerald-400/[0.12] text-emerald-100",
+                              perdido: "border-rose-300/30 bg-rose-400/[0.12] text-rose-100",
+                            };
+                            const statusLabel: Record<string, string> = {
+                              novo: "Novo",
+                              contactado: "Contactado",
+                              orcamento_enviado: "Orçamento",
+                              fechado: "Fechado",
+                              perdido: "Perdido",
+                            };
+                            return (
+                              <tr key={lead.id} className="border-b border-white/5 transition hover:bg-white/[0.03]">
+                                <td className="px-4 py-3 text-slate-400">
+                                  {new Date(lead.createdAt).toLocaleDateString("pt-PT", { day: "2-digit", month: "2-digit" })}
+                                  <div className="text-[11px] text-slate-500">
+                                    {new Date(lead.createdAt).toLocaleTimeString("pt-PT", { hour: "2-digit", minute: "2-digit" })}
+                                  </div>
+                                </td>
+                                <td className="px-4 py-3 font-semibold text-white">{lead.nome}</td>
+                                <td className="px-4 py-3">
+                                  <a href={`tel:${lead.telefone}`} className="block text-cyan-200 hover:text-cyan-100">{lead.telefone}</a>
+                                  <a href={`mailto:${lead.email}`} className="block text-xs text-slate-400 hover:text-slate-300">{lead.email}</a>
+                                </td>
+                                <td className="px-4 py-3 text-slate-300">{lead.localidade}</td>
+                                <td className="px-4 py-3 text-slate-300">{lead.tipoServico}</td>
+                                <td className="px-4 py-3 text-xs text-slate-400">
+                                  {lead.utmSource || lead.pagePath || "—"}
+                                  {lead.utmCampaign && <div className="text-slate-500">{lead.utmCampaign}</div>}
+                                </td>
+                                <td className="px-4 py-3">
+                                  <span className={`rounded-full border px-2.5 py-0.5 text-xs font-semibold ${statusColors[lead.status] || ""}`}>
+                                    {statusLabel[lead.status] || lead.status}
+                                  </span>
+                                </td>
+                                <td className="px-4 py-3">
+                                  <div className="flex items-center gap-1.5">
+                                    <button
+                                      type="button"
+                                      onClick={() => { setSelectedLead(lead); setLeadNotas(lead.notasInternas || ""); }}
+                                      className="flex h-8 w-8 items-center justify-center rounded-xl border border-white/10 bg-white/[0.04] text-slate-300 hover:bg-white/[0.1] hover:text-white"
+                                      title="Ver detalhes"
+                                    >
+                                      <Eye className="h-3.5 w-3.5" />
+                                    </button>
+                                    <a
+                                      href={`https://wa.me/351${lead.telefone.replace(/\D/g, "")}`}
+                                      target="_blank" rel="noreferrer"
+                                      className="flex h-8 w-8 items-center justify-center rounded-xl border border-emerald-300/20 bg-emerald-400/[0.08] text-emerald-200 hover:bg-emerald-400/[0.16]"
+                                      title="WhatsApp"
+                                    >
+                                      <MessageCircle className="h-3.5 w-3.5" />
+                                    </a>
+                                    <a
+                                      href={`tel:${lead.telefone}`}
+                                      className="flex h-8 w-8 items-center justify-center rounded-xl border border-cyan-300/20 bg-cyan-400/[0.08] text-cyan-200 hover:bg-cyan-400/[0.16]"
+                                      title="Ligar"
+                                    >
+                                      <Phone className="h-3.5 w-3.5" />
+                                    </a>
+                                    {lead.status === "novo" && (
+                                      <button
+                                        type="button"
+                                        onClick={() => atualizarStatusLead(lead.id, "contactado")}
+                                        className="rounded-xl border border-amber-300/20 bg-amber-400/[0.08] px-2.5 py-1 text-xs font-semibold text-amber-100 hover:bg-amber-400/[0.16]"
+                                      >
+                                        Contactado
+                                      </button>
+                                    )}
+                                  </div>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                      </tbody>
+                    </table>
+                  )}
+                </div>
+              )}
+
+              {/* Tabela de eventos */}
+              {activeLeadsTab === "eventos" && (
+                <div className="overflow-x-auto rounded-[16px] border border-white/10">
+                  {leadEvents.length === 0 && !loadingLeads ? (
+                    <div className="px-6 py-10 text-center text-sm text-slate-400">
+                      Nenhum evento encontrado para o período selecionado.
+                    </div>
+                  ) : (
+                    <table className="w-full min-w-[700px] border-collapse text-sm">
+                      <thead>
+                        <tr className="border-b border-white/10 bg-white/[0.03] text-left text-[11px] uppercase tracking-wide text-slate-400">
+                          <th className="px-4 py-3 font-semibold">Data/hora</th>
+                          <th className="px-4 py-3 font-semibold">Tipo de evento</th>
+                          <th className="px-4 py-3 font-semibold">Canal</th>
+                          <th className="px-4 py-3 font-semibold">Serviço</th>
+                          <th className="px-4 py-3 font-semibold">Localidade</th>
+                          <th className="px-4 py-3 font-semibold">Origem</th>
+                          <th className="px-4 py-3 font-semibold">Campanha</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {leadEvents.map((ev) => (
+                          <tr key={ev.id} className="border-b border-white/5 hover:bg-white/[0.02]">
+                            <td className="px-4 py-3 text-slate-400">
+                              {new Date(ev.createdAt).toLocaleDateString("pt-PT", { day: "2-digit", month: "2-digit" })}
+                              <div className="text-[11px] text-slate-500">
+                                {new Date(ev.createdAt).toLocaleTimeString("pt-PT", { hour: "2-digit", minute: "2-digit" })}
+                              </div>
+                            </td>
+                            <td className="px-4 py-3">
+                              <span className="rounded-full border border-white/10 bg-white/[0.06] px-2.5 py-0.5 text-[11px] font-mono text-slate-200">
+                                {ev.eventType}
+                              </span>
+                            </td>
+                            <td className="px-4 py-3 text-slate-300">{ev.contactPreference || "—"}</td>
+                            <td className="px-4 py-3 text-slate-300">{ev.serviceType || "—"}</td>
+                            <td className="px-4 py-3 text-slate-300">{ev.location || "—"}</td>
+                            <td className="px-4 py-3 text-slate-400 text-xs">{ev.utmSource || "—"}</td>
+                            <td className="px-4 py-3 text-slate-400 text-xs">{ev.utmCampaign || "—"}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  )}
+                </div>
+              )}
+
+              <p className="text-xs text-slate-500">
+                {activeLeadsTab === "leads"
+                  ? `${leads.filter((l) => !leadSearch || l.nome.toLowerCase().includes(leadSearch.toLowerCase()) || l.email.toLowerCase().includes(leadSearch.toLowerCase()) || l.telefone.includes(leadSearch)).length} leads mostrados`
+                  : `${leadEvents.length} eventos mostrados`}
+              </p>
+            </section>
+          )}
+          {/* ══════════════════════════════════════════════════════════════ */}
 
           {activeSection === "site" && (
             <section className="space-y-4 rounded-[28px] border border-cyan-300/16 bg-[linear-gradient(180deg,rgba(9,25,40,0.94)_0%,rgba(11,30,47,0.92)_100%)] p-5 shadow-[0_20px_70px_rgba(3,10,18,0.22)]">
@@ -2501,6 +2992,177 @@ export default function ColaboradorAdminClient() {
           )}
         </main>
       </div>
+
+      {/* Drawer lateral: detalhes do lead */}
+      {selectedLead && (
+        <div className="fixed inset-0 z-50 flex justify-end">
+          <button
+            type="button"
+            aria-label="Fechar detalhes do lead"
+            onClick={() => setSelectedLead(null)}
+            className="absolute inset-0 bg-slate-950/70 backdrop-blur-sm"
+          />
+          <aside className="relative flex h-full w-full max-w-lg flex-col overflow-y-auto border-l border-cyan-300/20 bg-[linear-gradient(180deg,rgba(9,27,43,0.99)_0%,rgba(7,20,33,0.99)_100%)] shadow-[-30px_0_80px_rgba(3,10,18,0.5)]">
+            <div className="sticky top-0 z-10 flex items-start justify-between gap-4 border-b border-white/10 bg-[rgba(9,27,43,0.96)] px-6 py-5 backdrop-blur">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-cyan-200">Lead #{selectedLead.id}</p>
+                <h3 className="mt-1 text-xl font-semibold text-white">{selectedLead.nome}</h3>
+                <p className="mt-0.5 text-sm text-slate-400">
+                  {new Date(selectedLead.createdAt).toLocaleDateString("pt-PT", { day: "2-digit", month: "long", year: "numeric" })}
+                  {" às "}
+                  {new Date(selectedLead.createdAt).toLocaleTimeString("pt-PT", { hour: "2-digit", minute: "2-digit" })}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedLead(null)}
+                className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/10 text-slate-400 hover:text-white"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="flex-1 space-y-5 px-6 py-5">
+              {/* Contacto */}
+              <div className="space-y-2">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Contacto</p>
+                <div className="grid gap-2 rounded-[16px] border border-white/10 bg-white/[0.03] p-4">
+                  {[
+                    { label: "Telefone", value: selectedLead.telefone, href: `tel:${selectedLead.telefone}` },
+                    { label: "Email", value: selectedLead.email, href: `mailto:${selectedLead.email}` },
+                    { label: "Localidade", value: selectedLead.localidade },
+                    { label: "Serviço", value: selectedLead.tipoServico },
+                    { label: "Preferência", value: selectedLead.preferenciaContacto },
+                  ].map((item) => (
+                    <div key={item.label} className="flex items-center justify-between gap-3">
+                      <span className="text-xs text-slate-400">{item.label}</span>
+                      {item.href ? (
+                        <a href={item.href} className="text-sm font-medium text-cyan-200 hover:text-cyan-100">{item.value}</a>
+                      ) : (
+                        <span className="text-sm font-medium text-white">{item.value}</span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Mensagem */}
+              {selectedLead.mensagem && (
+                <div className="space-y-2">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Mensagem</p>
+                  <div className="rounded-[16px] border border-white/10 bg-white/[0.03] p-4 text-sm leading-6 text-slate-200">
+                    {selectedLead.mensagem}
+                  </div>
+                </div>
+              )}
+
+              {/* Origem / UTM */}
+              <div className="space-y-2">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Origem</p>
+                <div className="grid gap-2 rounded-[16px] border border-white/10 bg-white/[0.03] p-4">
+                  {[
+                    { label: "Página", value: selectedLead.pagePath },
+                    { label: "UTM Source", value: selectedLead.utmSource },
+                    { label: "UTM Medium", value: selectedLead.utmMedium },
+                    { label: "UTM Campaign", value: selectedLead.utmCampaign },
+                    { label: "GCLID", value: selectedLead.gclid },
+                  ].filter((item) => item.value).map((item) => (
+                    <div key={item.label} className="flex items-center justify-between gap-3">
+                      <span className="text-xs text-slate-400">{item.label}</span>
+                      <span className="max-w-[220px] truncate text-sm text-slate-200">{item.value}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Estado */}
+              <div className="space-y-2">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Estado</p>
+                <select
+                  value={selectedLead.status}
+                  onChange={(e) => atualizarStatusLead(selectedLead.id, e.target.value as Lead["status"], leadNotas)}
+                  className="h-11 w-full rounded-[14px] border border-cyan-300/20 bg-[#0d1f35] px-3 text-sm text-white outline-none focus:border-cyan-400 [color-scheme:dark]"
+                  disabled={savingLeadStatus}
+                >
+                  <option value="novo">Novo</option>
+                  <option value="contactado">Contactado</option>
+                  <option value="orcamento_enviado">Orçamento enviado</option>
+                  <option value="fechado">Fechado</option>
+                  <option value="perdido">Perdido</option>
+                </select>
+              </div>
+
+              {/* Notas internas */}
+              <div className="space-y-2">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Notas internas</p>
+                <textarea
+                  value={leadNotas}
+                  onChange={(e) => setLeadNotas(e.target.value)}
+                  rows={3}
+                  placeholder="Notas visíveis apenas para administradores..."
+                  className="w-full rounded-[14px] border border-white/10 bg-white/[0.04] p-3 text-sm text-white outline-none focus:border-cyan-300 resize-none"
+                />
+                <Button
+                  type="button"
+                  onClick={() => atualizarStatusLead(selectedLead.id, selectedLead.status, leadNotas)}
+                  disabled={savingLeadStatus}
+                  className="h-10 w-full rounded-2xl bg-cyan-400 text-slate-950 hover:bg-cyan-300"
+                >
+                  {savingLeadStatus ? "A guardar..." : "Guardar notas"}
+                </Button>
+              </div>
+            </div>
+
+            {/* Botões de ação */}
+            <div className="sticky bottom-0 border-t border-white/10 bg-[rgba(9,27,43,0.96)] p-4">
+              <div className="grid grid-cols-3 gap-2">
+                <a
+                  href={`https://wa.me/351${selectedLead.telefone.replace(/\D/g, "")}`}
+                  target="_blank" rel="noreferrer"
+                  className="flex items-center justify-center gap-1.5 rounded-2xl border border-emerald-300/20 bg-emerald-400/[0.1] py-2.5 text-sm font-semibold text-emerald-200 hover:bg-emerald-400/[0.2]"
+                >
+                  <MessageCircle className="h-4 w-4" />
+                  WhatsApp
+                </a>
+                <a
+                  href={`tel:${selectedLead.telefone}`}
+                  className="flex items-center justify-center gap-1.5 rounded-2xl border border-cyan-300/20 bg-cyan-400/[0.1] py-2.5 text-sm font-semibold text-cyan-200 hover:bg-cyan-400/[0.2]"
+                >
+                  <Phone className="h-4 w-4" />
+                  Ligar
+                </a>
+                <a
+                  href={`mailto:${selectedLead.email}`}
+                  className="flex items-center justify-center gap-1.5 rounded-2xl border border-white/10 bg-white/[0.06] py-2.5 text-sm font-semibold text-slate-200 hover:bg-white/[0.12]"
+                >
+                  <Mail className="h-4 w-4" />
+                  Email
+                </a>
+              </div>
+              <div className="mt-2 grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => atualizarStatusLead(selectedLead.id, "fechado", leadNotas)}
+                  disabled={savingLeadStatus}
+                  className="rounded-2xl border border-emerald-300/20 bg-emerald-400/[0.08] py-2.5 text-sm font-semibold text-emerald-100 hover:bg-emerald-400/[0.16] disabled:opacity-50"
+                >
+                  <CheckCircle2 className="mr-1.5 inline h-3.5 w-3.5" />
+                  Fechado
+                </button>
+                <button
+                  type="button"
+                  onClick={() => atualizarStatusLead(selectedLead.id, "perdido", leadNotas)}
+                  disabled={savingLeadStatus}
+                  className="rounded-2xl border border-rose-300/20 bg-rose-400/[0.08] py-2.5 text-sm font-semibold text-rose-100 hover:bg-rose-400/[0.16] disabled:opacity-50"
+                >
+                  <X className="mr-1.5 inline h-3.5 w-3.5" />
+                  Perdido
+                </button>
+              </div>
+            </div>
+          </aside>
+        </div>
+      )}
 
       {/* Drawer lateral: histórico semanal do colaborador */}
       {drawerColaborador && (

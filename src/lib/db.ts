@@ -1,8 +1,8 @@
 import { drizzle } from "drizzle-orm/mysql2";
 import mysql from "mysql2/promise";
 import { eq, desc, inArray } from "drizzle-orm";
-import { users, colaboradores, registrosHoras, simulatorSettings, galleryMedia, leads } from "../../drizzle/schema";
-import type { InsertUser, InsertLead } from "../../drizzle/schema";
+import { users, colaboradores, registrosHoras, simulatorSettings, galleryMedia } from "../../drizzle/schema";
+import type { InsertUser } from "../../drizzle/schema";
 import { defaultSimulatorSettings } from "@/lib/simulator-settings";
 
 let dbInstance: ReturnType<typeof drizzle<typeof import('../../drizzle/schema')>> | null = null;
@@ -364,13 +364,10 @@ export async function updateRegistroHoras(
 
 // ─── Leads helpers ───────────────────────────────────────────────────────────
 
-let leadsTableEnsured = false;
-
-export async function ensureLeadsTable() {
-  if (leadsTableEnsured) return;
+async function ensureLeadsTable() {
   const pool = await getPool();
-  if (!pool) throw new Error("Database not available");
-  await pool.query(`
+  if (!pool) return;
+  await pool.execute(`
     CREATE TABLE IF NOT EXISTS leads (
       id int NOT NULL AUTO_INCREMENT PRIMARY KEY,
       nome varchar(160) NOT NULL,
@@ -380,45 +377,66 @@ export async function ensureLeadsTable() {
       tipoServico varchar(80) NOT NULL,
       preferenciaContacto varchar(30) NOT NULL,
       mensagem text NULL,
-      status enum('novo','contactado','fechado','perdido') NOT NULL DEFAULT 'novo',
       pagePath varchar(255) NULL,
       pageUrl varchar(500) NULL,
       utmSource varchar(120) NULL,
       utmMedium varchar(120) NULL,
       utmCampaign varchar(120) NULL,
       gclid varchar(255) NULL,
+      status varchar(30) NOT NULL DEFAULT 'novo',
       notasInternas text NULL,
       createdAt timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
       updatedAt timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
     )
   `);
-  leadsTableEnsured = true;
 }
 
-export async function createLead(data: Omit<InsertLead, "id" | "createdAt" | "updatedAt" | "status">) {
+export async function createLead(data: {
+  nome: string; telefone: string; email: string; localidade: string;
+  tipoServico: string; preferenciaContacto: string; mensagem?: string | null;
+  pagePath?: string | null; pageUrl?: string | null;
+  utmSource?: string | null; utmMedium?: string | null; utmCampaign?: string | null;
+  gclid?: string | null;
+}) {
   await ensureLeadsTable();
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-  await db.insert(leads).values({ ...data, status: "novo" });
+  const pool = await getPool();
+  if (!pool) return;
+  await pool.execute(
+    `INSERT INTO leads (nome, telefone, email, localidade, tipoServico, preferenciaContacto,
+                        mensagem, pagePath, pageUrl, utmSource, utmMedium, utmCampaign, gclid)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [data.nome, data.telefone, data.email, data.localidade, data.tipoServico,
+     data.preferenciaContacto, data.mensagem ?? null, data.pagePath ?? null,
+     data.pageUrl ?? null, data.utmSource ?? null, data.utmMedium ?? null,
+     data.utmCampaign ?? null, data.gclid ?? null]
+  );
 }
 
 export async function getAllLeads() {
   await ensureLeadsTable();
-  const db = await getDb();
-  if (!db) return [];
-  return db.select().from(leads).orderBy(desc(leads.createdAt));
+  const pool = await getPool();
+  if (!pool) return [];
+  const [rows] = await pool.execute(
+    `SELECT id, nome, telefone, email, localidade, tipoServico, preferenciaContacto,
+            mensagem, pagePath, pageUrl, utmSource, utmMedium, utmCampaign, gclid,
+            status, notasInternas, createdAt
+     FROM leads ORDER BY createdAt DESC LIMIT 500`
+  );
+  return rows as Record<string, unknown>[];
 }
 
-export async function updateLeadStatus(
-  id: number,
-  status: "novo" | "contactado" | "fechado" | "perdido",
-  notasInternas?: string
-) {
+export async function updateLeadStatus(id: number, status: string, notasInternas?: string) {
   await ensureLeadsTable();
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-  await db.update(leads).set({ status, ...(notasInternas !== undefined ? { notasInternas } : {}) }).where(eq(leads.id, id));
+  const pool = await getPool();
+  if (!pool) return;
+  if (notasInternas !== undefined) {
+    await pool.execute(`UPDATE leads SET status = ?, notasInternas = ? WHERE id = ?`, [status, notasInternas, id]);
+  } else {
+    await pool.execute(`UPDATE leads SET status = ? WHERE id = ?`, [status, id]);
+  }
 }
+
+// ─── Leads helpers END ───────────────────────────────────────────────────────
 
 export async function getTodayRegistroByColaborador(colaboradorId: number) {
   const db = await getDb();

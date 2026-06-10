@@ -23,7 +23,6 @@ import {
 
 import { trackWhatsAppClick } from "@/lib/analytics";
 import { BUSINESS_PHONE } from "@/lib/seo-data";
-import QueroContratarModal from "@/components/QueroContratarModal";
 
 const solucoes = [
   {
@@ -93,7 +92,6 @@ export default function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [solucoesOpen, setSolucoesOpen] = useState(false);
   const [mobileAccordionOpen, setMobileAccordionOpen] = useState(false);
-  const [modalOpen, setModalOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
 
@@ -180,13 +178,12 @@ export default function Header() {
             <MessageCircle className="h-4 w-4 text-white" />
             <span className="text-white">WhatsApp</span>
           </a>
-          <button
-            type="button"
-            onClick={() => setModalOpen(true)}
+          <Link
+            href="/simulador"
             className="inline-flex items-center gap-2 rounded-xl bg-cyan-600 px-5 py-2.5 text-sm font-semibold text-white transition-all hover:bg-cyan-700"
           >
             <span className="text-white">Quero contratar</span>
-          </button>
+          </Link>
         </div>
 
         {/* Mobile menu button */}
@@ -217,14 +214,14 @@ export default function Header() {
                   </p>
                 </div>
                 <div className="mt-6 space-y-3">
-                  <button
-                    type="button"
-                    onClick={() => { setSolucoesOpen(false); setModalOpen(true); }}
+                  <Link
+                    href="/simulador"
+                    onClick={() => setSolucoesOpen(false)}
                     className="flex w-full items-center justify-center gap-2 rounded-xl bg-cyan-600 px-4 py-3 text-sm font-semibold text-white transition-all hover:bg-cyan-700"
                   >
                     Pedir orçamento
                     <ArrowRight className="h-4 w-4" />
-                  </button>
+                  </Link>
                   <div className="flex items-center justify-center gap-2 rounded-xl bg-white px-4 py-2.5 text-sm text-slate-600">
                     <Clock className="h-4 w-4 text-emerald-500" />
                     <span>Resposta rápida em 24h</span>
@@ -278,9 +275,6 @@ export default function Header() {
           </div>
         </div>
       )}
-
-      {/* Modal Quero Contratar */}
-      <QueroContratarModal open={modalOpen} onClose={() => setModalOpen(false)} />
 
       {/* Mobile Menu */}
       {menuOpen && (
@@ -356,13 +350,13 @@ export default function Header() {
                 <MessageCircle className="h-5 w-5 text-white" />
                 <span className="text-white">WhatsApp</span>
               </a>
-              <button
-                type="button"
-                onClick={() => { setMenuOpen(false); setModalOpen(true); }}
+              <Link
+                href="/simulador"
+                onClick={() => setMenuOpen(false)}
                 className="flex w-full items-center justify-center gap-2 rounded-xl bg-cyan-600 px-4 py-3.5 text-base font-semibold text-white transition-all hover:bg-cyan-700"
               >
                 <span className="text-white">Quero contratar</span>
-              </button>
+              </Link>
             </div>
           </nav>
         </div>
