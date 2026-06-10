@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createLead, getAllLeads, updateLeadStatus } from "@/lib/db";
+import { createLead, createLeadEvent, getAllLeads, updateLeadStatus } from "@/lib/db";
 
 // POST /api/leads — criar novo lead
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
+    console.log("[api/leads] POST recebido:", body?.nome, body?.tipoServico, body?.localidade);
 
     const { nome, telefone, email, localidade, tipoServico, preferenciaContacto, mensagem, pagePath, pageUrl, utmSource, utmMedium, utmCampaign, gclid } = body;
 
@@ -33,7 +34,21 @@ export async function POST(request: NextRequest) {
       gclid: gclid ? String(gclid).slice(0, 255) : null,
     });
 
-    return NextResponse.json({ success: true });
+    // Gravar evento de formulário submetido (garante contagem no dashboard mesmo que o cliente falhe)
+    void createLeadEvent({
+      eventType: "form_submit_quero_contratar",
+      pagePath: pagePath ? String(pagePath).slice(0, 255) : null,
+      serviceType: tipoServico ? String(tipoServico).slice(0, 80) : null,
+      location: localidade ? String(localidade).slice(0, 120) : null,
+      contactPreference: preferenciaContacto ? String(preferenciaContacto).slice(0, 30) : null,
+      utmSource: utmSource ? String(utmSource).slice(0, 120) : null,
+      utmMedium: utmMedium ? String(utmMedium).slice(0, 120) : null,
+      utmCampaign: utmCampaign ? String(utmCampaign).slice(0, 120) : null,
+      gclid: gclid ? String(gclid).slice(0, 255) : null,
+    }).catch((e) => console.error("[api/leads] Erro ao criar evento form_submit:", e));
+
+    console.log("[api/leads] Lead criado com sucesso:", String(nome));
+    return NextResponse.json({ success: true }, { status: 201 });
   } catch (error) {
     console.error("[api/leads] POST error:", error);
     return NextResponse.json({ error: "Erro interno do servidor." }, { status: 500 });

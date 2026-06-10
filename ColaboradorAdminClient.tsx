@@ -466,6 +466,7 @@ export default function ColaboradorAdminClient() {
   const [leadTotals, setLeadTotals] = useState<LeadTotals>({});
   const [eventTotals, setEventTotals] = useState<EventTotals>({});
   const [loadingLeads, setLoadingLeads] = useState(false);
+  const [leadsError, setLeadsError] = useState<string | null>(null);
   const [leadPeriodo, setLeadPeriodo] = useState("7d");
   const [leadStatusFilter, setLeadStatusFilter] = useState("");
   const [leadEventTypeFilter, setLeadEventTypeFilter] = useState("");
@@ -585,6 +586,7 @@ export default function ColaboradorAdminClient() {
     if (!authToken) return;
     try {
       setLoadingLeads(true);
+      setLeadsError(null);
       const [leadsRes, eventsRes] = await Promise.all([
         fetch(`/api/admin/leads?periodo=${periodo}&status=${status}&_=${Date.now()}`, {
           cache: "no-store",
@@ -595,19 +597,37 @@ export default function ColaboradorAdminClient() {
           headers: { Authorization: `Bearer ${authToken}` },
         }),
       ]);
+
+      let hasError = false;
+
       if (leadsRes.ok) {
         const data = await leadsRes.json();
-        setLeads(data.leads || []);
-        setLeadTotals(data.totals || {});
+        if (data.error) {
+          hasError = true;
+        } else {
+          setLeads(data.leads || []);
+          setLeadTotals(data.totals || {});
+        }
+      } else {
+        hasError = true;
       }
+
       if (eventsRes.ok) {
         const data = await eventsRes.json();
-        setLeadEvents(data.events || []);
-        setEventTotals(data.totals || {});
+        if (!data.error) {
+          setLeadEvents(data.events || []);
+          setEventTotals(data.totals || {});
+        }
       }
+
+      if (hasError) {
+        setLeadsError("Não foi possível carregar leads. Verifique a ligação à base de dados ou os endpoints.");
+      }
+
       setLeadsLastUpdate(new Date());
-    } catch {
-      // Falha silenciosa — painel mantém dados anteriores
+    } catch (err) {
+      console.error("[admin] carregarLeads error:", err);
+      setLeadsError("Não foi possível carregar leads. Verifique a ligação à base de dados ou os endpoints.");
     } finally {
       setLoadingLeads(false);
     }
@@ -2331,6 +2351,14 @@ export default function ColaboradorAdminClient() {
                   Atualizar
                 </Button>
               </div>
+
+              {/* Aviso de erro */}
+              {leadsError && (
+                <div className="flex items-center gap-3 rounded-2xl border border-rose-400/20 bg-rose-400/[0.07] px-4 py-3 text-sm text-rose-300">
+                  <AlertTriangle className="h-4 w-4 flex-shrink-0" />
+                  {leadsError}
+                </div>
+              )}
 
               {/* Cards de resumo */}
               <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">

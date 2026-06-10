@@ -5,6 +5,7 @@ import Link from "next/link";
 import { MessageCircle, Phone } from "lucide-react";
 
 import { BUSINESS_PHONE } from "@/lib/seo-data";
+import { trackContactEvent } from "@/lib/track-contact";
 
 interface StickyCTAProps {
   showAfterScroll?: number;
@@ -36,6 +37,7 @@ export default function StickyCTA({ showAfterScroll = 300 }: StickyCTAProps) {
           href={whatsappUrl}
           target="_blank"
           rel="noopener noreferrer"
+          onClick={() => trackContactEvent({ eventType: "click_whatsapp", location: "sticky_cta" })}
           className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#25D366] px-4 py-3 text-sm font-semibold text-white shadow-[0_12px_28px_-12px_rgba(37,211,102,0.6)] transition hover:bg-[#20bd5a]"
         >
           <MessageCircle className="h-5 w-5 text-white" />

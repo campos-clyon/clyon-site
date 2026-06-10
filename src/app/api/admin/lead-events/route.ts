@@ -11,43 +11,47 @@ async function requireAdmin(request: NextRequest) {
   return { colaborador };
 }
 
-// GET /api/admin/lead-events — eventos de contacto com filtros e totais
+function getPeriodStart(periodo: string): string {
+  const now = new Date();
+  if (periodo === "hoje") return `${now.toISOString().slice(0, 10)} 00:00:00`;
+  if (periodo === "semana") {
+    const day = now.getDay();
+    const diff = day === 0 ? 6 : day - 1;
+    const d = new Date(now);
+    d.setDate(d.getDate() - diff);
+    return `${d.toISOString().slice(0, 10)} 00:00:00`;
+  }
+  if (periodo === "7d") {
+    const d = new Date(now);
+    d.setDate(d.getDate() - 7);
+    return `${d.toISOString().slice(0, 10)} 00:00:00`;
+  }
+  const d = new Date(now);
+  d.setDate(d.getDate() - 30);
+  return `${d.toISOString().slice(0, 10)} 00:00:00`;
+}
+
+// GET /api/admin/lead-events
 export async function GET(request: NextRequest) {
   const auth = await requireAdmin(request);
   if (auth.error) return auth.error;
 
+  console.log("[api/admin/lead-events] GET chamado");
+
   try {
     const db = await getDb();
-    if (!db) return NextResponse.json({ events: [], totals: {} });
+    if (!db) {
+      console.error("[api/admin/lead-events] Base de dados indisponível");
+      return NextResponse.json({ events: [], totals: {}, error: "Base de dados indisponível" }, { status: 503 });
+    }
 
     const { searchParams } = new URL(request.url);
     const periodo = searchParams.get("periodo") || "7d";
     const eventType = searchParams.get("eventType") || "";
-    const canal = searchParams.get("canal") || "";
+    const startDate = getPeriodStart(periodo);
+    const hoje = new Date().toISOString().slice(0, 10);
 
-    const now = new Date();
-    let startDate: string;
-    if (periodo === "hoje") {
-      startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString().slice(0, 10);
-    } else if (periodo === "semana") {
-      const day = now.getDay();
-      const diff = now.getDate() - (day === 0 ? 6 : day - 1);
-      startDate = new Date(now.getFullYear(), now.getMonth(), diff).toISOString().slice(0, 10);
-    } else if (periodo === "7d") {
-      const d = new Date(now); d.setDate(d.getDate() - 7);
-      startDate = d.toISOString().slice(0, 10);
-    } else {
-      const d = new Date(now); d.setDate(d.getDate() - 30);
-      startDate = d.toISOString().slice(0, 10);
-    }
-
-    const conditions: string[] = [`createdAt >= '${startDate} 00:00:00'`];
-    if (eventType) conditions.push(`eventType = '${eventType.replace(/'/g, "''")}'`);
-    if (canal) conditions.push(`contactPreference = '${canal.replace(/'/g, "''")}'`);
-
-    const where = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";
-
-    // Garantir tabela existe
+    // Garantir que a tabela leadEvents existe (nome consistente com o que está na BD)
     await (db as any).execute(`
       CREATE TABLE IF NOT EXISTS leadEvents (
         id int NOT NULL AUTO_INCREMENT PRIMARY KEY,
@@ -65,30 +69,42 @@ export async function GET(request: NextRequest) {
       )
     `);
 
+    const conditions: string[] = ["createdAt >= ?"];
+    const params: unknown[] = [startDate];
+    if (eventType) {
+      conditions.push("eventType = ?");
+      params.push(eventType);
+    }
+    const where = `WHERE ${conditions.join(" AND ")}`;
+
     const [events] = await (db as any).execute(
       `SELECT id, eventType, pagePath, serviceType, location, contactPreference,
               utmSource, utmMedium, utmCampaign, createdAt
        FROM leadEvents ${where}
        ORDER BY createdAt DESC
-       LIMIT 300`
+       LIMIT 500`,
+      params,
     );
 
-    // Totais por tipo de evento
-    const hoje = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString().slice(0, 10);
-    const [[totals]] = await (db as any).execute(`
-      SELECT
-        SUM(CASE WHEN eventType LIKE '%whatsapp%' AND DATE(createdAt) = '${hoje}' THEN 1 ELSE 0 END) AS whatsappHoje,
-        SUM(CASE WHEN (eventType LIKE '%call%' OR eventType LIKE '%ligar%') AND DATE(createdAt) = '${hoje}' THEN 1 ELSE 0 END) AS ligarHoje,
-        SUM(CASE WHEN eventType LIKE '%quero_contratar%' AND DATE(createdAt) = '${hoje}' THEN 1 ELSE 0 END) AS ctaHoje,
-        SUM(CASE WHEN (eventType LIKE '%form_submit%') AND DATE(createdAt) = '${hoje}' THEN 1 ELSE 0 END) AS formHoje,
-        SUM(CASE WHEN eventType LIKE '%email%' AND DATE(createdAt) = '${hoje}' THEN 1 ELSE 0 END) AS emailHoje,
+    // Totais por tipo de evento hoje
+    const [[totals]] = await (db as any).execute(
+      `SELECT
+        SUM(CASE WHEN eventType LIKE '%whatsapp%' AND DATE(createdAt) = ? THEN 1 ELSE 0 END) AS whatsappHoje,
+        SUM(CASE WHEN (eventType LIKE '%call%' OR eventType LIKE '%ligar%') AND DATE(createdAt) = ? THEN 1 ELSE 0 END) AS ligarHoje,
+        SUM(CASE WHEN eventType LIKE '%quero_contratar%' AND DATE(createdAt) = ? THEN 1 ELSE 0 END) AS ctaHoje,
+        SUM(CASE WHEN eventType LIKE '%form_submit%' AND DATE(createdAt) = ? THEN 1 ELSE 0 END) AS formHoje,
+        SUM(CASE WHEN eventType LIKE '%email%' AND DATE(createdAt) = ? THEN 1 ELSE 0 END) AS emailHoje,
         COUNT(*) AS total
-      FROM leadEvents
-    `);
+       FROM leadEvents`,
+      [hoje, hoje, hoje, hoje, hoje],
+    );
 
-    return NextResponse.json({ events: Array.isArray(events) ? events : [], totals });
+    const eventsArr = Array.isArray(events) ? events : [];
+    console.log("[api/admin/lead-events] Devolvidos:", eventsArr.length, "eventos. Totais hoje:", totals);
+
+    return NextResponse.json({ events: eventsArr, totals });
   } catch (error) {
     console.error("[api/admin/lead-events] GET error:", error);
-    return NextResponse.json({ events: [], totals: {} });
+    return NextResponse.json({ events: [], totals: {}, error: "Erro ao carregar eventos" }, { status: 500 });
   }
 }

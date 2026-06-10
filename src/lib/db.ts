@@ -398,18 +398,28 @@ export async function createLead(data: {
   utmSource?: string | null; utmMedium?: string | null; utmCampaign?: string | null;
   gclid?: string | null;
 }) {
+  console.log("[db/createLead] A criar lead:", data.nome, data.tipoServico);
   await ensureLeadsTable();
   const pool = await getPool();
-  if (!pool) return;
-  await pool.execute(
-    `INSERT INTO leads (nome, telefone, email, localidade, tipoServico, preferenciaContacto,
-                        mensagem, pagePath, pageUrl, utmSource, utmMedium, utmCampaign, gclid)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    [data.nome, data.telefone, data.email, data.localidade, data.tipoServico,
-     data.preferenciaContacto, data.mensagem ?? null, data.pagePath ?? null,
-     data.pageUrl ?? null, data.utmSource ?? null, data.utmMedium ?? null,
-     data.utmCampaign ?? null, data.gclid ?? null]
-  );
+  if (!pool) {
+    console.error("[db/createLead] Pool indisponível — lead não foi gravado");
+    return;
+  }
+  try {
+    await pool.execute(
+      `INSERT INTO leads (nome, telefone, email, localidade, tipoServico, preferenciaContacto,
+                          mensagem, pagePath, pageUrl, utmSource, utmMedium, utmCampaign, gclid)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [data.nome, data.telefone, data.email, data.localidade, data.tipoServico,
+       data.preferenciaContacto, data.mensagem ?? null, data.pagePath ?? null,
+       data.pageUrl ?? null, data.utmSource ?? null, data.utmMedium ?? null,
+       data.utmCampaign ?? null, data.gclid ?? null],
+    );
+    console.log("[db/createLead] Lead gravado com sucesso:", data.nome);
+  } catch (err) {
+    console.error("[db/createLead] Erro ao inserir lead:", err);
+    throw err;
+  }
 }
 
 export async function getAllLeads() {
@@ -434,6 +444,59 @@ export async function updateLeadStatus(id: number, status: string, notasInternas
   } else {
     await pool.execute(`UPDATE leads SET status = ? WHERE id = ?`, [status, id]);
   }
+}
+
+export async function createLeadEvent(data: {
+  eventType: string;
+  pagePath?: string | null;
+  pageUrl?: string | null;
+  serviceType?: string | null;
+  location?: string | null;
+  contactPreference?: string | null;
+  utmSource?: string | null;
+  utmMedium?: string | null;
+  utmCampaign?: string | null;
+  gclid?: string | null;
+}) {
+  const pool = await getPool();
+  if (!pool) {
+    console.warn("[db/createLeadEvent] Pool indisponível, evento ignorado:", data.eventType);
+    return;
+  }
+  // Garantir que a tabela existe (idempotente)
+  await pool.execute(`
+    CREATE TABLE IF NOT EXISTS leadEvents (
+      id int NOT NULL AUTO_INCREMENT PRIMARY KEY,
+      eventType varchar(80) NOT NULL,
+      pagePath varchar(255) NULL,
+      pageUrl varchar(500) NULL,
+      serviceType varchar(80) NULL,
+      location varchar(120) NULL,
+      contactPreference varchar(30) NULL,
+      utmSource varchar(120) NULL,
+      utmMedium varchar(120) NULL,
+      utmCampaign varchar(120) NULL,
+      gclid varchar(255) NULL,
+      createdAt timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+  await pool.execute(
+    `INSERT INTO leadEvents (eventType, pagePath, pageUrl, serviceType, location, contactPreference, utmSource, utmMedium, utmCampaign, gclid)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [
+      String(data.eventType).slice(0, 80),
+      data.pagePath ?? null,
+      data.pageUrl ?? null,
+      data.serviceType ?? null,
+      data.location ?? null,
+      data.contactPreference ?? null,
+      data.utmSource ?? null,
+      data.utmMedium ?? null,
+      data.utmCampaign ?? null,
+      data.gclid ?? null,
+    ],
+  );
+  console.log("[db/createLeadEvent] Evento gravado:", data.eventType);
 }
 
 // ─── Leads helpers END ───────────────────────────────────────────────────────

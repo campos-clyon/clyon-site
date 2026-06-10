@@ -11,50 +11,85 @@ async function requireAdmin(request: NextRequest) {
   return { colaborador };
 }
 
-// GET /api/admin/leads — lista de leads com filtros e totais
+// Calcular data de início dado um período (hora de Lisboa UTC+1)
+function getPeriodStart(periodo: string): string {
+  // Usar UTC. Lisboa é UTC+1 (UTC+2 no verão) mas para simplicidade usamos UTC.
+  const now = new Date();
+  if (periodo === "hoje") {
+    return `${now.toISOString().slice(0, 10)} 00:00:00`;
+  }
+  if (periodo === "semana") {
+    const day = now.getDay();
+    const diff = day === 0 ? 6 : day - 1; // Segunda-feira
+    const d = new Date(now);
+    d.setDate(d.getDate() - diff);
+    return `${d.toISOString().slice(0, 10)} 00:00:00`;
+  }
+  if (periodo === "7d") {
+    const d = new Date(now);
+    d.setDate(d.getDate() - 7);
+    return `${d.toISOString().slice(0, 10)} 00:00:00`;
+  }
+  // 30d (default)
+  const d = new Date(now);
+  d.setDate(d.getDate() - 30);
+  return `${d.toISOString().slice(0, 10)} 00:00:00`;
+}
+
+// GET /api/admin/leads
 export async function GET(request: NextRequest) {
   const auth = await requireAdmin(request);
   if (auth.error) return auth.error;
 
+  console.log("[api/admin/leads] GET chamado");
+
   try {
     const db = await getDb();
-    if (!db) return NextResponse.json({ leads: [], totals: {} });
+    if (!db) {
+      console.error("[api/admin/leads] Base de dados indisponível");
+      return NextResponse.json({ leads: [], totals: {}, error: "Base de dados indisponível" }, { status: 503 });
+    }
 
     const { searchParams } = new URL(request.url);
     const periodo = searchParams.get("periodo") || "30d";
     const status = searchParams.get("status") || "";
-    const servico = searchParams.get("servico") || "";
-    const localidade = searchParams.get("localidade") || "";
-    const origem = searchParams.get("origem") || "";
+    const startDate = getPeriodStart(periodo);
 
-    // Calcular data de início com base no período
-    let startDate: string;
-    const now = new Date();
-    if (periodo === "hoje") {
-      startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString().slice(0, 10);
-    } else if (periodo === "semana") {
-      const day = now.getDay();
-      const diff = now.getDate() - (day === 0 ? 6 : day - 1);
-      startDate = new Date(now.getFullYear(), now.getMonth(), diff).toISOString().slice(0, 10);
-    } else if (periodo === "7d") {
-      const d = new Date(now); d.setDate(d.getDate() - 7);
-      startDate = d.toISOString().slice(0, 10);
-    } else if (periodo === "30d") {
-      const d = new Date(now); d.setDate(d.getDate() - 30);
-      startDate = d.toISOString().slice(0, 10);
-    } else {
-      const d = new Date(now); d.setDate(d.getDate() - 30);
-      startDate = d.toISOString().slice(0, 10);
+    const hoje = new Date().toISOString().slice(0, 10);
+    const semanaStart = getPeriodStart("semana");
+
+    // Garantir que a tabela existe
+    await (db as any).execute(`
+      CREATE TABLE IF NOT EXISTS leads (
+        id int NOT NULL AUTO_INCREMENT PRIMARY KEY,
+        nome varchar(160) NOT NULL,
+        telefone varchar(30) NOT NULL,
+        email varchar(320) NOT NULL,
+        localidade varchar(120) NOT NULL,
+        tipoServico varchar(80) NOT NULL,
+        preferenciaContacto varchar(30) NOT NULL,
+        mensagem text NULL,
+        pagePath varchar(255) NULL,
+        pageUrl varchar(500) NULL,
+        utmSource varchar(120) NULL,
+        utmMedium varchar(120) NULL,
+        utmCampaign varchar(120) NULL,
+        gclid varchar(255) NULL,
+        status varchar(30) NOT NULL DEFAULT 'novo',
+        notasInternas text NULL,
+        createdAt timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updatedAt timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+      )
+    `);
+
+    // Construir query parametrizada
+    const conditions: string[] = ["createdAt >= ?"];
+    const params: unknown[] = [startDate];
+    if (status) {
+      conditions.push("status = ?");
+      params.push(status);
     }
-
-    // Build dynamic WHERE clauses
-    const conditions: string[] = [`createdAt >= '${startDate} 00:00:00'`];
-    if (status) conditions.push(`status = '${status.replace(/'/g, "''")}'`);
-    if (servico) conditions.push(`tipoServico = '${servico.replace(/'/g, "''")}'`);
-    if (localidade) conditions.push(`localidade LIKE '%${localidade.replace(/'/g, "''")}%'`);
-    if (origem) conditions.push(`utmSource = '${origem.replace(/'/g, "''")}'`);
-
-    const where = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";
+    const where = `WHERE ${conditions.join(" AND ")}`;
 
     const [leads] = await (db as any).execute(
       `SELECT id, nome, telefone, email, localidade, tipoServico, preferenciaContacto,
@@ -62,35 +97,32 @@ export async function GET(request: NextRequest) {
               createdAt
        FROM leads ${where}
        ORDER BY createdAt DESC
-       LIMIT 200`
+       LIMIT 200`,
+      params,
     );
 
-    // Totais
-    const hoje = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString().slice(0, 10);
-    const semanaStart = (() => {
-      const d = new Date(now); const day = d.getDay();
-      d.setDate(d.getDate() - (day === 0 ? 6 : day - 1));
-      return d.toISOString().slice(0, 10);
-    })();
-
-    const [[totals]] = await (db as any).execute(`
-      SELECT
-        SUM(CASE WHEN DATE(createdAt) = '${hoje}' THEN 1 ELSE 0 END) AS hoje,
-        SUM(CASE WHEN createdAt >= '${semanaStart} 00:00:00' THEN 1 ELSE 0 END) AS semana,
+    const [[totals]] = await (db as any).execute(
+      `SELECT
+        SUM(CASE WHEN DATE(createdAt) = ? THEN 1 ELSE 0 END) AS hoje,
+        SUM(CASE WHEN createdAt >= ? THEN 1 ELSE 0 END) AS semana,
         SUM(CASE WHEN status = 'novo' THEN 1 ELSE 0 END) AS novos,
         SUM(CASE WHEN status = 'fechado' THEN 1 ELSE 0 END) AS fechados,
         COUNT(*) AS total
-      FROM leads
-    `);
+       FROM leads`,
+      [hoje, semanaStart],
+    );
 
-    return NextResponse.json({ leads: Array.isArray(leads) ? leads : [], totals });
+    const leadsArr = Array.isArray(leads) ? leads : [];
+    console.log("[api/admin/leads] Devolvidos:", leadsArr.length, "leads. Totais:", totals);
+
+    return NextResponse.json({ leads: leadsArr, totals });
   } catch (error) {
     console.error("[api/admin/leads] GET error:", error);
-    return NextResponse.json({ leads: [], totals: {} });
+    return NextResponse.json({ leads: [], totals: {}, error: "Erro ao carregar leads" }, { status: 500 });
   }
 }
 
-// PATCH /api/admin/leads — atualizar status e notas de um lead
+// PATCH /api/admin/leads
 export async function PATCH(request: NextRequest) {
   const auth = await requireAdmin(request);
   if (auth.error) return auth.error;
@@ -107,12 +139,19 @@ export async function PATCH(request: NextRequest) {
     const db = await getDb();
     if (!db) return NextResponse.json({ error: "DB indisponível" }, { status: 503 });
 
-    const sets: string[] = [];
-    if (status) sets.push(`status = '${status}'`);
-    if (notasInternas !== undefined) sets.push(`notasInternas = '${String(notasInternas).replace(/'/g, "''")}'`);
-    if (!sets.length) return NextResponse.json({ success: true });
+    // Usar queries parametrizadas
+    if (status && notasInternas !== undefined) {
+      await (db as any).execute(
+        "UPDATE leads SET status = ?, notasInternas = ? WHERE id = ?",
+        [status, String(notasInternas), Number(id)],
+      );
+    } else if (status) {
+      await (db as any).execute("UPDATE leads SET status = ? WHERE id = ?", [status, Number(id)]);
+    } else if (notasInternas !== undefined) {
+      await (db as any).execute("UPDATE leads SET notasInternas = ? WHERE id = ?", [String(notasInternas), Number(id)]);
+    }
 
-    await (db as any).execute(`UPDATE leads SET ${sets.join(", ")} WHERE id = ${Number(id)}`);
+    console.log("[api/admin/leads] Lead atualizado:", id, status);
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("[api/admin/leads] PATCH error:", error);
