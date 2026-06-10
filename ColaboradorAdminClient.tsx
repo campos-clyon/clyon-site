@@ -394,6 +394,16 @@ export default function ColaboradorAdminClient() {
   const [loadingSimulatorSettings, setLoadingSimulatorSettings] = useState(false);
   const [savingSettingKey, setSavingSettingKey] = useState<string | null>(null);
 
+  // Estatísticas do gestor de imagens (para a aba "Imagens do site")
+  const [imageStats, setImageStats] = useState<{
+    total: number;
+    ativas: number;
+    inativas: number;
+    hero: number;
+    showcase: number;
+  } | null>(null);
+  const [loadingImageStats, setLoadingImageStats] = useState(false);
+
   useEffect(() => {
     const metaRobots = document.createElement("meta");
     metaRobots.name = "robots";
@@ -468,6 +478,32 @@ export default function ColaboradorAdminClient() {
       setError(err instanceof Error ? err.message : "Não foi possível carregar os valores do simulador.");
     } finally {
       setLoadingSimulatorSettings(false);
+    }
+  };
+
+  const carregarImageStats = async (authToken: string) => {
+    try {
+      setLoadingImageStats(true);
+      const response = await fetch(`/api/media/gallery?_=${Date.now()}`, {
+        cache: "no-store",
+        headers: { Authorization: `Bearer ${authToken}` },
+      });
+
+      if (!response.ok) return;
+
+      const data = await response.json();
+      const items: Array<{ section?: string; isActive?: boolean }> = data.items || [];
+      setImageStats({
+        total: items.length,
+        ativas: items.filter((item) => item.isActive).length,
+        inativas: items.filter((item) => !item.isActive).length,
+        hero: items.filter((item) => item.section === "hero").length,
+        showcase: items.filter((item) => item.section === "showcase").length,
+      });
+    } catch {
+      // Estatísticas de imagens são informativas; falhas não bloqueiam o painel.
+    } finally {
+      setLoadingImageStats(false);
     }
   };
 
