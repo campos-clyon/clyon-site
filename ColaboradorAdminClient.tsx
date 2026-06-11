@@ -3,6 +3,7 @@
 import type { ComponentType, ReactNode } from "react";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { clearColaboradorStorage, getColaboradorItem } from "@/lib/colaborador-storage";
 import {
   AlertTriangle,
   ArrowRight,
@@ -484,9 +485,9 @@ export default function ColaboradorAdminClient() {
     metaRobots.content = "noindex, nofollow";
     document.head.appendChild(metaRobots);
 
-    const storedToken = localStorage.getItem("colaborador_token");
-    const storedNome = localStorage.getItem("colaborador_nome");
-    const storedIsAdmin = localStorage.getItem("colaborador_isAdmin");
+    const storedToken = getColaboradorItem("token");
+    const storedNome = getColaboradorItem("nome");
+    const storedIsAdmin = getColaboradorItem("isAdmin");
 
     if (!storedToken) {
       router.push("/colaboradores");
@@ -1092,10 +1093,7 @@ export default function ColaboradorAdminClient() {
   }, [colaboradores]);
 
   const handleLogout = () => {
-    localStorage.removeItem("colaborador_token");
-    localStorage.removeItem("colaborador_nome");
-    localStorage.removeItem("colaborador_id");
-    localStorage.removeItem("colaborador_isAdmin");
+    clearColaboradorStorage();
     router.push("/colaboradores");
   };
 

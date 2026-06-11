@@ -56,9 +56,10 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const { nome, senha } = await req.json();
+    const { nome, senha, rememberMe } = await req.json();
     const nomeNormalizado = typeof nome === "string" ? nome.trim().toUpperCase() : "";
     const senhaNormalizada = typeof senha === "string" ? senha : "";
+    const manterSessao = rememberMe === true;
 
     if (!nomeNormalizado || !senhaNormalizada) {
       return NextResponse.json({ error: "Nome e senha são obrigatórios" }, { status: 400 });
@@ -116,7 +117,7 @@ export async function POST(req: NextRequest) {
       isAdmin: colaborador.isAdmin,
     })
       .setProtectedHeader({ alg: "HS256" })
-      .setExpirationTime("24h")
+      .setExpirationTime(manterSessao ? "30d" : "8h")
       .sign(getColaboradorSecretKey());
 
     return NextResponse.json({

@@ -3,6 +3,7 @@
 import type { ReactNode } from "react";
 import { ChangeEvent, FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { clearColaboradorStorage, getColaboradorItem } from "@/lib/colaborador-storage";
 import {
   ArrowLeft,
   ChevronDown,
@@ -153,7 +154,7 @@ export default function ImageManagerClient() {
   const [replacementFiles, setReplacementFiles] = useState<Record<string, File | null>>({});
 
   useEffect(() => {
-    const token = localStorage.getItem("colaborador_token");
+    const token = getColaboradorItem("token");
     if (!token) { router.push("/colaboradores"); return; }
     void loadGallery(token);
   }, [router]);
@@ -173,7 +174,7 @@ export default function ImageManagerClient() {
       const nextError = err instanceof Error ? err.message : "Erro ao carregar a galeria.";
       setError(nextError);
       if (nextError.includes("Não autorizado") || nextError.includes("Acesso negado")) {
-        localStorage.removeItem("colaborador_token");
+        clearColaboradorStorage();
         router.push("/colaboradores");
       }
     } finally {
@@ -187,7 +188,7 @@ export default function ImageManagerClient() {
   }
 
   async function handleRefresh() {
-    const token = localStorage.getItem("colaborador_token");
+    const token = getColaboradorItem("token");
     if (!token) { router.push("/colaboradores"); return; }
     setRefreshing(true); setMessage(""); setError("");
     try { await reloadAfterMutation(token); setMessage("Galeria atualizada."); }
@@ -221,7 +222,7 @@ export default function ImageManagerClient() {
 
   async function handleCreate(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const token = localStorage.getItem("colaborador_token");
+    const token = getColaboradorItem("token");
     if (!token) { router.push("/colaboradores"); return; }
     if (!newFile && !newItem.imageUrl.trim()) { setError("Escolha uma imagem ou indique um URL público."); return; }
     setSaving(true); setError(""); setMessage("");
@@ -262,7 +263,7 @@ export default function ImageManagerClient() {
   }
 
   async function handleSaveItem(item: GalleryItem) {
-    const token = localStorage.getItem("colaborador_token");
+    const token = getColaboradorItem("token");
     if (!token) { router.push("/colaboradores"); return; }
     setSaving(true); setError(""); setMessage("");
     try {
@@ -302,7 +303,7 @@ export default function ImageManagerClient() {
   }
 
   async function handleDeleteItem(id: string) {
-    const token = localStorage.getItem("colaborador_token");
+    const token = getColaboradorItem("token");
     if (!token) { router.push("/colaboradores"); return; }
     if (!window.confirm("Apagar esta imagem da galeria?")) return;
     setSaving(true); setError(""); setMessage("");

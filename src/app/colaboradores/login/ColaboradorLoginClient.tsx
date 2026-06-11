@@ -2,13 +2,14 @@
 
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowRight, Eye, EyeOff, LockKeyhole, ShieldCheck, Users, Clock } from "lucide-react";
+import { ArrowRight, Eye, EyeOff, LockKeyhole, ShieldCheck, Users, Clock, Check } from "lucide-react";
 
 export default function ColaboradorLoginClient() {
   const router = useRouter();
   const [nome, setNome] = useState("");
   const [senha, setSenha] = useState("");
   const [mostrarSenha, setMostrarSenha] = useState(false);
+  const [rememberMe, setRememberMe] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -21,7 +22,7 @@ export default function ColaboradorLoginClient() {
       const response = await fetch("/api/colaboradores/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ nome, senha }),
+        body: JSON.stringify({ nome, senha, rememberMe }),
       });
 
       const data = await response.json();
@@ -30,10 +31,19 @@ export default function ColaboradorLoginClient() {
         throw new Error(data.error || "Não foi possível iniciar sessão.");
       }
 
-      localStorage.setItem("colaborador_token", data.token);
-      localStorage.setItem("colaborador_nome", data.colaborador.nome);
-      localStorage.setItem("colaborador_id", String(data.colaborador.id));
-      localStorage.setItem("colaborador_isAdmin", String(data.colaborador.isAdmin));
+      // Se "Manter sessão": localStorage (persiste após fechar browser)
+      // Se não: sessionStorage (limpa ao fechar browser)
+      const store = rememberMe ? localStorage : sessionStorage;
+      store.setItem("colaborador_token", data.token);
+      store.setItem("colaborador_nome", data.colaborador.nome);
+      store.setItem("colaborador_id", String(data.colaborador.id));
+      store.setItem("colaborador_isAdmin", String(data.colaborador.isAdmin));
+      // Limpar o outro storage para evitar conflitos
+      if (rememberMe) {
+        sessionStorage.removeItem("colaborador_token");
+      } else {
+        localStorage.removeItem("colaborador_token");
+      }
 
       if (data.colaborador.isAdmin) {
         router.push("/colaboradores/admin");
@@ -159,6 +169,28 @@ export default function ColaboradorLoginClient() {
                   </button>
                 </div>
               </div>
+
+              {/* Manter sessão */}
+              <button
+                type="button"
+                onClick={() => setRememberMe((v) => !v)}
+                className="flex w-full items-center gap-3 text-left"
+                aria-pressed={rememberMe}
+              >
+                <span
+                  className={`flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-md border transition ${
+                    rememberMe
+                      ? "border-cyan-400 bg-cyan-500"
+                      : "border-slate-600 bg-slate-800"
+                  }`}
+                >
+                  {rememberMe && <Check className="h-3 w-3 text-slate-950" strokeWidth={3} />}
+                </span>
+                <span className="text-sm text-slate-300">
+                  Manter sessão activa{" "}
+                  <span className="text-slate-500">(30 dias)</span>
+                </span>
+              </button>
 
               {error && (
                 <div
