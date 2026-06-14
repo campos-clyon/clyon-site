@@ -6,7 +6,9 @@ export type ColaboradorTokenPayload = {
   isAdmin: number;
 };
 
-const JWT_SECRET = process.env.JWT_SECRET || "clyon-secret-2026";
+// JWT_SECRET DEVE ter >= 32 caracteres para HS256 (jose requer isto)
+// Definir JWT_SECRET no Vercel com: openssl rand -base64 32
+const JWT_SECRET = process.env.JWT_SECRET || "clyon-dashboard-secret-2026-xk9p";
 
 /**
  * Fonte única de verdade para o segredo JWT dos colaboradores.
