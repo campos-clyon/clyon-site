@@ -34,6 +34,7 @@ export default function ColaboradorLoginClient() {
       // Se "Manter sessão": localStorage (persiste após fechar browser)
       // Se não: sessionStorage (limpa ao fechar browser)
       const store = rememberMe ? localStorage : sessionStorage;
+      console.log("[v0] login rememberMe:", rememberMe, "store:", rememberMe ? "localStorage" : "sessionStorage");
       store.setItem("colaborador_token", data.token);
       store.setItem("colaborador_nome", data.colaborador.nome);
       store.setItem("colaborador_id", String(data.colaborador.id));
@@ -41,9 +42,16 @@ export default function ColaboradorLoginClient() {
       // Limpar o outro storage para evitar conflitos
       if (rememberMe) {
         sessionStorage.removeItem("colaborador_token");
+        sessionStorage.removeItem("colaborador_nome");
+        sessionStorage.removeItem("colaborador_id");
+        sessionStorage.removeItem("colaborador_isAdmin");
       } else {
         localStorage.removeItem("colaborador_token");
+        localStorage.removeItem("colaborador_nome");
+        localStorage.removeItem("colaborador_id");
+        localStorage.removeItem("colaborador_isAdmin");
       }
+      console.log("[v0] localStorage token após guardar:", localStorage.getItem("colaborador_token")?.slice(0, 20));
 
       if (data.colaborador.isAdmin) {
         router.push("/colaboradores/admin");

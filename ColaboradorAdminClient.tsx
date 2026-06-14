@@ -488,6 +488,7 @@ export default function ColaboradorAdminClient() {
     const storedToken = getColaboradorItem("token");
     const storedNome = getColaboradorItem("nome");
     const storedIsAdmin = getColaboradorItem("isAdmin");
+    console.log("[v0] admin init - token:", storedToken?.slice(0, 20) ?? "NULL", "isAdmin:", storedIsAdmin, "localStorage raw:", localStorage.getItem("colaborador_token")?.slice(0, 20) ?? "NULL");
 
     if (!storedToken) {
       router.push("/colaboradores");
