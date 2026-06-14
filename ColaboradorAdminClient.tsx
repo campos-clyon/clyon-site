@@ -145,6 +145,11 @@ type EventTotals = {
   ctaHoje?: number;
   formHoje?: number;
   emailHoje?: number;
+  whatsappSemana?: number;
+  ligarSemana?: number;
+  ctaSemana?: number;
+  formSemana?: number;
+  emailSemana?: number;
   total?: number;
 };
 
@@ -488,7 +493,6 @@ export default function ColaboradorAdminClient() {
     const storedToken = getColaboradorItem("token");
     const storedNome = getColaboradorItem("nome");
     const storedIsAdmin = getColaboradorItem("isAdmin");
-    console.log("[v0] admin init - token:", storedToken?.slice(0, 20) ?? "NULL", "isAdmin:", storedIsAdmin, "localStorage raw:", localStorage.getItem("colaborador_token")?.slice(0, 20) ?? "NULL");
 
     if (!storedToken) {
       router.push("/colaboradores");
@@ -2389,11 +2393,11 @@ export default function ColaboradorAdminClient() {
               {/* Cards de eventos */}
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
                 {[
-                  { label: "WhatsApp hoje", value: eventTotals.whatsappHoje ?? 0, icon: MessageCircle },
-                  { label: "Ligar hoje", value: eventTotals.ligarHoje ?? 0, icon: Phone },
-                  { label: "CTA hoje", value: eventTotals.ctaHoje ?? 0, icon: MousePointerClick },
-                  { label: "Forms hoje", value: eventTotals.formHoje ?? 0, icon: ReceiptText },
-                  { label: "Email hoje", value: eventTotals.emailHoje ?? 0, icon: Mail },
+                  { label: "WhatsApp", hoje: eventTotals.whatsappHoje ?? 0, semana: eventTotals.whatsappSemana ?? 0, icon: MessageCircle },
+                  { label: "Ligar", hoje: eventTotals.ligarHoje ?? 0, semana: eventTotals.ligarSemana ?? 0, icon: Phone },
+                  { label: "CTA", hoje: eventTotals.ctaHoje ?? 0, semana: eventTotals.ctaSemana ?? 0, icon: MousePointerClick },
+                  { label: "Forms", hoje: eventTotals.formHoje ?? 0, semana: eventTotals.formSemana ?? 0, icon: ReceiptText },
+                  { label: "Email", hoje: eventTotals.emailHoje ?? 0, semana: eventTotals.emailSemana ?? 0, icon: Mail },
                 ].map((stat) => {
                   const Icon = stat.icon;
                   return (
@@ -2402,7 +2406,8 @@ export default function ColaboradorAdminClient() {
                         <Icon className="h-3 w-3" />
                         {stat.label}
                       </div>
-                      <p className="mt-1.5 text-2xl font-semibold text-white">{loadingLeads ? "—" : stat.value}</p>
+                      <p className="mt-1.5 text-2xl font-semibold text-white">{loadingLeads ? "—" : stat.hoje}</p>
+                      <p className="mt-0.5 text-[10px] text-slate-500">{loadingLeads ? "" : `${stat.semana} esta semana`}</p>
                     </div>
                   );
                 })}

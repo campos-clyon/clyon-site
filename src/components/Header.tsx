@@ -176,10 +176,7 @@ export default function Header() {
             href={whatsappUrl}
             target="_blank"
             rel="noopener noreferrer"
-            onClick={() => {
-              trackWhatsAppClick("header");
-              trackContactEvent({ eventType: "click_whatsapp", location: "header" });
-            }}
+            onClick={() => trackWhatsAppClick("header")}
             className="inline-flex items-center gap-2 rounded-xl bg-[#25D366] px-4 py-2.5 text-sm font-semibold text-white transition-all hover:bg-[#20bd5a]"
           >
             <MessageCircle className="h-4 w-4 text-white" />
@@ -349,11 +346,7 @@ export default function Header() {
                 href={whatsappUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                onClick={() => {
-                  trackWhatsAppClick("header_mobile");
-                  trackContactEvent({ eventType: "click_whatsapp", location: "header_mobile" });
-                  setMenuOpen(false);
-                }}
+                onClick={() => { trackWhatsAppClick("header_mobile"); setMenuOpen(false); }}
                 className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#25D366] px-4 py-3.5 text-base font-semibold text-white transition-all hover:bg-[#20bd5a]"
               >
                 <MessageCircle className="h-5 w-5 text-white" />

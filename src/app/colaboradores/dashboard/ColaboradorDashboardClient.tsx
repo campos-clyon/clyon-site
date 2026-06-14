@@ -166,7 +166,7 @@ export default function ColaboradorDashboard() {
     const nome = getColaboradorItem("nome");
     const id = getColaboradorItem("id");
     const isAdmin = getColaboradorItem("isAdmin");
-    console.log("[v0] dashboard init - token:", token?.slice(0, 20) ?? "NULL", "localStorage raw:", localStorage.getItem("colaborador_token")?.slice(0, 20) ?? "NULL");
+
 
     if (!token) {
       router.push("/colaboradores");

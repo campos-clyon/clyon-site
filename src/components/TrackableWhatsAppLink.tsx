@@ -1,6 +1,6 @@
 "use client";
 
-import { trackContactEvent } from "@/lib/track-contact";
+import { trackWhatsAppClick } from "@/lib/analytics";
 import { MessageCircle } from "lucide-react";
 
 interface TrackableWhatsAppLinkProps {
@@ -21,7 +21,7 @@ export default function TrackableWhatsAppLink({
       href={href}
       target="_blank"
       rel="noopener noreferrer"
-      onClick={() => trackContactEvent({ eventType: "click_whatsapp", location })}
+      onClick={() => trackWhatsAppClick(location)}
       className={className}
     >
       {children ?? (
