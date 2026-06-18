@@ -1,23 +1,31 @@
 "use client";
 
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import {
   ArrowLeft,
   ArrowRight,
-  Calculator,
-  type LucideIcon,
+  BrainCircuit,
+  Check,
+  CheckCircle2,
+  ChevronDown,
+  Image as ImageIcon,
   Loader2,
+  LockKeyhole,
   MapPin,
   Package,
   Phone,
   Route,
+  ShieldCheck,
   Sparkles,
+  Star,
+  Trash2,
   Truck,
+  UploadCloud,
   Wrench,
+  type LucideIcon,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -30,12 +38,8 @@ import { BASE_ADDRESS } from "@/lib/maps-config";
 import { createSimulatorSettingsMap } from "@/lib/simulator-settings";
 import { cn } from "@/lib/utils";
 
-type CategoriaId =
-  | "moveis"
-  | "monos"
-  | "entulho"
-  | "mudancas"
-  | "limpeza";
+/* ─── tipos ─────────────────────────────────────────────── */
+type CategoriaId = "moveis" | "monos" | "entulho" | "mudancas" | "limpeza";
 type ModoCalculo = "entulho" | "moveis" | "mudancas";
 type ModoTrajeto = "base" | "custom";
 
@@ -55,67 +59,67 @@ type MapsPrediction = {
   mainText: string;
   secondaryText: string;
 };
-
 type SettingsResponse = {
   settings?: Array<{ key: string; value: string | number }>;
 };
+type FieldTone = "default" | "next" | "warning" | "error";
 
+/* ─── dados ──────────────────────────────────────────────── */
 const categorias: Categoria[] = [
-  { id: "moveis", nome: "Recolha de móveis", descricao: "Móveis antigos e recheios.", icon: Package, calculo: "moveis", trajeto: "base" },
-  { id: "monos", nome: "Recolha de monos", descricao: "Volumes grandes, sucata e despejos.", icon: Package, calculo: "moveis", trajeto: "base" },
-  { id: "entulho", nome: "Recolha de entulho", descricao: "Obras, resíduos e limpezas pesadas.", icon: Wrench, calculo: "entulho", trajeto: "base" },
-  { id: "mudancas", nome: "Mudanças", descricao: "Origem e destino reais com cálculo automático.", icon: Truck, calculo: "mudancas", trajeto: "custom" },
-  { id: "limpeza", nome: "Limpeza pós-obra", descricao: "Acabamento final e recolha associada.", icon: Sparkles, calculo: "entulho", trajeto: "base" },
+  { id: "moveis",   nome: "Recolha de móveis",   descricao: "Móveis antigos e recheios.",                        icon: Package, calculo: "moveis",   trajeto: "base" },
+  { id: "monos",    nome: "Recolha de monos",    descricao: "Volumes grandes, sucata e despejos.",               icon: Package, calculo: "moveis",   trajeto: "base" },
+  { id: "entulho",  nome: "Recolha de entulho",  descricao: "Obras, resíduos e limpezas pesadas.",               icon: Wrench,  calculo: "entulho",  trajeto: "base" },
+  { id: "mudancas", nome: "Mudanças",             descricao: "Origem e destino reais com cálculo automático.",    icon: Truck,   calculo: "mudancas", trajeto: "custom" },
+  { id: "limpeza",  nome: "Limpeza pós-obra",    descricao: "Acabamento final e recolha associada.",             icon: Sparkles,calculo: "entulho",  trajeto: "base" },
 ];
-
 const categoriaIds = new Set<CategoriaId>(["moveis", "monos", "entulho", "mudancas", "limpeza"]);
 
 type CountryOption = { code: string; dial: string; flag: string; label: string };
-
 const COUNTRY_OPTIONS: CountryOption[] = [
   { code: "PT", dial: "+351", flag: "🇵🇹", label: "Portugal" },
-  { code: "ES", dial: "+34", flag: "🇪🇸", label: "Espanha" },
-  { code: "FR", dial: "+33", flag: "🇫🇷", label: "França" },
-  { code: "GB", dial: "+44", flag: "🇬🇧", label: "Reino Unido" },
-  { code: "DE", dial: "+49", flag: "🇩🇪", label: "Alemanha" },
-  { code: "IT", dial: "+39", flag: "🇮🇹", label: "Itália" },
-  { code: "CH", dial: "+41", flag: "🇨🇭", label: "Suíça" },
-  { code: "NL", dial: "+31", flag: "🇳🇱", label: "Países Baixos" },
-  { code: "BE", dial: "+32", flag: "🇧🇪", label: "Bélgica" },
-  { code: "LU", dial: "+352", flag: "🇱🇺", label: "Luxemburgo" },
-  { code: "IE", dial: "+353", flag: "🇮🇪", label: "Irlanda" },
+  { code: "ES", dial: "+34",  flag: "🇪🇸", label: "Espanha" },
+  { code: "FR", dial: "+33",  flag: "🇫🇷", label: "França" },
+  { code: "GB", dial: "+44",  flag: "🇬🇧", label: "Reino Unido" },
+  { code: "DE", dial: "+49",  flag: "🇩🇪", label: "Alemanha" },
+  { code: "CH", dial: "+41",  flag: "🇨🇭", label: "Suíça" },
+  { code: "NL", dial: "+31",  flag: "🇳🇱", label: "Países Baixos" },
 ];
 
-// Número de WhatsApp dedicado para o simulador de mudanças.
 const MUDANCAS_WHATSAPP_PHONE = "+351924370335";
-
-// Número de WhatsApp do simulador para as restantes categorias.
-// Mantido fixo aqui para que o simulador permaneça inalterado.
 const SIMULADOR_WHATSAPP_PHONE = "+351931632622";
 
-const simulatorPrimaryButtonClass =
-  "bg-cyan-600 text-white border-2 border-cyan-600 hover:bg-cyan-700";
+/* ─── stepper steps ──────────────────────────────────────── */
+type Step = 1 | 2 | 3 | 4;
 
-const simulatorSecondaryButtonClass =
-  "bg-white text-slate-600 border border-cyan-100 hover:border-slate-300 hover:bg-slate-50";
+/* ─── props ──────────────────────────────────────────────── */
+type SimuladorClientProps = { initialCategoriaId?: CategoriaId | null };
 
-type SimuladorClientProps = {
-  initialCategoriaId?: CategoriaId | null;
-};
-
+/* ═══════════════════════════════════════════════════════════
+   COMPONENTE PRINCIPAL
+═══════════════════════════════════════════════════════════ */
 export default function SimuladorClient({ initialCategoriaId = null }: SimuladorClientProps) {
-  const summaryValueRef = useRef<HTMLDivElement | null>(null);
+  const summaryRef = useRef<HTMLDivElement | null>(null);
+
+  /* pricing */
   const [pricingMap, setPricingMap] = useState(() => createSimulatorSettingsMap());
+
+  /* stepper */
+  const [step, setStep] = useState<Step>(1);
   const [categoriaId, setCategoriaId] = useState<CategoriaId | null>(initialCategoriaId);
+  const categoria = categorias.find((c) => c.id === categoriaId) ?? null;
+
+  /* passo 1 – serviço */
+  /* passo 2 – morada + fotos + detalhes */
   const [origem, setOrigem] = useState("");
   const [destino, setDestino] = useState("");
   const [km, setKm] = useState<number | null>(null);
   const [kmLoading, setKmLoading] = useState(false);
   const [kmErro, setKmErro] = useState("");
-
+  const [fotos, setFotos] = useState<File[]>([]);
+  const [fotosUploading, setFotosUploading] = useState(false);
+  const [fotosUrls, setFotosUrls] = useState<string[]>([]);
+  const [isDragging, setIsDragging] = useState(false);
   const [tipoAcesso, setTipoAcesso] = useState("");
-  const [quantidadePessoas, setQuantidadePessoas] = useState("");
-  const [tempoEstimado, setTempoEstimado] = useState("2");
   const [numeroAndares, setNumeroAndares] = useState("1");
   const [temElevador, setTemElevador] = useState("");
   const [acessoDificil, setAcessoDificil] = useState(false);
@@ -126,1135 +130,864 @@ export default function SimuladorClient({ initialCategoriaId = null }: Simulador
   const [peq, setPeq] = useState("");
   const [med, setMed] = useState("");
   const [gra, setGra] = useState("");
-  const [orcamento, setOrcamento] = useState<number | null>(null);
-  const [showValidation, setShowValidation] = useState(false);
+  const [quantidadePessoas, setQuantidadePessoas] = useState("");
+  const [tempoEstimado, setTempoEstimado] = useState("2");
   const [pessoasManual, setPessoasManual] = useState(false);
-  const [highlightBudget, setHighlightBudget] = useState(false);
+  const [showValidation, setShowValidation] = useState(false);
+
+  /* passo 3 – IA a processar */
+  const [aiProcessing, setAiProcessing] = useState(false);
+  const [aiStep, setAiStep] = useState(0); // 0-4 etapas da animação
+  const [orcamento, setOrcamento] = useState<number | null>(null);
+
+  /* passo 4 – confirmação */
   const [telemovel, setTelemovel] = useState("");
   const [telemovelError, setTelemovelError] = useState("");
   const [countryDial, setCountryDial] = useState("+351");
   const [customDial, setCustomDial] = useState("");
   const [showCustomDial, setShowCustomDial] = useState(false);
+  const activeDial = showCustomDial ? customDial.trim() : countryDial;
 
-  const categoria = categorias.find((item) => item.id === categoriaId) ?? null;
-  const origemValida = categoria?.trajeto === "base" || origem.trim().length >= 3;
-  const destinoValido = destino.trim().length >= 3;
-  const entulhoModoValido = categoria?.calculo !== "entulho" || Boolean(entulhoModo);
-  const quantidadeSacosValida = categoria?.calculo !== "entulho" || Boolean(quantidadeSacos);
-  const moveisModoValido = categoria?.calculo !== "moveis" || Boolean(moveisModo);
-  const cargasValida = categoria?.calculo !== "moveis" || moveisModo !== "carga" || Boolean(cargas);
-  const itensMoveisValidos =
-    categoria?.calculo !== "moveis" ||
-    moveisModo !== "item" ||
-    Boolean(peq || med || gra);
-  const acessoValido = Boolean(tipoAcesso);
-  const pessoasValida = Boolean(quantidadePessoas);
-  const tempoValido = Boolean(tempoEstimado);
-
-  const step1Sequence = [
-    ...(categoria?.trajeto === "custom" ? [{ id: "origem", done: origemValida }] : []),
-    { id: "destino", done: destinoValido },
-    ...(categoria?.calculo === "entulho"
-      ? [
-          { id: "entulhoModo", done: entulhoModoValido },
-          { id: "quantidadeSacos", done: quantidadeSacosValida },
-        ]
-      : []),
-  ];
-
-  const step2Sequence = [
-    ...(categoria?.calculo === "moveis" ? [{ id: "moveisModo", done: moveisModoValido }] : []),
-    ...(categoria?.calculo === "moveis" && moveisModo === "carga"
-      ? [{ id: "cargas", done: cargasValida }]
-      : []),
-    ...(categoria?.calculo === "moveis" && moveisModo === "item"
-      ? [{ id: "itensMoveis", done: itensMoveisValidos }]
-      : []),
-    { id: "tipoAcesso", done: acessoValido },
-    ...(tipoAcesso === "apartamento"
-      ? [
-          { id: "numeroAndares", done: Boolean(numeroAndares) },
-          { id: "temElevador", done: Boolean(temElevador) },
-        ]
-      : []),
-    { id: "quantidadePessoas", done: pessoasValida },
-    { id: "tempoEstimado", done: tempoValido },
-  ];
-
-  const nextStep1Field = step1Sequence.find((item) => !item.done)?.id ?? null;
-  const nextStep2Field = step2Sequence.find((item) => !item.done)?.id ?? null;
-
+  /* ── carregar settings ── */
   useEffect(() => {
     let active = true;
-
     void (async () => {
       try {
-        const response = await fetch("/api/simulador/settings");
-        if (!response.ok) return;
-        const data = (await response.json()) as SettingsResponse;
-        if (active) {
-          setPricingMap(createSimulatorSettingsMap(data.settings));
-        }
-      } catch {
-        // Mantem os valores locais se a API falhar.
-      }
+        const res = await fetch("/api/simulador/settings");
+        if (!res.ok) return;
+        const data = (await res.json()) as SettingsResponse;
+        if (active) setPricingMap(createSimulatorSettingsMap(data.settings));
+      } catch { /* mantém valores locais */ }
     })();
-
-    return () => {
-      active = false;
-    };
+    return () => { active = false; };
   }, []);
 
   useEffect(() => {
     if (!initialCategoriaId || !categoriaIds.has(initialCategoriaId)) return;
-    setCategoriaId((current) => (current === initialCategoriaId ? current : initialCategoriaId));
+    setCategoriaId((c) => (c === initialCategoriaId ? c : initialCategoriaId));
   }, [initialCategoriaId]);
 
-  const resetFlow = () => {
-    setOrigem("");
-    setDestino("");
-    setKm(null);
-    setKmLoading(false);
-    setKmErro("");
-    setTipoAcesso("");
-    setQuantidadePessoas("");
-    setTempoEstimado("2");
-    setNumeroAndares("1");
-    setTemElevador("");
-    setAcessoDificil(false);
-    setEntulhoModo("");
-    setQuantidadeSacos("");
-    setMoveisModo("");
-    setCargas("1");
-    setPeq("");
-    setMed("");
-    setGra("");
-    setOrcamento(null);
-    setShowValidation(false);
-    setPessoasManual(false);
-    setTelemovel("");
-    setTelemovelError("");
-    setCountryDial("+351");
-    setCustomDial("");
-    setShowCustomDial(false);
-  };
-
-  useEffect(() => {
-    setOrcamento(null);
-  }, [
-    tipoAcesso,
-    quantidadePessoas,
-    tempoEstimado,
-    numeroAndares,
-    temElevador,
-    acessoDificil,
-    entulhoModo,
-    quantidadeSacos,
-    moveisModo,
-    cargas,
-    peq,
-    med,
-    gra,
-  ]);
+  /* ── reset ── */
+  const resetFlow = useCallback(() => {
+    setStep(1);
+    setOrigem(""); setDestino(""); setKm(null); setKmLoading(false); setKmErro("");
+    setFotos([]); setFotosUrls([]); setFotosUploading(false); setIsDragging(false);
+    setTipoAcesso(""); setNumeroAndares("1"); setTemElevador(""); setAcessoDificil(false);
+    setEntulhoModo(""); setQuantidadeSacos(""); setMoveisModo(""); setCargas("1");
+    setPeq(""); setMed(""); setGra("");
+    setQuantidadePessoas(""); setTempoEstimado("2"); setPessoasManual(false);
+    setShowValidation(false); setAiProcessing(false); setAiStep(0); setOrcamento(null);
+    setTelemovel(""); setTelemovelError(""); setCountryDial("+351");
+    setCustomDial(""); setShowCustomDial(false);
+  }, []);
 
   const escolherCategoria = (id: CategoriaId) => {
     resetFlow();
     setCategoriaId(id);
+    setStep(2);
     trackSimulatorStart(id);
   };
 
-  const atualizarOrigem = (value: string) => {
-    setOrigem(value);
-    setKm(null);
-    setOrcamento(null);
-    setKmErro("");
-  };
+  /* ── validações passo 2 ── */
+  const origemValida    = categoria?.trajeto === "base" || origem.trim().length >= 3;
+  const destinoValido   = destino.trim().length >= 3;
+  const entulhoModoValido   = categoria?.calculo !== "entulho" || Boolean(entulhoModo);
+  const quantidadeSacosValida = categoria?.calculo !== "entulho" || Boolean(quantidadeSacos);
+  const moveisModoValido = categoria?.calculo !== "moveis" || Boolean(moveisModo);
+  const cargasValida    = categoria?.calculo !== "moveis" || moveisModo !== "carga" || Boolean(cargas);
+  const itensMoveisValidos = categoria?.calculo !== "moveis" || moveisModo !== "item" || Boolean(peq || med || gra);
+  const acessoValido    = Boolean(tipoAcesso);
+  const pessoasValida   = Boolean(quantidadePessoas);
+  const tempoValido     = Boolean(tempoEstimado);
+  const kmOk            = km !== null;
 
-  const atualizarDestino = (value: string) => {
-    setDestino(value);
-    setKm(null);
-    setOrcamento(null);
-    setKmErro("");
-  };
+  const podeAvancarPasso2 = (() => {
+    if (!kmOk || !acessoValido || !pessoasValida || !tempoValido) return false;
+    if (tipoAcesso === "apartamento" && (!numeroAndares || !temElevador)) return false;
+    if (categoria?.calculo === "entulho" && (!entulhoModo || !quantidadeSacos)) return false;
+    if (categoria?.calculo === "moveis") {
+      if (!moveisModo) return false;
+      if (moveisModo === "carga" && !cargas) return false;
+      if (moveisModo === "item" && !(peq || med || gra)) return false;
+    }
+    return true;
+  })();
 
+  /* ── calcular distância ── */
   const calcularDistancia = async () => {
     const origin = categoria?.trajeto === "custom" ? origem.trim() : BASE_ADDRESS;
-    const destination = destino.trim();
-    if (!origin || !destination) {
-      setShowValidation(true);
-      setKmErro("Preencha a morada antes de calcular a distância.");
-      return;
-    }
-
-    setKmLoading(true);
-    setKmErro("");
-    setOrcamento(null);
-
+    if (!origin || !destino.trim()) { setShowValidation(true); return; }
+    setKmLoading(true); setKmErro(""); setOrcamento(null);
     try {
-      const response = await fetch("/api/maps/distance", {
+      const res = await fetch("/api/maps/distance", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ origin, destination }),
+        body: JSON.stringify({ origin, destination: destino.trim() }),
       });
-      const data = await response.json();
-
-      if (!response.ok) {
-        setKmErro(
-          data?.error === "maps_unconfigured"
-            ? "A chave Google Maps ainda não está configurada no servidor."
-            : "Não foi possível calcular a distância agora.",
-        );
-        return;
-      }
-
+      const data = await res.json();
+      if (!res.ok) { setKmErro("Não foi possível calcular a distância agora."); return; }
       setKm(Number(data.distanceKm ?? 0));
-      if (categoria?.trajeto === "custom") {
-        setOrigem(String(data.originAddress ?? origin));
-      }
-      setDestino(String(data.destinationAddress ?? destination));
-    } catch {
-      setKmErro("A distância não pôde ser calculada. Tente novamente.");
-    } finally {
-      setKmLoading(false);
-    }
+      if (categoria?.trajeto === "custom") setOrigem(String(data.originAddress ?? origin));
+      setDestino(String(data.destinationAddress ?? destino));
+    } catch { setKmErro("Erro ao calcular distância. Tente novamente."); }
+    finally { setKmLoading(false); }
   };
 
+  /* ── fotos ── */
+  const adicionarFotos = (novos: File[]) => {
+    setFotos((prev) => {
+      const combined = [...prev, ...novos].slice(0, 8);
+      return combined;
+    });
+  };
+
+  const onDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault(); setIsDragging(false);
+    const files = Array.from(e.dataTransfer.files).filter((f) => f.type.startsWith("image/"));
+    adicionarFotos(files);
+  }, []);
+
+  const onFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files ?? []);
+    adicionarFotos(files);
+    e.target.value = "";
+  };
+
+  /* ── upload fotos ── */
+  const uploadFotos = async (): Promise<string[]> => {
+    if (fotos.length === 0) return [];
+    setFotosUploading(true);
+    try {
+      const fd = new FormData();
+      fotos.forEach((f) => fd.append("fotos", f));
+      const res = await fetch("/api/simulador/upload-fotos", { method: "POST", body: fd });
+      const data = await res.json();
+      return (data.urls as string[]) ?? [];
+    } catch { return []; }
+    finally { setFotosUploading(false); }
+  };
+
+  /* ── calcular orçamento (motor real) ── */
   const calcularOrcamento = () => {
     if (!categoria || km === null) return;
-    setShowValidation(true);
-
     const pessoas = Number(quantidadePessoas || 0);
-    const horas = Number(tempoEstimado || 0);
+    const horas   = Number(tempoEstimado || 0);
     const andares = Number(numeroAndares || 0);
-    const sacos = Number(quantidadeSacos || 0);
-    const cargasNum = Number(cargas || 1);
+    const sacos   = Number(quantidadeSacos || 0);
+    const cargasN = Number(cargas || 1);
     const pequeno = Number(peq || 0);
-    const medio = Number(med || 0);
-    const grande = Number(gra || 0);
+    const medio   = Number(med || 0);
+    const grande  = Number(gra || 0);
 
     let adicionalAcesso = 0;
     if (tipoAcesso === "apartamento") {
-      adicionalAcesso =
-        temElevador === "sim"
-          ? andares * pricingMap.apartamento_com_elevador_por_andar
-          : andares * pricingMap.apartamento_sem_elevador_por_andar;
+      adicionalAcesso = temElevador === "sim"
+        ? andares * pricingMap.apartamento_com_elevador_por_andar
+        : andares * pricingMap.apartamento_sem_elevador_por_andar;
     }
     const adicionalDificil = acessoDificil ? pricingMap.acesso_dificil_extra : 0;
     let total = 0;
 
     if (categoria.calculo === "moveis") {
       if (moveisModo === "item") {
-        total =
-          pequeno * pricingMap.moveis_item_pequeno +
-          medio * pricingMap.moveis_item_medio +
-          grande * pricingMap.moveis_item_grande +
-          km * pricingMap.moveis_distancia_km +
-          adicionalAcesso +
-          adicionalDificil;
-        total *= pricingMap.entulho_multiplicador;
+        total = (pequeno * pricingMap.moveis_item_pequeno + medio * pricingMap.moveis_item_medio + grande * pricingMap.moveis_item_grande + km * pricingMap.moveis_distancia_km + adicionalAcesso + adicionalDificil) * pricingMap.entulho_multiplicador;
       } else {
         const base = (horas + pricingMap.moveis_carga_base) * (pessoas + 1) * pricingMap.hora_base;
-        total =
-          (base +
-            km * pricingMap.moveis_distancia_km +
-            adicionalAcesso +
-            adicionalDificil +
-            base * pricingMap.moveis_carga_multiplicador) *
-          cargasNum;
+        total = (base + km * pricingMap.moveis_distancia_km + adicionalAcesso + adicionalDificil + base * pricingMap.moveis_carga_multiplicador) * cargasN;
       }
     }
-
     if (categoria.calculo === "entulho") {
       const material = entulhoModo === "chao" ? sacos * pricingMap.entulho_saco_chao_extra : sacos;
-      total =
-        (horas * pessoas * pricingMap.hora_base +
-          material +
-          km * pricingMap.entulho_distancia_km +
-          adicionalAcesso +
-          adicionalDificil) *
-        pricingMap.entulho_multiplicador;
+      total = (horas * pessoas * pricingMap.hora_base + material + km * pricingMap.entulho_distancia_km + adicionalAcesso + adicionalDificil) * pricingMap.entulho_multiplicador;
     }
-
     if (categoria.calculo === "mudancas") {
-      total =
-        (horas * pessoas * pricingMap.hora_base +
-          km * pricingMap.mudancas_distancia_km +
-          adicionalAcesso +
-          adicionalDificil) *
-        pricingMap.mudancas_multiplicador;
+      total = (horas * pessoas * pricingMap.hora_base + km * pricingMap.mudancas_distancia_km + adicionalAcesso + adicionalDificil) * pricingMap.mudancas_multiplicador;
     }
-
-    const finalValue = Math.round(total * 100) / 100;
-    setOrcamento(finalValue);
-    setHighlightBudget(true);
-    trackSimulatorComplete(categoria.id, finalValue, destino);
+    return Math.round(total * 100) / 100;
   };
 
-  useEffect(() => {
-    if (!highlightBudget || orcamento === null) return;
+  /* ── avançar para passo 3 (animação IA) ── */
+  const avancarParaIA = async () => {
+    setShowValidation(true);
+    if (!podeAvancarPasso2) return;
+    setStep(3);
+    setAiProcessing(true);
+    setAiStep(0);
 
-    summaryValueRef.current?.scrollIntoView({
-      behavior: "smooth",
-      block: "center",
+    const urls = await uploadFotos();
+    setFotosUrls(urls);
+
+    // Animação sequencial das etapas
+    const delays = [600, 1200, 1800, 2400];
+    delays.forEach((d, i) => {
+      setTimeout(() => setAiStep(i + 1), d);
     });
-  }, [highlightBudget, orcamento]);
 
-  const podeCalcularDistancia =
-    destino.trim().length > 0 && (categoria?.trajeto === "base" || origem.trim().length > 0);
-
-  const podeCalcularOrcamento = (() => {
-    if (!categoria || km === null || !tipoAcesso || !quantidadePessoas || !tempoEstimado) {
-      return false;
-    }
-    if (tipoAcesso === "apartamento" && (!numeroAndares || !temElevador)) return false;
-    if (categoria.calculo === "entulho") return Boolean(entulhoModo && quantidadeSacos);
-    if (categoria.calculo === "moveis") {
-      if (!moveisModo) return false;
-      if (moveisModo === "carga") return Boolean(cargas);
-      return Boolean(peq || med || gra);
-    }
-    return true;
-  })();
-
-  const validateTelemovel = (phone: string): boolean => {
-    const cleaned = phone.replace(/\D/g, "");
-    // Aceita qualquer número internacional plausível (mínimo de dígitos).
-    return cleaned.length >= 6 && cleaned.length <= 15;
+    // Calcular orçamento real após animação
+    setTimeout(() => {
+      const valor = calcularOrcamento();
+      setOrcamento(valor ?? 0);
+      if (categoria) trackSimulatorComplete(categoria.id, valor ?? 0, destino);
+      setAiProcessing(false);
+      setStep(4);
+    }, 3200);
   };
 
-  const formatTelemovel = (phone: string): string => {
-    // Mantém apenas dígitos e espaços simples a cada 3 dígitos para legibilidade.
-    const cleaned = phone.replace(/\D/g, "").slice(0, 15);
-    return cleaned.replace(/(\d{3})(?=\d)/g, "$1 ").trim();
-  };
-
-  const activeDial = showCustomDial ? customDial.trim() : countryDial;
-
-  const handleTelemovelChange = (value: string) => {
-    const formatted = formatTelemovel(value);
-    setTelemovel(formatted);
-    setTelemovelError("");
-  };
-
-  const handleCountryChange = (value: string) => {
-    if (value === "custom") {
-      setShowCustomDial(true);
-      setCustomDial(countryDial);
-      return;
-    }
-    setShowCustomDial(false);
-    setCountryDial(value);
-  };
-
+  /* ── confirmar pedido ── */
   const confirmarPedido = () => {
     if (!categoria || km === null || orcamento === null) return;
-
-    // Validate dial code
     const cleanedDial = activeDial.replace(/[^\d+]/g, "");
     if (!cleanedDial || !/^\+?\d{1,4}$/.test(cleanedDial)) {
-      setTelemovelError("Indique um código de país válido (ex.: +351)");
-      return;
+      setTelemovelError("Indique um código de país válido (ex.: +351)"); return;
     }
-
-    // Validate phone
     const cleanedPhone = telemovel.replace(/\D/g, "");
-    if (!cleanedPhone) {
-      setTelemovelError("Telemóvel é obrigatório para enviar o pedido");
-      return;
+    if (!cleanedPhone || cleanedPhone.length < 6) {
+      setTelemovelError("Telemóvel é obrigatório para enviar o pedido"); return;
     }
-    if (!validateTelemovel(cleanedPhone)) {
-      setTelemovelError("Introduza um número de telemóvel válido");
-      return;
-    }
+    const dialN = cleanedDial.startsWith("+") ? cleanedDial : `+${cleanedDial}`;
+    const telCompleto = `${dialN} ${telemovel}`.trim();
 
-    const dialNormalized = cleanedDial.startsWith("+") ? cleanedDial : `+${cleanedDial}`;
-    const telemovelCompleto = `${dialNormalized} ${telemovel}`.trim();
-
-    setHighlightBudget(false);
     trackSimulatorWhatsApp(categoria.id, orcamento, true);
 
     const linhas = [
-      "Olá! Simulei um orçamento no site:",
+      "Olá! Simulei um orçamento no site CLYON:",
       "",
       `*Serviço:* ${categoria.nome}`,
       categoria.trajeto === "custom" ? `*Origem:* ${origem}` : "*Origem:* Base CLYON",
       `*Destino:* ${destino}`,
       `*Distância:* ${km.toFixed(1)} km`,
-      `*Telemóvel:* ${telemovelCompleto}`,
+      `*Telemóvel:* ${telCompleto}`,
       "",
-      `*Tipo de acesso:* ${tipoAcesso || "-"}`,
-      tipoAcesso === "apartamento" ? `*Andares:* ${numeroAndares || "0"}` : null,
-      tipoAcesso === "apartamento" ? `*Elevador:* ${temElevador || "-"}` : null,
-      `*Pessoas:* ${quantidadePessoas || "-"}`,
-      `*Tempo estimado:* ${tempoEstimado || "-"} h`,
+      `*Acesso:* ${tipoAcesso || "-"}`,
+      tipoAcesso === "apartamento" ? `*Andares:* ${numeroAndares || "0"} | *Elevador:* ${temElevador || "-"}` : null,
+      `*Pessoas:* ${quantidadePessoas || "-"} | *Tempo:* ${tempoEstimado || "-"} h`,
       acessoDificil ? "*Acesso difícil:* Sim" : null,
-      categoria.calculo === "entulho"
-        ? `*Condição:* ${entulhoModo || "-"} | Sacos: ${quantidadeSacos || "0"}`
-        : null,
-      categoria.calculo === "moveis" && moveisModo === "carga"
-        ? `*Condição:* por carga | Cargas: ${cargas || "1"}`
-        : null,
-      categoria.calculo === "moveis" && moveisModo === "item"
-        ? `*Condição:* por item | Pequeno: ${peq || "0"} | Médio: ${med || "0"} | Grande: ${gra || "0"}`
-        : null,
+      categoria.calculo === "entulho" ? `*Entulho:* ${entulhoModo || "-"} | Sacos: ${quantidadeSacos || "0"}` : null,
+      categoria.calculo === "moveis" && moveisModo === "item" ? `*Móveis:* Peq:${peq||0} Méd:${med||0} Gr:${gra||0}` : null,
+      categoria.calculo === "moveis" && moveisModo === "carga" ? `*Cargas:* ${cargas||1}` : null,
+      fotosUrls.length > 0 ? `*Fotos:* ${fotosUrls.join(", ")}` : null,
       "",
-      `*Estimativa:* EUR ${orcamento.toFixed(2)}`,
+      `*Estimativa IA CLYON:* EUR ${orcamento.toFixed(2)}`,
       "",
       "Podem confirmar disponibilidade?",
     ].filter(Boolean);
 
-    const mensagem = encodeURIComponent(linhas.join("\n"));
-    const destinoWhatsApp =
-      categoria.id === "mudancas" ? MUDANCAS_WHATSAPP_PHONE : SIMULADOR_WHATSAPP_PHONE;
-    window.location.href = `https://wa.me/${destinoWhatsApp.replace(/\D/g, "")}?text=${mensagem}`;
+    const msg = encodeURIComponent(linhas.join("\n"));
+    const dest = categoria.id === "mudancas" ? MUDANCAS_WHATSAPP_PHONE : SIMULADOR_WHATSAPP_PHONE;
+    window.location.href = `https://wa.me/${dest.replace(/\D/g, "")}?text=${msg}`;
   };
 
-  if (!categoria) {
+  /* ═══════════════════════════════════
+     PASSO 1 — SELEÇÃO DE SERVIÇO
+  ═══════════════════════════════════ */
+  if (!categoria || step === 1) {
     return (
-      <div className="min-h-screen bg-white">
-        <section className="relative overflow-hidden bg-white">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(34,211,238,0.18),transparent_24%),linear-gradient(90deg,rgba(236,254,255,0.96)_0%,rgba(255,255,255,1)_55%)]" />
-          <div className="relative mx-auto max-w-7xl px-4 pb-16 pt-20 sm:px-6 lg:px-8">
-            <div className="grid gap-8 lg:grid-cols-[1fr_0.9fr] lg:items-end">
-              <div>
-                <div className="inline-flex items-center rounded-full border border-cyan-200 bg-cyan-50 px-4 py-2 text-sm font-semibold uppercase tracking-[0.22em] text-cyan-700 shadow-sm">
-                  Simulador
-                </div>
-                <h1 className="mt-4 max-w-[18ch] text-[2.25rem] font-bold leading-[1.05] tracking-tight text-slate-950 sm:text-[3.35rem]">
-                  Calcule a distância antes do preço final.
-                </h1>
-                <p className="mt-4 max-w-2xl text-[0.98rem] leading-7 text-slate-600">
-                  O cliente escreve a morada, recebe sugestões automáticas do Google
-                  e só depois avança para o cálculo do valor final.
-                </p>
-              </div>
-              <Card className="rounded-[30px] border border-cyan-100 bg-white p-6 shadow-[0_24px_60px_-34px_rgba(14,116,144,0.2)]">
-                <p className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-700">
-                  Fluxo novo
-                </p>
-                <ol className="mt-4 space-y-2 text-sm leading-7 text-slate-600">
-                  <li>1. Escolher o serviço</li>
-                  <li>2. Introduzir a morada com sugestões</li>
-                  <li>3. Calcular distância</li>
-                  <li>4. Gerar o valor final</li>
-                </ol>
-              </Card>
+      <div className="min-h-screen bg-[#050d18]">
+        {/* hero */}
+        <section className="relative overflow-hidden">
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_-10%,rgba(6,182,212,0.18),transparent)]" />
+          <div className="relative mx-auto max-w-4xl px-4 pb-10 pt-16 text-center sm:px-6">
+            {/* badges */}
+            <div className="flex flex-wrap items-center justify-center gap-3">
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-cyan-500/30 bg-cyan-500/10 px-3 py-1 text-xs font-semibold text-cyan-300">
+                <Star className="h-3 w-3 fill-cyan-300" />
+                163 avaliações 5 estrelas
+              </span>
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-semibold text-slate-300">
+                <MapPin className="h-3 w-3" />
+                24+ localidades
+              </span>
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-300">
+                <ShieldCheck className="h-3 w-3" />
+                Preço fixo garantido
+              </span>
             </div>
+            <h1 className="mt-6 text-balance text-3xl font-bold leading-tight tracking-tight text-white sm:text-5xl">
+              Orçamento inteligente<br />
+              <span className="text-cyan-400">em menos de 60 segundos.</span>
+            </h1>
+            <p className="mx-auto mt-4 max-w-xl text-pretty text-base leading-7 text-slate-400">
+              Sem leilões, sem negociação. A CLYON analisa os seus dados e devolve um preço fixo e transparente imediatamente.
+            </p>
           </div>
         </section>
 
-        <section className="bg-slate-50 py-16">
-          <div className="mx-auto grid max-w-7xl gap-4 px-4 sm:px-6 lg:grid-cols-2 lg:px-8">
-            {categorias.map((item) => (
-              <button
-                key={item.id}
-                type="button"
-                onClick={() => escolherCategoria(item.id)}
-                className="group rounded-[28px] border border-cyan-100 bg-white p-5 text-left shadow-[0_20px_44px_-34px_rgba(14,116,144,0.22)] transition hover:-translate-y-0.5 hover:border-cyan-300"
-              >
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <h3 className="text-lg font-semibold text-slate-950">{item.nome}</h3>
-                    <p className="mt-2 text-sm leading-6 text-slate-600">{item.descricao}</p>
+        {/* cards de serviço */}
+        <section className="pb-20">
+          <div className="mx-auto max-w-4xl px-4 sm:px-6">
+            <p className="mb-5 text-center text-xs font-semibold uppercase tracking-widest text-slate-500">
+              Escolha o serviço
+            </p>
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {categorias.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => escolherCategoria(item.id)}
+                    className="group relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-5 text-left transition hover:border-cyan-500/50 hover:bg-white/10"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-cyan-500/15 text-cyan-400">
+                        <Icon className="h-5 w-5" />
+                      </div>
+                      <ArrowRight className="h-4 w-4 text-slate-600 transition group-hover:text-cyan-400 group-hover:translate-x-0.5" />
+                    </div>
+                    <h3 className="mt-3 text-base font-semibold text-white">{item.nome}</h3>
+                    <p className="mt-1 text-sm leading-6 text-slate-400">{item.descricao}</p>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* trust signals */}
+            <div className="mt-10 grid gap-3 sm:grid-cols-3">
+              {[
+                { icon: ShieldCheck, title: "Profissionais verificados", desc: "Rigorosos processos de seleção e antecedentes." },
+                { icon: CheckCircle2, title: "Garantia de 15 dias",       desc: "Se não ficar satisfeito, retificamos sem custos." },
+                { icon: LockKeyhole,  title: "Sem taxas ocultas",         desc: "Preço fixo, transparente e confirmado antes do serviço." },
+              ].map((t) => {
+                const Icon = t.icon;
+                return (
+                  <div key={t.title} className="flex items-start gap-3 rounded-2xl border border-white/8 bg-white/4 p-4">
+                    <Icon className="mt-0.5 h-5 w-5 flex-shrink-0 text-emerald-400" />
+                    <div>
+                      <p className="text-sm font-semibold text-white">{t.title}</p>
+                      <p className="mt-0.5 text-xs leading-5 text-slate-400">{t.desc}</p>
+                    </div>
                   </div>
-                  <div className="flex h-12 w-12 items-center justify-center rounded-[18px] bg-cyan-50 text-cyan-600">
-                    <item.icon className="h-5 w-5" />
-                  </div>
-                </div>
-                <div
-                  className={cn(
-                    "mt-4 inline-flex min-h-[54px] items-center rounded-[22px] border px-5 py-3 text-sm font-bold",
-                    simulatorPrimaryButtonClass,
-                  )}
-                >
-                  Simular agora
-                  <ArrowRight className="ml-2 h-3.5 w-3.5" />
-                </div>
-              </button>
-            ))}
+                );
+              })}
+            </div>
           </div>
         </section>
       </div>
     );
   }
 
-  return (
-    <div className="min-h-screen bg-white">
-      <section className="relative overflow-hidden bg-white">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(34,211,238,0.18),transparent_24%),linear-gradient(90deg,rgba(236,254,255,0.96)_0%,rgba(255,255,255,1)_55%)]" />
-        <div className="relative mx-auto max-w-7xl px-4 pb-12 pt-20 sm:px-6 lg:px-8">
+  /* ═══════════════════════════════════
+     PASSO 2 — DADOS
+  ═══════════════════════════════════ */
+  if (step === 2) {
+    return (
+      <div className="min-h-screen bg-[#050d18]">
+        <div className="mx-auto max-w-2xl px-4 pb-20 pt-10 sm:px-6">
+          {/* voltar */}
           <button
-            onClick={() => {
-              resetFlow();
-              setCategoriaId(null);
-            }}
-            className={cn(
-              "inline-flex min-h-[54px] items-center gap-2 rounded-[22px] border px-5 py-3 text-sm font-bold transition",
-              simulatorSecondaryButtonClass,
-            )}
+            type="button"
+            onClick={() => { resetFlow(); setCategoriaId(null); }}
+            className="mb-6 inline-flex items-center gap-2 text-sm font-medium text-slate-400 hover:text-white transition"
           >
             <ArrowLeft className="h-4 w-4" />
             Voltar aos serviços
           </button>
 
-          <div className="mt-5 grid gap-8 lg:grid-cols-[1fr_0.9fr] lg:items-end">
-            <div>
-              <div className="inline-flex items-center rounded-full border border-cyan-200 bg-cyan-50 px-4 py-2 text-sm font-semibold uppercase tracking-[0.22em] text-cyan-700 shadow-sm">
-                {categoria.nome}
-              </div>
-              <h1 className="mt-4 max-w-[16ch] text-[2.2rem] font-bold leading-[1.04] tracking-tight text-slate-950 sm:text-[3.15rem]">
-                Introduza a morada e calcule a distância.
-              </h1>
-            </div>
-            <Card className="rounded-[30px] border border-cyan-100 bg-white p-6 shadow-[0_24px_60px_-34px_rgba(14,116,144,0.2)]">
-              <p className="text-sm leading-7 text-slate-600">
-                {categoria.trajeto === "custom"
-                  ? "Este serviço usa origem e destino reais."
-                  : "Este serviço usa a base CLYON como origem e calcula a distância até à morada do cliente."}
-              </p>
-            </Card>
-          </div>
-        </div>
-      </section>
+          {/* stepper */}
+          <StepperBar current={2} />
 
-      <section className="bg-slate-50 py-16">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="grid gap-6 lg:grid-cols-2 lg:items-start">
-            <Card className="rounded-[28px] border border-cyan-100 bg-white p-5 shadow-[0_20px_52px_-34px_rgba(14,116,144,0.18)]">
-              <StepTitle number="1" title="Morada e distância" />
-              <div className="mt-4 space-y-4">
-                {categoria.trajeto === "custom" ? (
-                  <AddressField
-                    id="origem"
-                    label="Morada de origem *"
-                    value={origem}
-                    onChange={atualizarOrigem}
-                    placeholder="Ex: Rua da Paz, 123, Lisboa"
-                    tone={getFieldTone({
-                      isNext: nextStep1Field === "origem",
-                      isMissing: showValidation && !origemValida,
-                      hasError: Boolean(kmErro) && !origemValida,
-                    })}
-                  />
-                ) : (
-                  <div className="rounded-[20px] border border-cyan-100 bg-cyan-50/80 p-3.5 text-sm leading-7 text-slate-700">
-                    A origem operacional é a base CLYON e é aplicada automaticamente.
-                  </div>
-                )}
-
+          <div className="mt-8 space-y-6">
+            {/* morada */}
+            <FormSection title="Morada do serviço">
+              {categoria.trajeto === "custom" && (
                 <AddressField
-                  id="destino"
-                  label={categoria.trajeto === "custom" ? "Morada de destino *" : "Morada do serviço *"}
-                  value={destino}
-                  onChange={atualizarDestino}
-                  placeholder="Ex: Rua da Paz, 123, Lisboa"
-                  tone={getFieldTone({
-                    isNext: nextStep1Field === "destino",
-                    isMissing: showValidation && !destinoValido,
-                    hasError: Boolean(kmErro) && !destinoValido,
-                  })}
+                  id="origem"
+                  label="Morada de origem *"
+                  value={origem}
+                  onChange={(v) => { setOrigem(v); setKm(null); }}
+                  placeholder="Ex: Rua da Paz 12, Lisboa"
+                  tone={showValidation && !origemValida ? "warning" : "default"}
+                  dark
                 />
+              )}
+              {categoria.trajeto === "base" && (
+                <div className="flex items-center gap-2 rounded-xl border border-cyan-500/20 bg-cyan-500/10 px-4 py-3 text-sm text-cyan-300">
+                  <MapPin className="h-4 w-4 flex-shrink-0" />
+                  Origem: Base operacional CLYON (aplicada automaticamente)
+                </div>
+              )}
+              <AddressField
+                id="destino"
+                label={categoria.trajeto === "custom" ? "Morada de destino *" : "Morada do serviço *"}
+                value={destino}
+                onChange={(v) => { setDestino(v); setKm(null); }}
+                placeholder="Ex: Rua da Paz 12, Lisboa"
+                tone={showValidation && !destinoValido ? "warning" : "default"}
+                dark
+              />
+              <button
+                type="button"
+                onClick={calcularDistancia}
+                disabled={!destino.trim() || kmLoading}
+                className="flex w-full items-center justify-center gap-2 rounded-xl bg-cyan-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-cyan-700 disabled:opacity-40"
+              >
+                {kmLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Route className="h-4 w-4" />}
+                {kmLoading ? "A calcular..." : "Calcular distância"}
+              </button>
+              {kmErro && <p className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-300">{kmErro}</p>}
+              {km !== null && (
+                <div className="flex items-center gap-3 rounded-xl border border-cyan-500/30 bg-cyan-500/10 px-4 py-3">
+                  <CheckCircle2 className="h-5 w-5 text-cyan-400" />
+                  <div>
+                    <p className="text-sm font-semibold text-cyan-300">Distância calculada</p>
+                    <p className="text-xs text-slate-400">{km.toFixed(1)} km — usado no cálculo do preço</p>
+                  </div>
+                  <span className="ml-auto text-2xl font-bold text-white">{km.toFixed(1)}<span className="text-sm font-normal text-slate-400"> km</span></span>
+                </div>
+              )}
+            </FormSection>
 
-                {categoria.calculo === "entulho" ? (
+            {/* fotos */}
+            <FormSection title="Fotos do material" subtitle="Opcional — ajudam a confirmar o orçamento (máx. 8 fotos)">
+              <div
+                onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+                onDragLeave={() => setIsDragging(false)}
+                onDrop={onDrop}
+                className={cn(
+                  "relative flex flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed px-6 py-8 text-center transition",
+                  isDragging
+                    ? "border-cyan-400 bg-cyan-500/10"
+                    : "border-white/15 bg-white/4 hover:border-white/30",
+                )}
+              >
+                <UploadCloud className="h-8 w-8 text-slate-500" />
+                <div>
+                  <p className="text-sm font-medium text-slate-300">Arraste fotos aqui ou</p>
+                  <label className="mt-1 inline-block cursor-pointer text-sm font-semibold text-cyan-400 hover:underline">
+                    selecione do dispositivo
+                    <input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      className="sr-only"
+                      onChange={onFileInput}
+                    />
+                  </label>
+                </div>
+                <p className="text-xs text-slate-500">JPG, PNG, HEIC — até 8 fotos</p>
+              </div>
+              {fotos.length > 0 && (
+                <div className="grid grid-cols-4 gap-2">
+                  {fotos.map((f, i) => (
+                    <div key={i} className="group relative aspect-square overflow-hidden rounded-xl">
+                      <img
+                        src={URL.createObjectURL(f)}
+                        alt={`foto ${i + 1}`}
+                        className="h-full w-full object-cover"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setFotos((prev) => prev.filter((_, j) => j !== i))}
+                        className="absolute inset-0 flex items-center justify-center bg-black/60 opacity-0 transition group-hover:opacity-100"
+                        aria-label="Remover foto"
+                      >
+                        <Trash2 className="h-5 w-5 text-white" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </FormSection>
+
+            {/* detalhes específicos do serviço */}
+            {km !== null && (
+              <FormSection title="Detalhes do serviço">
+                {/* entulho */}
+                {categoria.calculo === "entulho" && (
                   <>
-                    <Field>
-                      <Label>O entulho está em sacos ou no chão? *</Label>
+                    <DarkField label="O entulho está em sacos ou no chão? *">
                       <ChoiceGrid
                         value={entulhoModo}
                         onChange={setEntulhoModo}
-                        options={[
-                          { value: "sacos", label: "Em sacos" },
-                          { value: "chao", label: "No chão" },
-                        ]}
-                        tone={getFieldTone({
-                          isNext: nextStep1Field === "entulhoModo",
-                          isMissing: showValidation && !entulhoModoValido,
-                        })}
+                        options={[{ value: "sacos", label: "Em sacos" }, { value: "chao", label: "No chão" }]}
+                        tone={showValidation && !entulhoModoValido ? "warning" : "default"}
                       />
-                    </Field>
-                    <CompactNumberInput
-                      id="sacos"
-                      label="Quantidade de sacos *"
-                      value={quantidadeSacos}
-                      onChange={setQuantidadeSacos}
-                      placeholder="0"
-                      maxWidthClass="w-24"
-                      tone={getFieldTone({
-                        isNext: nextStep1Field === "quantidadeSacos",
-                        isMissing: showValidation && !quantidadeSacosValida,
-                      })}
-                    />
+                    </DarkField>
+                    <DarkField label="Quantidade de sacos *">
+                      <DarkInput id="sacos" type="number" min="0" value={quantidadeSacos} onChange={(e) => setQuantidadeSacos(e.target.value)} placeholder="0" className="w-28" />
+                    </DarkField>
                   </>
-                ) : null}
+                )}
 
-                <Button
-                  type="button"
-                  onClick={calcularDistancia}
-                  disabled={!podeCalcularDistancia || kmLoading}
-                  className="w-full rounded-[22px] bg-cyan-600 py-4 text-base font-semibold text-white hover:bg-cyan-700"
-                >
-                  {kmLoading ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Route className="mr-2 h-5 w-5" />}
-                  Calcular distância
-                </Button>
-
-                {kmErro ? (
-                  <div className="rounded-[20px] border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-7 text-amber-900">
-                    {kmErro}
-                  </div>
-                ) : null}
-
-                {km !== null ? (
-                  <div className="rounded-[22px] border border-cyan-100 bg-cyan-50/70 p-4">
-                    <p className="text-sm font-semibold uppercase tracking-[0.16em] text-cyan-700">Distância calculada</p>
-                    <p className="mt-2 text-[2.5rem] font-bold leading-none text-slate-950">{km.toFixed(1)} km</p>
-                    <p className="mt-2 text-sm leading-7 text-slate-600">
-                      Estes quilómetros serão usados no cálculo final.
-                    </p>
-                  </div>
-                ) : null}
-              </div>
-            </Card>
-
-            {km !== null ? (
-              <Card className="rounded-2xl border border-cyan-100 bg-white p-5 shadow-[0_20px_52px_-34px_rgba(14,116,144,0.18)]">
-                <StepTitle number="2" title="Detalhes do serviço" />
-                <div className="mt-4 space-y-4">
-                  {categoria.calculo === "moveis" ? (
-                    <>
-                      <Field>
-                      <Label>Como deseja calcular? *</Label>
-                        <ChoiceGrid
-                          value={moveisModo}
-                          onChange={setMoveisModo}
-                          options={[
-                            { value: "carga", label: "Por carga" },
-                            { value: "item", label: "Por item" },
-                          ]}
-                          tone={getFieldTone({
-                            isNext: nextStep2Field === "moveisModo",
-                            isMissing: showValidation && !moveisModoValido,
-                          })}
-                        />
-                      </Field>
-                      {moveisModo === "carga" ? (
-                        <CompactNumberInput
-                          id="cargas"
-                          label="Quantas cargas? *"
-                          value={cargas}
-                          onChange={setCargas}
-                          placeholder="1"
-                          maxWidthClass="w-24"
-                          tone={getFieldTone({
-                            isNext: nextStep2Field === "cargas",
-                            isMissing: showValidation && !cargasValida,
-                          })}
-                        />
-                      ) : null}
-                      {moveisModo === "item" ? (
-                        <div className={cn(
-                          "grid gap-4 rounded-[20px] border p-3 md:grid-cols-3",
-                          fieldToneClass(
-                            getFieldTone({
-                              isNext: nextStep2Field === "itensMoveis",
-                              isMissing: showValidation && !itensMoveisValidos,
-                            }),
-                          ),
-                        )}>
-                          <Field>
-                          <Label htmlFor="peq">Móvel pequeno</Label>
-                            <Input id="peq" type="number" min="0" value={peq} onChange={(event) => setPeq(event.target.value)} className="h-10 rounded-[14px] text-center" />
-                          </Field>
-                          <Field>
-                          <Label htmlFor="med">Móvel médio</Label>
-                            <Input id="med" type="number" min="0" value={med} onChange={(event) => setMed(event.target.value)} className="h-10 rounded-[14px] text-center" />
-                          </Field>
-                          <Field>
-                          <Label htmlFor="gra">Móvel grande</Label>
-                            <Input id="gra" type="number" min="0" value={gra} onChange={(event) => setGra(event.target.value)} className="h-10 rounded-[14px] text-center" />
-                          </Field>
-                        </div>
-                      ) : null}
-                    </>
-                  ) : null}
-
-                  <Field>
-                    <Label>Tipo de acesso *</Label>
-                    <ChoiceGrid
-                      value={tipoAcesso}
-                      onChange={setTipoAcesso}
-                      options={[
-                        { value: "apartamento", label: "Apartamento" },
-                        { value: "casa", label: "Casa" },
-                      ]}
-                      tone={getFieldTone({
-                        isNext: nextStep2Field === "tipoAcesso",
-                        isMissing: showValidation && !acessoValido,
-                      })}
-                    />
-                  </Field>
-
-                  {tipoAcesso === "apartamento" ? (
-                    <div className="grid gap-4 rounded-[22px] border border-cyan-100 bg-cyan-50/70 p-4 md:grid-cols-2">
-                      <Field>
-                        <Label htmlFor="andares">Número de andares *</Label>
-                        <Input id="andares" type="number" min="1" value={numeroAndares} onChange={(event) => setNumeroAndares(event.target.value)} className={cn("h-10 w-24 rounded-[14px] text-center", fieldToneClass(getFieldTone({
-                          isNext: nextStep2Field === "numeroAndares",
-                          isMissing: showValidation && tipoAcesso === "apartamento" && !numeroAndares,
-                        })))} />
-                      </Field>
-                      <Field>
-                        <Label>Tem elevador? *</Label>
-                        <ChoiceGrid value={temElevador} onChange={setTemElevador} options={[{ value: "sim", label: "Sim" }, { value: "nao", label: "Não" }]} tone={getFieldTone({
-                          isNext: nextStep2Field === "temElevador",
-                          isMissing: showValidation && tipoAcesso === "apartamento" && !temElevador,
-                        })} compact />
-                      </Field>
-                    </div>
-                  ) : null}
-
-                  <div className="grid gap-4 md:grid-cols-[1.1fr_0.9fr]">
-                    <Field>
-                      <Label>Quantidade de pessoas necessárias *</Label>
-                      <PeopleSelector
-                        value={quantidadePessoas}
-                        onChange={setQuantidadePessoas}
-                        manualMode={pessoasManual}
-                        onManualModeChange={setPessoasManual}
-                        tone={getFieldTone({
-                          isNext: nextStep2Field === "quantidadePessoas",
-                          isMissing: showValidation && !pessoasValida,
-                        })}
+                {/* móveis */}
+                {categoria.calculo === "moveis" && (
+                  <>
+                    <DarkField label="Como deseja calcular? *">
+                      <ChoiceGrid
+                        value={moveisModo}
+                        onChange={setMoveisModo}
+                        options={[{ value: "carga", label: "Por carga" }, { value: "item", label: "Por item" }]}
+                        tone={showValidation && !moveisModoValido ? "warning" : "default"}
                       />
-                    </Field>
-                    <CompactNumberInput
-                      id="tempo"
-                      label="Tempo estimado (horas) *"
-                      value={tempoEstimado}
-                      onChange={setTempoEstimado}
-                      placeholder="2"
-                      maxWidthClass="w-28"
-                      tone={getFieldTone({
-                        isNext: nextStep2Field === "tempoEstimado",
-                        isMissing: showValidation && !tempoValido,
-                      })}
-                    />
-                  </div>
-
-                  <div className="flex items-center gap-3 rounded-[20px] border border-cyan-100 bg-cyan-50/70 p-4">
-                    <Checkbox id="dificil" checked={acessoDificil} onCheckedChange={(checked) => setAcessoDificil(Boolean(checked))} />
-                    <Label htmlFor="dificil" className="cursor-pointer font-medium leading-6">
-                      O acesso é considerado difícil
-                    </Label>
-                  </div>
-
-                  <Button
-                    type="button"
-                    onClick={calcularOrcamento}
-                    disabled={!podeCalcularOrcamento}
-                    className={cn(
-                      "w-full rounded-[22px] bg-cyan-600 py-4 text-base font-semibold text-white hover:bg-cyan-700",
-                      podeCalcularOrcamento &&
-                        "border border-cyan-300 shadow-[0_0_0_0_rgba(34,211,238,0.55)] animate-[budget-button-pulse_1.8s_ease-in-out_infinite]",
+                    </DarkField>
+                    {moveisModo === "carga" && (
+                      <DarkField label="Quantas cargas? *">
+                        <DarkInput id="cargas" type="number" min="1" value={cargas} onChange={(e) => setCargas(e.target.value)} placeholder="1" className="w-28" />
+                      </DarkField>
                     )}
-                  >
-                    <Calculator className="mr-2 h-5 w-5" />
-                    Calcular orçamento
-                  </Button>
+                    {moveisModo === "item" && (
+                      <DarkField label="Número de itens *">
+                        <div className="grid grid-cols-3 gap-3">
+                          {[
+                            { id: "peq", label: "Pequeno", value: peq, set: setPeq },
+                            { id: "med", label: "Médio",   value: med, set: setMed },
+                            { id: "gra", label: "Grande",  value: gra, set: setGra },
+                          ].map((it) => (
+                            <div key={it.id} className="space-y-1">
+                              <label htmlFor={it.id} className="text-xs text-slate-400">{it.label}</label>
+                              <DarkInput id={it.id} type="number" min="0" value={it.value} onChange={(e) => it.set(e.target.value)} placeholder="0" />
+                            </div>
+                          ))}
+                        </div>
+                      </DarkField>
+                    )}
+                  </>
+                )}
+
+                {/* acesso */}
+                <DarkField label="Tipo de acesso *">
+                  <ChoiceGrid
+                    value={tipoAcesso}
+                    onChange={setTipoAcesso}
+                    options={[{ value: "apartamento", label: "Apartamento" }, { value: "casa", label: "Casa/Moradia" }]}
+                    tone={showValidation && !acessoValido ? "warning" : "default"}
+                  />
+                </DarkField>
+                {tipoAcesso === "apartamento" && (
+                  <div className="grid grid-cols-2 gap-3">
+                    <DarkField label="Andares *">
+                      <DarkInput id="andares" type="number" min="1" value={numeroAndares} onChange={(e) => setNumeroAndares(e.target.value)} />
+                    </DarkField>
+                    <DarkField label="Elevador? *">
+                      <ChoiceGrid
+                        value={temElevador}
+                        onChange={setTemElevador}
+                        options={[{ value: "sim", label: "Sim" }, { value: "nao", label: "Não" }]}
+                        tone={showValidation && tipoAcesso === "apartamento" && !temElevador ? "warning" : "default"}
+                      />
+                    </DarkField>
+                  </div>
+                )}
+
+                {/* pessoas + tempo */}
+                <div className="grid grid-cols-2 gap-3">
+                  <DarkField label="Pessoas necessárias *">
+                    <PeopleSelector
+                      value={quantidadePessoas}
+                      onChange={setQuantidadePessoas}
+                      manualMode={pessoasManual}
+                      onManualModeChange={setPessoasManual}
+                      tone={showValidation && !pessoasValida ? "warning" : "default"}
+                      dark
+                    />
+                  </DarkField>
+                  <DarkField label="Tempo estimado (h) *">
+                    <DarkInput id="tempo" type="number" min="1" value={tempoEstimado} onChange={(e) => setTempoEstimado(e.target.value)} placeholder="2" />
+                  </DarkField>
                 </div>
-              </Card>
-            ) : <div className="hidden lg:block" />}
+
+                {/* acesso difícil */}
+                <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-white/10 bg-white/5 px-4 py-3">
+                  <Checkbox
+                    id="dificil"
+                    checked={acessoDificil}
+                    onCheckedChange={(v) => setAcessoDificil(Boolean(v))}
+                  />
+                  <span className="text-sm text-slate-300">Acesso considerado difícil (rua estreita, sem paragem próxima)</span>
+                </label>
+              </FormSection>
+            )}
+
+            {/* botão avançar */}
+            <button
+              type="button"
+              onClick={avancarParaIA}
+              disabled={!kmOk || fotosUploading}
+              className={cn(
+                "flex w-full items-center justify-center gap-2 rounded-2xl px-6 py-4 text-base font-semibold text-white transition",
+                kmOk && podeAvancarPasso2
+                  ? "bg-cyan-600 hover:bg-cyan-700 shadow-[0_12px_32px_-12px_rgba(6,182,212,0.5)]"
+                  : "bg-white/10 text-slate-500 cursor-not-allowed",
+              )}
+            >
+              {fotosUploading
+                ? <><Loader2 className="h-5 w-5 animate-spin" />A enviar fotos...</>
+                : <><BrainCircuit className="h-5 w-5" />Gerar orçamento com IA</>}
+              {!fotosUploading && <ArrowRight className="h-4 w-4" />}
+            </button>
+            {showValidation && !podeAvancarPasso2 && (
+              <p className="text-center text-sm text-amber-400">
+                Calcule a distância e preencha todos os campos obrigatórios para continuar.
+              </p>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  /* ═══════════════════════════════════
+     PASSO 3 — IA A PROCESSAR
+  ═══════════════════════════════════ */
+  if (step === 3) {
+    const etapas = [
+      "A analisar as fotos e o tipo de serviço...",
+      "A calcular volume e complexidade de acesso...",
+      "A verificar distância e disponibilidade...",
+      "A gerar o preço fixo garantido...",
+    ];
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center bg-[#050d18] px-4">
+        <div className="w-full max-w-md space-y-8 text-center">
+          {/* ícone animado */}
+          <div className="relative mx-auto flex h-24 w-24 items-center justify-center">
+            <div className="absolute inset-0 animate-ping rounded-full bg-cyan-500/20" />
+            <div className="absolute inset-3 animate-pulse rounded-full bg-cyan-500/15" />
+            <div className="relative flex h-16 w-16 items-center justify-center rounded-full bg-cyan-600 shadow-[0_0_40px_rgba(6,182,212,0.5)]">
+              <BrainCircuit className="h-8 w-8 text-white" />
+            </div>
           </div>
 
-          <Card className="mt-6 rounded-2xl border border-slate-900 bg-[linear-gradient(160deg,#082f49_0%,#041c2d_100%)] p-5 text-white shadow-[0_28px_70px_-34px_rgba(2,132,199,0.4)]">
-            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-200">Resumo</p>
-            <div className="mt-3 grid gap-5 lg:grid-cols-[0.95fr_1.05fr] lg:items-start">
-              <div>
-                <h2 className="text-[1.65rem] font-bold leading-tight">{categoria.nome}</h2>
-                <p className="mt-3 text-sm leading-7 text-slate-300">{categoria.descricao}</p>
-              </div>
-              <div className="space-y-4">
-                <style>{`
-                  @keyframes budget-button-pulse {
-                    0%, 100% { box-shadow: 0 0 0 0 rgba(34,211,238,0.18); }
-                    50% { box-shadow: 0 0 0 8px rgba(34,211,238,0.06); }
-                  }
-                  @keyframes budget-card-pulse {
-                    0%, 100% { box-shadow: 0 0 0 0 rgba(34,211,238,0.18); }
-                    50% { box-shadow: 0 0 0 12px rgba(34,211,238,0.08); }
-                  }
-                  @keyframes whatsapp-cta-pulse {
-                    0%, 100% {
-                      box-shadow: 0 0 0 0 rgba(34,211,238,0.24), 0 16px 38px -24px rgba(34,211,238,0.72);
-                      transform: translateY(0);
-                    }
-                    50% {
-                      box-shadow: 0 0 0 10px rgba(34,211,238,0.08), 0 22px 44px -22px rgba(34,211,238,0.8);
-                      transform: translateY(-1px);
-                    }
-                  }
-                `}</style>
+          <div>
+            <h2 className="text-2xl font-bold text-white">IA CLYON a processar</h2>
+            <p className="mt-2 text-sm text-slate-400">Análise em tempo real do seu pedido</p>
+          </div>
+
+          {/* etapas */}
+          <div className="space-y-3 text-left">
+            {etapas.map((etapa, i) => {
+              const done = aiStep > i + 1;
+              const active = aiStep === i + 1;
+              return (
                 <div
-                  ref={summaryValueRef}
+                  key={i}
                   className={cn(
-                    "rounded-[24px] border border-cyan-300/20 bg-cyan-400/10 p-5 transition duration-300",
-                    highlightBudget &&
-                      "border-cyan-300 shadow-[0_0_0_0_rgba(34,211,238,0.55)] animate-[budget-card-pulse_1.2s_ease-in-out_infinite]",
+                    "flex items-center gap-3 rounded-xl px-4 py-3 text-sm transition-all duration-500",
+                    done   ? "border border-emerald-500/30 bg-emerald-500/10 text-emerald-300" :
+                    active ? "border border-cyan-500/40 bg-cyan-500/10 text-cyan-200" :
+                             "border border-white/5 bg-white/3 text-slate-600",
                   )}
                 >
-                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-cyan-200">
-                    Valor simulado
-                  </p>
-                  <p className="mt-2 text-[2.2rem] font-bold leading-none text-white">
-                    {orcamento !== null ? `EUR ${orcamento.toFixed(2)}` : "--"}
-                  </p>
-                  <p className="mt-2 text-sm leading-6 text-cyan-50/85">
-                    {orcamento !== null
-                      ? "Estimativa pronta para envio."
-                      : "Preencha os dados para ver o valor estimado."}
-                  </p>
+                  {done ? (
+                    <Check className="h-4 w-4 flex-shrink-0 text-emerald-400" />
+                  ) : active ? (
+                    <Loader2 className="h-4 w-4 flex-shrink-0 animate-spin text-cyan-400" />
+                  ) : (
+                    <div className="h-4 w-4 flex-shrink-0 rounded-full border border-white/15" />
+                  )}
+                  {etapa}
                 </div>
-                {orcamento !== null ? (
-                  <>
-                    <div className="rounded-[22px] border border-amber-200/35 bg-amber-50/10 px-4 py-3 text-sm leading-7 text-cyan-50">
-                      Estes valores são aproximados e devem ser confirmados por um assistente.
-                    </div>
-                    
-                    {/* Campo telemóvel obrigatório */}
-                    <div className="rounded-[22px] border border-white/15 bg-white/5 p-4">
-                      <p className="text-sm font-semibold text-cyan-100">
-                        Quer um valor mais exato?
-                      </p>
-                      <p className="mt-1 text-sm leading-6 text-slate-300">
-                        Deixe o seu contacto e respondemos em minutos.
-                      </p>
-                      <div className="mt-3 space-y-2">
-                        <label htmlFor="telemovel-simulador" className="sr-only">
-                          Telemóvel
-                        </label>
-                        <div className="flex gap-2">
-                          {showCustomDial ? (
-                            <Input
-                              type="tel"
-                              inputMode="tel"
-                              value={customDial}
-                              onChange={(e) => {
-                                setCustomDial(e.target.value);
-                                setTelemovelError("");
-                              }}
-                              placeholder="+000"
-                              aria-label="Código do país"
-                              className="h-12 w-24 rounded-[14px] border border-white/20 bg-white/10 text-center text-white placeholder:text-slate-400 transition-colors focus:border-cyan-400"
-                            />
-                          ) : (
-                            <select
-                              value={countryDial}
-                              onChange={(e) => handleCountryChange(e.target.value)}
-                              aria-label="Código do país"
-                              className="h-12 w-28 rounded-[14px] border border-white/20 bg-white/10 px-2 text-sm text-white transition-colors focus:border-cyan-400 focus:outline-none [&>option]:text-slate-900"
-                            >
-                              {COUNTRY_OPTIONS.map((country) => (
-                                <option key={country.code} value={country.dial}>
-                                  {country.flag} {country.dial}
-                                </option>
-                              ))}
-                              <option value="custom">Outro…</option>
-                            </select>
-                          )}
-                          <Input
-                            id="telemovel-simulador"
-                            type="tel"
-                            inputMode="tel"
-                            value={telemovel}
-                            onChange={(e) => handleTelemovelChange(e.target.value)}
-                            placeholder="912 345 678"
-                            maxLength={18}
-                            className={cn(
-                              "h-12 flex-1 rounded-[14px] border bg-white/10 text-white placeholder:text-slate-400 transition-colors",
-                              telemovelError
-                                ? "border-red-400 ring-2 ring-red-400/30"
-                                : "border-white/20 focus:border-cyan-400",
-                            )}
-                          />
-                        </div>
-                        {showCustomDial ? (
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setShowCustomDial(false);
-                              setTelemovelError("");
-                            }}
-                            className="text-xs font-semibold text-cyan-200 underline-offset-2 hover:underline"
-                          >
-                            Escolher da lista de países
-                          </button>
-                        ) : null}
-                        {telemovelError && (
-                          <p className="text-sm text-red-300">{telemovelError}</p>
-                        )}
-                      </div>
-                    </div>
-
-                    <Button
-                      type="button"
-                      onClick={confirmarPedido}
-                      className={cn(
-                        "w-full rounded-[22px] bg-cyan-600 py-5 text-base font-semibold text-white hover:bg-cyan-700",
-                        highlightBudget &&
-                          "border border-cyan-200/70 animate-[whatsapp-cta-pulse_1.2s_ease-in-out_infinite]",
-                      )}
-                    >
-                      <Phone className="mr-2 h-5 w-5" />
-                      Enviar por WhatsApp
-                    </Button>
-                  </>
-                ) : null}
-              </div>
-            </div>
-            <div className="mt-5 space-y-3 rounded-[22px] border border-white/10 bg-white/5 p-4">
-              {categoria.trajeto === "custom" ? (
-                <SummaryRow icon={<MapPin className="h-4.5 w-4.5" />} label="Origem" value={origem || "Ainda não definida"} />
-              ) : (
-                <SummaryRow icon={<MapPin className="h-4.5 w-4.5" />} label="Origem" value="Base CLYON" />
-              )}
-              <SummaryRow icon={<MapPin className="h-4.5 w-4.5" />} label="Destino" value={destino || "Ainda não definido"} />
-              <SummaryRow icon={<Route className="h-4.5 w-4.5" />} label="Distância" value={km !== null ? `${km.toFixed(1)} km` : "Calcule a distância"} />
-              <SummaryRow
-                icon={<Calculator className="h-4.5 w-4.5" />}
-                label="Condições"
-                value={[
-                  tipoAcesso ? `Acesso: ${tipoAcesso}` : null,
-                  quantidadePessoas ? `Pessoas: ${quantidadePessoas}` : null,
-                  tempoEstimado ? `Tempo: ${tempoEstimado} h` : null,
-                  acessoDificil ? "Acesso difícil" : null,
-                ].filter(Boolean).join(" | ") || "Preencha os detalhes do serviço"}
-              />
-            </div>
-
-            {orcamento !== null ? (
-              <>
-                <div className="hidden mt-5 rounded-[22px] border border-amber-200/35 bg-amber-50/10 px-4 py-3 text-sm leading-7 text-cyan-50">
-                  Estes valores são aproximados e devem ser confirmados por um assistente.
-                </div>
-                <Button
-                  type="button"
-                  onClick={confirmarPedido}
-                  className="mt-4 hidden w-full rounded-[22px] bg-cyan-600 py-5 text-base font-semibold text-white hover:bg-cyan-700"
-                >
-                  <Phone className="mr-2 h-5 w-5" />
-                  Solicitar este serviço no WhatsApp
-                </Button>
-              </>
-            ) : (
-              <div className="mt-5 rounded-[22px] border border-dashed border-white/15 bg-white/5 p-4 text-sm leading-7 text-slate-300">
-                Calcule a distância e complete os detalhes para ver o valor final.
-              </div>
-            )}
-          </Card>
+              );
+            })}
+          </div>
         </div>
-      </section>
-    </div>
-  );
-}
-
-function Field({ children }: { children: ReactNode }) {
-  return <div className="space-y-2.5">{children}</div>;
-}
-
-type FieldTone = "default" | "next" | "warning" | "error";
-
-function getFieldTone({
-  isNext,
-  isMissing,
-  hasError,
-}: {
-  isNext?: boolean;
-  isMissing?: boolean;
-  hasError?: boolean;
-}): FieldTone {
-  if (hasError) return "error";
-  if (isNext) return "next";
-  if (isMissing) return "warning";
-  return "default";
-}
-
-function fieldToneClass(tone: FieldTone) {
-  if (tone === "error") {
-    return "border-red-400 ring-4 ring-red-100 transition-colors hover:border-red-500";
-  }
-  if (tone === "warning") {
-    return "border-amber-400 ring-4 ring-amber-100 transition-colors hover:border-amber-500";
-  }
-  if (tone === "next") {
-    return "border-cyan-400 ring-4 ring-cyan-100 shadow-[0_0_0_1px_rgba(34,211,238,0.15)] transition-colors hover:border-cyan-600";
-  }
-  return "border-cyan-300 transition-colors hover:border-cyan-600 focus:border-cyan-600";
-}
-
-function fieldToneRingClass(tone: FieldTone) {
-  if (tone === "error") {
-    return "ring-4 ring-red-100";
-  }
-  if (tone === "warning") {
-    return "ring-4 ring-amber-100";
-  }
-  if (tone === "next") {
-    return "ring-4 ring-cyan-100 shadow-[0_0_0_1px_rgba(34,211,238,0.15)]";
-  }
-  return "";
-}
-
-function StepTitle({ number, title }: { number: string; title: string }) {
-  return (
-    <div>
-      <div className="inline-flex items-center gap-2 rounded-full border border-cyan-100 bg-cyan-50 px-3 py-1.5 text-sm font-semibold text-cyan-700">
-        <span className="flex h-6 w-6 items-center justify-center rounded-full bg-cyan-500 text-white">
-          {number}
-        </span>
-        Etapa {number}
       </div>
-      <h2 className="mt-4 text-[1.55rem] font-bold leading-tight text-slate-950">{title}</h2>
-    </div>
-  );
-}
+    );
+  }
 
-function SummaryRow({
-  icon,
-  label,
-  value,
-}: {
-  icon: ReactNode;
-  label: string;
-  value: string;
-}) {
+  /* ═══════════════════════════════════
+     PASSO 4 — RESULTADO + CONFIRMAÇÃO
+  ═══════════════════════════════════ */
   return (
-    <div className="flex items-start gap-3 text-sm">
-      <div className="mt-0.5 text-cyan-200">{icon}</div>
-      <div className="min-w-0">
-        <p className="font-semibold text-cyan-100">{label}</p>
-        <p className="mt-1 break-words leading-6 text-slate-300">{value}</p>
-      </div>
-    </div>
-  );
-}
+    <div className="min-h-screen bg-[#050d18]">
+      <div className="mx-auto max-w-xl px-4 pb-20 pt-10 sm:px-6">
+        <StepperBar current={4} />
 
-function AddressField({
-  id,
-  label,
-  value,
-  onChange,
-  placeholder,
-  tone = "default",
-}: {
-  id: string;
-  label: string;
-  value: string;
-  onChange: (value: string) => void;
-  placeholder: string;
-  tone?: FieldTone;
-}) {
-  const [focused, setFocused] = useState(false);
-  const [predictions, setPredictions] = useState<MapsPrediction[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-
-  useEffect(() => {
-    const query = value.trim();
-    if (!focused || query.length < 3) {
-      setPredictions([]);
-      setLoading(false);
-      setError("");
-      return;
-    }
-
-    const controller = new AbortController();
-    const timeout = window.setTimeout(async () => {
-      try {
-        setLoading(true);
-        setError("");
-        const response = await fetch("/api/maps/autocomplete", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ input: query }),
-          signal: controller.signal,
-        });
-        const data = await response.json();
-        if (!response.ok) {
-          setError(
-            data?.error === "maps_unconfigured"
-            ? "A chave Google Maps ainda não está configurada."
-            : "Não foi possível carregar sugestões.",
-          );
-          setPredictions([]);
-          return;
-        }
-        setPredictions(Array.isArray(data.predictions) ? data.predictions : []);
-      } catch (fetchError) {
-        if (fetchError instanceof DOMException && fetchError.name === "AbortError") return;
-      setError("Não foi possível carregar sugestões.");
-        setPredictions([]);
-      } finally {
-        setLoading(false);
-      }
-    }, 260);
-
-    return () => {
-      controller.abort();
-      window.clearTimeout(timeout);
-    };
-  }, [focused, value]);
-
-  return (
-    <Field>
-      <Label htmlFor={id}>{label}</Label>
-      <div className="relative">
-        <Input
-          id={id}
-          value={value}
-          onChange={(event) => onChange(event.target.value)}
-          onFocus={() => setFocused(true)}
-          onBlur={() => window.setTimeout(() => setFocused(false), 140)}
-          placeholder={placeholder}
-          autoComplete="street-address"
-          className={cn("h-10 rounded-[14px] bg-white", fieldToneClass(tone))}
-        />
-        {loading ? (
-          <div className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-cyan-600">
-            <Loader2 className="h-4 w-4 animate-spin" />
-          </div>
-        ) : null}
-        {focused && predictions.length > 0 ? (
-          <div className="absolute left-0 right-0 top-[calc(100%+0.5rem)] z-20 overflow-hidden rounded-[22px] border border-cyan-100 bg-white shadow-[0_24px_60px_-34px_rgba(14,116,144,0.3)]">
-            {predictions.map((prediction) => (
-              <button
-                key={prediction.placeId}
-                type="button"
-                onMouseDown={(event) => {
-                  event.preventDefault();
-                  onChange(prediction.description);
-                  setPredictions([]);
-                  setFocused(false);
-                }}
-                className="flex w-full items-start gap-3 border-b border-cyan-50 px-4 py-3 text-left transition last:border-b-0 hover:bg-cyan-50"
-              >
-                <MapPin className="mt-1 h-4 w-4 flex-shrink-0 text-cyan-600" />
-                <div>
-                  <p className="text-sm font-semibold text-slate-950">{prediction.mainText}</p>
-                  <p className="text-sm leading-6 text-slate-500">
-                    {prediction.secondaryText || prediction.description}
-                  </p>
+        <div className="mt-8 space-y-5">
+          {/* resultado de preço */}
+          <div className="overflow-hidden rounded-2xl border border-cyan-500/30 bg-gradient-to-br from-[#091a2e] to-[#050d18]">
+            <div className="border-b border-cyan-500/20 px-6 py-4">
+              <div className="flex items-center gap-2">
+                <BrainCircuit className="h-5 w-5 text-cyan-400" />
+                <p className="text-sm font-semibold text-cyan-300">Resultado da análise IA CLYON</p>
+              </div>
+            </div>
+            <div className="px-6 py-6 text-center" ref={summaryRef}>
+              <p className="text-xs font-semibold uppercase tracking-widest text-slate-500">Valor estimado</p>
+              <p className="mt-2 text-5xl font-bold text-white">
+                {orcamento !== null ? `€${orcamento.toFixed(2)}` : "—"}
+              </p>
+              <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-300">
+                <ShieldCheck className="h-3.5 w-3.5" />
+                Preço fixo · Sem taxas ocultas · Sem leilão
+              </div>
+            </div>
+            {/* resumo */}
+            <div className="border-t border-white/8 px-6 py-4 space-y-2">
+              {[
+                { label: "Serviço",    value: categoria.nome },
+                { label: "Destino",    value: destino },
+                { label: "Distância",  value: `${km?.toFixed(1) ?? "—"} km` },
+                { label: "Acesso",     value: tipoAcesso || "—" },
+                { label: "Equipa",     value: quantidadePessoas ? `${quantidadePessoas} pessoa(s)` : "—" },
+                fotos.length > 0 ? { label: "Fotos",  value: `${fotos.length} enviada(s)` } : null,
+              ].filter(Boolean).map((r) => (
+                <div key={r!.label} className="flex items-baseline justify-between text-sm">
+                  <span className="text-slate-500">{r!.label}</span>
+                  <span className="font-medium text-slate-200">{r!.value}</span>
                 </div>
-              </button>
-            ))}
+              ))}
+            </div>
           </div>
-        ) : null}
+
+          {/* disclaimer */}
+          <p className="text-center text-xs leading-5 text-slate-500">
+            Esta estimativa é gerada automaticamente e pode ser ajustada após confirmação por um especialista CLYON.
+          </p>
+
+          {/* confirmação humana */}
+          <div className="rounded-2xl border border-white/10 bg-white/5 p-5 space-y-4">
+            <div className="flex items-start gap-3">
+              <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-cyan-500/15">
+                <Phone className="h-4 w-4 text-cyan-400" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-white">Um especialista CLYON vai confirmar a sua vaga</p>
+                <p className="mt-0.5 text-xs text-slate-400">Deixe o seu contacto — respondemos em minutos.</p>
+              </div>
+            </div>
+
+            {/* campo telefone */}
+            <div className="space-y-2">
+              <label className="text-xs font-medium text-slate-400">Telemóvel *</label>
+              <div className="flex gap-2">
+                {showCustomDial ? (
+                  <Input
+                    type="tel"
+                    value={customDial}
+                    onChange={(e) => { setCustomDial(e.target.value); setTelemovelError(""); }}
+                    placeholder="+000"
+                    aria-label="Código do país"
+                    className="h-11 w-20 rounded-xl border-white/20 bg-white/10 text-center text-white placeholder:text-slate-500"
+                  />
+                ) : (
+                  <select
+                    value={countryDial}
+                    onChange={(e) => {
+                      if (e.target.value === "custom") { setShowCustomDial(true); setCustomDial(countryDial); }
+                      else { setShowCustomDial(false); setCountryDial(e.target.value); }
+                    }}
+                    aria-label="Código do país"
+                    className="h-11 w-28 rounded-xl border border-white/20 bg-white/10 px-2 text-sm text-white [&>option]:text-slate-900"
+                  >
+                    {COUNTRY_OPTIONS.map((c) => (
+                      <option key={c.code} value={c.dial}>{c.flag} {c.dial}</option>
+                    ))}
+                    <option value="custom">Outro…</option>
+                  </select>
+                )}
+                <Input
+                  type="tel"
+                  value={telemovel}
+                  onChange={(e) => {
+                    setTelemovel(e.target.value.replace(/\D/g, "").replace(/(\d{3})(?=\d)/g, "$1 ").trim().slice(0, 18));
+                    setTelemovelError("");
+                  }}
+                  placeholder="912 345 678"
+                  className={cn(
+                    "h-11 flex-1 rounded-xl border bg-white/10 text-white placeholder:text-slate-500",
+                    telemovelError ? "border-red-400" : "border-white/20 focus:border-cyan-400",
+                  )}
+                />
+              </div>
+              {telemovelError && <p className="text-xs text-red-400">{telemovelError}</p>}
+            </div>
+
+            {/* botão confirmar */}
+            <button
+              type="button"
+              onClick={confirmarPedido}
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-6 py-4 text-base font-semibold text-white transition hover:bg-emerald-700 shadow-[0_12px_32px_-12px_rgba(16,185,129,0.5)]"
+            >
+              <Phone className="h-5 w-5" />
+              Confirmar e agendar via WhatsApp
+            </button>
+          </div>
+
+          {/* recomeçar */}
+          <button
+            type="button"
+            onClick={() => { resetFlow(); setCategoriaId(null); }}
+            className="flex w-full items-center justify-center gap-2 rounded-xl border border-white/10 bg-transparent px-4 py-3 text-sm font-medium text-slate-400 hover:text-white transition"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Simular outro serviço
+          </button>
+        </div>
       </div>
-      {value.trim().length > 0 && value.trim().length < 3 ? (
-        <p className="text-xs leading-6 text-slate-500">
-                    Escreva pelo menos 3 caracteres para ver sugestões do Google.
-        </p>
-      ) : null}
-      {error ? <p className="text-xs leading-6 text-amber-700">{error}</p> : null}
-    </Field>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════
+   SUB-COMPONENTES
+═══════════════════════════════════════════════════════════ */
+
+function StepperBar({ current }: { current: number }) {
+  const steps = [
+    { n: 1, label: "Serviço" },
+    { n: 2, label: "Dados" },
+    { n: 3, label: "Análise IA" },
+    { n: 4, label: "Resultado" },
+  ];
+  return (
+    <div className="flex items-center gap-0">
+      {steps.map((s, i) => {
+        const done = current > s.n;
+        const active = current === s.n;
+        return (
+          <div key={s.n} className="flex flex-1 items-center">
+            <div className="flex flex-col items-center gap-1">
+              <div className={cn(
+                "flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold transition",
+                done   ? "bg-emerald-500 text-white" :
+                active ? "bg-cyan-600 text-white shadow-[0_0_12px_rgba(6,182,212,0.5)]" :
+                         "bg-white/10 text-slate-500",
+              )}>
+                {done ? <Check className="h-3.5 w-3.5" /> : s.n}
+              </div>
+              <span className={cn("text-[10px] font-medium", active ? "text-cyan-300" : done ? "text-emerald-400" : "text-slate-600")}>{s.label}</span>
+            </div>
+            {i < steps.length - 1 && (
+              <div className={cn("mx-1 h-px flex-1 transition", done ? "bg-emerald-500/50" : "bg-white/10")} />
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function FormSection({ title, subtitle, children }: { title: string; subtitle?: string; children: ReactNode }) {
+  return (
+    <div className="space-y-4">
+      <div>
+        <h3 className="text-base font-semibold text-white">{title}</h3>
+        {subtitle && <p className="mt-0.5 text-xs text-slate-400">{subtitle}</p>}
+      </div>
+      {children}
+    </div>
+  );
+}
+
+function DarkField({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <div className="space-y-2">
+      <label className="text-sm font-medium text-slate-300">{label}</label>
+      {children}
+    </div>
+  );
+}
+
+function DarkInput({ className, ...props }: React.InputHTMLAttributes<HTMLInputElement>) {
+  return (
+    <input
+      {...props}
+      className={cn(
+        "h-11 w-full rounded-xl border border-white/20 bg-white/8 px-3 text-sm text-white placeholder:text-slate-500 focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-400/20",
+        className,
+      )}
+    />
   );
 }
 
@@ -1262,42 +995,32 @@ function ChoiceGrid({
   value,
   onChange,
   options,
-  columns = 2,
   tone = "default",
-  compact = false,
 }: {
   value: string;
-  onChange: (value: string) => void;
+  onChange: (v: string) => void;
   options: ChoiceOption[];
-  columns?: 2 | 3;
   tone?: FieldTone;
-  compact?: boolean;
 }) {
-  const gridClass =
-    columns === 3
-      ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
-      : "grid-cols-1 sm:grid-cols-2";
-
   return (
-    <div className={`grid gap-3 ${gridClass}`}>
-      {options.map((option) => {
-        const active = value === option.value;
+    <div className="grid grid-cols-2 gap-2">
+      {options.map((opt) => {
+        const active = value === opt.value;
         return (
           <button
-            key={option.value}
+            key={opt.value}
             type="button"
-            onClick={() => onChange(option.value)}
+            onClick={() => onChange(opt.value)}
             className={cn(
-              compact
-                ? "min-h-[54px] rounded-[22px] px-4 py-3 text-center text-sm"
-                : "min-h-[54px] rounded-[22px] px-4 py-3 text-center text-sm",
-              "inline-flex items-center justify-center font-bold transition",
+              "rounded-xl border px-4 py-3 text-sm font-semibold transition",
               active
-                ? simulatorPrimaryButtonClass
-                : `${simulatorSecondaryButtonClass} ${fieldToneRingClass(tone)}`,
+                ? "border-cyan-500 bg-cyan-600 text-white"
+                : tone === "warning"
+                  ? "border-amber-500/40 bg-white/5 text-slate-300 hover:border-white/30"
+                  : "border-white/15 bg-white/5 text-slate-300 hover:border-white/30",
             )}
           >
-            {option.label}
+            {opt.label}
           </button>
         );
       })}
@@ -1305,112 +1028,129 @@ function ChoiceGrid({
   );
 }
 
-function CompactNumberInput({
-  id,
-  label,
-  value,
-  onChange,
-  placeholder,
-  maxWidthClass = "w-28",
-  tone = "default",
+type FieldToneType = "default" | "next" | "warning" | "error";
+
+function AddressField({
+  id, label, value, onChange, placeholder, tone = "default", dark = false,
 }: {
-  id: string;
-  label: string;
-  value: string;
-  onChange: (value: string) => void;
-  placeholder?: string;
-  maxWidthClass?: string;
-  tone?: FieldTone;
+  id: string; label: string; value: string; onChange: (v: string) => void;
+  placeholder: string; tone?: FieldToneType; dark?: boolean;
 }) {
+  const [focused, setFocused] = useState(false);
+  const [predictions, setPredictions] = useState<MapsPrediction[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const query = value.trim();
+    if (!focused || query.length < 3) { setPredictions([]); return; }
+    const ctrl = new AbortController();
+    const t = window.setTimeout(async () => {
+      try {
+        setLoading(true);
+        const res = await fetch("/api/maps/autocomplete", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ input: query }), signal: ctrl.signal,
+        });
+        const data = await res.json();
+        setPredictions(res.ok && Array.isArray(data.predictions) ? data.predictions : []);
+      } catch { setPredictions([]); }
+      finally { setLoading(false); }
+    }, 260);
+    return () => { ctrl.abort(); window.clearTimeout(t); };
+  }, [focused, value]);
+
   return (
-    <Field>
-      <Label htmlFor={id}>{label}</Label>
-      <Input
-        id={id}
-        type="number"
-        min="0"
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        placeholder={placeholder}
-        className={cn("h-10 rounded-[14px] text-center", maxWidthClass, fieldToneClass(tone))}
-      />
-    </Field>
+    <div className="space-y-1.5">
+      <label htmlFor={id} className={cn("text-sm font-medium", dark ? "text-slate-300" : "text-slate-700")}>{label}</label>
+      <div className="relative">
+        <input
+          id={id}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          onFocus={() => setFocused(true)}
+          onBlur={() => window.setTimeout(() => setFocused(false), 140)}
+          placeholder={placeholder}
+          autoComplete="street-address"
+          className={cn(
+            "h-11 w-full rounded-xl border px-3 pr-10 text-sm focus:outline-none focus:ring-2",
+            dark
+              ? cn("border-white/20 bg-white/8 text-white placeholder:text-slate-500 focus:border-cyan-400 focus:ring-cyan-400/20",
+                  tone === "warning" && "border-amber-500/50")
+              : cn("border-slate-200 bg-white text-slate-900 placeholder:text-slate-400 focus:border-cyan-400 focus:ring-cyan-100",
+                  tone === "warning" && "border-amber-400"),
+          )}
+        />
+        {loading && (
+          <div className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2">
+            <Loader2 className="h-4 w-4 animate-spin text-cyan-400" />
+          </div>
+        )}
+        {focused && predictions.length > 0 && (
+          <div className="absolute left-0 right-0 top-[calc(100%+6px)] z-30 overflow-hidden rounded-xl border border-white/15 bg-[#0d1f35] shadow-xl">
+            {predictions.map((p) => (
+              <button
+                key={p.placeId}
+                type="button"
+                onMouseDown={(e) => { e.preventDefault(); onChange(p.description); setPredictions([]); setFocused(false); }}
+                className="flex w-full items-start gap-3 border-b border-white/8 px-4 py-3 text-left last:border-0 hover:bg-white/8"
+              >
+                <MapPin className="mt-0.5 h-4 w-4 flex-shrink-0 text-cyan-400" />
+                <div>
+                  <p className="text-sm font-semibold text-white">{p.mainText}</p>
+                  <p className="text-xs text-slate-400">{p.secondaryText || p.description}</p>
+                </div>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
   );
 }
 
 function PeopleSelector({
-  value,
-  onChange,
-  manualMode,
-  onManualModeChange,
-  tone = "default",
+  value, onChange, manualMode, onManualModeChange, tone = "default", dark = false,
 }: {
-  value: string;
-  onChange: (value: string) => void;
-  manualMode: boolean;
-  onManualModeChange: (manual: boolean) => void;
-  tone?: FieldTone;
+  value: string; onChange: (v: string) => void;
+  manualMode: boolean; onManualModeChange: (m: boolean) => void;
+  tone?: FieldTone; dark?: boolean;
 }) {
+  const btnBase = cn("flex h-10 w-10 items-center justify-center rounded-xl text-sm font-bold transition border");
   return (
-    <div className="space-y-3">
+    <div className="flex flex-wrap gap-2">
       {manualMode ? (
-        <div className="flex items-center gap-2">
-          <Input
-            type="number"
-            min="8"
-            value={value}
-            onChange={(event) => onChange(event.target.value)}
-            placeholder="8"
-            className={cn("h-10 w-24 rounded-[14px] text-center", fieldToneClass(tone))}
+        <>
+          <DarkInput
+            type="number" min="8" value={value}
+            onChange={(e) => onChange((e.target as HTMLInputElement).value)}
+            placeholder="8" className="w-20 h-10"
           />
-          <button
-            type="button"
-            onClick={() => {
-              onManualModeChange(false);
-              onChange("");
-            }}
-            className="h-10 min-h-10 rounded-lg border border-cyan-100 bg-white px-3 py-2 text-sm text-slate-600 hover:border-slate-300 hover:bg-slate-50"
-          >
+          <button type="button" onClick={() => { onManualModeChange(false); onChange(""); }}
+            className="rounded-xl border border-white/15 bg-white/5 px-3 text-xs text-slate-400 hover:text-white">
             Voltar
           </button>
-        </div>
+        </>
       ) : (
-        <div className="flex flex-wrap gap-2">
-          {[1, 2, 3, 4, 5, 6, 7].map((num) => {
-            const active = value === String(num) && !manualMode;
-            return (
-              <button
-                key={num}
-                type="button"
-                onClick={() => {
-                  onManualModeChange(false);
-                  onChange(String(num));
-                }}
-                className={cn(
-                  "flex h-11 w-11 items-center justify-center rounded-[18px] text-sm font-bold transition",
-                  active
-                    ? simulatorPrimaryButtonClass
-                    : `${simulatorSecondaryButtonClass} ${fieldToneRingClass(tone)}`,
-                )}
-              >
-                {num}
-              </button>
-            );
-          })}
-          <button
-            type="button"
-            onClick={() => {
-              onManualModeChange(true);
-              onChange("");
-            }}
-            className={cn(
-              "flex h-11 min-w-12 items-center justify-center rounded-[18px] px-3 text-sm font-bold transition",
-              `${simulatorSecondaryButtonClass} ${fieldToneRingClass(tone)}`,
-            )}
-          >
-            8+
-          </button>
-        </div>
+        <>
+          {[1, 2, 3, 4, 5, 6, 7].map((n) => (
+            <button
+              key={n} type="button"
+              onClick={() => { onManualModeChange(false); onChange(String(n)); }}
+              className={cn(btnBase,
+                value === String(n)
+                  ? "border-cyan-500 bg-cyan-600 text-white"
+                  : dark
+                    ? "border-white/15 bg-white/5 text-slate-300 hover:border-white/30"
+                    : "border-slate-200 bg-white text-slate-600 hover:border-slate-300",
+              )}
+            >{n}</button>
+          ))}
+          <button type="button" onClick={() => { onManualModeChange(true); onChange(""); }}
+            className={cn(btnBase, "w-auto px-3",
+              dark ? "border-white/15 bg-white/5 text-slate-300 hover:border-white/30"
+                   : "border-slate-200 bg-white text-slate-600 hover:border-slate-300",
+            )}>8+</button>
+        </>
       )}
     </div>
   );
