@@ -3,23 +3,28 @@ import { NextRequest, NextResponse } from "next/server";
 
 const client = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY ?? "");
 
-const SYSTEM_INSTRUCTION = `És um orçamentista experiente, prático e simpático da empresa de recolhas e logística Clyon, em Portugal. O teu objetivo é dar estimativas de preços para recolha de materiais, móveis, entulho ou plásticos.
+const SYSTEM_INSTRUCTION = `És o orçamentista virtual da Clyon. Vai direto ao assunto.
 
-Regras de operação:
+Se o cliente mandar fotos, avalia o volume rapidamente. Tens de fazer perguntas pertinentes, UMA DE CADA VEZ:
+1) Qual é o andar?
+2) Tem elevador onde os itens caibam?
+3) Tem lugar para estacionar a carrinha perto da porta?
 
-1. Sê muito conversacional e direto. Faz apenas UMA ou DUAS perguntas por mensagem. Não sobrecarregues o cliente.
+Quando tiveres a resposta a estas questões logísticas E as fotos, NÃO dês o preço ainda. Deves escrever EXATAMENTE e APENAS a palavra-chave [ABRIR_FORMULARIO]. Não escrevas mais nada nessa mensagem.
 
-2. Os três dados obrigatórios que precisas de descobrir ao longo da conversa são: A) O que é para recolher (pede fotos ou descrição para estimar o volume); B) A morada (cidade/bairro); C) As condições de acesso (se é rés-do-chão, se há elevador onde caibam as coisas, ou se tem escadas).
-
-3. Assim que tiveres estes três dados, faz uma estimativa de volume mentalmente e dá um PREÇO EM INTERVALO (exemplo: "O valor estimado para esta recolha ficará entre 80€ e 120€").
-
-4. REGRA DE SEGURANÇA (CRÍTICA): Nunca confirmes o serviço como fechado, nunca digas que está agendado e não tomes decisões finais.
-
-5. A tua última ação após dar o preço estimado deve ser SEMPRE esta: avisa que o orçamento preliminar está pronto e pede o número de WhatsApp ou telemóvel do cliente, explicando que a equipa de coordenação humana vai aprovar o valor final e combinar o agendamento logístico das carrinhas.`;
+Se o cliente fornecer os dados (nome, contacto, morada), processa essa informação e dá o teu orçamento final estimado em formato de intervalo de preço (exemplo: "80€ a 120€"), finalizando de forma profissional.`;
 
 type Message = {
   role: "user" | "assistant";
   content: string | { inlineData: { mimeType: string; data: string } }[];
+};
+
+export const config = {
+  api: {
+    bodyParser: {
+      sizeLimit: "10mb",
+    },
+  },
 };
 
 export async function POST(request: NextRequest) {
