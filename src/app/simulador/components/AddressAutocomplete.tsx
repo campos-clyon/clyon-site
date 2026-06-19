@@ -281,21 +281,48 @@ export default function AddressAutocomplete({
 
   const isAddressReady = addressStatus === "selected" || addressStatus === "manual_confirmed";
 
+  // Coordenadas da base CLYON (Av. Q.ta das Laranjeiras, Fernão Ferro)
+  const BASE_LAT = 38.5555;
+  const BASE_LNG = -8.9921;
+
+  // Haversine: distância em linha recta entre dois pontos
+  function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number): number {
+    const R = 6371;
+    const dLat = ((lat2 - lat1) * Math.PI) / 180;
+    const dLng = ((lng2 - lng1) * Math.PI) / 180;
+    const a =
+      Math.sin(dLat / 2) ** 2 +
+      Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLng / 2) ** 2;
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  }
+
+  // Fallback local usando coordenadas do Nominatim + Haversine
+  function calculateLocalDistance(addr: AddressData): DistanceFromBase | null {
+    if (!addr.lat || !addr.lng) return null;
+    const km = Math.round(haversineKm(BASE_LAT, BASE_LNG, addr.lat, addr.lng) * 10) / 10;
+    const estimatedMin = Math.round((km / 60) * 60); // ~60km/h médio
+    return {
+      distanceMeters: Math.round(km * 1000),
+      distanceKm: km,
+      durationSeconds: estimatedMin * 60,
+      durationText: estimatedMin < 60 ? `~${estimatedMin} min` : `~${Math.floor(estimatedMin / 60)}h${estimatedMin % 60 ? ` ${estimatedMin % 60}min` : ""}`,
+      calculatedAt: new Date().toISOString(),
+      isEstimate: true,
+    };
+  }
+
   // Disparar cálculo automático assim que a morada é confirmada.
-  // Usamos uma ref para garantir que só corre uma vez por selecção.
   const calculatingRef = useRef(false);
 
-  useEffect(() => {
-    if (!isAddressReady || !selectedAddress) return;
+  const runDistanceCalculation = useCallback((addr: AddressData) => {
     if (calculatingRef.current) return;
     calculatingRef.current = true;
-
     setDistanceStatus("calculating");
 
     fetch("/api/maps/distance", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ destination: selectedAddress }),
+      body: JSON.stringify({ destination: addr }),
     })
       .then((r) => r.json())
       .then((data) => {
@@ -311,17 +338,39 @@ export default function AddressAutocomplete({
           setDistanceStatus("calculated");
           onDistanceCalculated?.(result, "calculated");
         } else {
+          // Fallback: Haversine com coordenadas do Nominatim
+          const local = calculateLocalDistance(addr);
+          if (local) {
+            setDistanceResult(local);
+            setDistanceStatus("calculated");
+            onDistanceCalculated?.(local, "calculated");
+          } else {
+            setDistanceStatus("error");
+            onDistanceCalculated?.({}, "error");
+          }
+        }
+      })
+      .catch(() => {
+        // Fallback em caso de erro de rede
+        const local = calculateLocalDistance(addr);
+        if (local) {
+          setDistanceResult(local);
+          setDistanceStatus("calculated");
+          onDistanceCalculated?.(local, "calculated");
+        } else {
           setDistanceStatus("error");
           onDistanceCalculated?.({}, "error");
         }
       })
-      .catch(() => {
-        setDistanceStatus("error");
-        onDistanceCalculated?.({}, "error");
-      })
       .finally(() => {
         calculatingRef.current = false;
       });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [onDistanceCalculated]);
+
+  useEffect(() => {
+    if (!isAddressReady || !selectedAddress) return;
+    runDistanceCalculation(selectedAddress);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAddressReady, selectedAddress]);
 
@@ -438,6 +487,23 @@ export default function AddressAutocomplete({
         </p>
       )}
 
+      {/* Botão forçar cálculo — aparece em erro ou quando ficou idle */}
+      {isAddressReady && selectedAddress && (distanceStatus === "error" || distanceStatus === "idle") && (
+        <button
+          type="button"
+          onClick={() => {
+            calculatingRef.current = false;
+            runDistanceCalculation(selectedAddress);
+          }}
+          className="inline-flex items-center gap-1.5 text-[11px] font-medium text-[#0487D9] hover:text-[#0369a1] transition-colors"
+        >
+          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+          </svg>
+          {distanceStatus === "error" ? "Recalcular distância da base CLYON" : "Calcular distância da base CLYON"}
+        </button>
+      )}
+
       {/* Badge resultado da distância */}
       {distanceStatus === "calculated" && distanceResult && (
         <div className="flex items-center gap-2 flex-wrap">
@@ -445,7 +511,7 @@ export default function AddressAutocomplete({
             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
             </svg>
-            {distanceResult.distanceKm} km · {distanceResult.durationText}
+            {distanceResult.distanceKm} km{(distanceResult as DistanceFromBase & { isEstimate?: boolean }).isEstimate ? " (estimativa)" : ""} · {distanceResult.durationText}
           </span>
           <span className="text-[11px] text-[#64748B]">da base CLYON</span>
         </div>
