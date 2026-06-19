@@ -640,20 +640,7 @@ export default function SimulatorPage() {
                       </svg>
                     </button>
 
-                    {/* Botão Resumo — só mobile, dentro da barra para não sobrepor o teclado */}
-                    <button
-                      type="button"
-                      onClick={() => setShowMobileDrawer(true)}
-                      className="lg:hidden flex-shrink-0 h-7 px-2 rounded-lg flex items-center gap-1 text-[#0487D9] hover:bg-[#EFF8FF] transition-colors border border-[#BAE6FD]"
-                      title="Ver resumo do pedido"
-                    >
-                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                      </svg>
-                      <span className="text-[11px] font-semibold">
-                        Resumo{filledCount > 0 ? ` (${filledCount})` : ""}
-                      </span>
-                    </button>
+
                     <input
                       ref={fileInputRef}
                       type="file"
@@ -695,6 +682,45 @@ export default function SimulatorPage() {
                   <p className="text-[10px] text-[#CBD5E1] mt-1 ml-1">
                     Pode escrever tudo de uma vez ou usar o <span className="font-medium">+</span> para adicionar fotos
                   </p>
+
+                  {/* Strip de resumo mobile — só aparece quando há dados preenchidos */}
+                  {filledCount > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => setShowMobileDrawer(true)}
+                      className="lg:hidden w-full mt-2 flex items-center gap-1.5 bg-[#F0F9FF] border border-[#BAE6FD] rounded-lg px-2.5 py-1.5 text-left hover:bg-[#E0F2FE] transition-colors"
+                    >
+                      <svg className="w-3 h-3 text-[#0487D9] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                      </svg>
+                      <div className="flex-1 flex items-center gap-1.5 overflow-hidden min-w-0">
+                        {/* Chips dos campos preenchidos */}
+                        {order.serviceType && (
+                          <span className="text-[10px] bg-white border border-[#BAE6FD] text-[#0487D9] px-1.5 py-0.5 rounded-full whitespace-nowrap font-medium">
+                            {order.serviceType.replace(/_/g, " ")}
+                          </span>
+                        )}
+                        {order.floor && (
+                          <span className="text-[10px] bg-white border border-[#BAE6FD] text-[#0487D9] px-1.5 py-0.5 rounded-full whitespace-nowrap font-medium">
+                            {order.floor}
+                          </span>
+                        )}
+                        {order.address?.formattedAddress && (
+                          <span className="text-[10px] bg-white border border-[#BAE6FD] text-[#0487D9] px-1.5 py-0.5 rounded-full whitespace-nowrap font-medium truncate max-w-[100px]">
+                            {order.address.formattedAddress}
+                          </span>
+                        )}
+                        {order.urgency && (
+                          <span className="text-[10px] bg-white border border-[#BAE6FD] text-[#0487D9] px-1.5 py-0.5 rounded-full whitespace-nowrap font-medium">
+                            {order.urgency === "today" ? "Urgente hoje" : order.urgency === "tomorrow" ? "Amanhã" : order.urgency === "this_week" ? "Esta semana" : "Flexível"}
+                          </span>
+                        )}
+                      </div>
+                      <span className="text-[10px] text-[#0487D9] font-semibold flex-shrink-0">
+                        {filledCount} campo{filledCount !== 1 ? "s" : ""} ›
+                      </span>
+                    </button>
+                  )}
                 </div>
 
               </div>
