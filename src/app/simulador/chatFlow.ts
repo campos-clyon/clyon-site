@@ -154,17 +154,22 @@ export function parseServiceType(text: string): string {
 }
 
 export function parseElevator(text: string): OrderData["hasElevator"] {
-  if (text.toLowerCase().includes("sim, funciona")) return "yes";
-  if (text.toLowerCase().includes("pequeno")) return "small";
-  if (text.toLowerCase().includes("não tem")) return "no";
+  const t = text.toLowerCase();
+  if (t.includes("sim, funciona") || t === "sim" || /sim.*funciona|funciona.*sim/.test(t)) return "yes";
+  if (t.includes("pequeno") || t.includes("mas é pequeno") || t.includes("cabe pouco")) return "small";
+  if (t.includes("não tem") || t.includes("nao tem") || t === "não" || t === "nao") return "no";
+  if (t.includes("sim")) return "yes"; // "sim" sozinho → tem elevador
   return "unknown";
 }
 
 export function parseParking(text: string): OrderData["parkingDistance"] {
-  if (text.toLowerCase().includes("mesmo à porta")) return "door";
-  if (text.toLowerCase().includes("20 metros")) return "under_20m";
-  if (text.toLowerCase().includes("30 metros")) return "over_30m";
-  if (text.toLowerCase().includes("difícil")) return "difficult";
+  const t = text.toLowerCase();
+  if (t.includes("mesmo à porta") || t.includes("mesmo a porta") || t.includes("porta")) return "door";
+  if (t.includes("até 20") || t.includes("ate 20") || t.includes("20 metro") || t.includes("sim, até 20") || t.includes("sim ate 20")) return "under_20m";
+  if (t.includes("30 metro") || t.includes("mais de 30") || t.includes("mais 30")) return "over_30m";
+  if (t.includes("difícil") || t.includes("dificil") || t.includes("complicado") || t.includes("não há") || t.includes("nao ha")) return "difficult";
+  // Resposta afirmativa genérica ("sim", "há lugar", "consegue", "dá")
+  if (t === "sim" || /^sim[.!]?$/.test(t.trim()) || t.includes("há lugar") || t.includes("ha lugar") || t.includes("consegue") || t.includes("dá para") || t.includes("da para")) return "under_20m";
   return "unknown";
 }
 

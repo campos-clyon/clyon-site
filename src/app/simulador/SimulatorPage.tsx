@@ -192,6 +192,47 @@ export default function SimulatorPage() {
     el.scrollTop = el.scrollHeight;
   }, [messages, isTyping]);
 
+  // ─── Cálculo automático de distância quando morada chega via chat ──────────
+  useEffect(() => {
+    const addr = order.address;
+    const isReady = order.addressStatus === "selected" || order.addressStatus === "manual_confirmed";
+    const notYetCalculated = !order.distanceStatus || order.distanceStatus === "idle";
+    if (!isReady || !notYetCalculated) return;
+    if (!addr?.formattedAddress && !addr?.lat) return;
+
+    setOrder((prev) => ({ ...prev, distanceStatus: "calculating" }));
+
+    const destination = addr.lat
+      ? { lat: addr.lat, lng: addr.lng, formattedAddress: addr.formattedAddress }
+      : { formattedAddress: addr.formattedAddress };
+
+    fetch("/api/maps/distance", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ destination }),
+    })
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.ok) {
+          setOrder((prev) => ({
+            ...prev,
+            distanceStatus: "calculated",
+            distanceFromBase: {
+              distanceMeters: data.distanceMeters,
+              distanceKm: data.distanceKm,
+              durationSeconds: data.durationSeconds,
+              durationText: data.durationText,
+              calculatedAt: new Date().toISOString(),
+            },
+          }));
+        } else {
+          setOrder((prev) => ({ ...prev, distanceStatus: "error" }));
+        }
+      })
+      .catch(() => setOrder((prev) => ({ ...prev, distanceStatus: "error" })));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [order.addressStatus, order.address?.formattedAddress, order.address?.lat]);
+
   // ─── Reset ─────────────────────────────────────────────────────────────────
   const resetSimulator = () => {
     isResettingRef.current = true;
