@@ -639,6 +639,21 @@ export default function SimulatorPage() {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                       </svg>
                     </button>
+
+                    {/* Botão Resumo — só mobile, dentro da barra para não sobrepor o teclado */}
+                    <button
+                      type="button"
+                      onClick={() => setShowMobileDrawer(true)}
+                      className="lg:hidden flex-shrink-0 h-7 px-2 rounded-lg flex items-center gap-1 text-[#0487D9] hover:bg-[#EFF8FF] transition-colors border border-[#BAE6FD]"
+                      title="Ver resumo do pedido"
+                    >
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                      </svg>
+                      <span className="text-[11px] font-semibold">
+                        Resumo{filledCount > 0 ? ` (${filledCount})` : ""}
+                      </span>
+                    </button>
                     <input
                       ref={fileInputRef}
                       type="file"
@@ -699,22 +714,7 @@ export default function SimulatorPage() {
               />
             </div>
 
-            {/* Botão flutuante mobile — abre drawer */}
-            <button
-              type="button"
-              onClick={() => setShowMobileDrawer(true)}
-              className="lg:hidden fixed bottom-20 right-4 z-30 flex items-center gap-2 px-3 py-2.5 rounded-full bg-[#0487D9] text-white shadow-lg text-[12px] font-semibold"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-              </svg>
-              Resumo
-              {filledCount > 0 && (
-                <span className="w-5 h-5 rounded-full bg-white text-[#0487D9] text-[10px] font-bold flex items-center justify-center">
-                  {filledCount}
-                </span>
-              )}
-            </button>
+
 
             {/* Drawer mobile — resumo + estimativa */}
             {showMobileDrawer && (
