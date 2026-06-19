@@ -481,9 +481,21 @@ export default function SimulatorPage() {
 
   const progressStep = getProgressStep(order);
 
+  // ─── Drawer mobile (resumo + estimativa) ──────────────────────────────────
+  const [showMobileDrawer, setShowMobileDrawer] = useState(false);
+
+  // Contar itens preenchidos para badge no botão
+  const filledCount = [
+    order.serviceType, order.description || (order.files?.length ?? 0) > 0 ? "x" : null,
+    order.address?.formattedAddress, order.floor,
+    order.hasElevator && order.hasElevator !== "unknown" ? order.hasElevator : null,
+    order.parkingDistance && order.parkingDistance !== "unknown" ? order.parkingDistance : null,
+    order.receiver?.name, order.urgency,
+  ].filter(Boolean).length;
+
   // ─── Render ────────────────────────────────────────────────────────────────
   return (
-    <div className="h-screen bg-[#F7FBFF] overflow-hidden flex flex-col">
+    <div className="h-[calc(100dvh-76px)] bg-[#F7FBFF] overflow-hidden flex flex-col">
 
       {/* Hero */}
       <div className="bg-white border-b border-[#E2E8F0] flex-shrink-0">
@@ -519,7 +531,7 @@ export default function SimulatorPage() {
         <div className="h-full max-w-7xl mx-auto px-3 sm:px-5 lg:px-8 py-3">
           <div className="h-full flex flex-col lg:flex-row gap-3">
 
-            {/* Coluna chat */}
+            {/* Coluna chat — ocupa tudo no mobile */}
             <div className="flex-1 min-w-0 min-h-0 flex flex-col">
               <div className="flex-1 min-h-0 bg-white rounded-xl border border-[#E2E8F0] shadow-sm flex flex-col overflow-hidden">
 
@@ -673,8 +685,8 @@ export default function SimulatorPage() {
               </div>
             </div>
 
-            {/* Coluna lateral */}
-            <div className="lg:w-[340px] flex-shrink-0 min-h-0 overflow-y-auto space-y-3 pb-3">
+            {/* Coluna lateral — visível apenas lg+ */}
+            <div className="hidden lg:block lg:w-[340px] flex-shrink-0 min-h-0 overflow-y-auto space-y-3 pb-3">
               <OrderSummaryCard key={`summary-${resetVersion}`} order={order} />
               <EstimateCard
                 key={`estimate-${resetVersion}`}
@@ -686,6 +698,54 @@ export default function SimulatorPage() {
                 order={order}
               />
             </div>
+
+            {/* Botão flutuante mobile — abre drawer */}
+            <button
+              type="button"
+              onClick={() => setShowMobileDrawer(true)}
+              className="lg:hidden fixed bottom-20 right-4 z-30 flex items-center gap-2 px-3 py-2.5 rounded-full bg-[#0487D9] text-white shadow-lg text-[12px] font-semibold"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+              </svg>
+              Resumo
+              {filledCount > 0 && (
+                <span className="w-5 h-5 rounded-full bg-white text-[#0487D9] text-[10px] font-bold flex items-center justify-center">
+                  {filledCount}
+                </span>
+              )}
+            </button>
+
+            {/* Drawer mobile — resumo + estimativa */}
+            {showMobileDrawer && (
+              <div className="lg:hidden fixed inset-0 z-40 flex flex-col justify-end">
+                <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShowMobileDrawer(false)} />
+                <div className="relative bg-[#F7FBFF] rounded-t-2xl max-h-[85dvh] overflow-y-auto p-4 space-y-3">
+                  <div className="flex items-center justify-between mb-1">
+                    <h2 className="text-[14px] font-bold text-[#102033]">Resumo do pedido</h2>
+                    <button
+                      type="button"
+                      onClick={() => setShowMobileDrawer(false)}
+                      className="w-7 h-7 rounded-full bg-[#F1F5F9] flex items-center justify-center text-[#64748B]"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+                  <OrderSummaryCard key={`summary-mob-${resetVersion}`} order={order} />
+                  <EstimateCard
+                    key={`estimate-mob-${resetVersion}`}
+                    estimate={estimate}
+                    loading={estimateLoading}
+                    canGenerate={canGenerate}
+                    onGenerate={handleGenerateEstimate}
+                    onReset={() => setShowResetConfirm(true)}
+                    order={order}
+                  />
+                </div>
+              </div>
+            )}
 
           </div>
         </div>

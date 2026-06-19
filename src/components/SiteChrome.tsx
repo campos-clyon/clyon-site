@@ -11,7 +11,7 @@ import StickyCTA from "@/components/StickyCTA";
 const BARE_ROUTES = ["/orcamento-recolha-lisboa"];
 
 // Rotas internas (dashboard) que usam apenas o Header — sem Footer nem StickyCTA
-const DASHBOARD_ROUTES = ["/colaboradores"];
+const DASHBOARD_ROUTES = ["/colaboradores", "/simulador"];
 
 export default function SiteChrome({
   children,
