@@ -113,8 +113,10 @@ export function calculateLocalEstimate(order: OrderData): EstimateResult {
     missingFields.push("Descrição ou fotos");
   if (!order.city && !order.address?.formattedAddress) missingFields.push("Localidade ou morada");
   if (!order.floor) missingFields.push("Andar");
-  if (!order.hasElevator) missingFields.push("Elevador");
-  if (!order.parkingDistance) missingFields.push("Estacionamento");
+  // hasElevator e parkingDistance podem ter valor "no", "under_20m", etc. — strings truthy mesmo quando indicam "sem"
+  // só está em falta se for undefined, null ou "unknown"
+  if (!order.hasElevator || order.hasElevator === "unknown") missingFields.push("Elevador");
+  if (!order.parkingDistance || order.parkingDistance === "unknown") missingFields.push("Estacionamento");
   if (!order.receiver?.name || !order.receiver?.phone) missingFields.push("Nome e contacto");
 
   if (missingFields.length > 0) {

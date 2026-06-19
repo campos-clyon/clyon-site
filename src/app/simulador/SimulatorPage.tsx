@@ -128,6 +128,7 @@ function extractOrderFieldsFromText(text: string, current: OrderData): Partial<O
       updates.locationZone = detectZone(cityMatch[1].trim());
       updates.address = { formattedAddress: cityMatch[1].trim() };
       updates.addressStatus = "manual_confirmed";
+      updates.distanceStatus = "idle"; // garantir que o useEffect de distância dispara
     }
   }
 
@@ -207,7 +208,7 @@ export default function SimulatorPage() {
   useEffect(() => {
     const addr = order.address;
     const isReady = order.addressStatus === "selected" || order.addressStatus === "manual_confirmed";
-    const notYetCalculated = !order.distanceStatus || order.distanceStatus === "idle";
+    const notYetCalculated = !order.distanceStatus || order.distanceStatus === "idle" || order.distanceStatus === "error";
     if (!isReady || !notYetCalculated) return;
     if (!addr?.formattedAddress && !addr?.lat) return;
 
@@ -380,7 +381,7 @@ export default function SimulatorPage() {
     }
   };
 
-  // ─── Formulário de contacto ────────────────────────────────────────────────
+  // ─── Formul��rio de contacto ────────────────────────────────────────────────
   const handleContactSubmit = (data: {
     receiver: OrderData["receiver"];
     address: { formattedAddress?: string; city?: string; postalCode?: string; lat?: number; lng?: number; placeId?: string };
@@ -421,20 +422,25 @@ export default function SimulatorPage() {
     ]);
   };
 
+  // Ref sempre actualizada com o order mais recente — evita stale closure nos useEffects
+  const orderRef = useRef(order);
+  useEffect(() => { orderRef.current = order; }, [order]);
+
   // ─── Gerar estimativa ──────────────────────────────────────────────────────
-  const handleGenerateEstimate = async () => {
+  const handleGenerateEstimate = async (orderOverride?: OrderData) => {
+    const currentOrder = orderOverride ?? orderRef.current;
     setEstimateLoading(true);
     setEstimate(null);
     try {
       const res = await fetch("/api/simulator/estimate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ order }),
+        body: JSON.stringify({ order: currentOrder }),
       });
       const data = await res.json();
-      setEstimate(res.ok ? data : calculateLocalEstimate(order));
+      setEstimate(res.ok ? data : calculateLocalEstimate(currentOrder));
     } catch {
-      setEstimate(calculateLocalEstimate(order));
+      setEstimate(calculateLocalEstimate(currentOrder));
     } finally {
       setEstimateLoading(false);
     }
@@ -496,10 +502,11 @@ export default function SimulatorPage() {
   // ─── Auto-gerar estimativa quando o resumo fica completo ──────────────────
   useEffect(() => {
     if (canGenerate && !estimate && !estimateLoading) {
-      handleGenerateEstimate();
+      // Passar order directamente para evitar stale closure
+      handleGenerateEstimate(order);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [canGenerate]);
+  }, [canGenerate, order]);
 
   const progressStep = getProgressStep(order);
 
