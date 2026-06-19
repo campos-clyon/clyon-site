@@ -1,23 +1,21 @@
 import type { Metadata } from "next";
-import SimuladorChatClient from "./SimuladorChatClient";
+import SimulatorPage from "./SimulatorPage";
 
 export const metadata: Metadata = {
-  title: "Simulador de Preços — Calcule o Custo da Sua Recolha",
+  title: "Simulador de Preços — Estimativa Instantânea CLYON",
   description:
-    "Chat interativo com a IA orçamentista da Clyon. Obtenha uma estimativa de preço para a sua recolha de móveis, entulho, monos ou limpeza em Lisboa e Setúbal.",
+    "Descreva o serviço, envie fotos e indique a morada. A CLYON calcula uma estimativa com base no preçário e nas condições de acesso. Recolha de móveis, entulho, monos, esvaziamentos e mudanças em Lisboa e Setúbal.",
   alternates: {
     canonical: "https://clyon.pt/simulador",
   },
   openGraph: {
-    title: "Simulador de Preços — Calcule o Custo da Sua Recolha",
+    title: "Simulador de Preços — Estimativa Instantânea CLYON",
     description:
-      "Chat com IA para obter orçamento instantâneo da sua recolha em Lisboa e Setúbal!",
+      "Estimativa de preço instantânea para recolha, esvaziamento e mudanças em Lisboa e Setúbal.",
     url: "https://clyon.pt/simulador",
   },
 };
 
-export const revalidate = 86400;
-
 export default function SimuladorPage() {
-  return <SimuladorChatClient />;
+  return <SimulatorPage />;
 }
