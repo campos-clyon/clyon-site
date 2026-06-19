@@ -511,7 +511,7 @@ export default function AddressAutocomplete({
             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
             </svg>
-            {distanceResult.distanceKm} km{(distanceResult as DistanceFromBase & { isEstimate?: boolean }).isEstimate ? " (estimativa)" : ""} · {distanceResult.durationText}
+            {distanceResult.distanceKm} km{distanceResult.isEstimate ? " (estimativa)" : ""} · {distanceResult.durationText}
           </span>
           <span className="text-[11px] text-[#64748B]">da base CLYON</span>
         </div>

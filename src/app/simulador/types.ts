@@ -38,6 +38,7 @@ export interface DistanceFromBase {
   durationSeconds?: number;
   durationText?: string;
   calculatedAt?: string;
+  isEstimate?: boolean; // true quando calculado por Haversine (sem Google Maps)
 }
 
 export interface ReceiverData {
