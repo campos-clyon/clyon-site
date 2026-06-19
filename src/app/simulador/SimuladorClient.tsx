@@ -309,6 +309,34 @@ export default function SimuladorClient({ initialCategoriaId = null }: Simulador
   /* ── avançar para passo 3 (animação IA) ── */
   const avancarParaIA = async () => {
     setShowValidation(true);
+
+    // Se a distância ainda não foi calculada, calcular agora automaticamente
+    if (km === null) {
+      const origin = categoria?.trajeto === "custom" ? origem.trim() : BASE_ADDRESS;
+      if (!origin || !destino.trim()) return;
+      setKmLoading(true); setKmErro("");
+      try {
+        const res = await fetch("/api/maps/distance", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ origin, destination: destino.trim() }),
+        });
+        const data = await res.json();
+        if (!res.ok) { setKmErro("Não foi possível calcular a distância. Tente novamente."); setKmLoading(false); return; }
+        const kmVal = Number(data.distanceKm ?? 0);
+        setKm(kmVal);
+        if (categoria?.trajeto === "custom") setOrigem(String(data.originAddress ?? origin));
+        setDestino(String(data.destinationAddress ?? destino));
+        setKmLoading(false);
+        // Rever validações com km preenchido — se ainda faltarem campos, parar aqui
+        if (!acessoValido || !pessoasValida || !tempoValido) return;
+      } catch {
+        setKmErro("Erro ao calcular distância. Tente novamente.");
+        setKmLoading(false);
+        return;
+      }
+    }
+
     if (!podeAvancarPasso2) return;
     setStep(3);
     setAiProcessing(true);
@@ -699,25 +727,30 @@ export default function SimuladorClient({ initialCategoriaId = null }: Simulador
             )}
 
             {/* botão avançar */}
+            {kmErro && (
+              <p className="text-center text-sm text-red-400">{kmErro}</p>
+            )}
             <button
               type="button"
               onClick={avancarParaIA}
-              disabled={!kmOk || fotosUploading}
+              disabled={!destinoValido || fotosUploading || kmLoading}
               className={cn(
                 "flex w-full items-center justify-center gap-2 rounded-2xl px-6 py-4 text-base font-semibold text-white transition",
-                kmOk && podeAvancarPasso2
+                destinoValido && !fotosUploading && !kmLoading
                   ? "bg-cyan-600 hover:bg-cyan-700 shadow-[0_12px_32px_-12px_rgba(6,182,212,0.5)]"
                   : "bg-white/10 text-slate-500 cursor-not-allowed",
               )}
             >
-              {fotosUploading
-                ? <><Loader2 className="h-5 w-5 animate-spin" />A enviar fotos...</>
-                : <><BrainCircuit className="h-5 w-5" />Gerar orçamento com IA</>}
-              {!fotosUploading && <ArrowRight className="h-4 w-4" />}
+              {kmLoading
+                ? <><Loader2 className="h-5 w-5 animate-spin" />A calcular distância...</>
+                : fotosUploading
+                  ? <><Loader2 className="h-5 w-5 animate-spin" />A enviar fotos...</>
+                  : <><BrainCircuit className="h-5 w-5" />Gerar orçamento com IA</>}
+              {!kmLoading && !fotosUploading && <ArrowRight className="h-4 w-4" />}
             </button>
-            {showValidation && !podeAvancarPasso2 && (
+            {showValidation && !podeAvancarPasso2 && !kmLoading && km !== null && (
               <p className="text-center text-sm text-amber-400">
-                Calcule a distância e preencha todos os campos obrigatórios para continuar.
+                Preencha todos os campos obrigatórios para continuar.
               </p>
             )}
           </div>
