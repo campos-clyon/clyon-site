@@ -214,25 +214,6 @@ export default function SimuladorClient({ initialCategoriaId = null }: Simulador
   })();
 
   /* ── calcular distância ── */
-  const calcularDistancia = async () => {
-    const origin = categoria?.trajeto === "custom" ? origem.trim() : BASE_ADDRESS;
-    if (!origin || !destino.trim()) { setShowValidation(true); return; }
-    setKmLoading(true); setKmErro(""); setOrcamento(null);
-    try {
-      const res = await fetch("/api/maps/distance", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ origin, destination: destino.trim() }),
-      });
-      const data = await res.json();
-      if (!res.ok) { setKmErro("Não foi possível calcular a distância agora."); return; }
-      setKm(Number(data.distanceKm ?? 0));
-      if (categoria?.trajeto === "custom") setOrigem(String(data.originAddress ?? origin));
-      setDestino(String(data.destinationAddress ?? destino));
-    } catch { setKmErro("Erro ao calcular distância. Tente novamente."); }
-    finally { setKmLoading(false); }
-  };
-
   /* ── fotos ── */
   const adicionarFotos = (novos: File[]) => {
     setFotos((prev) => {
@@ -496,7 +477,7 @@ export default function SimuladorClient({ initialCategoriaId = null }: Simulador
 
   /* ═══════════════════════════════════
      PASSO 2 — DADOS
-  ═══════════════════════════════════ */
+  ══════════��════════════════════════ */
   if (step === 2) {
     return (
       <div className="min-h-screen bg-[#050d18]">
@@ -543,16 +524,6 @@ export default function SimuladorClient({ initialCategoriaId = null }: Simulador
                 tone={showValidation && !destinoValido ? "warning" : "default"}
                 dark
               />
-              <button
-                type="button"
-                onClick={calcularDistancia}
-                disabled={!destino.trim() || kmLoading}
-                className="flex w-full items-center justify-center gap-2 rounded-xl bg-cyan-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-cyan-700 disabled:opacity-40"
-              >
-                {kmLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Route className="h-4 w-4" />}
-                {kmLoading ? "A calcular..." : "Calcular distância"}
-              </button>
-              {kmErro && <p className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-300">{kmErro}</p>}
               {km !== null && (
                 <div className="flex items-center gap-3 rounded-xl border border-cyan-500/30 bg-cyan-500/10 px-4 py-3">
                   <CheckCircle2 className="h-5 w-5 text-cyan-400" />
@@ -726,10 +697,14 @@ export default function SimuladorClient({ initialCategoriaId = null }: Simulador
               </FormSection>
             )}
 
-            {/* botão avançar */}
+            {/* feedback de erro de distância */}
             {kmErro && (
-              <p className="text-center text-sm text-red-400">{kmErro}</p>
+              <div className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3">
+                <p className="text-center text-sm text-red-300">{kmErro}</p>
+              </div>
             )}
+
+            {/* botão avançar */}
             <button
               type="button"
               onClick={avancarParaIA}
