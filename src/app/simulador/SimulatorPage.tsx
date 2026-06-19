@@ -80,11 +80,11 @@ function extractOrderFieldsFromText(text: string, current: OrderData): Partial<O
     const fl = parseFloor(text);
     if (fl) updates.floor = fl;
   }
-  if (!current.hasElevator) {
+  if (!current.hasElevator || current.hasElevator === "unknown") {
     const el = parseElevator(text);
     if (el && el !== "unknown") updates.hasElevator = el;
   }
-  if (!current.parkingDistance) {
+  if (!current.parkingDistance || current.parkingDistance === "unknown") {
     const pk = parseParking(text);
     if (pk && pk !== "unknown") updates.parkingDistance = pk;
   }

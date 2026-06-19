@@ -168,8 +168,21 @@ export function parseParking(text: string): OrderData["parkingDistance"] {
   if (t.includes("até 20") || t.includes("ate 20") || t.includes("20 metro") || t.includes("sim, até 20") || t.includes("sim ate 20")) return "under_20m";
   if (t.includes("30 metro") || t.includes("mais de 30") || t.includes("mais 30")) return "over_30m";
   if (t.includes("difícil") || t.includes("dificil") || t.includes("complicado") || t.includes("não há") || t.includes("nao ha")) return "difficult";
-  // Resposta afirmativa genérica ("sim", "há lugar", "consegue", "dá")
-  if (t === "sim" || /^sim[.!]?$/.test(t.trim()) || t.includes("há lugar") || t.includes("ha lugar") || t.includes("consegue") || t.includes("dá para") || t.includes("da para")) return "under_20m";
+  // Resposta afirmativa genérica — qualquer frase com "sim" + indicação positiva,
+  // ou "sim" isolado, ou "tem local", "há lugar", "consegue", etc.
+  if (
+    /^sim[.! ]?$/.test(t.trim()) ||
+    t.includes("tem local") ||
+    t.includes("há lugar") ||
+    t.includes("ha lugar") ||
+    t.includes("tem lugar") ||
+    t.includes("consegue") ||
+    t.includes("dá para") ||
+    t.includes("da para") ||
+    t.includes("tem estacionamento") ||
+    t.includes("tem parque") ||
+    (t.startsWith("sim") && !t.includes("não") && !t.includes("nao") && !t.includes("difícil") && !t.includes("dificil"))
+  ) return "under_20m";
   return "unknown";
 }
 
