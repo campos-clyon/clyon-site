@@ -56,9 +56,9 @@ const WELCOME_MESSAGE = "Olá! Sou o orçamentista da CLYON. Descreva o serviço
 function getNextMissingFieldQuestion(order: OrderData): string {
   if (!order.serviceType) return "Que tipo de serviço precisa? (recolha de móveis, monos, entulho, esvaziamento ou mudança)";
   if (!order.description && (!order.files || order.files.length === 0)) return "O que precisa de recolher ou transportar? Pode descrever ou enviar fotos.";
-  if (!order.floor) return "Em que andar se encontra o material?";
-  if (!order.hasElevator || order.hasElevator === "unknown") return "Existe elevador? Se sim, os itens cabem?";
-  if (!order.parkingDistance || order.parkingDistance === "unknown") return "A carrinha consegue estacionar perto da entrada?";
+  if (!order.floor) return "Em que andar se encontra o material? (ex: rés-do-chão, 1, 2, 3...)";
+  if (!order.hasElevator || order.hasElevator === "unknown") return "Tem elevador? (sim / não / sim mas é pequeno)";
+  if (!order.parkingDistance || order.parkingDistance === "unknown") return "A carrinha consegue estacionar perto da entrada? (sim / não / até 20 metros)";
   if (!order.urgency) return "Qual a urgência? (amanhã, esta semana, flexível)";
   return "Para finalizar, preciso dos seus dados de contacto e morada:";
 }

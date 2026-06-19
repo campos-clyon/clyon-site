@@ -203,18 +203,42 @@ export function parseDismantling(text: string): OrderData["needsDismantling"] {
 }
 
 export function parseFloor(text: string): string | undefined {
-  const t = text.toLowerCase();
-  if (/rés.do.chão|r\/c|térreo|piso 0/.test(t)) return "Rés-do-chão";
-  if (/1[ºo°]?\s*andar|piso 1/.test(t)) return "1.º andar";
-  if (/2[ºo°]?\s*andar|piso 2/.test(t)) return "2.º andar";
-  if (/3[ºo°]?\s*andar|piso 3/.test(t)) return "3.º andar";
-  if (/4[ºo°]?\s*andar|piso 4/.test(t)) return "4.º andar";
-  if (/5[ºo°]?\s*andar|piso [56789]/.test(t)) return "4.º andar ou superior";
-  if (/cave/.test(t)) return "Cave";
-  if (/garagem/.test(t)) return "Garagem";
-  if (/andar/.test(t)) {
-    const m = t.match(/(\d+)[ºo°]?\s*andar/);
-    if (m) return `${m[1]}.º andar`;
+  const t = text.toLowerCase().trim();
+
+  // Rés-do-chão / cave / garagem
+  if (/rés.do.chão|res.do.chao|r\/c|térreo|terreo|piso\s*0|andar\s*0/.test(t)) return "Rés-do-chão";
+  if (/\bcave\b/.test(t)) return "Cave";
+  if (/\bgaragem\b/.test(t)) return "Garagem";
+
+  // Ordinais por extenso
+  if (/\bprimeiro\b|\b1[ºo°]?\s*andar\b|piso\s*1/.test(t)) return "1.º andar";
+  if (/\bsegundo\b|\b2[ºo°]?\s*andar\b|piso\s*2/.test(t)) return "2.º andar";
+  if (/\bterceiro\b|\b3[ºo°]?\s*andar\b|piso\s*3/.test(t)) return "3.º andar";
+  if (/\bquarto\b|\b4[ºo°]?\s*andar\b|piso\s*4/.test(t)) return "4.º andar";
+  if (/\bquinto\b|\bsexto\b|\bsétimo\b|\bsetimo\b|\b[56789][ºo°]?\s*andar\b|piso\s*[56789]/.test(t)) return "4.º andar ou superior";
+
+  // Número sozinho (ex: "2", "3", "1") — só se o texto for curto (resposta directa)
+  if (/^\s*\d+\s*$/.test(t)) {
+    const n = parseInt(t, 10);
+    if (n === 0) return "Rés-do-chão";
+    if (n === 1) return "1.º andar";
+    if (n === 2) return "2.º andar";
+    if (n === 3) return "3.º andar";
+    if (n === 4) return "4.º andar";
+    if (n >= 5) return "4.º andar ou superior";
   }
+
+  // "N andar" sem ordinal (ex: "3 andar", "2 andar")
+  const mAndar = t.match(/\b(\d+)\s*[ºo°]?\s*andar/);
+  if (mAndar) {
+    const n = parseInt(mAndar[1], 10);
+    if (n === 0) return "Rés-do-chão";
+    if (n === 1) return "1.º andar";
+    if (n === 2) return "2.º andar";
+    if (n === 3) return "3.º andar";
+    if (n === 4) return "4.º andar";
+    if (n >= 5) return "4.º andar ou superior";
+  }
+
   return undefined;
 }
