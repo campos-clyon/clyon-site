@@ -38,7 +38,7 @@ export default function ChatMessage({ message }: ChatMessageProps) {
         {message.files && message.files.length > 0 && (
           <div className={`grid gap-1.5 ${message.files.length === 1 ? "grid-cols-1" : "grid-cols-2"}`}>
             {message.files.map((f) =>
-              f.type === "image" ? (
+              (f.type === "image" || f.mimeType?.startsWith("image/")) && f.previewUrl ? (
                 <div key={f.id} className="relative w-28 h-28 rounded-xl overflow-hidden border border-[#E2E8F0]">
                   <Image src={f.previewUrl} alt={f.name} fill className="object-cover" />
                 </div>

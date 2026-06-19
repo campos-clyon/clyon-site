@@ -108,7 +108,7 @@ export default function UploadDropzone({
           {files.map((f) => (
             <div key={f.id} className="relative group">
               <div className="relative w-full aspect-square rounded-xl overflow-hidden border border-[#E2E8F0] bg-[#F1F5F9]">
-                {f.type === "image" ? (
+                {(f.type === "image" || f.mimeType?.startsWith("image/")) && f.previewUrl ? (
                   <Image src={f.previewUrl} alt={f.name} fill className="object-cover" />
                 ) : (
                   <div className="absolute inset-0 flex items-center justify-center">
