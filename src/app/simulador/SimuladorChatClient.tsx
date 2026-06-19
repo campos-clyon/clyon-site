@@ -115,21 +115,39 @@ export default function SimuladorChatClient() {
       }
 
       // Converter histórico de mensagens para enviar à API
-      const messagesForAPI = messages.map((msg) => ({
-        role: msg.role,
-        content:
-          msg.role === "user" && msg.images
-            ? [
-                { text: msg.content },
-                ...msg.images.map((img) => ({
+      const messagesForAPI = await Promise.all(
+        messages.map(async (msg) => {
+          if (msg.role === "user" && msg.images) {
+            const imageData = await Promise.all(
+              msg.images.map(async (img) => {
+                const base64 = await new Promise<string>((resolve) => {
+                  const reader = new FileReader();
+                  reader.onload = () => {
+                    const result = reader.result as string;
+                    const base64Data = result.split(",")[1] || result;
+                    resolve(base64Data);
+                  };
+                  reader.readAsDataURL(img.file);
+                });
+                return {
                   inlineData: {
-                    mimeType: img.file.type,
-                    data: img.url.split(",")[1],
+                    mimeType: img.file.type as "image/jpeg" | "image/png" | "image/gif" | "image/webp",
+                    data: base64,
                   },
-                })),
-              ]
-            : msg.content,
-      }));
+                };
+              })
+            );
+            return {
+              role: msg.role,
+              content: [{ text: msg.content }, ...imageData],
+            };
+          }
+          return {
+            role: msg.role,
+            content: msg.content,
+          };
+        })
+      );
 
       // Adicionar nova mensagem do utilizador
       messagesForAPI.push({

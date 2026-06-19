@@ -91,9 +91,13 @@ export async function POST(request: NextRequest) {
       role: "assistant",
     });
   } catch (error) {
-    console.error("[chat-simulador] Error:", error);
+    const errorMsg = error instanceof Error ? error.message : String(error);
+    console.error("[chat-simulador] Error:", errorMsg);
     return NextResponse.json(
-      { error: "Failed to generate response" },
+      {
+        error: "Falha ao gerar resposta",
+        details: process.env.NODE_ENV === "development" ? errorMsg : undefined,
+      },
       { status: 500 }
     );
   }
