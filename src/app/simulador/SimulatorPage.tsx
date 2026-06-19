@@ -500,17 +500,18 @@ export default function SimulatorPage() {
       {/* Hero */}
       <div className="bg-white border-b border-[#E2E8F0] flex-shrink-0">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-            <div className="flex items-center gap-3">
+          {/* Linha 1: ícone + título + badge */}
+          <div className="flex items-center justify-between gap-3 mb-2">
+            <div className="flex items-center gap-3 min-w-0">
               <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#0487D9] to-[#19C2E6] flex items-center justify-center shadow-sm flex-shrink-0">
                 <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 11h.01M12 11h.01M15 11h.01M4.026 19.222A10.787 10.787 0 0012 21c2.695 0 5.17-.986 7.02-2.606" />
                 </svg>
               </div>
-              <div>
+              <div className="min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
                   <h1 className="text-[15px] font-bold text-[#102033]">Simulador de Preços</h1>
-                  <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-[#EFF8FF] text-[#0487D9] border border-[#BAE6FD]">
+                  <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-[#EFF8FF] text-[#0487D9] border border-[#BAE6FD] whitespace-nowrap">
                     Estimativa sem compromisso
                   </span>
                 </div>
@@ -519,10 +520,9 @@ export default function SimulatorPage() {
                 </p>
               </div>
             </div>
-            <div className="flex-shrink-0">
-              <ProgressSteps currentStep={progressStep} />
-            </div>
           </div>
+          {/* Linha 2: stepper — largura total, adapta-se ao ecrã */}
+          <ProgressSteps currentStep={progressStep} />
         </div>
       </div>
 
