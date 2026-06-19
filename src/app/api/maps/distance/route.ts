@@ -1,103 +1,115 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const CLYON_BASE_ADDRESS =
-  process.env.CLYON_BASE_ADDRESS ?? "Fernão Ferro, Seixal, Portugal";
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+function parseGoogleDurationToSeconds(duration: string): number {
+  // Routes API devolve ex: "1680s"
+  return Number(duration.replace("s", ""));
+}
+
+function formatDuration(seconds: number): string {
+  const minutes = Math.round(seconds / 60);
+  if (minutes < 60) return `${minutes} min`;
+  const hours = Math.floor(minutes / 60);
+  const rest = minutes % 60;
+  return rest ? `${hours}h ${rest}min` : `${hours}h`;
+}
+
+// ---------------------------------------------------------------------------
+// Resposta amigável reutilizável
+// ---------------------------------------------------------------------------
+
+const FRIENDLY_ERROR = NextResponse.json(
+  {
+    ok: false,
+    customerMessage:
+      "Não foi possível calcular a distância agora. A equipa CLYON confirma manualmente.",
+  },
+  { status: 503 }
+);
+
+// ---------------------------------------------------------------------------
+// Route handler
+// ---------------------------------------------------------------------------
 
 export const revalidate = 0;
 
 export async function POST(request: NextRequest) {
+  // 1. Chave de servidor — NUNCA usar NEXT_PUBLIC_ no backend
+  const key = process.env.GOOGLE_MAPS_SERVER_API_KEY;
+  if (!key) {
+    console.error("[maps/distance] GOOGLE_MAPS_SERVER_API_KEY não configurada.");
+    return FRIENDLY_ERROR;
+  }
+
+  // 2. Origem: coordenadas da base CLYON (preferencial) ou endereço
+  const baseLat = process.env.CLYON_BASE_LAT ? Number(process.env.CLYON_BASE_LAT) : null;
+  const baseLng = process.env.CLYON_BASE_LNG ? Number(process.env.CLYON_BASE_LNG) : null;
+  const baseAddress = process.env.CLYON_BASE_ADDRESS ?? "Fernão Ferro, Seixal, Portugal";
+
+  const originPayload =
+    baseLat !== null && baseLng !== null
+      ? { location: { latLng: { latitude: baseLat, longitude: baseLng } } }
+      : { address: baseAddress };
+
+  // 3. Destino: coordenadas (preferencial) ou endereço formatado
+  let body: { destination?: { formattedAddress?: string; lat?: number; lng?: number; placeId?: string } };
   try {
-    const body = await request.json();
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ ok: false, customerMessage: "Payload inválido." }, { status: 400 });
+  }
 
-    // Aceitar novo formato { destination: { formattedAddress, lat, lng, placeId } }
-    // e formato legado { origin, destination } (string)
-    let destinationStr: string;
-    if (body.destination && typeof body.destination === "object") {
-      const d = body.destination as {
-        formattedAddress?: string;
-        lat?: number;
-        lng?: number;
-        placeId?: string;
-      };
-      if (d.lat && d.lng) {
-        destinationStr = `${d.lat},${d.lng}`;
-      } else {
-        destinationStr = d.formattedAddress ?? "";
-      }
-    } else {
-      destinationStr =
-        typeof body.destination === "string" ? body.destination.trim() : "";
-    }
+  const dest = body.destination;
+  if (!dest || (!dest.lat && !dest.formattedAddress)) {
+    return NextResponse.json({ ok: false, customerMessage: "Destino em falta." }, { status: 400 });
+  }
 
-    const originStr =
-      typeof body.origin === "string" ? body.origin.trim() : CLYON_BASE_ADDRESS;
+  const destinationPayload =
+    dest.lat && dest.lng
+      ? { location: { latLng: { latitude: dest.lat, longitude: dest.lng } } }
+      : { address: dest.formattedAddress! };
 
-    if (!destinationStr) {
-      return NextResponse.json(
-        { ok: false, customerMessage: "Destino em falta." },
-        { status: 400 }
-      );
-    }
-
-    const key =
-      process.env.GOOGLE_MAPS_SERVER_API_KEY ??
-      process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
-
-    if (!key) {
-      return NextResponse.json(
-        {
-          ok: false,
-          customerMessage:
-            "Não foi possível calcular a distância agora. A equipa CLYON confirma manualmente.",
-        },
-        { status: 503 }
-      );
-    }
-
-    const params = new URLSearchParams({
-      origins: originStr,
-      destinations: destinationStr,
-      mode: "driving",
-      language: "pt-PT",
-      region: "pt",
-      key,
+  // 4. Chamada à Google Routes API
+  try {
+    const res = await fetch("https://routes.googleapis.com/directions/v2:computeRoutes", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Goog-Api-Key": key,
+        "X-Goog-FieldMask": "routes.distanceMeters,routes.duration,routes.localizedValues",
+      },
+      body: JSON.stringify({
+        origin: originPayload,
+        destination: destinationPayload,
+        travelMode: "DRIVE",
+        routingPreference: "TRAFFIC_AWARE",
+        languageCode: "pt-PT",
+        regionCode: "PT",
+      }),
+      cache: "no-store",
     });
 
-    const res = await fetch(
-      `https://maps.googleapis.com/maps/api/distancematrix/json?${params.toString()}`,
-      { cache: "no-store" }
-    );
-
     if (!res.ok) {
-      return NextResponse.json(
-        {
-          ok: false,
-          customerMessage:
-            "Não foi possível calcular a distância agora. A equipa CLYON confirma manualmente.",
-        },
-        { status: 502 }
-      );
+      const errBody = await res.text();
+      console.error("[maps/distance] Routes API HTTP error:", res.status, errBody);
+      return FRIENDLY_ERROR;
     }
 
     const data = await res.json();
-    const element = data.rows?.[0]?.elements?.[0];
+    const route = data.routes?.[0];
 
-    if (data.status !== "OK" || !element || element.status !== "OK") {
-      console.error("[maps/distance] Google error:", data.status, element?.status);
-      return NextResponse.json(
-        {
-          ok: false,
-          customerMessage:
-            "Não foi possível calcular a distância agora. A equipa CLYON confirma manualmente.",
-        },
-        { status: 502 }
-      );
+    if (!route || !route.distanceMeters || !route.duration) {
+      console.error("[maps/distance] Routes API sem rota válida:", JSON.stringify(data));
+      return FRIENDLY_ERROR;
     }
 
-    const distanceMeters: number = element.distance.value;
+    const distanceMeters: number = route.distanceMeters;
     const distanceKm = Math.round((distanceMeters / 1000) * 10) / 10;
-    const durationSeconds: number = element.duration.value;
-    const durationText: string = element.duration.text;
+    const durationSeconds = parseGoogleDurationToSeconds(String(route.duration));
+    const durationText = formatDuration(durationSeconds);
 
     return NextResponse.json({
       ok: true,
@@ -106,25 +118,19 @@ export async function POST(request: NextRequest) {
       durationSeconds,
       durationText,
       origin: {
-        address: data.origin_addresses?.[0] ?? originStr,
+        address: baseAddress,
+        lat: baseLat,
+        lng: baseLng,
       },
       destination: {
-        formattedAddress: data.destination_addresses?.[0] ?? destinationStr,
+        formattedAddress: dest.formattedAddress,
+        lat: dest.lat,
+        lng: dest.lng,
+        placeId: dest.placeId,
       },
-      // campos legados para compatibilidade
-      distanceKm_legacy: distanceKm,
-      originAddress: data.origin_addresses?.[0] ?? originStr,
-      destinationAddress: data.destination_addresses?.[0] ?? destinationStr,
     });
   } catch (err) {
-    console.error("[maps/distance] Erro:", err);
-    return NextResponse.json(
-      {
-        ok: false,
-        customerMessage:
-          "Não foi possível calcular a distância agora. A equipa CLYON confirma manualmente.",
-      },
-      { status: 500 }
-    );
+    console.error("[maps/distance] Erro inesperado:", err);
+    return FRIENDLY_ERROR;
   }
 }
