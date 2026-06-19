@@ -22,6 +22,7 @@ import EstimateCard from "./components/EstimateCard";
 import ProgressSteps from "./components/ProgressSteps";
 
 const STORAGE_KEY = "clyon_simulator_draft";
+const SIMULATOR_STORAGE_KEYS = [STORAGE_KEY, "clyon-simulator", "clyon-simulator-draft", "simulator-order", "simulator-messages"];
 
 function uid() {
   return Math.random().toString(36).slice(2, 10);
@@ -29,6 +30,13 @@ function uid() {
 
 function makeAssistantMessage(content: string, extra?: Partial<ChatMessage>): ChatMessage {
   return { id: uid(), role: "assistant", content, timestamp: new Date(), ...extra };
+}
+
+function getInitialMessages(): ChatMessage[] {
+  const firstStep = getNextChatStep({});
+  return [makeAssistantMessage(firstStep?.question ?? "Qual é o tipo de serviço que precisa?", {
+    quickReplies: firstStep?.quickReplies,
+  })];
 }
 
 export default function SimulatorPage() {
@@ -41,13 +49,52 @@ export default function SimulatorPage() {
   const [estimate, setEstimate] = useState<EstimateResult | null>(null);
   const [estimateLoading, setEstimateLoading] = useState(false);
   const [currentStep, setCurrentStep] = useState<ReturnType<typeof getNextChatStep>>(null);
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
 
   // Scroll interno — referência ao container, não ao elemento filho
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
+  // Função de reset — limpa tudo
+  const resetSimulator = () => {
+    // Revogar Object URLs das fotos em memória
+    if (typeof window !== "undefined") {
+      SIMULATOR_STORAGE_KEYS.forEach((key) => {
+        localStorage.removeItem(key);
+        sessionStorage.removeItem(key);
+      });
+    }
+    const initial = getInitialMessages();
+    setMessages(initial);
+    setOrder({});
+    setEstimate(null);
+    setPendingFiles([]);
+    setShowUpload(false);
+    setInput("");
+    setIsTyping(false);
+    setEstimateLoading(false);
+    setShowResetConfirm(false);
+    setCurrentStep(getNextChatStep({}));
+  };
+
   // Inicializar chat
   useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    // Opção B: ?novo=1 limpa automaticamente
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("novo") === "1") {
+      SIMULATOR_STORAGE_KEYS.forEach((key) => {
+        localStorage.removeItem(key);
+        sessionStorage.removeItem(key);
+      });
+      window.history.replaceState({}, "", "/simulador");
+      setMessages(getInitialMessages());
+      setCurrentStep(getNextChatStep({}));
+      return;
+    }
+
+    // Opção A: restaurar rascunho salvo
     const draft = localStorage.getItem(STORAGE_KEY);
     if (draft) {
       try {
@@ -57,13 +104,9 @@ export default function SimulatorPage() {
         // ignorar draft inválido
       }
     }
-    const firstStep = getNextChatStep({});
-    const firstMsg = makeAssistantMessage(firstStep?.question ?? "Qual é o tipo de serviço que precisa?", {
-      quickReplies: firstStep?.quickReplies,
-    });
-    setMessages([firstMsg]);
-    setCurrentStep(firstStep);
-  }, []);
+    setMessages(getInitialMessages());
+    setCurrentStep(getNextChatStep({}));
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Scroll automático dentro do container — não move a página
   useEffect(() => {
@@ -307,16 +350,38 @@ export default function SimulatorPage() {
 
                 {/* Cabeçalho do chat */}
                 <div className="px-4 py-2.5 border-b border-[#F1F5F9] flex items-center gap-2.5 flex-shrink-0">
-                  <div className="w-7 h-7 rounded-full bg-gradient-to-br from-[#0487D9] to-[#19C2E6] flex items-center justify-center">
+                  <div className="w-7 h-7 rounded-full bg-gradient-to-br from-[#0487D9] to-[#19C2E6] flex items-center justify-center flex-shrink-0">
                     <span className="text-white text-[10px] font-bold">S</span>
                   </div>
-                  <div>
+                  <div className="flex-1 min-w-0">
                     <p className="text-[13px] font-semibold text-[#102033]">Orçamentista CLYON</p>
                     <div className="flex items-center gap-1">
                       <div className="w-1.5 h-1.5 rounded-full bg-[#22C55E]" />
                       <span className="text-[10px] text-[#64748B]">Online</span>
                     </div>
                   </div>
+                  {/* Botão Novo pedido */}
+                  <button
+                    type="button"
+                    onClick={() => setShowResetConfirm(true)}
+                    className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-[#E2E8F0] text-[11px] font-medium text-[#64748B] hover:border-[#0487D9] hover:text-[#0487D9] transition-colors bg-white flex-shrink-0"
+                    title="Começar novo pedido"
+                  >
+                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                    Novo pedido
+                  </button>
+                  {process.env.NODE_ENV === "development" && (
+                    <button
+                      type="button"
+                      onClick={resetSimulator}
+                      className="px-2 py-1 rounded text-[10px] font-mono bg-red-100 text-red-600 border border-red-200 hover:bg-red-200 transition-colors flex-shrink-0"
+                      title="DEV: Limpar storage e reset"
+                    >
+                      Limpar storage
+                    </button>
+                  )}
                 </div>
 
                 {/* Área de mensagens — scroll interno, não move a página */}
@@ -428,6 +493,7 @@ export default function SimulatorPage() {
                 loading={estimateLoading}
                 canGenerate={canGenerate}
                 onGenerate={handleGenerateEstimate}
+                onReset={() => setShowResetConfirm(true)}
                 order={order}
               />
             </div>
@@ -435,6 +501,41 @@ export default function SimulatorPage() {
           </div>
         </div>
       </main>
+      {/* Modal de confirmação de reset */}
+      {showResetConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShowResetConfirm(false)} />
+          <div className="relative bg-white rounded-2xl shadow-2xl border border-[#E2E8F0] w-full max-w-sm p-6">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 rounded-xl bg-[#FEF2F2] flex items-center justify-center flex-shrink-0">
+                <svg className="w-5 h-5 text-[#EF4444]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+              </div>
+              <h2 className="text-[15px] font-semibold text-[#102033]">Começar novo pedido?</h2>
+            </div>
+            <p className="text-sm text-[#64748B] leading-relaxed mb-5">
+              Tem a certeza que deseja começar um novo pedido? Os dados atuais serão apagados.
+            </p>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setShowResetConfirm(false)}
+                className="flex-1 py-2.5 px-4 rounded-xl border border-[#E2E8F0] text-[13px] font-medium text-[#64748B] hover:border-[#CBD5E1] hover:text-[#102033] transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={resetSimulator}
+                className="flex-1 py-2.5 px-4 rounded-xl bg-[#EF4444] hover:bg-[#DC2626] text-white text-[13px] font-semibold transition-colors shadow-sm"
+              >
+                Sim, começar novo pedido
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -24,6 +24,7 @@ interface EstimateCardProps {
   loading?: boolean;
   canGenerate?: boolean;
   onGenerate?: () => void;
+  onReset?: () => void;
   order: OrderData;
 }
 
@@ -44,7 +45,7 @@ function buildWhatsAppMessage(order: OrderData, estimate: EstimateResult | null)
   return encodeURIComponent(lines.join("\n"));
 }
 
-export default function EstimateCard({ estimate, loading, canGenerate, onGenerate, order }: EstimateCardProps) {
+export default function EstimateCard({ estimate, loading, canGenerate, onGenerate, onReset, order }: EstimateCardProps) {
   const vatRate = Math.round(TAX_RATE * 100);
 
   return (
@@ -196,6 +197,16 @@ export default function EstimateCard({ estimate, loading, canGenerate, onGenerat
               </a>
               <button className="w-full py-2.5 px-4 rounded-xl border border-[#E2E8F0] text-[#64748B] hover:text-[#102033] hover:border-[#CBD5E1] text-sm font-medium transition-colors">
                 Pedir visita presencial
+              </button>
+              <button
+                type="button"
+                onClick={onReset}
+                className="w-full flex items-center justify-center gap-1.5 py-2 px-4 rounded-xl border border-[#E2E8F0] text-[#94A3B8] hover:text-[#64748B] hover:border-[#CBD5E1] text-xs font-medium transition-colors"
+              >
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                Começar novo pedido
               </button>
             </div>
           </div>
