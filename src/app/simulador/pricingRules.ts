@@ -48,6 +48,29 @@ export function detectZone(city: string | undefined): LocationZone {
   return "D";
 }
 
+// Extrai quantidade de sacos/unidades da descrição livre
+export function extractQuantityFromDescription(description: string | undefined): number | null {
+  if (!description) return null;
+  const t = description.toLowerCase();
+  // "100 sacos", "50 sacos de entulho", "20 caixas", "30 monos", "5 móveis"
+  const m = t.match(/(\d+)\s*(sacos?|caixas?|monos?|móveis?|peças?|unidades?|cadeiras?|sofás?|armários?|mesas?|estantes?|camas?)/);
+  if (m) return parseInt(m[1], 10);
+  // Número sozinho no início: "100 ..." 
+  const m2 = t.match(/^(\d+)\s/);
+  if (m2) return parseInt(m2[1], 10);
+  return null;
+}
+
+// Multiplicador de volume com base na quantidade
+export function volumeMultiplier(qty: number | null): { multiplier: number; label: string } {
+  if (!qty || qty <= 5)   return { multiplier: 1.0,  label: "" };
+  if (qty <= 15)          return { multiplier: 1.15, label: `Volume médio (~${qty} itens)` };
+  if (qty <= 30)          return { multiplier: 1.35, label: `Volume considerável (~${qty} itens)` };
+  if (qty <= 60)          return { multiplier: 1.60, label: `Volume elevado (~${qty} sacos/itens)` };
+  if (qty <= 100)         return { multiplier: 2.00, label: `Volume muito elevado (~${qty} sacos)` };
+  return               { multiplier: 2.60, label: `Volume excepcional (~${qty} sacos — possível 2ª viagem)` };
+}
+
 // Calcula dificuldade 1-5
 function calcDifficulty(order: OrderData): DifficultyLevel {
   let score = 0;
@@ -74,6 +97,14 @@ function calcDifficulty(order: OrderData): DifficultyLevel {
   const heavy = order.heavyItems ?? [];
   if (heavy.length >= 3) score += 2;
   else if (heavy.length >= 1) score += 1;
+
+  // Volume / quantidade
+  const qty = extractQuantityFromDescription(order.description);
+  if (qty !== null) {
+    if (qty > 100) score += 3;
+    else if (qty > 60) score += 2;
+    else if (qty > 30) score += 1;
+  }
 
   // Urgência
   if (order.urgency === "today") score += 1;
@@ -180,6 +211,15 @@ export function calculateLocalEstimate(order: OrderData): EstimateResult {
   assumptions.push(
     `Localidade em Zona ${zone} (${zone === "A" ? "Amora / Fernão Ferro" : zone === "B" ? "Lisboa" : "Lisboa difícil / região mais distante"})`
   );
+
+  // Ajuste por volume/quantidade
+  const qty = extractQuantityFromDescription(order.description);
+  const vol = volumeMultiplier(qty);
+  if (vol.multiplier > 1.0) {
+    base = Math.round(base * vol.multiplier);
+    if (vol.label) assumptions.push(vol.label);
+    internalNotes.push(`Multiplicador de volume: ×${vol.multiplier} (${qty} itens)`);
+  }
 
   // Ajuste por dificuldade
   if (difficulty === 2) {

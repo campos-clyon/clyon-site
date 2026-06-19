@@ -29,7 +29,16 @@ PREÇÁRIO BASE CLYON (valores sem IVA, IVA = 23%):
 - Zona C (Lisboa difícil, regiões distantes): base 270€
 - Zona D: orçamento personalizado
 
-EXTRAS:
+MULTIPLICADOR DE VOLUME (aplicado ao preço base ANTES dos extras):
+- Até 5 itens/sacos: ×1.0 (sem ajuste)
+- 6–15 itens/sacos: ×1.15
+- 16–30 itens/sacos: ×1.35
+- 31–60 sacos/itens: ×1.60
+- 61–100 sacos: ×2.0
+- Mais de 100 sacos: ×2.6 (possível 2.ª viagem)
+IMPORTANTE: Lê a descrição e extrai a quantidade. 50 sacos e 100 sacos TÊM valores diferentes.
+
+EXTRAS (após o multiplicador):
 - Urgente hoje: +30€ a +60€
 - Sem elevador, carga leve: +15€ a +25€ por andar
 - Sem elevador, carga pesada: +25€ a +50€ por andar
