@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
   // 2. Origem: coordenadas da base CLYON (preferencial) ou endereço
   const baseLat = process.env.CLYON_BASE_LAT ? Number(process.env.CLYON_BASE_LAT) : null;
   const baseLng = process.env.CLYON_BASE_LNG ? Number(process.env.CLYON_BASE_LNG) : null;
-  const baseAddress = process.env.CLYON_BASE_ADDRESS ?? "Fernão Ferro, Seixal, Portugal";
+  const baseAddress = process.env.CLYON_BASE_ADDRESS ?? "Av. Q.ta das Laranjeiras, 2865-688 Fernão Ferro, Portugal";
 
   const originPayload =
     baseLat !== null && baseLng !== null

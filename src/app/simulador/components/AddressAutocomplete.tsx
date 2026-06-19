@@ -280,6 +280,14 @@ export default function AddressAutocomplete({
 
   const isAddressReady = addressStatus === "selected" || addressStatus === "manual_confirmed";
 
+  // Disparar cálculo automático assim que a morada é confirmada
+  useEffect(() => {
+    if (isAddressReady && selectedAddress && distanceStatus === "idle") {
+      handleCalculateDistance();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAddressReady, selectedAddress, distanceStatus]);
+
   return (
     <div className={`space-y-2 ${className}`}>
       {/* Input com dropdown */}
@@ -382,31 +390,15 @@ export default function AddressAutocomplete({
         </button>
       )}
 
-      {/* Botão calcular distância */}
-      {isAddressReady && distanceStatus !== "calculated" && (
-        <button
-          type="button"
-          onClick={handleCalculateDistance}
-          disabled={distanceStatus === "calculating"}
-          className="flex items-center gap-1.5 text-[12px] font-medium px-3 py-1.5 rounded-lg border border-[#0487D9] text-[#0487D9] hover:bg-[#EFF8FF] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-        >
-          {distanceStatus === "calculating" ? (
-            <>
-              <svg className="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-              </svg>
-              A calcular distancia...
-            </>
-          ) : (
-            <>
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
-              </svg>
-              Calcular distancia da base CLYON
-            </>
-          )}
-        </button>
+      {/* Indicador automático enquanto calcula */}
+      {distanceStatus === "calculating" && (
+        <p className="text-[11px] text-[#0487D9] flex items-center gap-1.5">
+          <svg className="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+          </svg>
+          A calcular distancia da base CLYON...
+        </p>
       )}
 
       {/* Badge resultado da distância */}
