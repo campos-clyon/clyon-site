@@ -69,7 +69,14 @@ export async function POST(request: NextRequest) {
         : [{ text: String(msg.content) }],
     }));
 
-    const chat = model.startChat({ history: contents.slice(0, -1) });
+    // O Gemini exige que o histórico comece sempre com role 'user'.
+    // A primeira mensagem no estado é a saudação da IA (role 'model') —
+    // removemos todas as mensagens 'model' iniciais antes de passar o histórico.
+    const historyForGemini = contents.slice(0, -1);
+    const firstUserIndex = historyForGemini.findIndex((m) => m.role === "user");
+    const safeHistory = firstUserIndex === -1 ? [] : historyForGemini.slice(firstUserIndex);
+
+    const chat = model.startChat({ history: safeHistory });
 
     // Última mensagem do utilizador (pode ter texto + imagens)
     const lastMessage = messages[messages.length - 1];
