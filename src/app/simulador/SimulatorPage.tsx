@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import type { ChatMessage, EstimateResult, OrderData, UploadedFile } from "./types";
+import type { ChatMessage, EstimateResult, OrderData, UploadedFile, DistanceFromBase, DistanceStatus } from "./types";
 import {
   getNextChatStep,
   getProgressStep,
@@ -41,10 +41,12 @@ export default function SimulatorPage() {
   const [estimate, setEstimate] = useState<EstimateResult | null>(null);
   const [estimateLoading, setEstimateLoading] = useState(false);
   const [currentStep, setCurrentStep] = useState<ReturnType<typeof getNextChatStep>>(null);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Scroll interno — referência ao container, não ao elemento filho
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
-  // Inicializar chat com primeira mensagem
+  // Inicializar chat
   useEffect(() => {
     const draft = localStorage.getItem(STORAGE_KEY);
     if (draft) {
@@ -55,7 +57,6 @@ export default function SimulatorPage() {
         // ignorar draft inválido
       }
     }
-
     const firstStep = getNextChatStep({});
     const firstMsg = makeAssistantMessage(firstStep?.question ?? "Qual é o tipo de serviço que precisa?", {
       quickReplies: firstStep?.quickReplies,
@@ -64,9 +65,11 @@ export default function SimulatorPage() {
     setCurrentStep(firstStep);
   }, []);
 
-  // Scroll automático
+  // Scroll automático dentro do container — não move a página
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    const el = messagesContainerRef.current;
+    if (!el) return;
+    el.scrollTop = el.scrollHeight;
   }, [messages, isTyping]);
 
   // Guardar rascunho
@@ -118,7 +121,6 @@ export default function SimulatorPage() {
     setShowUpload(false);
     setIsTyping(true);
 
-    // Actualizar order com base no step actual
     let updatedOrder = { ...order };
 
     if (currentStep) {
@@ -150,7 +152,6 @@ export default function SimulatorPage() {
           break;
       }
     } else if (files && files.length > 0) {
-      // Upload adicional
       updatedOrder.files = [...(updatedOrder.files ?? []), ...files];
     }
 
@@ -162,31 +163,56 @@ export default function SimulatorPage() {
     receiver: OrderData["receiver"];
     address: { formattedAddress?: string; city?: string; postalCode?: string; lat?: number; lng?: number; placeId?: string };
     addressText: string;
+    distanceFromBase?: DistanceFromBase;
+    distanceStatus?: DistanceStatus;
   }) => {
     const updatedOrder: OrderData = {
       ...order,
       receiver: data.receiver,
       address: data.address,
+      addressStatus: "selected",
       city: data.address.city ?? order.city,
       locationZone: detectZone(data.address.city ?? order.city),
+      distanceFromBase: data.distanceFromBase,
+      distanceStatus: data.distanceStatus ?? "idle",
     };
     setOrder(updatedOrder);
 
-    const summary = [
+    const summaryParts = [
       `Contacto: ${data.receiver?.name}, ${data.receiver?.phone}`,
       data.receiver?.email ? `E-mail: ${data.receiver.email}` : "",
       `Morada: ${data.addressText}`,
-    ]
-      .filter(Boolean)
-      .join(". ");
+    ].filter(Boolean);
+
+    if (data.distanceStatus === "calculated" && data.distanceFromBase?.distanceKm) {
+      summaryParts.push(
+        `Distância: ${data.distanceFromBase.distanceKm} km da base CLYON, aproximadamente ${data.distanceFromBase.durationText} de viagem.`
+      );
+    }
 
     const userMsg: ChatMessage = {
       id: uid(),
       role: "user",
-      content: summary,
+      content: summaryParts.join(". "),
       timestamp: new Date(),
     };
     setMessages((prev) => [...prev, userMsg]);
+
+    // Mensagem automática de distância
+    if (data.distanceStatus === "calculated" && data.distanceFromBase?.distanceKm) {
+      setTimeout(() => {
+        addAssistantMessage(
+          `Distância calculada: ${data.distanceFromBase!.distanceKm} km da base CLYON, aproximadamente ${data.distanceFromBase!.durationText} de viagem.`
+        );
+      }, 400);
+    } else if (data.distanceStatus === "error") {
+      setTimeout(() => {
+        addAssistantMessage(
+          "Não consegui calcular a distância automaticamente. A equipa CLYON confirma manualmente."
+        );
+      }, 400);
+    }
+
     setIsTyping(true);
     advanceChat(updatedOrder);
   };
@@ -194,8 +220,6 @@ export default function SimulatorPage() {
   const handleGenerateEstimate = async () => {
     setEstimateLoading(true);
     setEstimate(null);
-
-    // Tentar API com Gemini; se falhar usar cálculo local
     try {
       const res = await fetch("/api/simulator/estimate", {
         method: "POST",
@@ -215,10 +239,17 @@ export default function SimulatorPage() {
     }
   };
 
+  // Dados mínimos: morada selecionada/confirmada OU com texto, distância não bloqueia
+  const addressReady =
+    order.addressStatus === "selected" ||
+    order.addressStatus === "manual_confirmed" ||
+    !!(order.address?.formattedAddress) ||
+    !!order.city;
+
   const canGenerate =
     !!order.serviceType &&
     !!(order.description || (order.files && order.files.length > 0)) &&
-    !!(order.address?.formattedAddress || order.city) &&
+    addressReady &&
     !!order.floor &&
     !!order.hasElevator &&
     !!order.parkingDistance &&
@@ -235,79 +266,74 @@ export default function SimulatorPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F7FBFF]">
-      {/* Hero */}
-      <div className="bg-white border-b border-[#E2E8F0]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-            <div className="flex items-start gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#0487D9] to-[#19C2E6] flex items-center justify-center shadow-sm flex-shrink-0">
-                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 11h.01M12 11h.01M15 11h.01M4.026 19.222A10.787 10.787 0 0012 21c2.695 0 5.17-.986 7.02-2.606l.1-.087A2.987 2.987 0 0020 17v-.5a2.5 2.5 0 00-2.5-2.5h-15A2.5 2.5 0 000 17v.5c0 .414.168.79.44 1.064" />
+    <div className="h-screen bg-[#F7FBFF] overflow-hidden flex flex-col">
+      {/* Hero compacto */}
+      <div className="bg-white border-b border-[#E2E8F0] flex-shrink-0">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#0487D9] to-[#19C2E6] flex items-center justify-center shadow-sm flex-shrink-0">
+                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 11h.01M12 11h.01M15 11h.01M4.026 19.222A10.787 10.787 0 0012 21c2.695 0 5.17-.986 7.02-2.606" />
                 </svg>
               </div>
               <div>
                 <div className="flex items-center gap-2 flex-wrap">
-                  <h1 className="text-xl font-bold text-[#102033]">Simulador de Preços</h1>
-                  <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-[#EFF8FF] text-[#0487D9] border border-[#BAE6FD]">
+                  <h1 className="text-[15px] font-bold text-[#102033]">Simulador de Preços</h1>
+                  <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-[#EFF8FF] text-[#0487D9] border border-[#BAE6FD]">
                     Estimativa sem compromisso
                   </span>
                 </div>
-                <p className="text-sm text-[#64748B] mt-0.5 max-w-xl">
-                  Descreva o serviço, envie fotos e indique a morada. A CLYON calcula uma estimativa com base no preçário e nas condições de acesso.
+                <p className="text-[11px] text-[#64748B] hidden sm:block">
+                  Descreva o serviço, envie fotos e indique a morada. A CLYON calcula uma estimativa com base no preçário.
                 </p>
               </div>
             </div>
-            <div className="sm:flex-shrink-0">
+            <div className="flex-shrink-0">
               <ProgressSteps currentStep={progressStep} />
             </div>
           </div>
         </div>
       </div>
 
-      {/* Layout principal */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <div className="flex flex-col lg:flex-row gap-6">
-          {/* Coluna principal: Chat */}
-          <div className="flex-1 min-w-0">
-            <div className="bg-white rounded-2xl border border-[#E2E8F0] shadow-sm flex flex-col h-[calc(100vh-220px)] min-h-[500px]">
-              {/* Cabeçalho do chat */}
-              <div className="px-5 py-4 border-b border-[#F1F5F9] flex items-center gap-3 flex-shrink-0">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#0487D9] to-[#19C2E6] flex items-center justify-center">
-                  <span className="text-white text-xs font-bold">S</span>
-                </div>
-                <div>
-                  <p className="text-sm font-semibold text-[#102033]">Orçamentista CLYON</p>
-                  <div className="flex items-center gap-1.5">
-                    <div className="w-2 h-2 rounded-full bg-[#22C55E]" />
-                    <span className="text-xs text-[#64748B]">Online</span>
+      {/* Layout principal — ocupa o resto do viewport */}
+      <main className="flex-1 min-h-0 overflow-hidden">
+        <div className="h-full max-w-7xl mx-auto px-3 sm:px-5 lg:px-8 py-3">
+          <div className="h-full flex flex-col lg:flex-row gap-3">
+
+            {/* Coluna chat */}
+            <div className="flex-1 min-w-0 min-h-0 flex flex-col">
+              <div className="flex-1 min-h-0 bg-white rounded-xl border border-[#E2E8F0] shadow-sm flex flex-col overflow-hidden">
+
+                {/* Cabeçalho do chat */}
+                <div className="px-4 py-2.5 border-b border-[#F1F5F9] flex items-center gap-2.5 flex-shrink-0">
+                  <div className="w-7 h-7 rounded-full bg-gradient-to-br from-[#0487D9] to-[#19C2E6] flex items-center justify-center">
+                    <span className="text-white text-[10px] font-bold">S</span>
+                  </div>
+                  <div>
+                    <p className="text-[13px] font-semibold text-[#102033]">Orçamentista CLYON</p>
+                    <div className="flex items-center gap-1">
+                      <div className="w-1.5 h-1.5 rounded-full bg-[#22C55E]" />
+                      <span className="text-[10px] text-[#64748B]">Online</span>
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              {/* Mensagens */}
-              <div className="flex-1 overflow-y-auto px-5 py-5 space-y-5">
-                {messages.map((msg, idx) => (
-                  <div key={msg.id}>
-                    <ChatMessageComponent message={msg} />
-                    {/* Quick replies na última mensagem do assistente */}
-                    {msg.role === "assistant" &&
-                      msg.quickReplies &&
-                      idx === messages.length - 1 &&
-                      !isTyping && (
-                        <div className="ml-11 mt-2">
-                          <QuickReplyChips
-                            options={msg.quickReplies}
-                            onSelect={(val) => handleUserReply(val)}
-                          />
+                {/* Área de mensagens — scroll interno, não move a página */}
+                <div
+                  ref={messagesContainerRef}
+                  className="flex-1 min-h-0 overflow-y-auto px-4 py-4 space-y-4"
+                >
+                  {messages.map((msg, idx) => (
+                    <div key={msg.id}>
+                      <ChatMessageComponent message={msg} />
+                      {msg.role === "assistant" && msg.quickReplies && idx === messages.length - 1 && !isTyping && (
+                        <div className="ml-9 mt-1.5">
+                          <QuickReplyChips options={msg.quickReplies} onSelect={(val) => handleUserReply(val)} />
                         </div>
                       )}
-                    {/* Upload na última mensagem do assistente */}
-                    {msg.role === "assistant" &&
-                      msg.showUpload &&
-                      idx === messages.length - 1 &&
-                      !isTyping && (
-                        <div className="ml-11 mt-3">
+                      {msg.role === "assistant" && msg.showUpload && idx === messages.length - 1 && !isTyping && (
+                        <div className="ml-9 mt-2">
                           <UploadDropzone
                             files={pendingFiles}
                             onAdd={(f) => setPendingFiles((prev) => [...prev, ...f])}
@@ -315,105 +341,100 @@ export default function SimulatorPage() {
                           />
                         </div>
                       )}
-                    {/* Formulário de contacto na última mensagem */}
-                    {msg.role === "assistant" &&
-                      msg.showContactForm &&
-                      idx === messages.length - 1 &&
-                      !isTyping && (
-                        <div className="ml-11 mt-3">
+                      {msg.role === "assistant" && msg.showContactForm && idx === messages.length - 1 && !isTyping && (
+                        <div className="ml-9 mt-2">
                           <ContactAccessForm onSubmit={handleContactSubmit} />
                         </div>
                       )}
-                  </div>
-                ))}
-
-                {/* Indicador de digitação */}
-                {isTyping && (
-                  <div className="flex items-start gap-3">
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#0487D9] to-[#19C2E6] flex items-center justify-center flex-shrink-0">
-                      <span className="text-white text-xs font-bold">S</span>
                     </div>
-                    <div className="bg-white border border-[#E2E8F0] rounded-2xl rounded-tl-sm px-4 py-3 shadow-sm">
-                      <div className="flex gap-1 items-center h-5">
-                        <div className="w-2 h-2 rounded-full bg-[#94A3B8] animate-bounce [animation-delay:0ms]" />
-                        <div className="w-2 h-2 rounded-full bg-[#94A3B8] animate-bounce [animation-delay:150ms]" />
-                        <div className="w-2 h-2 rounded-full bg-[#94A3B8] animate-bounce [animation-delay:300ms]" />
+                  ))}
+
+                  {isTyping && (
+                    <div className="flex items-start gap-2.5">
+                      <div className="w-7 h-7 rounded-full bg-gradient-to-br from-[#0487D9] to-[#19C2E6] flex items-center justify-center flex-shrink-0">
+                        <span className="text-white text-[10px] font-bold">S</span>
+                      </div>
+                      <div className="bg-white border border-[#E2E8F0] rounded-xl rounded-tl-sm px-3 py-2.5 shadow-sm">
+                        <div className="flex gap-1 items-center h-4">
+                          <div className="w-1.5 h-1.5 rounded-full bg-[#94A3B8] animate-bounce [animation-delay:0ms]" />
+                          <div className="w-1.5 h-1.5 rounded-full bg-[#94A3B8] animate-bounce [animation-delay:150ms]" />
+                          <div className="w-1.5 h-1.5 rounded-full bg-[#94A3B8] animate-bounce [animation-delay:300ms]" />
+                        </div>
                       </div>
                     </div>
-                  </div>
-                )}
-                <div ref={messagesEndRef} />
-              </div>
-
-              {/* Input fixo */}
-              <div className="px-4 py-3 border-t border-[#F1F5F9] flex-shrink-0 space-y-2">
-                {/* Botão upload rápido */}
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setShowUpload((v) => !v)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#E2E8F0] text-xs text-[#64748B] hover:border-[#0487D9] hover:text-[#0487D9] transition-colors bg-white"
-                  >
-                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
-                    Adicionar fotos ou vídeos
-                    <span className="text-[#94A3B8]">até 10MB cada</span>
-                  </button>
-                  {pendingFiles.length > 0 && (
-                    <span className="text-xs text-[#0487D9] font-medium">
-                      {pendingFiles.length} {pendingFiles.length === 1 ? "ficheiro" : "ficheiros"} prontos
-                    </span>
                   )}
                 </div>
 
-                {showUpload && (
-                  <UploadDropzone
-                    files={pendingFiles}
-                    onAdd={(f) => setPendingFiles((prev) => [...prev, ...f])}
-                    onRemove={(id) => setPendingFiles((prev) => prev.filter((f) => f.id !== id))}
-                  />
-                )}
+                {/* Input fixo na base do card */}
+                <div className="px-3 py-2.5 border-t border-[#F1F5F9] flex-shrink-0 space-y-1.5">
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setShowUpload((v) => !v)}
+                      className="flex items-center gap-1 px-2.5 py-1 rounded-lg border border-[#E2E8F0] text-[11px] text-[#64748B] hover:border-[#0487D9] hover:text-[#0487D9] transition-colors bg-white"
+                    >
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                      Adicionar fotos ou vídeos
+                      <span className="text-[#94A3B8]">até 10MB</span>
+                    </button>
+                    {pendingFiles.length > 0 && (
+                      <span className="text-[11px] text-[#0487D9] font-medium">
+                        {pendingFiles.length} {pendingFiles.length === 1 ? "ficheiro" : "ficheiros"}
+                      </span>
+                    )}
+                  </div>
 
-                <div className="flex items-end gap-2">
-                  <textarea
-                    ref={inputRef}
-                    value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                    onKeyDown={handleKeyDown}
-                    placeholder="Descreva o que precisa recolher..."
-                    rows={1}
-                    className="flex-1 resize-none rounded-xl border border-[#E2E8F0] px-4 py-2.5 text-sm text-[#102033] placeholder:text-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-[#0487D9]/30 focus:border-[#0487D9] transition-colors bg-white leading-relaxed"
-                    style={{ maxHeight: "120px" }}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => handleUserReply(input, pendingFiles.length > 0 ? pendingFiles : undefined)}
-                    disabled={!input.trim() && pendingFiles.length === 0}
-                    className="flex-shrink-0 w-10 h-10 rounded-xl bg-[#0487D9] hover:bg-[#036BB0] disabled:opacity-40 disabled:cursor-not-allowed text-white flex items-center justify-center transition-colors shadow-sm"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-                    </svg>
-                  </button>
+                  {showUpload && (
+                    <UploadDropzone
+                      files={pendingFiles}
+                      onAdd={(f) => setPendingFiles((prev) => [...prev, ...f])}
+                      onRemove={(id) => setPendingFiles((prev) => prev.filter((f) => f.id !== id))}
+                    />
+                  )}
+
+                  <div className="flex items-end gap-2">
+                    <textarea
+                      ref={inputRef}
+                      value={input}
+                      onChange={(e) => setInput(e.target.value)}
+                      onKeyDown={handleKeyDown}
+                      placeholder="Descreva o que precisa recolher..."
+                      rows={1}
+                      className="flex-1 resize-none rounded-xl border border-[#E2E8F0] px-3 py-2 text-[13px] text-[#102033] placeholder:text-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-[#0487D9]/30 focus:border-[#0487D9] transition-colors bg-white leading-relaxed"
+                      style={{ maxHeight: "100px" }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => handleUserReply(input, pendingFiles.length > 0 ? pendingFiles : undefined)}
+                      disabled={!input.trim() && pendingFiles.length === 0}
+                      className="flex-shrink-0 w-9 h-9 rounded-xl bg-[#0487D9] hover:bg-[#036BB0] disabled:opacity-40 disabled:cursor-not-allowed text-white flex items-center justify-center transition-colors shadow-sm"
+                    >
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                      </svg>
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
 
-          {/* Coluna direita: Resumo + Estimativa */}
-          <div className="lg:w-[360px] flex-shrink-0 space-y-4">
-            <OrderSummaryCard order={order} />
-            <EstimateCard
-              estimate={estimate}
-              loading={estimateLoading}
-              canGenerate={canGenerate}
-              onGenerate={handleGenerateEstimate}
-              order={order}
-            />
+            {/* Coluna lateral — scroll interno se necessário */}
+            <div className="lg:w-[340px] flex-shrink-0 min-h-0 overflow-y-auto space-y-3 pb-3">
+              <OrderSummaryCard order={order} />
+              <EstimateCard
+                estimate={estimate}
+                loading={estimateLoading}
+                canGenerate={canGenerate}
+                onGenerate={handleGenerateEstimate}
+                order={order}
+              />
+            </div>
+
           </div>
         </div>
-      </div>
+      </main>
     </div>
   );
 }

@@ -1,70 +1,130 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { getMapsApiKey } from "@/lib/maps-config";
+const CLYON_BASE_ADDRESS =
+  process.env.CLYON_BASE_ADDRESS ?? "Fernão Ferro, Seixal, Portugal";
 
 export const revalidate = 0;
 
 export async function POST(request: NextRequest) {
-  const { origin, destination } = await request.json();
+  try {
+    const body = await request.json();
 
-  const originText = typeof origin === "string" ? origin.trim() : "";
-  const destinationText =
-    typeof destination === "string" ? destination.trim() : "";
+    // Aceitar novo formato { destination: { formattedAddress, lat, lng, placeId } }
+    // e formato legado { origin, destination } (string)
+    let destinationStr: string;
+    if (body.destination && typeof body.destination === "object") {
+      const d = body.destination as {
+        formattedAddress?: string;
+        lat?: number;
+        lng?: number;
+        placeId?: string;
+      };
+      if (d.lat && d.lng) {
+        destinationStr = `${d.lat},${d.lng}`;
+      } else {
+        destinationStr = d.formattedAddress ?? "";
+      }
+    } else {
+      destinationStr =
+        typeof body.destination === "string" ? body.destination.trim() : "";
+    }
 
-  if (!originText || !destinationText) {
-    return NextResponse.json(
-      { error: "missing_origin_or_destination" },
-      { status: 400 },
+    const originStr =
+      typeof body.origin === "string" ? body.origin.trim() : CLYON_BASE_ADDRESS;
+
+    if (!destinationStr) {
+      return NextResponse.json(
+        { ok: false, customerMessage: "Destino em falta." },
+        { status: 400 }
+      );
+    }
+
+    const key =
+      process.env.GOOGLE_MAPS_SERVER_API_KEY ??
+      process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+
+    if (!key) {
+      return NextResponse.json(
+        {
+          ok: false,
+          customerMessage:
+            "Não foi possível calcular a distância agora. A equipa CLYON confirma manualmente.",
+        },
+        { status: 503 }
+      );
+    }
+
+    const params = new URLSearchParams({
+      origins: originStr,
+      destinations: destinationStr,
+      mode: "driving",
+      language: "pt-PT",
+      region: "pt",
+      key,
+    });
+
+    const res = await fetch(
+      `https://maps.googleapis.com/maps/api/distancematrix/json?${params.toString()}`,
+      { cache: "no-store" }
     );
-  }
 
-  const key = getMapsApiKey();
-  if (!key) {
-    return NextResponse.json(
-      { error: "maps_unconfigured" },
-      { status: 503 },
-    );
-  }
+    if (!res.ok) {
+      return NextResponse.json(
+        {
+          ok: false,
+          customerMessage:
+            "Não foi possível calcular a distância agora. A equipa CLYON confirma manualmente.",
+        },
+        { status: 502 }
+      );
+    }
 
-  const params = new URLSearchParams({
-    origins: originText,
-    destinations: destinationText,
-    mode: "driving",
-    language: "pt-PT",
-    region: "pt",
-    key,
-  });
+    const data = await res.json();
+    const element = data.rows?.[0]?.elements?.[0];
 
-  const response = await fetch(
-    `https://maps.googleapis.com/maps/api/distancematrix/json?${params.toString()}`,
-    { cache: "no-store" },
-  );
+    if (data.status !== "OK" || !element || element.status !== "OK") {
+      console.error("[maps/distance] Google error:", data.status, element?.status);
+      return NextResponse.json(
+        {
+          ok: false,
+          customerMessage:
+            "Não foi possível calcular a distância agora. A equipa CLYON confirma manualmente.",
+        },
+        { status: 502 }
+      );
+    }
 
-  if (!response.ok) {
-    return NextResponse.json({ error: "distance_unavailable" }, { status: 502 });
-  }
+    const distanceMeters: number = element.distance.value;
+    const distanceKm = Math.round((distanceMeters / 1000) * 10) / 10;
+    const durationSeconds: number = element.duration.value;
+    const durationText: string = element.duration.text;
 
-  const data = await response.json();
-  const element = data.rows?.[0]?.elements?.[0];
-
-  if (data.status !== "OK" || !element || element.status !== "OK") {
+    return NextResponse.json({
+      ok: true,
+      distanceMeters,
+      distanceKm,
+      durationSeconds,
+      durationText,
+      origin: {
+        address: data.origin_addresses?.[0] ?? originStr,
+      },
+      destination: {
+        formattedAddress: data.destination_addresses?.[0] ?? destinationStr,
+      },
+      // campos legados para compatibilidade
+      distanceKm_legacy: distanceKm,
+      originAddress: data.origin_addresses?.[0] ?? originStr,
+      destinationAddress: data.destination_addresses?.[0] ?? destinationStr,
+    });
+  } catch (err) {
+    console.error("[maps/distance] Erro:", err);
     return NextResponse.json(
       {
-        error:
-          element?.status ||
-          data.error_message ||
-          data.status ||
-          "distance_unavailable",
+        ok: false,
+        customerMessage:
+          "Não foi possível calcular a distância agora. A equipa CLYON confirma manualmente.",
       },
-      { status: 502 },
+      { status: 500 }
     );
   }
-
-  const distanceKm = Math.round((element.distance.value / 1000) * 10) / 10;
-
-  return NextResponse.json({
-    distanceKm,
-    originAddress: data.origin_addresses?.[0] ?? originText,
-    destinationAddress: data.destination_addresses?.[0] ?? destinationText,
-  });
 }

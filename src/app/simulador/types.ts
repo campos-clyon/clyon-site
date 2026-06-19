@@ -27,6 +27,17 @@ export interface AddressData {
   placeId?: string;
 }
 
+export type AddressStatus = "empty" | "typing" | "selected" | "manual_confirmed";
+export type DistanceStatus = "idle" | "calculating" | "calculated" | "error";
+
+export interface DistanceFromBase {
+  distanceMeters?: number;
+  distanceKm?: number;
+  durationSeconds?: number;
+  durationText?: string;
+  calculatedAt?: string;
+}
+
 export interface ReceiverData {
   name?: string;
   phone?: string;
@@ -40,6 +51,9 @@ export interface OrderData {
   locationZone?: LocationZone;
   city?: string;
   address?: AddressData;
+  addressStatus?: AddressStatus;
+  distanceFromBase?: DistanceFromBase;
+  distanceStatus?: DistanceStatus;
   floor?: string;
   hasElevator?: "yes" | "small" | "no" | "unknown";
   parkingDistance?: "door" | "under_20m" | "over_30m" | "difficult" | "unknown";

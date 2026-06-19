@@ -209,6 +209,34 @@ export function calculateLocalEstimate(order: OrderData): EstimateResult {
     assumptions.push("Desmontagem média incluída");
   }
 
+  // Ajuste por distância (se calculada)
+  const distKm = order.distanceFromBase?.distanceKm;
+  if (distKm !== undefined) {
+    if (distKm > 50) {
+      return {
+        status: "onsite_required",
+        estimatedPriceWithoutVat: null,
+        vatAmount: null,
+        estimatedPriceWithVat: null,
+        difficultyLevel: difficulty,
+        summary: `Distância: ${distKm} km`,
+        assumptions: [],
+        missingFields: [],
+        customerMessage:
+          "A distância da base CLYON até à morada indicada é elevada. Iremos apresentar um orçamento personalizado.",
+        internalNotes: [`Distância: ${distKm} km — orçamento personalizado.`],
+      };
+    } else if (distKm > 35) {
+      base += 60;
+      assumptions.push(`Deslocação de ${distKm} km (ajuste de 40€ a 80€)`);
+    } else if (distKm > 20) {
+      base += 30;
+      assumptions.push(`Deslocação de ${distKm} km (ajuste de 20€ a 40€)`);
+    }
+    internalNotes.push(`Distância calculada: ${distKm} km`);
+    assumptions.push("A estimativa considera a distância aproximada entre a base CLYON e a morada indicada.");
+  }
+
   // Dar intervalo (±10%)
   const low = Math.floor(base * 0.9 / 10) * 10;
   const high = Math.ceil(base * 1.1 / 10) * 10;
