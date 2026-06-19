@@ -389,7 +389,7 @@ export default function SimulatorPage() {
     setMessages((prev) => [...prev, userMsg]);
     setMessages((prev) => [
       ...prev,
-      makeAssistantMessage("Obrigado! Já tenho todos os dados. Clique em 'Gerar estimativa' no painel lateral para calcular o valor com base no preçário CLYON."),
+      makeAssistantMessage("Obrigado! Já tenho todos os dados. A calcular a estimativa com base no preçário CLYON..."),
     ]);
   };
 
@@ -464,6 +464,14 @@ export default function SimulatorPage() {
     addressReady &&
     !!order.receiver?.name &&
     !!order.receiver?.phone;
+
+  // ─── Auto-gerar estimativa quando o resumo fica completo ──────────────────
+  useEffect(() => {
+    if (canGenerate && !estimate && !estimateLoading) {
+      handleGenerateEstimate();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [canGenerate]);
 
   const progressStep = getProgressStep(order);
 
