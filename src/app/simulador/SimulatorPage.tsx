@@ -3,10 +3,10 @@
 import { useEffect, useRef, useState } from "react";
 import type { ChatMessage, EstimateResult, OrderData, UploadedFile, DistanceFromBase, DistanceStatus } from "./types";
 import {
-  getNextChatStep,
   getProgressStep,
   parseDismantling,
   parseElevator,
+  parseFloor,
   parseParking,
   parseServiceType,
   parseUrgency,
@@ -43,70 +43,114 @@ function clearSimulatorStorage() {
 
 function markReset() {
   if (typeof window === "undefined") return;
-  // Escreve a flag de forma síncrona antes de qualquer setState
-  // A hidratação verifica esta flag e ignora o draft mesmo que ainda exista
   localStorage.setItem(SIMULATOR_RESET_FLAG, "1");
-  clearSimulatorStorage(); // limpa tudo incluindo a flag logo a seguir
-  // Re-escreve apenas a flag para que a próxima hidratação a encontre
+  clearSimulatorStorage();
   localStorage.setItem(SIMULATOR_RESET_FLAG, "1");
 }
 
-// ─── Estado inicial ─────────────────────────────────────────────────────────
+// ─── Helpers ────────────────────────────────────────────────────────────────
 function uid() {
   return Math.random().toString(36).slice(2, 10);
-}
-
-function createInitialOrder(): OrderData {
-  return {};
-}
-
-function createInitialMessages(): ChatMessage[] {
-  const firstStep = getNextChatStep({});
-  return [
-    {
-      id: uid(),
-      role: "assistant",
-      content: firstStep?.question ?? "Qual é o tipo de serviço que precisa?",
-      timestamp: new Date(),
-      quickReplies: firstStep?.quickReplies,
-    },
-  ];
 }
 
 function makeAssistantMessage(content: string, extra?: Partial<ChatMessage>): ChatMessage {
   return { id: uid(), role: "assistant", content, timestamp: new Date(), ...extra };
 }
 
+const WELCOME_MESSAGE = "Olá! Sou o orçamentista da CLYON. Descreva o serviço que precisa (pode escrever tudo de uma vez: tipo de serviço, o que tem para recolher, morada, andar, elevador, urgência) ou vá respondendo às perguntas. Também pode enviar fotos.";
+
+function createInitialMessages(): ChatMessage[] {
+  return [makeAssistantMessage(WELCOME_MESSAGE)];
+}
+
+// ─── Extracção de campos do texto livre (client-side, sem IA) ───────────────
+// Complementa a extracção feita pelo Gemini no backend
+function extractOrderFieldsFromText(text: string, current: OrderData): Partial<OrderData> {
+  const t = text.toLowerCase();
+  const updates: Partial<OrderData> = {};
+
+  if (!current.serviceType) {
+    const st = parseServiceType(text);
+    if (st) updates.serviceType = st as OrderData["serviceType"];
+  }
+  if (!current.description && text.length > 15) {
+    updates.description = text.trim();
+  }
+  if (!current.floor) {
+    const fl = parseFloor(text);
+    if (fl) updates.floor = fl;
+  }
+  if (!current.hasElevator) {
+    const el = parseElevator(text);
+    if (el && el !== "unknown") updates.hasElevator = el;
+  }
+  if (!current.parkingDistance) {
+    const pk = parseParking(text);
+    if (pk && pk !== "unknown") updates.parkingDistance = pk;
+  }
+  if (!current.needsDismantling) {
+    const dm = parseDismantling(text);
+    if (dm && dm !== "unknown") updates.needsDismantling = dm;
+  }
+  if (!current.urgency) {
+    const ug = parseUrgency(text);
+    if (ug && ug !== "no") updates.urgency = ug;
+  }
+  // Tentar extrair nome + telefone
+  if (!current.receiver?.name) {
+    const nameMatch = text.match(/nome[:\s]+([A-ZÁÉÍÓÚÀÃÕÂÊÔÇ][a-záéíóúàãõâêôç]+(?:\s+[A-ZÁÉÍÓÚÀÃÕÂÊÔÇ][a-záéíóúàãõâêôç]+)+)/i);
+    if (nameMatch) {
+      const phone = text.match(/(?:telef[^\d]*|tel[:\s]+|contacto[:\s]+)?(\+351\s?)?([289][0-9]{8}|9[1236][0-9]{7})/);
+      const email = text.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
+      updates.receiver = {
+        name: nameMatch[1].trim(),
+        phone: phone ? phone[0].replace(/\D/g, "").replace(/^351/, "") : "",
+        email: email ? email[0] : undefined,
+      };
+    }
+  }
+  // Tentar extrair cidade/morada
+  if (!current.city) {
+    const cityMatch = text.match(/(?:localidade|cidade|morada|local)[:\s]+([A-ZÁÉÍÓÚÀÃÕÂÊÔÇÜ][^,.\n]+)/i);
+    if (cityMatch) {
+      updates.city = cityMatch[1].trim();
+      updates.locationZone = detectZone(cityMatch[1].trim());
+      updates.address = { formattedAddress: cityMatch[1].trim() };
+      updates.addressStatus = "manual_confirmed";
+    }
+  }
+
+  return updates;
+}
+
 // ─── Componente ─────────────────────────────────────────────────────────────
 export default function SimulatorPage() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [order, setOrder] = useState<OrderData>(createInitialOrder());
+  const [order, setOrder] = useState<OrderData>({});
   const [input, setInput] = useState("");
   const [pendingFiles, setPendingFiles] = useState<UploadedFile[]>([]);
   const [showUpload, setShowUpload] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
   const [estimate, setEstimate] = useState<EstimateResult | null>(null);
   const [estimateLoading, setEstimateLoading] = useState(false);
-  const [currentStep, setCurrentStep] = useState<ReturnType<typeof getNextChatStep>>(null);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
-  // resetVersion força desmontagem/remontagem de filhos com estado interno
   const [resetVersion, setResetVersion] = useState(0);
+  // Histórico de mensagens para o Gemini (formato {role, content})
+  const [chatHistory, setChatHistory] = useState<Array<{ role: "user" | "assistant"; content: string }>>([]);
 
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
-
-  // Guards para evitar que o auto-save reescreva o storage durante/após reset
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const hasHydratedRef = useRef(false);
   const isResettingRef = useRef(false);
 
-  // ─── Hidratação inicial (corre uma única vez) ──────────────────────────────
+  // ─── Hidratação ────────────────────────────────────────────────────────────
   useEffect(() => {
     if (hasHydratedRef.current) return;
     hasHydratedRef.current = true;
 
     if (typeof window === "undefined") {
       setMessages(createInitialMessages());
-      setCurrentStep(getNextChatStep({}));
       return;
     }
 
@@ -115,13 +159,9 @@ export default function SimulatorPage() {
       clearSimulatorStorage();
       window.history.replaceState({}, "", "/simulador");
       setMessages(createInitialMessages());
-      setOrder(createInitialOrder());
-      setEstimate(null);
-      setCurrentStep(getNextChatStep({}));
       return;
     }
 
-    // Se existe a flag de reset, ignorar qualquer draft e limpar tudo
     const wasReset = localStorage.getItem(SIMULATOR_RESET_FLAG) === "1";
     if (wasReset) {
       clearSimulatorStorage();
@@ -130,32 +170,19 @@ export default function SimulatorPage() {
       if (saved) {
         try {
           const parsed = JSON.parse(saved);
-          if (parsed.order && Object.keys(parsed.order).length > 0) {
-            setOrder(parsed.order);
-          }
-          if (parsed.estimate) {
-            setEstimate(parsed.estimate);
-          }
-        } catch {
-          // draft inválido — ignorar
-        }
+          if (parsed.order && Object.keys(parsed.order).length > 0) setOrder(parsed.order);
+          if (parsed.estimate) setEstimate(parsed.estimate);
+        } catch { /* ignorar */ }
       }
     }
-
     setMessages(createInitialMessages());
-    setCurrentStep(getNextChatStep({}));
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ─── Auto-save (nunca escreve durante reset) ───────────────────────────────
+  // ─── Auto-save ─────────────────────────────────────────────────────────────
   useEffect(() => {
-    if (!hasHydratedRef.current) return;
-    if (isResettingRef.current) return;
+    if (!hasHydratedRef.current || isResettingRef.current) return;
     if (Object.keys(order).length === 0 && !estimate) return;
-
-    localStorage.setItem(
-      SIMULATOR_DRAFT_KEY,
-      JSON.stringify({ order, estimate })
-    );
+    localStorage.setItem(SIMULATOR_DRAFT_KEY, JSON.stringify({ order, estimate }));
   }, [order, estimate]);
 
   // ─── Scroll interno ────────────────────────────────────────────────────────
@@ -167,77 +194,35 @@ export default function SimulatorPage() {
 
   // ─── Reset ─────────────────────────────────────────────────────────────────
   const resetSimulator = () => {
-    // 1. Bloquear auto-save e marcar reset de forma 100% síncrona
-    //    Tem de ser ANTES de qualquer setState.
     isResettingRef.current = true;
-    markReset(); // escreve flag + limpa storage de forma síncrona
+    markReset();
+    pendingFiles.forEach((f) => { if (f.previewUrl) URL.revokeObjectURL(f.previewUrl); });
 
-    // 2. Revogar Object URLs de fotos pendentes
-    pendingFiles.forEach((f) => {
-      if (f.previewUrl) URL.revokeObjectURL(f.previewUrl);
-    });
-
-    // 3. Resetar todos os estados num único flush
-    const initialOrder = createInitialOrder();
-    const initialMessages = createInitialMessages();
-    const initialStep = getNextChatStep({});
-
-    setOrder(initialOrder);
-    setMessages(initialMessages);
+    setOrder({});
+    setMessages(createInitialMessages());
     setEstimate(null);
     setEstimateLoading(false);
     setPendingFiles([]);
     setShowUpload(false);
     setInput("");
     setIsTyping(false);
-    setCurrentStep(initialStep);
+    setChatHistory([]);
     setShowResetConfirm(false);
-
-    // 4. Incrementar resetVersion — desmonta e remonta filhos com estado interno
     setResetVersion((v) => v + 1);
 
-    // 5. Após o flush dos setStates, limpar storage uma segunda vez
-    //    (cobre o caso de o auto-save ter escrito entre o passo 1 e o render)
-    //    e liberar o guard.
     requestAnimationFrame(() => {
       clearSimulatorStorage();
-      if (messagesContainerRef.current) {
-        messagesContainerRef.current.scrollTop = 0;
-      }
+      if (messagesContainerRef.current) messagesContainerRef.current.scrollTop = 0;
       isResettingRef.current = false;
     });
   };
 
-  // ─── Chat helpers ──────────────────────────────────────────────────────────
-  const addAssistantMessage = (content: string, extra?: Partial<ChatMessage>) => {
-    setMessages((prev) => [...prev, makeAssistantMessage(content, extra)]);
-  };
-
-  const advanceChat = (updatedOrder: OrderData) => {
-    const next = getNextChatStep(updatedOrder);
-    setCurrentStep(next);
-
-    setTimeout(() => {
-      setIsTyping(false);
-      if (!next) {
-        addAssistantMessage(
-          "Obrigado. Já tenho os dados principais. Clique em 'Gerar estimativa' no painel lateral para calcular o valor com base no preçário CLYON."
-        );
-      } else {
-        addAssistantMessage(next.question, {
-          quickReplies: next.quickReplies,
-          showContactForm: next.showContactForm,
-          showUpload: next.showUpload,
-        });
-        if (next.showUpload) setShowUpload(true);
-      }
-    }, 700);
-  };
-
-  const handleUserReply = (text: string, files?: UploadedFile[]) => {
+  // ─── Enviar mensagem com Gemini ────────────────────────────────────────────
+  const handleSend = async (text: string, files?: UploadedFile[]) => {
     const trimmed = text.trim();
     if (!trimmed && (!files || files.length === 0)) return;
 
+    // 1. Mensagem do utilizador
     const userMsg: ChatMessage = {
       id: uid(),
       role: "user",
@@ -251,44 +236,82 @@ export default function SimulatorPage() {
     setShowUpload(false);
     setIsTyping(true);
 
-    let updatedOrder = { ...order };
-
-    if (currentStep) {
-      switch (currentStep.step) {
-        case "service_type":
-          updatedOrder.serviceType = parseServiceType(trimmed) as OrderData["serviceType"];
-          break;
-        case "description":
-          updatedOrder.description = trimmed || undefined;
-          if (files && files.length > 0) updatedOrder.files = [...(updatedOrder.files ?? []), ...files];
-          break;
-        case "floor":
-          updatedOrder.floor = trimmed;
-          break;
-        case "elevator":
-          updatedOrder.hasElevator = parseElevator(trimmed);
-          break;
-        case "parking":
-          updatedOrder.parkingDistance = parseParking(trimmed);
-          break;
-        case "dismantling":
-          updatedOrder.needsDismantling = parseDismantling(trimmed);
-          break;
-        case "heavy_items":
-          updatedOrder.heavyItems = trimmed === "Não" ? [] : [trimmed];
-          break;
-        case "urgency":
-          updatedOrder.urgency = parseUrgency(trimmed);
-          break;
-      }
-    } else if (files && files.length > 0) {
+    // 2. Extracção local de campos (sem IA, instantânea)
+    const extracted = extractOrderFieldsFromText(trimmed, order);
+    const updatedOrder = { ...order, ...extracted };
+    if (files && files.length > 0) {
       updatedOrder.files = [...(updatedOrder.files ?? []), ...files];
     }
-
     setOrder(updatedOrder);
-    advanceChat(updatedOrder);
+
+    // 3. Novo histórico para o Gemini
+    const newHistory = [
+      ...chatHistory,
+      { role: "user" as const, content: trimmed },
+    ];
+    setChatHistory(newHistory);
+
+    // 4. Chamar Gemini
+    try {
+      // Construir payload com fotos inline se existirem
+      type MsgPart = { text: string } | { inlineData: { mimeType: string; data: string } };
+      type ApiMsg = { role: "user" | "assistant"; content: string | MsgPart[] };
+
+      const apiMessages: ApiMsg[] = newHistory.map((m) => ({ role: m.role, content: m.content }));
+
+      // Substituir a última mensagem por uma com imagens se houver ficheiros
+      if (files && files.length > 0) {
+        const parts: MsgPart[] = [];
+        if (trimmed) parts.push({ text: trimmed });
+        for (const f of files) {
+          if (f.base64 && f.mimeType) {
+            parts.push({ inlineData: { mimeType: f.mimeType, data: f.base64 } });
+          }
+        }
+        if (parts.length > 0) {
+          apiMessages[apiMessages.length - 1] = { role: "user", content: parts };
+        }
+      }
+
+      const res = await fetch("/api/chat-simulador", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ messages: apiMessages, order: updatedOrder }),
+      });
+
+      const data = await res.json();
+      const responseText: string = data.message ?? data.customerMessage ?? "Pode continuar a descrever o serviço.";
+
+      // 5. Verificar se o Gemini detectou [ABRIR_FORMULARIO]
+      const showForm = responseText.includes("[ABRIR_FORMULARIO]");
+      const cleanResponse = responseText.replace("[ABRIR_FORMULARIO]", "").trim();
+
+      // 6. Atualizar histórico com resposta da IA
+      setChatHistory((prev) => [...prev, { role: "assistant", content: cleanResponse }]);
+
+      // 7. Mostrar resposta da IA
+      setIsTyping(false);
+      if (showForm) {
+        setMessages((prev) => [
+          ...prev,
+          makeAssistantMessage("Para finalizar, preciso dos seus dados de contacto e morada:", {
+            showContactForm: true,
+          }),
+        ]);
+      } else if (cleanResponse) {
+        setMessages((prev) => [...prev, makeAssistantMessage(cleanResponse)]);
+      }
+
+    } catch {
+      setIsTyping(false);
+      setMessages((prev) => [
+        ...prev,
+        makeAssistantMessage("Pode continuar a descrever o que precisa. Estou aqui para ajudar."),
+      ]);
+    }
   };
 
+  // ─── Formulário de contacto ────────────────────────────────────────────────
   const handleContactSubmit = (data: {
     receiver: OrderData["receiver"];
     address: { formattedAddress?: string; city?: string; postalCode?: string; lat?: number; lng?: number; placeId?: string };
@@ -296,8 +319,6 @@ export default function SimulatorPage() {
     distanceFromBase?: DistanceFromBase;
     distanceStatus?: DistanceStatus;
   }) => {
-    // Garantir que formattedAddress nunca fica undefined:
-    // se Google Places não devolveu nada, usar o texto que o utilizador escreveu.
     const resolvedAddress = {
       ...data.address,
       formattedAddress: data.address.formattedAddress || data.addressText || undefined,
@@ -318,41 +339,20 @@ export default function SimulatorPage() {
     const summaryParts = [
       `Contacto: ${data.receiver?.name}, ${data.receiver?.phone}`,
       data.receiver?.email ? `E-mail: ${data.receiver.email}` : "",
-      `Morada: ${data.addressText}`,
+      `Morada: ${data.addressText || resolvedAddress.formattedAddress}`,
     ].filter(Boolean);
 
-    if (data.distanceStatus === "calculated" && data.distanceFromBase?.distanceKm) {
-      summaryParts.push(
-        `Distância: ${data.distanceFromBase.distanceKm} km da base CLYON, aproximadamente ${data.distanceFromBase.durationText} de viagem.`
-      );
-    }
-
     const userMsg: ChatMessage = {
-      id: uid(),
-      role: "user",
-      content: summaryParts.join(". "),
-      timestamp: new Date(),
+      id: uid(), role: "user", content: summaryParts.join(". "), timestamp: new Date(),
     };
     setMessages((prev) => [...prev, userMsg]);
-
-    if (data.distanceStatus === "calculated" && data.distanceFromBase?.distanceKm) {
-      setTimeout(() => {
-        addAssistantMessage(
-          `Distância calculada: ${data.distanceFromBase!.distanceKm} km da base CLYON, aproximadamente ${data.distanceFromBase!.durationText} de viagem.`
-        );
-      }, 400);
-    } else if (data.distanceStatus === "error") {
-      setTimeout(() => {
-        addAssistantMessage(
-          "Não consegui calcular a distância automaticamente. A equipa CLYON confirma manualmente."
-        );
-      }, 400);
-    }
-
-    setIsTyping(true);
-    advanceChat(updatedOrder);
+    setMessages((prev) => [
+      ...prev,
+      makeAssistantMessage("Obrigado! Já tenho todos os dados. Clique em 'Gerar estimativa' no painel lateral para calcular o valor com base no preçário CLYON."),
+    ]);
   };
 
+  // ─── Gerar estimativa ──────────────────────────────────────────────────────
   const handleGenerateEstimate = async () => {
     setEstimateLoading(true);
     setEstimate(null);
@@ -362,12 +362,8 @@ export default function SimulatorPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ order }),
       });
-      if (res.ok) {
-        const data = await res.json();
-        setEstimate(data);
-      } else {
-        setEstimate(calculateLocalEstimate(order));
-      }
+      const data = await res.json();
+      setEstimate(res.ok ? data : calculateLocalEstimate(order));
     } catch {
       setEstimate(calculateLocalEstimate(order));
     } finally {
@@ -375,6 +371,46 @@ export default function SimulatorPage() {
     }
   };
 
+  // ─── Upload de ficheiros via input hidden ──────────────────────────────────
+  const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const rawFiles = Array.from(e.target.files ?? []);
+    const MAX = 10 * 1024 * 1024;
+    const uploaded: UploadedFile[] = rawFiles
+      .filter((f) => f.size <= MAX)
+      .map((f) => ({
+        id: uid(),
+        file: f,
+        name: f.name,
+        size: f.size,
+        mimeType: f.type,
+        previewUrl: f.type.startsWith("image/") ? URL.createObjectURL(f) : undefined,
+      }));
+
+    // Converter para base64
+    uploaded.forEach((uf) => {
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        const b64 = (ev.target?.result as string)?.split(",")[1];
+        setPendingFiles((prev) =>
+          prev.map((p) => (p.id === uf.id ? { ...p, base64: b64 } : p))
+        );
+      };
+      reader.readAsDataURL(uf.file as File);
+    });
+
+    setPendingFiles((prev) => [...prev, ...uploaded]);
+    if (e.target) e.target.value = "";
+  };
+
+  // ─── Canais de teclado ─────────────────────────────────────────────────────
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSend(input, pendingFiles.length > 0 ? pendingFiles : undefined);
+    }
+  };
+
+  // ─── Computed ──────────────────────────────────────────────────────────────
   const addressReady =
     order.addressStatus === "selected" ||
     order.addressStatus === "manual_confirmed" ||
@@ -385,24 +421,16 @@ export default function SimulatorPage() {
     !!order.serviceType &&
     !!(order.description || (order.files && order.files.length > 0)) &&
     addressReady &&
-    !!order.floor &&
-    !!order.hasElevator &&
-    !!order.parkingDistance &&
     !!order.receiver?.name &&
     !!order.receiver?.phone;
 
   const progressStep = getProgressStep(order);
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      handleUserReply(input, pendingFiles.length > 0 ? pendingFiles : undefined);
-    }
-  };
-
+  // ─── Render ────────────────────────────────────────────────────────────────
   return (
     <div className="h-screen bg-[#F7FBFF] overflow-hidden flex flex-col">
-      {/* Hero compacto */}
+
+      {/* Hero */}
       <div className="bg-white border-b border-[#E2E8F0] flex-shrink-0">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
@@ -440,7 +468,7 @@ export default function SimulatorPage() {
             <div className="flex-1 min-w-0 min-h-0 flex flex-col">
               <div className="flex-1 min-h-0 bg-white rounded-xl border border-[#E2E8F0] shadow-sm flex flex-col overflow-hidden">
 
-                {/* Cabeçalho do chat */}
+                {/* Cabeçalho */}
                 <div className="px-4 py-2.5 border-b border-[#F1F5F9] flex items-center gap-2.5 flex-shrink-0">
                   <div className="w-7 h-7 rounded-full bg-gradient-to-br from-[#0487D9] to-[#19C2E6] flex items-center justify-center flex-shrink-0">
                     <span className="text-white text-[10px] font-bold">S</span>
@@ -456,7 +484,6 @@ export default function SimulatorPage() {
                     type="button"
                     onClick={() => setShowResetConfirm(true)}
                     className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-[#E2E8F0] text-[11px] font-medium text-[#64748B] hover:border-[#0487D9] hover:text-[#0487D9] transition-colors bg-white flex-shrink-0"
-                    title="Começar novo pedido"
                   >
                     <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -465,7 +492,7 @@ export default function SimulatorPage() {
                   </button>
                 </div>
 
-                {/* Área de mensagens */}
+                {/* Mensagens — flex-1 com scroll */}
                 <div
                   ref={messagesContainerRef}
                   className="flex-1 min-h-0 overflow-y-auto px-4 py-4 space-y-4"
@@ -475,17 +502,7 @@ export default function SimulatorPage() {
                       <ChatMessageComponent message={msg} />
                       {msg.role === "assistant" && msg.quickReplies && idx === messages.length - 1 && !isTyping && (
                         <div className="ml-9 mt-1.5">
-                          <QuickReplyChips options={msg.quickReplies} onSelect={(val) => handleUserReply(val)} />
-                        </div>
-                      )}
-                      {msg.role === "assistant" && msg.showUpload && idx === messages.length - 1 && !isTyping && (
-                        <div className="ml-9 mt-2">
-                          <UploadDropzone
-                            key={`upload-inline-${resetVersion}`}
-                            files={pendingFiles}
-                            onAdd={(f) => setPendingFiles((prev) => [...prev, ...f])}
-                            onRemove={(id) => setPendingFiles((prev) => prev.filter((f) => f.id !== id))}
-                          />
+                          <QuickReplyChips options={msg.quickReplies} onSelect={(val) => handleSend(val)} />
                         </div>
                       )}
                       {msg.role === "assistant" && msg.showContactForm && idx === messages.length - 1 && !isTyping && (
@@ -515,59 +532,95 @@ export default function SimulatorPage() {
                   )}
                 </div>
 
-                {/* Input */}
-                <div className="px-3 py-2.5 border-t border-[#F1F5F9] flex-shrink-0 space-y-1.5">
-                  <div className="flex items-center gap-2">
+                {/* Preview de ficheiros pendentes */}
+                {pendingFiles.length > 0 && (
+                  <div className="px-3 pt-2 flex flex-wrap gap-2 border-t border-[#F1F5F9]">
+                    {pendingFiles.map((f) => (
+                      <div key={f.id} className="relative group">
+                        {f.previewUrl ? (
+                          <img src={f.previewUrl} alt={f.name} className="w-12 h-12 rounded-lg object-cover border border-[#E2E8F0]" />
+                        ) : (
+                          <div className="w-12 h-12 rounded-lg bg-[#F1F5F9] border border-[#E2E8F0] flex items-center justify-center">
+                            <svg className="w-5 h-5 text-[#94A3B8]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 10l4.553-2.069A1 1 0 0121 8.879V15.12a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                            </svg>
+                          </div>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => setPendingFiles((p) => p.filter((x) => x.id !== f.id))}
+                          className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-[#EF4444] text-white text-[9px] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Barra de input — sempre colada ao fundo */}
+                <div className="px-3 py-2 border-t border-[#F1F5F9] flex-shrink-0">
+                  <div className="flex items-end gap-1.5 bg-[#F8FAFC] rounded-xl border border-[#E2E8F0] px-2 py-1.5 focus-within:border-[#0487D9] focus-within:ring-2 focus-within:ring-[#0487D9]/20 transition-all">
+                    {/* Botão "+" para fotos */}
                     <button
                       type="button"
-                      onClick={() => setShowUpload((v) => !v)}
-                      className="flex items-center gap-1 px-2.5 py-1 rounded-lg border border-[#E2E8F0] text-[11px] text-[#64748B] hover:border-[#0487D9] hover:text-[#0487D9] transition-colors bg-white"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="flex-shrink-0 w-7 h-7 rounded-lg flex items-center justify-center text-[#94A3B8] hover:text-[#0487D9] hover:bg-[#EFF8FF] transition-colors"
+                      title="Adicionar fotos ou vídeos (até 10MB)"
                     >
-                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                       </svg>
-                      Adicionar fotos ou vídeos
-                      <span className="text-[#94A3B8]">até 10MB</span>
                     </button>
-                    {pendingFiles.length > 0 && (
-                      <span className="text-[11px] text-[#0487D9] font-medium">
-                        {pendingFiles.length} {pendingFiles.length === 1 ? "ficheiro" : "ficheiros"}
-                      </span>
-                    )}
-                  </div>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*,video/*"
+                      multiple
+                      className="hidden"
+                      onChange={handleFileInputChange}
+                    />
 
-                  <div className="flex items-end gap-2">
+                    {/* Textarea */}
                     <textarea
                       ref={inputRef}
                       value={input}
-                      onChange={(e) => setInput(e.target.value)}
+                      onChange={(e) => {
+                        setInput(e.target.value);
+                        // Auto-resize
+                        e.target.style.height = "auto";
+                        e.target.style.height = Math.min(e.target.scrollHeight, 120) + "px";
+                      }}
                       onKeyDown={handleKeyDown}
-                      placeholder="Descreva o que precisa recolher..."
+                      placeholder="Descreva o serviço ou coloque aqui toda a informação..."
                       rows={1}
-                      className="flex-1 resize-none rounded-xl border border-[#E2E8F0] px-3 py-2 text-[13px] text-[#102033] placeholder:text-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-[#0487D9]/30 focus:border-[#0487D9] transition-colors bg-white leading-relaxed"
-                      style={{ maxHeight: "100px" }}
+                      className="flex-1 resize-none bg-transparent text-[13px] text-[#102033] placeholder:text-[#B0BEC5] focus:outline-none leading-relaxed py-1"
+                      style={{ minHeight: "28px", maxHeight: "120px" }}
                     />
+
+                    {/* Botão enviar */}
                     <button
                       type="button"
-                      onClick={() => handleUserReply(input, pendingFiles.length > 0 ? pendingFiles : undefined)}
+                      onClick={() => handleSend(input, pendingFiles.length > 0 ? pendingFiles : undefined)}
                       disabled={!input.trim() && pendingFiles.length === 0}
-                      className="flex-shrink-0 w-9 h-9 rounded-xl bg-[#0487D9] hover:bg-[#036BB0] disabled:opacity-40 disabled:cursor-not-allowed text-white flex items-center justify-center transition-colors shadow-sm"
+                      className="flex-shrink-0 w-7 h-7 rounded-lg bg-[#0487D9] hover:bg-[#036BB0] disabled:opacity-30 disabled:cursor-not-allowed text-white flex items-center justify-center transition-colors shadow-sm"
                     >
                       <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
                       </svg>
                     </button>
                   </div>
+                  <p className="text-[10px] text-[#CBD5E1] mt-1 ml-1">
+                    Pode escrever tudo de uma vez ou usar o <span className="font-medium">+</span> para adicionar fotos
+                  </p>
                 </div>
+
               </div>
             </div>
 
             {/* Coluna lateral */}
             <div className="lg:w-[340px] flex-shrink-0 min-h-0 overflow-y-auto space-y-3 pb-3">
-              <OrderSummaryCard
-                key={`summary-${resetVersion}`}
-                order={order}
-              />
+              <OrderSummaryCard key={`summary-${resetVersion}`} order={order} />
               <EstimateCard
                 key={`estimate-${resetVersion}`}
                 estimate={estimate}
@@ -583,7 +636,7 @@ export default function SimulatorPage() {
         </div>
       </main>
 
-      {/* Modal de confirmação */}
+      {/* Modal de confirmação de reset */}
       {showResetConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShowResetConfirm(false)} />
@@ -600,18 +653,10 @@ export default function SimulatorPage() {
               Tem a certeza que deseja começar um novo pedido? Os dados atuais serão apagados.
             </p>
             <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={() => setShowResetConfirm(false)}
-                className="flex-1 py-2.5 px-4 rounded-xl border border-[#E2E8F0] text-[13px] font-medium text-[#64748B] hover:border-[#CBD5E1] hover:text-[#102033] transition-colors"
-              >
+              <button type="button" onClick={() => setShowResetConfirm(false)} className="flex-1 py-2.5 px-4 rounded-xl border border-[#E2E8F0] text-[13px] font-medium text-[#64748B] hover:border-[#CBD5E1] hover:text-[#102033] transition-colors">
                 Cancelar
               </button>
-              <button
-                type="button"
-                onClick={resetSimulator}
-                className="flex-1 py-2.5 px-4 rounded-xl bg-[#EF4444] hover:bg-[#DC2626] text-white text-[13px] font-semibold transition-colors shadow-sm"
-              >
+              <button type="button" onClick={resetSimulator} className="flex-1 py-2.5 px-4 rounded-xl bg-[#EF4444] hover:bg-[#DC2626] text-white text-[13px] font-semibold transition-colors shadow-sm">
                 Sim, começar novo pedido
               </button>
             </div>

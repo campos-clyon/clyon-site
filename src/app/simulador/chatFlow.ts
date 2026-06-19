@@ -183,3 +183,20 @@ export function parseDismantling(text: string): OrderData["needsDismantling"] {
   if (text.toLowerCase().includes("demorada")) return "complex";
   return "unknown";
 }
+
+export function parseFloor(text: string): string | undefined {
+  const t = text.toLowerCase();
+  if (/rés.do.chão|r\/c|térreo|piso 0/.test(t)) return "Rés-do-chão";
+  if (/1[ºo°]?\s*andar|piso 1/.test(t)) return "1.º andar";
+  if (/2[ºo°]?\s*andar|piso 2/.test(t)) return "2.º andar";
+  if (/3[ºo°]?\s*andar|piso 3/.test(t)) return "3.º andar";
+  if (/4[ºo°]?\s*andar|piso 4/.test(t)) return "4.º andar";
+  if (/5[ºo°]?\s*andar|piso [56789]/.test(t)) return "4.º andar ou superior";
+  if (/cave/.test(t)) return "Cave";
+  if (/garagem/.test(t)) return "Garagem";
+  if (/andar/.test(t)) {
+    const m = t.match(/(\d+)[ºo°]?\s*andar/);
+    if (m) return `${m[1]}.º andar`;
+  }
+  return undefined;
+}
