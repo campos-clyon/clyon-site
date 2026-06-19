@@ -208,9 +208,11 @@ export default function SimuladorChatClient() {
       const data = await response.json();
 
       if (!response.ok) {
-        const apiError = data?.error || data?.details || `Erro ${response.status}: ${response.statusText}`;
-        console.error("[v0] API error response:", data);
-        throw new Error(apiError);
+        console.error("[chat] API error response:", data);
+        const friendlyMsg =
+          data?.customerMessage ||
+          "Não consegui calcular a estimativa agora. Pode continuar a enviar os detalhes e a equipa CLYON confirma o valor.";
+        throw new Error(friendlyMsg);
       }
 
       const responseText = data.message;
@@ -240,10 +242,10 @@ export default function SimuladorChatClient() {
         setMessages((prev) => [...prev, assistantMessage]);
       }
     } catch (err) {
+      console.error("[chat] Erro técnico:", err);
       setError(
-        err instanceof Error ? err.message : "Erro ao enviar mensagem"
+        "Não consegui calcular a estimativa agora. Pode continuar a enviar os detalhes e a equipa CLYON confirma o valor."
       );
-      console.error("Chat error:", err);
     } finally {
       setLoading(false);
     }

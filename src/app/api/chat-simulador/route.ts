@@ -1,7 +1,7 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { GoogleGenAI } from "@google/genai";
 import { NextRequest, NextResponse } from "next/server";
 
-const client = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY ?? "");
+const MODEL = process.env.GEMINI_MODEL || "gemini-2.0-flash";
 
 const SYSTEM_INSTRUCTION = `És o orçamentista virtual da Clyon. Vai direto ao assunto.
 
@@ -14,49 +14,46 @@ Quando tiveres a resposta a estas questões logísticas E as fotos, NÃO dês o 
 
 Se o cliente fornecer os dados (nome, contacto, morada), processa essa informação e dá o teu orçamento final estimado em formato de intervalo de preço (exemplo: "80€ a 120€"), finalizando de forma profissional.`;
 
+type MessagePart =
+  | { text: string }
+  | { inlineData: { mimeType: string; data: string } };
+
 type Message = {
   role: "user" | "assistant";
-  content: string | { inlineData: { mimeType: string; data: string } }[];
+  content: string | MessagePart[];
 };
 
-export const config = {
-  api: {
-    bodyParser: {
-      sizeLimit: "10mb",
-    },
-  },
-};
+export const runtime = "nodejs";
 
 export async function POST(request: NextRequest) {
+  if (!process.env.GEMINI_API_KEY && !process.env.GOOGLE_API_KEY) {
+    return NextResponse.json(
+      {
+        error: "API key não configurada",
+        customerMessage:
+          "Não consegui calcular a estimativa agora. A equipa CLYON pode confirmar o valor manualmente.",
+      },
+      { status: 500 }
+    );
+  }
+
   try {
-    const { messages } = await request.json() as { messages: Message[] };
+    const { messages } = (await request.json()) as { messages: Message[] };
 
     if (!messages || !Array.isArray(messages)) {
-      return NextResponse.json(
-        { error: "Invalid messages format" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Formato inválido" }, { status: 400 });
     }
 
-    if (!process.env.GOOGLE_API_KEY) {
-      return NextResponse.json(
-        { error: "GOOGLE_API_KEY not configured" },
-        { status: 500 }
-      );
-    }
+    const apiKey =
+      process.env.GEMINI_API_KEY ?? process.env.GOOGLE_API_KEY ?? "";
+    const ai = new GoogleGenAI({ apiKey });
 
-    // Converter para formato esperado pelo Gemini
-    const model = client.getGenerativeModel({
-      model: "gemini-1.5-flash",
-      systemInstruction: SYSTEM_INSTRUCTION,
-    });
-
-    // Converter histórico de mensagens
+    // Converter histórico para o formato do novo SDK
     const contents = messages.map((msg) => ({
       role: msg.role === "user" ? "user" : "model",
       parts: Array.isArray(msg.content)
-        ? msg.content.map((part: any) => {
-            if (part.inlineData) {
+        ? (msg.content as MessagePart[]).map((part) => {
+            if ("inlineData" in part) {
               return {
                 inlineData: {
                   mimeType: part.inlineData.mimeType,
@@ -64,51 +61,41 @@ export async function POST(request: NextRequest) {
                 },
               };
             }
-            return { text: part.text || "" };
+            return { text: (part as { text: string }).text || "" };
           })
         : [{ text: String(msg.content) }],
     }));
 
-    // O Gemini exige que o histórico comece sempre com role 'user'.
-    // A primeira mensagem no estado é a saudação da IA (role 'model') —
-    // removemos todas as mensagens 'model' iniciais antes de passar o histórico.
-    const historyForGemini = contents.slice(0, -1);
-    const firstUserIndex = historyForGemini.findIndex((m) => m.role === "user");
-    const safeHistory = firstUserIndex === -1 ? [] : historyForGemini.slice(firstUserIndex);
+    // Gemini exige que o histórico comece com role 'user' — remover mensagens
+    // 'model' iniciais (como a saudação automática da IA)
+    const historyRaw = contents.slice(0, -1);
+    const firstUserIdx = historyRaw.findIndex((m) => m.role === "user");
+    const safeHistory = firstUserIdx === -1 ? [] : historyRaw.slice(firstUserIdx);
 
-    const chat = model.startChat({ history: safeHistory });
+    const lastMsg = contents[contents.length - 1];
 
-    // Última mensagem do utilizador (pode ter texto + imagens)
-    const lastMessage = messages[messages.length - 1];
-    const lastContent = Array.isArray(lastMessage.content)
-      ? lastMessage.content.map((part: any) => {
-          if (part.inlineData) {
-            return {
-              inlineData: {
-                mimeType: part.inlineData.mimeType,
-                data: part.inlineData.data,
-              },
-            };
-          }
-          return { text: part.text || "" };
-        })
-      : [{ text: String(lastMessage.content) }];
-
-    const result = await chat.sendMessage(lastContent);
-    const responseText =
-      result.response.candidates?.[0]?.content?.parts?.[0]?.text || "";
-
-    return NextResponse.json({
-      message: responseText,
-      role: "assistant",
+    const response = await ai.models.generateContent({
+      model: MODEL,
+      config: {
+        systemInstruction: SYSTEM_INSTRUCTION,
+      },
+      contents: [
+        ...safeHistory,
+        { role: lastMsg.role, parts: lastMsg.parts },
+      ],
     });
+
+    const responseText = response.text ?? "";
+
+    return NextResponse.json({ message: responseText, role: "assistant" });
   } catch (error) {
-    const errorMsg = error instanceof Error ? error.message : String(error);
-    const errorStack = error instanceof Error ? error.stack : undefined;
     console.error("[chat-simulador] Erro detalhado do Gemini:", error);
-    console.error("[chat-simulador] Stack:", errorStack);
     return NextResponse.json(
-      { error: errorMsg },
+      {
+        error: "GEMINI_REQUEST_FAILED",
+        customerMessage:
+          "Não consegui calcular a estimativa agora. Pode continuar a enviar os detalhes e a equipa CLYON confirma o valor.",
+      },
       { status: 500 }
     );
   }
