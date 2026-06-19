@@ -296,13 +296,20 @@ export default function SimulatorPage() {
     distanceFromBase?: DistanceFromBase;
     distanceStatus?: DistanceStatus;
   }) => {
+    // Garantir que formattedAddress nunca fica undefined:
+    // se Google Places não devolveu nada, usar o texto que o utilizador escreveu.
+    const resolvedAddress = {
+      ...data.address,
+      formattedAddress: data.address.formattedAddress || data.addressText || undefined,
+    };
+
     const updatedOrder: OrderData = {
       ...order,
       receiver: data.receiver,
-      address: data.address,
+      address: resolvedAddress,
       addressStatus: "selected",
-      city: data.address.city ?? order.city,
-      locationZone: detectZone(data.address.city ?? order.city),
+      city: resolvedAddress.city ?? data.addressText ?? order.city,
+      locationZone: detectZone(resolvedAddress.city ?? data.addressText ?? order.city),
       distanceFromBase: data.distanceFromBase,
       distanceStatus: data.distanceStatus ?? "idle",
     };
