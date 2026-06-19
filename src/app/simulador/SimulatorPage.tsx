@@ -22,11 +22,9 @@ import EstimateCard from "./components/EstimateCard";
 import ProgressSteps from "./components/ProgressSteps";
 
 // ─── Storage ────────────────────────────────────────────────────────────────
-const SIMULATOR_DRAFT_KEY = "clyon_simulator_draft";
-const SIMULATOR_RESET_FLAG = "clyon_simulator_reset";
 const SIMULATOR_STORAGE_KEYS = [
-  SIMULATOR_DRAFT_KEY,
-  SIMULATOR_RESET_FLAG,
+  "clyon_simulator_draft",
+  "clyon_simulator_reset",
   "clyon-simulator",
   "clyon-simulator-draft",
   "simulator-order",
@@ -41,12 +39,7 @@ function clearSimulatorStorage() {
   });
 }
 
-function markReset() {
-  if (typeof window === "undefined") return;
-  localStorage.setItem(SIMULATOR_RESET_FLAG, "1");
-  clearSimulatorStorage();
-  localStorage.setItem(SIMULATOR_RESET_FLAG, "1");
-}
+
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 function uid() {
@@ -153,14 +146,11 @@ export default function SimulatorPage() {
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const hasHydratedRef = useRef(false);
-  const isResettingRef = useRef(false);
+
 
   // ─── Hidratação ────────────────────────────────────────────────────────────
   useEffect(() => {
-    if (hasHydratedRef.current) return;
-    hasHydratedRef.current = true;
-
+    
     if (typeof window === "undefined") {
       setMessages(createInitialMessages());
       return;
@@ -174,28 +164,12 @@ export default function SimulatorPage() {
       return;
     }
 
-    const wasReset = localStorage.getItem(SIMULATOR_RESET_FLAG) === "1";
-    if (wasReset) {
-      clearSimulatorStorage();
-    } else {
-      const saved = localStorage.getItem(SIMULATOR_DRAFT_KEY);
-      if (saved) {
-        try {
-          const parsed = JSON.parse(saved);
-          if (parsed.order && Object.keys(parsed.order).length > 0) setOrder(parsed.order);
-          if (parsed.estimate) setEstimate(parsed.estimate);
-        } catch { /* ignorar */ }
-      }
-    }
+    // Limpar sempre ao carregar — F5 ou Novo pedido reiniciam o estado por completo
+    clearSimulatorStorage();
     setMessages(createInitialMessages());
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ─── Auto-save ─────────────────────────────────────────────────────────────
-  useEffect(() => {
-    if (!hasHydratedRef.current || isResettingRef.current) return;
-    if (Object.keys(order).length === 0 && !estimate) return;
-    localStorage.setItem(SIMULATOR_DRAFT_KEY, JSON.stringify({ order, estimate }));
-  }, [order, estimate]);
+
 
   // ─── Scroll interno ────────────────────────────────────────────────────────
   useEffect(() => {
@@ -247,8 +221,7 @@ export default function SimulatorPage() {
 
   // ─── Reset ─────────────────────────────────────────────────────────────────
   const resetSimulator = () => {
-    isResettingRef.current = true;
-    markReset();
+    clearSimulatorStorage();
     pendingFiles.forEach((f) => { if (f.previewUrl) URL.revokeObjectURL(f.previewUrl); });
 
     setOrder({});
@@ -264,9 +237,7 @@ export default function SimulatorPage() {
     setResetVersion((v) => v + 1);
 
     requestAnimationFrame(() => {
-      clearSimulatorStorage();
       if (messagesContainerRef.current) messagesContainerRef.current.scrollTop = 0;
-      isResettingRef.current = false;
     });
   };
 
