@@ -184,6 +184,7 @@ export default function AddressAutocomplete({
 
   // ── Helpers ───────────────────────────────────────────────────────────────
   const confirmSelection = (data: AddressData, displayText: string) => {
+    calculatingRef.current = false; // permitir novo cálculo para nova selecção
     setSelectedAddress(data);
     setAddressStatus("selected");
     setDistanceStatus("idle");
@@ -280,13 +281,49 @@ export default function AddressAutocomplete({
 
   const isAddressReady = addressStatus === "selected" || addressStatus === "manual_confirmed";
 
-  // Disparar cálculo automático assim que a morada é confirmada
+  // Disparar cálculo automático assim que a morada é confirmada.
+  // Usamos uma ref para garantir que só corre uma vez por selecção.
+  const calculatingRef = useRef(false);
+
   useEffect(() => {
-    if (isAddressReady && selectedAddress && distanceStatus === "idle") {
-      handleCalculateDistance();
-    }
+    if (!isAddressReady || !selectedAddress) return;
+    if (calculatingRef.current) return;
+    calculatingRef.current = true;
+
+    setDistanceStatus("calculating");
+
+    fetch("/api/maps/distance", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ destination: selectedAddress }),
+    })
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.ok) {
+          const result: DistanceFromBase = {
+            distanceMeters: data.distanceMeters,
+            distanceKm: data.distanceKm,
+            durationSeconds: data.durationSeconds,
+            durationText: data.durationText,
+            calculatedAt: new Date().toISOString(),
+          };
+          setDistanceResult(result);
+          setDistanceStatus("calculated");
+          onDistanceCalculated?.(result, "calculated");
+        } else {
+          setDistanceStatus("error");
+          onDistanceCalculated?.({}, "error");
+        }
+      })
+      .catch(() => {
+        setDistanceStatus("error");
+        onDistanceCalculated?.({}, "error");
+      })
+      .finally(() => {
+        calculatingRef.current = false;
+      });
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isAddressReady, selectedAddress, distanceStatus]);
+  }, [isAddressReady, selectedAddress]);
 
   return (
     <div className={`space-y-2 ${className}`}>
