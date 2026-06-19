@@ -2,19 +2,29 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { MessageCircle, Phone } from "lucide-react";
 
 import { BUSINESS_PHONE } from "@/lib/seo-data";
 import { trackWhatsAppClick, trackCTAClick } from "@/lib/analytics";
+
+// Rotas onde o StickyCTA não deve aparecer
+const HIDDEN_ROUTES = ["/colaboradores", "/simulador"];
 
 interface StickyCTAProps {
   showAfterScroll?: number;
 }
 
 export default function StickyCTA({ showAfterScroll = 300 }: StickyCTAProps) {
+  const pathname = usePathname();
   const [isVisible, setIsVisible] = useState(false);
 
+  const isHidden = HIDDEN_ROUTES.some(
+    (route) => pathname === route || pathname.startsWith(`${route}/`),
+  );
+
   useEffect(() => {
+    if (isHidden) return;
     const handleScroll = () => {
       setIsVisible(window.scrollY > showAfterScroll);
     };
@@ -23,9 +33,9 @@ export default function StickyCTA({ showAfterScroll = 300 }: StickyCTAProps) {
     handleScroll();
 
     return () => window.removeEventListener("scroll", handleScroll);
-  }, [showAfterScroll]);
+  }, [showAfterScroll, isHidden]);
 
-  if (!isVisible) return null;
+  if (isHidden || !isVisible) return null;
 
   const whatsappNumber = BUSINESS_PHONE.replace(/[^\d]/g, "");
   const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent("Olá! Gostava de pedir um orçamento à CLYON.")}`;
