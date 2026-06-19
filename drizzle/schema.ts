@@ -88,3 +88,62 @@ export type SimulatorSetting = typeof simulatorSettings.$inferSelect;
 export type InsertSimulatorSetting = typeof simulatorSettings.$inferInsert;
 export type GalleryMedia = typeof galleryMedia.$inferSelect;
 export type InsertGalleryMedia = typeof galleryMedia.$inferInsert;
+
+// ─── SimulatorOrders (gerido com raw SQL — só os tipos aqui) ─────────────────
+
+export type OrderStatus = "pendente" | "aprovado" | "rejeitado" | "em_execucao" | "concluido" | "cancelado";
+
+export interface SimulatorOrder {
+  id: number;
+  serviceType?: string | null;
+  description?: string | null;
+  filesJson?: string | null;
+  address?: string | null;
+  city?: string | null;
+  floor?: string | null;
+  hasElevator?: string | null;
+  parkingDistance?: string | null;
+  contactName?: string | null;
+  contactPhone?: string | null;
+  contactEmail?: string | null;
+  urgency?: string | null;
+  estimateMin?: string | null;
+  estimateMax?: string | null;
+  estimateTotal?: string | null;
+  estimateJson?: string | null;
+  distanceKm?: string | null;
+  distanceText?: string | null;
+  status: OrderStatus;
+  notasInternas?: string | null;
+  precoFinal?: string | null;
+  colaboradorId?: number | null;
+  dataAgendada?: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface InsertSimulatorOrder {
+  serviceType?: string | null;
+  description?: string | null;
+  filesJson?: string | null;
+  address?: string | null;
+  city?: string | null;
+  floor?: string | null;
+  hasElevator?: string | null;
+  parkingDistance?: string | null;
+  contactName?: string | null;
+  contactPhone?: string | null;
+  contactEmail?: string | null;
+  urgency?: string | null;
+  estimateMin?: string | null;
+  estimateMax?: string | null;
+  estimateTotal?: string | null;
+  estimateJson?: string | null;
+  distanceKm?: string | null;
+  distanceText?: string | null;
+  status?: OrderStatus;
+  notasInternas?: string | null;
+  precoFinal?: string | null;
+  colaboradorId?: number | null;
+  dataAgendada?: Date | null;
+}

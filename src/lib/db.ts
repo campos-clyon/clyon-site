@@ -2,7 +2,7 @@ import { drizzle } from "drizzle-orm/mysql2";
 import mysql from "mysql2/promise";
 import { eq, desc, inArray } from "drizzle-orm";
 import { users, colaboradores, registrosHoras, simulatorSettings, galleryMedia } from "../../drizzle/schema";
-import type { InsertUser } from "../../drizzle/schema";
+import type { InsertUser, InsertSimulatorOrder, SimulatorOrder } from "../../drizzle/schema";
 import { defaultSimulatorSettings } from "@/lib/simulator-settings";
 
 let dbInstance: ReturnType<typeof drizzle<typeof import('../../drizzle/schema')>> | null = null;
@@ -501,3 +501,141 @@ export async function getTodayRegistroByColaborador(colaboradorId: number) {
   if (regDate >= today && regDate < tomorrow) return result[0];
   return undefined;
 }
+
+// ─── SimulatorOrders ──────────────────────────────────────────────────────────
+
+let _simulatorOrdersEnsured = false;
+
+async function ensureSimulatorOrdersTable() {
+  if (_simulatorOrdersEnsured) return;
+  const pool = await getPool();
+  if (!pool) return;
+  await pool.execute(`
+    CREATE TABLE IF NOT EXISTS simulatorOrders (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      serviceType VARCHAR(80),
+      description TEXT,
+      filesJson TEXT,
+      address TEXT,
+      city VARCHAR(120),
+      floor VARCHAR(40),
+      hasElevator VARCHAR(20),
+      parkingDistance VARCHAR(30),
+      contactName VARCHAR(120),
+      contactPhone VARCHAR(30),
+      contactEmail VARCHAR(200),
+      urgency VARCHAR(30),
+      estimateMin DECIMAL(10,2),
+      estimateMax DECIMAL(10,2),
+      estimateTotal DECIMAL(10,2),
+      estimateJson TEXT,
+      distanceKm DECIMAL(8,2),
+      distanceText VARCHAR(60),
+      status ENUM('pendente','aprovado','rejeitado','em_execucao','concluido','cancelado') NOT NULL DEFAULT 'pendente',
+      notasInternas TEXT,
+      precoFinal DECIMAL(10,2),
+      colaboradorId INT,
+      dataAgendada TIMESTAMP NULL DEFAULT NULL,
+      createdAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updatedAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    )
+  `);
+  _simulatorOrdersEnsured = true;
+}
+
+export async function createSimulatorOrder(data: InsertSimulatorOrder): Promise<number> {
+  await ensureSimulatorOrdersTable();
+  const pool = await getPool();
+  if (!pool) throw new Error("DB not available");
+  const cols = Object.keys(data).filter((k) => (data as Record<string, unknown>)[k] !== undefined);
+  const vals = cols.map((k) => (data as Record<string, unknown>)[k]);
+  const placeholders = cols.map(() => "?").join(", ");
+  const sql = `INSERT INTO simulatorOrders (${cols.join(", ")}) VALUES (${placeholders})`;
+  const [result] = await pool.execute(sql, vals) as any[];
+  return result.insertId ?? 0;
+}
+
+export async function getAllSimulatorOrders(filters?: {
+  status?: string;
+  search?: string;
+}): Promise<SimulatorOrder[]> {
+  await ensureSimulatorOrdersTable();
+  const pool = await getPool();
+  if (!pool) return [];
+  const conditions: string[] = [];
+  const params: unknown[] = [];
+  if (filters?.status) {
+    conditions.push("status = ?");
+    params.push(filters.status);
+  }
+  if (filters?.search) {
+    conditions.push("(contactName LIKE ? OR contactPhone LIKE ? OR address LIKE ? OR description LIKE ?)");
+    const s = `%${filters.search}%`;
+    params.push(s, s, s, s);
+  }
+  const where = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";
+  const [rows] = await pool.execute(
+    `SELECT * FROM simulatorOrders ${where} ORDER BY createdAt DESC LIMIT 500`,
+    params,
+  ) as any[];
+  return rows as SimulatorOrder[];
+}
+
+export async function getSimulatorOrderById(id: number): Promise<SimulatorOrder | undefined> {
+  await ensureSimulatorOrdersTable();
+  const pool = await getPool();
+  if (!pool) return undefined;
+  const [rows] = await pool.execute("SELECT * FROM simulatorOrders WHERE id = ? LIMIT 1", [id]) as any[];
+  return (rows as SimulatorOrder[])[0];
+}
+
+export async function updateSimulatorOrder(
+  id: number,
+  data: Partial<{
+    status: "pendente" | "aprovado" | "rejeitado" | "em_execucao" | "concluido" | "cancelado";
+    notasInternas: string;
+    precoFinal: string;
+    colaboradorId: number;
+    dataAgendada: Date;
+    serviceType: string;
+    description: string;
+    contactName: string;
+    contactPhone: string;
+    contactEmail: string;
+    address: string;
+    floor: string;
+    urgency: string;
+  }>
+) {
+  await ensureSimulatorOrdersTable();
+  const pool = await getPool();
+  if (!pool) throw new Error("DB not available");
+  const entries = Object.entries(data).filter(([, v]) => v !== undefined);
+  if (!entries.length) return;
+  const sets = entries.map(([k]) => `${k} = ?`).join(", ");
+  const vals = [...entries.map(([, v]) => v), id];
+  await pool.execute(`UPDATE simulatorOrders SET ${sets} WHERE id = ?`, vals);
+}
+
+export async function deleteSimulatorOrder(id: number) {
+  await ensureSimulatorOrdersTable();
+  const pool = await getPool();
+  if (!pool) throw new Error("DB not available");
+  await pool.execute("DELETE FROM simulatorOrders WHERE id = ?", [id]);
+}
+
+export async function countSimulatorOrdersByStatus(): Promise<Record<string, number>> {
+  await ensureSimulatorOrdersTable();
+  const pool = await getPool();
+  if (!pool) return {};
+  const [rows] = await pool.execute(
+    "SELECT status, COUNT(*) AS total FROM simulatorOrders GROUP BY status"
+  ) as any[];
+  const result: Record<string, number> = {};
+  for (const row of (rows as { status: string; total: string | number }[])) {
+    result[row.status] = Number(row.total);
+  }
+  return result;
+}
+
+// ─── SimulatorOrders END ──────────────────────────────────────────────────────
