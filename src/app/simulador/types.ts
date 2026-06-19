@@ -11,11 +11,13 @@ export type LocationZone = "A" | "B" | "C" | "D";
 
 export interface UploadedFile {
   id: string;
-  file: File;
-  previewUrl: string;
-  type: "image" | "video";
+  file?: File;
+  previewUrl?: string;
+  type?: "image" | "video";
   name: string;
   size: number;
+  mimeType?: string;
+  base64?: string;
 }
 
 export interface AddressData {
