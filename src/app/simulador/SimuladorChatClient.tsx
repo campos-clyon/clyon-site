@@ -29,7 +29,7 @@ export default function SimuladorChatClient() {
       id: "initial",
       role: "assistant",
       content:
-        "Olá! Bem-vindo ao simulador de preços da Clyon. Eu sou o seu orçamentista virtual e vou ajudá-lo a obter uma estimativa de preço para a sua recolha. Para começar, pode descrever-me o que precisa de recolher? Se tiver fotos, também pode carregá-las para me dar uma ideia melhor.",
+        "Olá! Bem-vindo à Clyon. Que materiais precisa que a nossa equipa recolha hoje? Pode descrever ou enviar fotos do que tem aí.",
       timestamp: new Date(),
     };
     setMessages([initialMessage]);
