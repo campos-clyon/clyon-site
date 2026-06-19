@@ -59,6 +59,17 @@ function makeAssistantMessage(content: string, extra?: Partial<ChatMessage>): Ch
 
 const WELCOME_MESSAGE = "Olá! Sou o orçamentista da CLYON. Descreva o serviço que precisa (pode escrever tudo de uma vez: tipo de serviço, o que tem para recolher, morada, andar, elevador, urgência) ou vá respondendo às perguntas. Também pode enviar fotos.";
 
+// Pergunta pelo próximo campo em falta — usado como fallback quando Gemini falha
+function getNextMissingFieldQuestion(order: OrderData): string {
+  if (!order.serviceType) return "Que tipo de serviço precisa? (recolha de móveis, monos, entulho, esvaziamento ou mudança)";
+  if (!order.description && (!order.files || order.files.length === 0)) return "O que precisa de recolher ou transportar? Pode descrever ou enviar fotos.";
+  if (!order.floor) return "Em que andar se encontra o material?";
+  if (!order.hasElevator || order.hasElevator === "unknown") return "Existe elevador? Se sim, os itens cabem?";
+  if (!order.parkingDistance || order.parkingDistance === "unknown") return "A carrinha consegue estacionar perto da entrada?";
+  if (!order.urgency) return "Qual a urgência? (amanhã, esta semana, flexível)";
+  return "Para finalizar, preciso dos seus dados de contacto e morada:";
+}
+
 function createInitialMessages(): ChatMessage[] {
   return [makeAssistantMessage(WELCOME_MESSAGE)];
 }
@@ -320,8 +331,23 @@ export default function SimulatorPage() {
         body: JSON.stringify({ messages: apiMessages, order: updatedOrder }),
       });
 
+      setIsTyping(false);
+
+      if (!res.ok) {
+        // Gemini não disponível — usar fallback local inteligente
+        const nextQuestion = getNextMissingFieldQuestion(updatedOrder);
+        const showForm = nextQuestion.includes("contacto e morada");
+        setMessages((prev) => [
+          ...prev,
+          makeAssistantMessage(showForm ? nextQuestion : nextQuestion, {
+            showContactForm: showForm,
+          }),
+        ]);
+        return;
+      }
+
       const data = await res.json();
-      const responseText: string = data.message ?? data.customerMessage ?? "Pode continuar a descrever o serviço.";
+      const responseText: string = data.message ?? "Pode continuar a descrever o serviço.";
 
       // 5. Verificar se o Gemini detectou [ABRIR_FORMULARIO]
       const showForm = responseText.includes("[ABRIR_FORMULARIO]");
@@ -331,7 +357,6 @@ export default function SimulatorPage() {
       setChatHistory((prev) => [...prev, { role: "assistant", content: cleanResponse }]);
 
       // 7. Mostrar resposta da IA
-      setIsTyping(false);
       if (showForm) {
         setMessages((prev) => [
           ...prev,
@@ -345,9 +370,12 @@ export default function SimulatorPage() {
 
     } catch {
       setIsTyping(false);
+      // Fallback local inteligente em caso de erro de rede
+      const nextQuestion = getNextMissingFieldQuestion(updatedOrder);
+      const showForm = nextQuestion.includes("contacto e morada");
       setMessages((prev) => [
         ...prev,
-        makeAssistantMessage("Pode continuar a descrever o que precisa. Estou aqui para ajudar."),
+        makeAssistantMessage(nextQuestion, { showContactForm: showForm }),
       ]);
     }
   };
