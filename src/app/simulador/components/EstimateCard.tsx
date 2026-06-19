@@ -2,6 +2,13 @@
 
 import type { EstimateResult, OrderData } from "../types";
 import { TAX_RATE } from "../pricingRules";
+import { BUSINESS_PHONE } from "@/lib/seo-data";
+import { trackWhatsAppClick } from "@/lib/analytics";
+
+// Número limpo para wa.me (sem + e sem espaços)
+function waNumber(): string {
+  return BUSINESS_PHONE.replace(/\D/g, "");
+}
 
 const DIFFICULTY_LABELS: Record<number, string> = {
   1: "Fácil",
@@ -119,9 +126,10 @@ export default function EstimateCard({ estimate, loading, canGenerate, onGenerat
               <p className="text-xs text-[#0284C7] mt-1 leading-relaxed">{estimate.customerMessage}</p>
             </div>
             <a
-              href={`https://wa.me/351960027802?text=${buildWhatsAppMessage(order, estimate)}`}
+              href={`https://wa.me/${waNumber()}?text=${buildWhatsAppMessage(order, estimate)}`}
               target="_blank"
               rel="noreferrer"
+              onClick={() => trackWhatsAppClick("simulator_onsite", order.serviceType)}
               className="flex items-center justify-center gap-2 w-full py-3 px-4 rounded-xl bg-[#25D366] hover:bg-[#1DAE52] text-white text-sm font-semibold transition-colors shadow-sm"
             >
               <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
@@ -181,13 +189,23 @@ export default function EstimateCard({ estimate, loading, canGenerate, onGenerat
 
             {/* Botões de ação */}
             <div className="space-y-2 pt-1">
-              <button className="w-full py-3 px-4 rounded-xl bg-[#0487D9] hover:bg-[#036BB0] text-white text-sm font-semibold transition-colors shadow-sm">
-                Confirmar pedido
-              </button>
               <a
-                href={`https://wa.me/351960027802?text=${buildWhatsAppMessage(order, estimate)}`}
+                href={`https://wa.me/${waNumber()}?text=${buildWhatsAppMessage(order, estimate)}`}
                 target="_blank"
                 rel="noreferrer"
+                onClick={() => trackWhatsAppClick("simulator_confirm", order.serviceType)}
+                className="flex items-center justify-center gap-2 w-full py-3 px-4 rounded-xl bg-[#0487D9] hover:bg-[#036BB0] text-white text-sm font-semibold transition-colors shadow-sm"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+                Confirmar pedido
+              </a>
+              <a
+                href={`https://wa.me/${waNumber()}?text=${buildWhatsAppMessage(order, estimate)}`}
+                target="_blank"
+                rel="noreferrer"
+                onClick={() => trackWhatsAppClick("simulator_whatsapp", order.serviceType)}
                 className="flex items-center justify-center gap-2 w-full py-3 px-4 rounded-xl bg-[#25D366] hover:bg-[#1DAE52] text-white text-sm font-semibold transition-colors shadow-sm"
               >
                 <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
@@ -195,9 +213,21 @@ export default function EstimateCard({ estimate, loading, canGenerate, onGenerat
                 </svg>
                 Falar no WhatsApp
               </a>
-              <button className="w-full py-2.5 px-4 rounded-xl border border-[#E2E8F0] text-[#64748B] hover:text-[#102033] hover:border-[#CBD5E1] text-sm font-medium transition-colors">
+              <a
+                href={`https://wa.me/${waNumber()}?text=${encodeURIComponent(
+                  `Olá CLYON, gostaria de pedir uma visita presencial para avaliação do serviço.\n\nMorada: ${order.address?.formattedAddress ?? order.city ?? "—"}\nContacto: ${order.receiver?.name ?? "—"}, ${order.receiver?.phone ?? "—"}\nServiço: ${order.serviceType ?? "—"}\nDescrição: ${order.description ?? "—"}`
+                )}`}
+                target="_blank"
+                rel="noreferrer"
+                onClick={() => trackWhatsAppClick("simulator_visit", order.serviceType)}
+                className="flex items-center justify-center gap-2 w-full py-2.5 px-4 rounded-xl border border-[#E2E8F0] text-[#64748B] hover:text-[#102033] hover:border-[#CBD5E1] hover:bg-[#F8FAFC] text-sm font-medium transition-colors"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
                 Pedir visita presencial
-              </button>
+              </a>
               <button
                 type="button"
                 onClick={onReset}
