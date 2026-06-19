@@ -205,11 +205,14 @@ export default function SimuladorChatClient() {
         body: JSON.stringify({ messages: messagesForAPI }),
       });
 
+      const data = await response.json();
+
       if (!response.ok) {
-        throw new Error("Falha ao obter resposta");
+        const apiError = data?.error || data?.details || `Erro ${response.status}: ${response.statusText}`;
+        console.error("[v0] API error response:", data);
+        throw new Error(apiError);
       }
 
-      const data = await response.json();
       const responseText = data.message;
 
       // Verificar se a resposta é a palavra-chave para abrir formulário

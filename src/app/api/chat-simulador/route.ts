@@ -97,12 +97,11 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     const errorMsg = error instanceof Error ? error.message : String(error);
-    console.error("[chat-simulador] Error:", errorMsg);
+    const errorStack = error instanceof Error ? error.stack : undefined;
+    console.error("[chat-simulador] Erro detalhado do Gemini:", error);
+    console.error("[chat-simulador] Stack:", errorStack);
     return NextResponse.json(
-      {
-        error: "Falha ao gerar resposta",
-        details: process.env.NODE_ENV === "development" ? errorMsg : undefined,
-      },
+      { error: errorMsg },
       { status: 500 }
     );
   }
