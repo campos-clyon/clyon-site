@@ -21,27 +21,54 @@ import OrderSummaryCard from "./components/OrderSummaryCard";
 import EstimateCard from "./components/EstimateCard";
 import ProgressSteps from "./components/ProgressSteps";
 
-const STORAGE_KEY = "clyon_simulator_draft";
-const SIMULATOR_STORAGE_KEYS = [STORAGE_KEY, "clyon-simulator", "clyon-simulator-draft", "simulator-order", "simulator-messages"];
+// ─── Storage ────────────────────────────────────────────────────────────────
+const SIMULATOR_DRAFT_KEY = "clyon_simulator_draft";
+const SIMULATOR_STORAGE_KEYS = [
+  SIMULATOR_DRAFT_KEY,
+  "clyon-simulator",
+  "clyon-simulator-draft",
+  "simulator-order",
+  "simulator-messages",
+];
 
+function clearSimulatorStorage() {
+  if (typeof window === "undefined") return;
+  SIMULATOR_STORAGE_KEYS.forEach((key) => {
+    localStorage.removeItem(key);
+    sessionStorage.removeItem(key);
+  });
+}
+
+// ─── Estado inicial ─────────────────────────────────────────────────────────
 function uid() {
   return Math.random().toString(36).slice(2, 10);
+}
+
+function createInitialOrder(): OrderData {
+  return {};
+}
+
+function createInitialMessages(): ChatMessage[] {
+  const firstStep = getNextChatStep({});
+  return [
+    {
+      id: uid(),
+      role: "assistant",
+      content: firstStep?.question ?? "Qual é o tipo de serviço que precisa?",
+      timestamp: new Date(),
+      quickReplies: firstStep?.quickReplies,
+    },
+  ];
 }
 
 function makeAssistantMessage(content: string, extra?: Partial<ChatMessage>): ChatMessage {
   return { id: uid(), role: "assistant", content, timestamp: new Date(), ...extra };
 }
 
-function getInitialMessages(): ChatMessage[] {
-  const firstStep = getNextChatStep({});
-  return [makeAssistantMessage(firstStep?.question ?? "Qual é o tipo de serviço que precisa?", {
-    quickReplies: firstStep?.quickReplies,
-  })];
-}
-
+// ─── Componente ─────────────────────────────────────────────────────────────
 export default function SimulatorPage() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [order, setOrder] = useState<OrderData>({});
+  const [order, setOrder] = useState<OrderData>(createInitialOrder());
   const [input, setInput] = useState("");
   const [pendingFiles, setPendingFiles] = useState<UploadedFile[]>([]);
   const [showUpload, setShowUpload] = useState(false);
@@ -50,78 +77,122 @@ export default function SimulatorPage() {
   const [estimateLoading, setEstimateLoading] = useState(false);
   const [currentStep, setCurrentStep] = useState<ReturnType<typeof getNextChatStep>>(null);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
+  // resetVersion força desmontagem/remontagem de filhos com estado interno
+  const [resetVersion, setResetVersion] = useState(0);
 
-  // Scroll interno — referência ao container, não ao elemento filho
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
-  // Função de reset — limpa tudo
-  const resetSimulator = () => {
-    // Revogar Object URLs das fotos em memória
-    if (typeof window !== "undefined") {
-      SIMULATOR_STORAGE_KEYS.forEach((key) => {
-        localStorage.removeItem(key);
-        sessionStorage.removeItem(key);
-      });
-    }
-    const initial = getInitialMessages();
-    setMessages(initial);
-    setOrder({});
-    setEstimate(null);
-    setPendingFiles([]);
-    setShowUpload(false);
-    setInput("");
-    setIsTyping(false);
-    setEstimateLoading(false);
-    setShowResetConfirm(false);
-    setCurrentStep(getNextChatStep({}));
-  };
+  // Guards para evitar que o auto-save reescreva o storage durante/após reset
+  const hasHydratedRef = useRef(false);
+  const isResettingRef = useRef(false);
 
-  // Inicializar chat
+  // ─── Hidratação inicial (corre uma única vez) ──────────────────────────────
   useEffect(() => {
-    if (typeof window === "undefined") return;
+    if (hasHydratedRef.current) return;
+    hasHydratedRef.current = true;
 
-    // Opção B: ?novo=1 limpa automaticamente
-    const params = new URLSearchParams(window.location.search);
-    if (params.get("novo") === "1") {
-      SIMULATOR_STORAGE_KEYS.forEach((key) => {
-        localStorage.removeItem(key);
-        sessionStorage.removeItem(key);
-      });
-      window.history.replaceState({}, "", "/simulador");
-      setMessages(getInitialMessages());
+    if (typeof window === "undefined") {
+      setMessages(createInitialMessages());
       setCurrentStep(getNextChatStep({}));
       return;
     }
 
-    // Opção A: restaurar rascunho salvo
-    const draft = localStorage.getItem(STORAGE_KEY);
-    if (draft) {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("novo") === "1") {
+      clearSimulatorStorage();
+      window.history.replaceState({}, "", "/simulador");
+      setMessages(createInitialMessages());
+      setOrder(createInitialOrder());
+      setEstimate(null);
+      setCurrentStep(getNextChatStep({}));
+      return;
+    }
+
+    const saved = localStorage.getItem(SIMULATOR_DRAFT_KEY);
+    if (saved) {
       try {
-        const { order: savedOrder } = JSON.parse(draft);
-        setOrder(savedOrder ?? {});
+        const parsed = JSON.parse(saved);
+        if (parsed.order && Object.keys(parsed.order).length > 0) {
+          setOrder(parsed.order);
+        }
+        if (parsed.estimate) {
+          setEstimate(parsed.estimate);
+        }
       } catch {
-        // ignorar draft inválido
+        // draft inválido — ignorar
       }
     }
-    setMessages(getInitialMessages());
+
+    setMessages(createInitialMessages());
     setCurrentStep(getNextChatStep({}));
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Scroll automático dentro do container — não move a página
+  // ─── Auto-save (nunca escreve durante reset) ───────────────────────────────
+  useEffect(() => {
+    if (!hasHydratedRef.current) return;
+    if (isResettingRef.current) return;
+    if (Object.keys(order).length === 0 && !estimate) return;
+
+    localStorage.setItem(
+      SIMULATOR_DRAFT_KEY,
+      JSON.stringify({ order, estimate })
+    );
+  }, [order, estimate]);
+
+  // ─── Scroll interno ────────────────────────────────────────────────────────
   useEffect(() => {
     const el = messagesContainerRef.current;
     if (!el) return;
     el.scrollTop = el.scrollHeight;
   }, [messages, isTyping]);
 
-  // Guardar rascunho
-  useEffect(() => {
-    if (Object.keys(order).length > 0) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({ order }));
-    }
-  }, [order]);
+  // ─── Reset ─────────────────────────────────────────────────────────────────
+  const resetSimulator = () => {
+    isResettingRef.current = true;
 
+    // 1. Limpar storage imediatamente
+    clearSimulatorStorage();
+
+    // 2. Revogar Object URLs de fotos pendentes
+    pendingFiles.forEach((f) => {
+      if (f.previewUrl) URL.revokeObjectURL(f.previewUrl);
+    });
+
+    // 3. Resetar todos os estados
+    const initialOrder = createInitialOrder();
+    const initialMessages = createInitialMessages();
+    const initialStep = getNextChatStep({});
+
+    setOrder(initialOrder);
+    setMessages(initialMessages);
+    setEstimate(null);
+    setEstimateLoading(false);
+    setPendingFiles([]);
+    setShowUpload(false);
+    setInput("");
+    setIsTyping(false);
+    setCurrentStep(initialStep);
+    setShowResetConfirm(false);
+
+    // 4. Incrementar resetVersion — desmonta e remonta filhos com estado interno
+    setResetVersion((v) => v + 1);
+
+    // 5. Scroll para o topo
+    requestAnimationFrame(() => {
+      if (messagesContainerRef.current) {
+        messagesContainerRef.current.scrollTop = 0;
+      }
+      // 6. Garantir que o auto-save não regrava dados antigos
+      //    (deixar um tick para os setStates acima commitarem)
+      requestAnimationFrame(() => {
+        clearSimulatorStorage();
+        isResettingRef.current = false;
+      });
+    });
+  };
+
+  // ─── Chat helpers ──────────────────────────────────────────────────────────
   const addAssistantMessage = (content: string, extra?: Partial<ChatMessage>) => {
     setMessages((prev) => [...prev, makeAssistantMessage(content, extra)]);
   };
@@ -241,7 +312,6 @@ export default function SimulatorPage() {
     };
     setMessages((prev) => [...prev, userMsg]);
 
-    // Mensagem automática de distância
     if (data.distanceStatus === "calculated" && data.distanceFromBase?.distanceKm) {
       setTimeout(() => {
         addAssistantMessage(
@@ -282,7 +352,6 @@ export default function SimulatorPage() {
     }
   };
 
-  // Dados mínimos: morada selecionada/confirmada OU com texto, distância não bloqueia
   const addressReady =
     order.addressStatus === "selected" ||
     order.addressStatus === "manual_confirmed" ||
@@ -339,7 +408,7 @@ export default function SimulatorPage() {
         </div>
       </div>
 
-      {/* Layout principal — ocupa o resto do viewport */}
+      {/* Layout principal */}
       <main className="flex-1 min-h-0 overflow-hidden">
         <div className="h-full max-w-7xl mx-auto px-3 sm:px-5 lg:px-8 py-3">
           <div className="h-full flex flex-col lg:flex-row gap-3">
@@ -360,7 +429,6 @@ export default function SimulatorPage() {
                       <span className="text-[10px] text-[#64748B]">Online</span>
                     </div>
                   </div>
-                  {/* Botão Novo pedido */}
                   <button
                     type="button"
                     onClick={() => setShowResetConfirm(true)}
@@ -372,19 +440,9 @@ export default function SimulatorPage() {
                     </svg>
                     Novo pedido
                   </button>
-                  {process.env.NODE_ENV === "development" && (
-                    <button
-                      type="button"
-                      onClick={resetSimulator}
-                      className="px-2 py-1 rounded text-[10px] font-mono bg-red-100 text-red-600 border border-red-200 hover:bg-red-200 transition-colors flex-shrink-0"
-                      title="DEV: Limpar storage e reset"
-                    >
-                      Limpar storage
-                    </button>
-                  )}
                 </div>
 
-                {/* Área de mensagens — scroll interno, não move a página */}
+                {/* Área de mensagens */}
                 <div
                   ref={messagesContainerRef}
                   className="flex-1 min-h-0 overflow-y-auto px-4 py-4 space-y-4"
@@ -400,6 +458,7 @@ export default function SimulatorPage() {
                       {msg.role === "assistant" && msg.showUpload && idx === messages.length - 1 && !isTyping && (
                         <div className="ml-9 mt-2">
                           <UploadDropzone
+                            key={`upload-inline-${resetVersion}`}
                             files={pendingFiles}
                             onAdd={(f) => setPendingFiles((prev) => [...prev, ...f])}
                             onRemove={(id) => setPendingFiles((prev) => prev.filter((f) => f.id !== id))}
@@ -408,7 +467,10 @@ export default function SimulatorPage() {
                       )}
                       {msg.role === "assistant" && msg.showContactForm && idx === messages.length - 1 && !isTyping && (
                         <div className="ml-9 mt-2">
-                          <ContactAccessForm onSubmit={handleContactSubmit} />
+                          <ContactAccessForm
+                            key={`contact-${resetVersion}`}
+                            onSubmit={handleContactSubmit}
+                          />
                         </div>
                       )}
                     </div>
@@ -430,7 +492,7 @@ export default function SimulatorPage() {
                   )}
                 </div>
 
-                {/* Input fixo na base do card */}
+                {/* Input */}
                 <div className="px-3 py-2.5 border-t border-[#F1F5F9] flex-shrink-0 space-y-1.5">
                   <div className="flex items-center gap-2">
                     <button
@@ -453,6 +515,7 @@ export default function SimulatorPage() {
 
                   {showUpload && (
                     <UploadDropzone
+                      key={`upload-bar-${resetVersion}`}
                       files={pendingFiles}
                       onAdd={(f) => setPendingFiles((prev) => [...prev, ...f])}
                       onRemove={(id) => setPendingFiles((prev) => prev.filter((f) => f.id !== id))}
@@ -485,10 +548,14 @@ export default function SimulatorPage() {
               </div>
             </div>
 
-            {/* Coluna lateral — scroll interno se necessário */}
+            {/* Coluna lateral */}
             <div className="lg:w-[340px] flex-shrink-0 min-h-0 overflow-y-auto space-y-3 pb-3">
-              <OrderSummaryCard order={order} />
+              <OrderSummaryCard
+                key={`summary-${resetVersion}`}
+                order={order}
+              />
               <EstimateCard
+                key={`estimate-${resetVersion}`}
                 estimate={estimate}
                 loading={estimateLoading}
                 canGenerate={canGenerate}
@@ -501,7 +568,8 @@ export default function SimulatorPage() {
           </div>
         </div>
       </main>
-      {/* Modal de confirmação de reset */}
+
+      {/* Modal de confirmação */}
       {showResetConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShowResetConfirm(false)} />
