@@ -1,7 +1,7 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { NextRequest, NextResponse } from "next/server";
 
-const client = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
+const client = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY ?? "");
 
 const SYSTEM_INSTRUCTION = `És um orçamentista experiente e simpático da empresa de recolhas e logística Clyon, a operar em Portugal. O teu objetivo é dar estimativas de preços para recolha de materiais (móveis, entulho, plásticos, ferro, etc.).
 

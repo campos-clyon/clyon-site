@@ -108,10 +108,10 @@ export default function SimuladorChatClient() {
 
         messageParts.push({
           inlineData: {
-            mimeType: img.file.type,
-            data: base64,
+            mimeType: img.file.type as "image/jpeg" | "image/png" | "image/gif" | "image/webp",
+            data: base64.split(",")[1] || base64,
           },
-        });
+        } as any);
       }
 
       // Converter histórico de mensagens para enviar à API
