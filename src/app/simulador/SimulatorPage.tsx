@@ -23,8 +23,10 @@ import ProgressSteps from "./components/ProgressSteps";
 
 // ─── Storage ────────────────────────────────────────────────────────────────
 const SIMULATOR_DRAFT_KEY = "clyon_simulator_draft";
+const SIMULATOR_RESET_FLAG = "clyon_simulator_reset";
 const SIMULATOR_STORAGE_KEYS = [
   SIMULATOR_DRAFT_KEY,
+  SIMULATOR_RESET_FLAG,
   "clyon-simulator",
   "clyon-simulator-draft",
   "simulator-order",
@@ -37,6 +39,16 @@ function clearSimulatorStorage() {
     localStorage.removeItem(key);
     sessionStorage.removeItem(key);
   });
+}
+
+function markReset() {
+  if (typeof window === "undefined") return;
+  // Escreve a flag de forma síncrona antes de qualquer setState
+  // A hidratação verifica esta flag e ignora o draft mesmo que ainda exista
+  localStorage.setItem(SIMULATOR_RESET_FLAG, "1");
+  clearSimulatorStorage(); // limpa tudo incluindo a flag logo a seguir
+  // Re-escreve apenas a flag para que a próxima hidratação a encontre
+  localStorage.setItem(SIMULATOR_RESET_FLAG, "1");
 }
 
 // ─── Estado inicial ─────────────────────────────────────────────────────────
@@ -109,18 +121,24 @@ export default function SimulatorPage() {
       return;
     }
 
-    const saved = localStorage.getItem(SIMULATOR_DRAFT_KEY);
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        if (parsed.order && Object.keys(parsed.order).length > 0) {
-          setOrder(parsed.order);
+    // Se existe a flag de reset, ignorar qualquer draft e limpar tudo
+    const wasReset = localStorage.getItem(SIMULATOR_RESET_FLAG) === "1";
+    if (wasReset) {
+      clearSimulatorStorage();
+    } else {
+      const saved = localStorage.getItem(SIMULATOR_DRAFT_KEY);
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          if (parsed.order && Object.keys(parsed.order).length > 0) {
+            setOrder(parsed.order);
+          }
+          if (parsed.estimate) {
+            setEstimate(parsed.estimate);
+          }
+        } catch {
+          // draft inválido — ignorar
         }
-        if (parsed.estimate) {
-          setEstimate(parsed.estimate);
-        }
-      } catch {
-        // draft inválido — ignorar
       }
     }
 
@@ -149,17 +167,17 @@ export default function SimulatorPage() {
 
   // ─── Reset ─────────────────────────────────────────────────────────────────
   const resetSimulator = () => {
+    // 1. Bloquear auto-save e marcar reset de forma 100% síncrona
+    //    Tem de ser ANTES de qualquer setState.
     isResettingRef.current = true;
-
-    // 1. Limpar storage imediatamente
-    clearSimulatorStorage();
+    markReset(); // escreve flag + limpa storage de forma síncrona
 
     // 2. Revogar Object URLs de fotos pendentes
     pendingFiles.forEach((f) => {
       if (f.previewUrl) URL.revokeObjectURL(f.previewUrl);
     });
 
-    // 3. Resetar todos os estados
+    // 3. Resetar todos os estados num único flush
     const initialOrder = createInitialOrder();
     const initialMessages = createInitialMessages();
     const initialStep = getNextChatStep({});
@@ -178,17 +196,15 @@ export default function SimulatorPage() {
     // 4. Incrementar resetVersion — desmonta e remonta filhos com estado interno
     setResetVersion((v) => v + 1);
 
-    // 5. Scroll para o topo
+    // 5. Após o flush dos setStates, limpar storage uma segunda vez
+    //    (cobre o caso de o auto-save ter escrito entre o passo 1 e o render)
+    //    e liberar o guard.
     requestAnimationFrame(() => {
+      clearSimulatorStorage();
       if (messagesContainerRef.current) {
         messagesContainerRef.current.scrollTop = 0;
       }
-      // 6. Garantir que o auto-save não regrava dados antigos
-      //    (deixar um tick para os setStates acima commitarem)
-      requestAnimationFrame(() => {
-        clearSimulatorStorage();
-        isResettingRef.current = false;
-      });
+      isResettingRef.current = false;
     });
   };
 
