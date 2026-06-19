@@ -529,15 +529,6 @@ export default function SimulatorPage() {
                     )}
                   </div>
 
-                  {showUpload && (
-                    <UploadDropzone
-                      key={`upload-bar-${resetVersion}`}
-                      files={pendingFiles}
-                      onAdd={(f) => setPendingFiles((prev) => [...prev, ...f])}
-                      onRemove={(id) => setPendingFiles((prev) => prev.filter((f) => f.id !== id))}
-                    />
-                  )}
-
                   <div className="flex items-end gap-2">
                     <textarea
                       ref={inputRef}
