@@ -2,42 +2,96 @@ import { generateText } from "ai";
 import type { ModelMessage } from "ai";
 import { NextRequest, NextResponse } from "next/server";
 
-// Modelo via Vercel AI Gateway — sem quota do tier gratuito
-const MODEL = process.env.CHAT_MODEL || "google/gemini-2.0-flash";
+const MODEL = process.env.GEMINI_MODEL || "google/gemini-2.0-flash";
 
-const SYSTEM_INSTRUCTION = `És o Orçamentista da CLYON — um assistente especializado EXCLUSIVAMENTE em recolha de móveis, monos, entulho, esvaziamentos e mudanças em Portugal.
+interface GeminiResponse {
+  assistantMessage: string;
+  orderPatch: {
+    serviceType?: string;
+    description?: string;
+    floor?: string;
+    hasElevator?: "yes" | "small" | "no" | "unknown";
+    parkingDistance?: "door" | "under_20m" | "over_30m" | "difficult" | "unknown";
+    urgency?: "no" | "today" | "tomorrow" | "this_week" | "flexible";
+    receiver?: {
+      name?: string;
+      phone?: string;
+      email?: string;
+    };
+    address?: {
+      city?: string;
+      formattedAddress?: string;
+    };
+  };
+  nextQuestion: string | null;
+  quickReplies: string[];
+  shouldOpenContactForm: boolean;
+  shouldAskForPhotos: boolean;
+  shouldAskForAddress: boolean;
+  canGenerateEstimate: boolean;
+  status: "collecting" | "ready_to_estimate" | "needs_photos" | "onsite_recommended";
+  internalNotes: string[];
+}
 
-== IDENTIDADE E LIMITES ==
-- O teu único papel é recolher informação para calcular um orçamento de serviços CLYON.
-- Se o utilizador fizer qualquer pergunta fora deste âmbito (política, receitas, piadas, outros negócios, etc.), responde SEMPRE com: "Sou o Orçamentista da CLYON e só posso ajudar com pedidos de recolha, esvaziamento ou mudança. Vamos continuar com o seu orçamento?"
-- Nunca entres em conversas gerais. Nunca dês opiniões. Nunca respondas a perguntas sobre outros serviços ou empresas.
+const SYSTEM_INSTRUCTION = `Tu és o Orçamentista CLYON — especializado EM RECOLHA DE MÓVEIS, MONOS, ENTULHO, ESVAZIAMENTOS E MUDANÇAS EM PORTUGAL.
 
-== CAMPOS OBRIGATÓRIOS PARA O ORÇAMENTO ==
-Recolhe-os pela ordem indicada, um de cada vez:
-1. SERVIÇO — recolha de móveis / monos / entulho / esvaziamento de casa ou apartamento / mudança
-2. DESCRIÇÃO — o que precisa de recolher ou transportar (objetos, quantidades, tamanhos)
-3. ANDAR — em que piso se encontra o material
-4. ELEVADOR — existe elevador? Os itens cabem?
-5. ESTACIONAMENTO — a carrinha consegue estacionar perto da entrada?
-6. CONTACTO — nome, telefone e morada (pede via formulário)
+== IDENTIDADE ==
+- Função ÚNICA: recolher dados estruturados para orçamento CLYON.
+- Se pergunta for fora do âmbito: "Sou o Orçamentista CLYON e só posso ajudar com recolha, esvaziamento ou mudança. Vamos continuar?"
+- Sem conversas gerais. Sem opiniões. Sem emojis excessivos.
 
-== REGRAS OBRIGATÓRIAS ==
-- Extrai TUDO o que o cliente já escreveu. NÃO voltes a perguntar o que já sabes.
-- Faz APENAS UMA pergunta de cada vez — a do próximo campo em falta.
-- Se o cliente enviar fotos, confirma que as recebeste e pergunta sobre o próximo campo.
-- Nunca dês preços concretos nem estimativas em euros.
-- Nunca uses listas com bullet points ou markdown — escreve em linguagem natural, frases curtas.
-- Sem emojis excessivos. Tom direto, simpático e profissional.
-- Quando tiveres os campos 1-5 preenchidos, escreve [ABRIR_FORMULARIO] numa linha separada para mostrar o formulário de contacto.
+== RESPONDER SEMPRE EM JSON VÁLIDO ==
+\`\`\`json
+{
+  "assistantMessage": "texto natural para o cliente",
+  "orderPatch": { "serviceType": "recolha_moveis", "description": "..." },
+  "nextQuestion": "próxima pergunta ou null",
+  "quickReplies": ["opção 1", "opção 2"],
+  "shouldOpenContactForm": false,
+  "shouldAskForPhotos": false,
+  "shouldAskForAddress": false,
+  "canGenerateEstimate": false,
+  "status": "collecting",
+  "internalNotes": ["nota 1"]
+}
+\`\`\`
 
-== EXEMPLOS DE RESPOSTAS CORRETAS ==
-- Falta serviço: "Que tipo de serviço precisa? Recolha de móveis, monos, entulho, esvaziamento ou mudança?"
-- Falta descrição: "O que precisa de recolher? Pode descrever os objetos ou enviar fotos."
-- Falta andar: "Em que andar se encontra o material?"
-- Falta elevador: "Existe elevador? Se sim, os itens cabem?"
-- Falta estacionamento: "A carrinha consegue estacionar perto da entrada?"
-- Tudo preenchido: "Perfeito, já tenho toda a informação. Vou precisar dos seus dados de contacto e morada." [ABRIR_FORMULARIO]`;
+== CAMPOS A EXTRAIR ==
+1. serviceType: "recolha_moveis" | "recolha_monos" | "recolha_entulho" | "esvaziamento_casa" | "esvaziamento_apartamento" | "mudanca"
+2. description: texto detalhado
+3. floor: "Rés-do-chão" | "1.º andar" | "2.º andar" | "3.º andar" | "4.º andar" | "4.º andar ou superior" | "Cave" | "Garagem"
+4. hasElevator: "yes" | "small" | "no" | "unknown"
+5. parkingDistance: "door" | "under_20m" | "over_30m" | "difficult" | "unknown"
+6. urgency: "no" | "today" | "tomorrow" | "this_week" | "flexible"
+7. receiver: { name, phone, email }
+8. address: { city, formattedAddress }
 
+== REGRAS ==
+- Extrai TUDO o que o cliente escreveu. NÃO REPITAS perguntas já respondidas.
+- Se cliente enviou fotos: confirma recepção, extrai descrição, continua com próximo campo.
+- Nunca inventes dados.
+- Uma pergunta por vez.
+- assistantMessage: linguagem natural, frases curtas, tom profissional.
+- Quando tiveres serviceType + description + floor + hasElevator + parkingDistance + urgency + receiver: readyToEstimate.
+
+== EXEMPLO ==
+Cliente: "Oi, preciso recolher monos da garagem. Nome: João Silva, Telefone: 913456789, Email: joao@email.com"
+\`\`\`json
+{
+  "assistantMessage": "Obrigado João! Recebi que vai recolher monos da sua garagem. Pode descrever em mais detalhe o que vai recolher?",
+  "orderPatch": {
+    "serviceType": "recolha_monos",
+    "floor": "Garagem",
+    "receiver": {
+      "name": "João Silva",
+      "phone": "913456789",
+      "email": "joao@email.com"
+    }
+  },
+  "nextQuestion": "Pode descrever o que vai recolher? Quantidades, tamanho aproximado?",
+  "status": "collecting"
+}
+\`\`\``;
 
 type MsgPart =
   | { text: string }
@@ -49,6 +103,41 @@ type IncomingMessage = {
 };
 
 export const runtime = "nodejs";
+
+function parseGeminiResponse(text: string): GeminiResponse {
+  try {
+    const jsonMatch = text.match(/```json\s*([\s\S]*?)\s*```/);
+    const jsonStr = jsonMatch ? jsonMatch[1] : text;
+    const parsed = JSON.parse(jsonStr);
+
+    return {
+      assistantMessage: (parsed.assistantMessage || "").trim(),
+      orderPatch: parsed.orderPatch || {},
+      nextQuestion: parsed.nextQuestion ?? null,
+      quickReplies: Array.isArray(parsed.quickReplies) ? parsed.quickReplies : [],
+      shouldOpenContactForm: parsed.shouldOpenContactForm ?? false,
+      shouldAskForPhotos: parsed.shouldAskForPhotos ?? false,
+      shouldAskForAddress: parsed.shouldAskForAddress ?? false,
+      canGenerateEstimate: parsed.canGenerateEstimate ?? false,
+      status: parsed.status ?? "collecting",
+      internalNotes: Array.isArray(parsed.internalNotes) ? parsed.internalNotes : [],
+    };
+  } catch (err) {
+    console.error("[chat-simulador] Parse error:", err, "Text:", text);
+    return {
+      assistantMessage: text.substring(0, 200),
+      orderPatch: {},
+      nextQuestion: "Qual é o tipo de serviço que precisa?",
+      quickReplies: [],
+      shouldOpenContactForm: false,
+      shouldAskForPhotos: false,
+      shouldAskForAddress: false,
+      canGenerateEstimate: false,
+      status: "collecting",
+      internalNotes: ["Fallback parse. Raw: " + text.substring(0, 100)],
+    };
+  }
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -62,27 +151,30 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Formato inválido" }, { status: 400 });
     }
 
-    // Contexto do pedido já recolhido — passado ao Gemini para não repetir perguntas
     const knownFields: string[] = [];
     if (order) {
       if (order.serviceType) knownFields.push(`Serviço: ${order.serviceType}`);
       if (order.description) knownFields.push(`Descrição: ${order.description}`);
       if (order.floor) knownFields.push(`Andar: ${order.floor}`);
-      if (order.hasElevator && order.hasElevator !== "unknown") knownFields.push(`Elevador: ${order.hasElevator}`);
-      if (order.parkingDistance && order.parkingDistance !== "unknown") knownFields.push(`Estacionamento: ${order.parkingDistance}`);
+      if (order.hasElevator && order.hasElevator !== "unknown") {
+        knownFields.push(`Elevador: ${order.hasElevator}`);
+      }
+      if (order.parkingDistance && order.parkingDistance !== "unknown") {
+        knownFields.push(`Estacionamento: ${order.parkingDistance}`);
+      }
       if (order.urgency) knownFields.push(`Urgência: ${order.urgency}`);
       if (order.city) knownFields.push(`Cidade: ${order.city}`);
-      const receiver = order.receiver as { name?: string; phone?: string } | undefined;
+      const receiver = order.receiver as { name?: string; phone?: string; email?: string } | undefined;
       if (receiver?.name) knownFields.push(`Nome: ${receiver.name}`);
       if (receiver?.phone) knownFields.push(`Telefone: ${receiver.phone}`);
+      if (receiver?.email) knownFields.push(`Email: ${receiver.email}`);
     }
 
-    const systemWithContext = knownFields.length > 0
-      ? `${SYSTEM_INSTRUCTION}\n\nDADOS JÁ RECOLHIDOS (não voltes a perguntar sobre estes campos):\n${knownFields.join("\n")}`
-      : SYSTEM_INSTRUCTION;
+    const systemWithContext =
+      knownFields.length > 0
+        ? `${SYSTEM_INSTRUCTION}\n\nDADOS JÁ RECOLHIDOS:\n${knownFields.join("\n")}`
+        : SYSTEM_INSTRUCTION;
 
-    // Converter para formato simples compatível com AI SDK
-    // Histórico: texto apenas. Última mensagem: pode ter imagens inline.
     const rawMessages = messages.map((msg, idx) => {
       const role = msg.role === "assistant" ? "assistant" : "user";
       const isLast = idx === messages.length - 1;
@@ -94,17 +186,18 @@ export async function POST(request: NextRequest) {
       const parts = msg.content as MsgPart[];
 
       if (isLast) {
-        // Última mensagem — preservar imagens para o Gemini ver
         const content = parts.map((part) => {
           if ("inlineData" in part) {
-            return { type: "image", image: `data:${part.inlineData.mimeType};base64,${part.inlineData.data}` };
+            return {
+              type: "image",
+              image: `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`,
+            };
           }
           return { type: "text", text: (part as { text: string }).text };
         });
         return { role, content };
       }
 
-      // Mensagens do histórico — extrair só o texto
       const text = parts
         .filter((p): p is { text: string } => "text" in p)
         .map((p) => p.text)
@@ -112,24 +205,39 @@ export async function POST(request: NextRequest) {
       return { role, content: text || "(imagem)" };
     });
 
-    // A API exige que o histórico comece com 'user'
     const firstUserIdx = rawMessages.findIndex((m) => m.role === "user");
-    const safeMessages = (firstUserIdx >= 0 ? rawMessages.slice(firstUserIdx) : rawMessages) as ModelMessage[];
+    const safeMessages =
+      (firstUserIdx >= 0 ? rawMessages.slice(firstUserIdx) : rawMessages) as ModelMessage[];
 
+    console.log(`[chat-simulador] Chamando Gemini model=${MODEL}`);
     const { text } = await generateText({
       model: MODEL,
       system: systemWithContext,
       messages: safeMessages,
     });
 
-    return NextResponse.json({ message: text ?? "", role: "assistant" });
+    if (!text) {
+      throw new Error("Resposta vazia do Gemini");
+    }
+
+    const response = parseGeminiResponse(text);
+
+    return NextResponse.json(response);
   } catch (error) {
     console.error("[chat-simulador] Erro:", error);
     return NextResponse.json(
       {
-        error: "AI_REQUEST_FAILED",
-        customerMessage: "Não consegui processar o pedido agora. Tente novamente ou contacte a CLYON diretamente.",
-      },
+        assistantMessage: "Não consegui processar agora. Tente novamente ou contacte a CLYON.",
+        orderPatch: {},
+        nextQuestion: null,
+        quickReplies: [],
+        shouldOpenContactForm: false,
+        shouldAskForPhotos: false,
+        shouldAskForAddress: false,
+        canGenerateEstimate: false,
+        status: "collecting",
+        internalNotes: [String(error)],
+      } as GeminiResponse,
       { status: 500 }
     );
   }

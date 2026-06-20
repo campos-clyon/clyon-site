@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ArrowRight, Loader2, Image as ImageIcon, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import type { OrderData } from "./types";
+import { mergeOrderPatch, getMissingFields, isOrderComplete } from "./orderUtils";
 
 type Message = {
   id: string;
@@ -13,6 +15,18 @@ type Message = {
   images?: { url: string; file: File }[];
   timestamp: Date;
   isHidden?: boolean;
+  quickReplies?: string[];
+};
+
+type GeminiResponse = {
+  assistantMessage: string;
+  orderPatch?: Record<string, unknown>;
+  nextQuestion?: string | null;
+  quickReplies?: string[];
+  shouldOpenContactForm?: boolean;
+  shouldAskForPhotos?: boolean;
+  status?: "collecting" | "ready_to_estimate" | "needs_photos" | "onsite_recommended";
+  internalNotes?: string[];
 };
 
 export default function SimuladorChatClient() {
@@ -22,6 +36,7 @@ export default function SimuladorChatClient() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [showContactForm, setShowContactForm] = useState(false);
+  const [orderData, setOrderData] = useState<OrderData>({});
   const [formData, setFormData] = useState({ nome: "", whatsapp: "", email: "", morada: "" });
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -202,44 +217,49 @@ export default function SimuladorChatClient() {
       const response = await fetch("/api/chat-simulador", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: messagesForAPI }),
+        body: JSON.stringify({ messages: messagesForAPI, order: orderData }),
       });
 
-      const data = await response.json();
+      const data: GeminiResponse = await response.json();
 
       if (!response.ok) {
         console.error("[chat] API error response:", data);
         const friendlyMsg =
-          data?.customerMessage ||
+          data.assistantMessage ||
           "Não consegui calcular a estimativa agora. Pode continuar a enviar os detalhes e a equipa CLYON confirma o valor.";
         throw new Error(friendlyMsg);
       }
 
-      const responseText = data.message;
+      // Actualizar orderData com o patch extraído pelo Gemini
+      if (data.orderPatch) {
+        setOrderData((prev) => mergeOrderPatch(prev, data.orderPatch as Partial<OrderData>));
+      }
 
-      // Verificar se a resposta é a palavra-chave para abrir formulário
-      if (responseText.trim() === "[ABRIR_FORMULARIO]") {
-        // Adicionar mensagem oculta ao histórico
-        setMessages((prev) => [
+      // Preencher automaticamente formulário se Gemini extraiu dados de contacto
+      if (data.orderPatch?.receiver) {
+        const receiver = data.orderPatch.receiver as { name?: string; phone?: string; email?: string };
+        setFormData((prev) => ({
           ...prev,
-          {
-            id: `assistant-${Date.now()}`,
-            role: "assistant",
-            content: responseText,
-            timestamp: new Date(),
-            isHidden: true,
-          },
-        ]);
-        setShowContactForm(true);
-      } else {
-        const assistantMessage: Message = {
-          id: `assistant-${Date.now()}`,
-          role: "assistant",
-          content: responseText,
-          timestamp: new Date(),
-        };
+          nome: receiver.name || prev.nome,
+          whatsapp: receiver.phone || prev.whatsapp,
+          email: receiver.email || prev.email,
+        }));
+      }
 
-        setMessages((prev) => [...prev, assistantMessage]);
+      // Mostrar mensagem do assistente
+      const assistantMessage: Message = {
+        id: `assistant-${Date.now()}`,
+        role: "assistant",
+        content: data.assistantMessage,
+        timestamp: new Date(),
+        quickReplies: data.quickReplies,
+      };
+
+      setMessages((prev) => [...prev, assistantMessage]);
+
+      // Abrir formulário se Gemini indicou ou se completo
+      if (data.shouldOpenContactForm || isOrderComplete({ ...orderData, ...data.orderPatch })) {
+        setShowContactForm(true);
       }
     } catch (err) {
       console.error("[chat] Erro técnico:", err);

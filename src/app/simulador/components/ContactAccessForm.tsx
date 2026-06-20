@@ -13,14 +13,17 @@ interface ContactAccessFormProps {
     distanceStatus?: DistanceStatus;
   }) => void;
   loading?: boolean;
+  // Pré-preenchimento do Gemini
+  initialReceiver?: ReceiverData;
+  initialAddress?: AddressData;
 }
 
-export default function ContactAccessForm({ onSubmit, loading }: ContactAccessFormProps) {
-  const [name, setName] = useState("");
-  const [phone, setPhone] = useState("");
-  const [email, setEmail] = useState("");
-  const [addressText, setAddressText] = useState("");
-  const [addressData, setAddressData] = useState<AddressData>({});
+export default function ContactAccessForm({ onSubmit, loading, initialReceiver, initialAddress }: ContactAccessFormProps) {
+  const [name, setName] = useState(initialReceiver?.name ?? "");
+  const [phone, setPhone] = useState(initialReceiver?.phone ?? "");
+  const [email, setEmail] = useState(initialReceiver?.email ?? "");
+  const [addressText, setAddressText] = useState((initialAddress?.formattedAddress || initialAddress?.city) ?? "");
+  const [addressData, setAddressData] = useState<AddressData>(initialAddress ?? {});
   const [distanceFromBase, setDistanceFromBase] = useState<DistanceFromBase | undefined>();
   const [distanceStatus, setDistanceStatus] = useState<DistanceStatus>("idle");
   const [errors, setErrors] = useState<Record<string, string>>({});
