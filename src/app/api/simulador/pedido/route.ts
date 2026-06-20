@@ -12,16 +12,20 @@ export const runtime = "nodejs";
 
 export async function POST(req: NextRequest) {
   try {
+    console.log("[v0] POST /api/simulador/pedido: Iniciando...");
     const { order, estimate, chatHistory } = await req.json();
     if (!order) {
+      console.log("[v0] POST /api/simulador/pedido: Erro - order ausente");
       return NextResponse.json({ error: "order required" }, { status: 400 });
     }
+    console.log("[v0] POST /api/simulador/pedido: Dados recebidos - serviceType=", order.serviceType, ", contactName=", order.receiver?.name);
 
     const priority = calculateOrderPriority({
       urgency: order.urgency,
       description: order.description,
       estimateTotal: estimate?.estimatedPriceWithVat?.toString() ?? null,
     });
+    console.log("[v0] POST /api/simulador/pedido: Prioridade calculada=", priority);
 
     const row: InsertSimulatorOrder = {
       serviceType: order.serviceType ?? null,
@@ -44,11 +48,11 @@ export async function POST(req: NextRequest) {
       distanceText: order.distanceFromBase?.durationText ?? null,
       chatJson: chatHistory ? JSON.stringify(chatHistory) : null,
       priority,
-      status: "pendente", // Status inicial: sempre "pendente", depois muda para "atribuido" se atribuído
+      status: "pendente",
     };
 
     const id = await createSimulatorOrder(row);
-    console.log("[v0] simulador/pedido: Pedido #", id, " criado com status 'pendente'");
+    console.log("[v0] POST /api/simulador/pedido: ✓ Pedido #", id, " CRIADO com status 'pendente', insertId=", id, ", tipo=", typeof id);
 
     // Registar no histórico que o pedido foi criado
     await appendOrderHistory(id, {
@@ -56,33 +60,39 @@ export async function POST(req: NextRequest) {
       by: null,
       message: `Pedido criado via simulador. Serviço: ${order.serviceType ?? "—"}. Prioridade: ${priority}.`,
     });
+    console.log("[v0] POST /api/simulador/pedido: ✓ Histórico registado para pedido #", id);
 
     // Atribuição automática ao assistente com menos carga
     const assignee = await pickLeastLoadedAssistant();
+    console.log("[v0] POST /api/simulador/pedido: pickLeastLoadedAssistant() retornou=", assignee ? `{ id: ${assignee.id}, nome: ${assignee.nome} }` : "null");
+
     if (assignee) {
-      console.log("[v0] simulador/pedido: Atribuindo pedido #", id, " a ", assignee.nome);
+      console.log("[v0] POST /api/simulador/pedido: Atribuindo pedido #", id, " a ", assignee.nome, " (id=", assignee.id, ")");
       await assignSimulatorOrder(id, assignee, null);
+      console.log("[v0] POST /api/simulador/pedido: ✓ Pedido #", id, " atribuído a ", assignee.nome);
       return NextResponse.json({
         ok: true,
         id,
         priority,
         status: "atribuido",
         assignedTo: assignee.nome,
+        assignedToId: assignee.id,
         message: `Pedido #${id} enviado para análise. Assistente atribuída: ${assignee.nome}.`,
       });
     } else {
-      console.log("[v0] simulador/pedido: Sem assistente disponível para pedido #", id);
+      console.log("[v0] POST /api/simulador/pedido: ⚠ Sem assistente disponível para pedido #", id);
       return NextResponse.json({
         ok: true,
         id,
         priority,
         status: "pendente",
         assignedTo: null,
+        assignedToId: null,
         message: `Pedido #${id} enviado para análise. Será atribuído a um assistente em breve.`,
       });
     }
   } catch (err: any) {
-    console.error("[simulador/pedido] Erro ao guardar pedido:", err);
+    console.error("[v0] POST /api/simulador/pedido: ❌ Erro:", err.message, err.stack);
     return NextResponse.json({ ok: false, error: err.message }, { status: 500 });
   }
 }

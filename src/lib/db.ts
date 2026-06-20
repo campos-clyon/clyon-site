@@ -961,13 +961,20 @@ export async function countActiveOrdersByAssistant(): Promise<Record<number, num
 }
 
 export async function pickLeastLoadedAssistant(): Promise<{ id: number; nome: string } | null> {
+  console.log("[v0] pickLeastLoadedAssistant: Iniciando...");
   await ensureSimulatorOrdersTable();
   const pool = await getPool();
   const [assistants, counts] = await Promise.all([
     getActiveAssistants(),
     countActiveOrdersByAssistant(),
   ]);
-  if (!assistants.length) return null;
+  console.log("[v0] pickLeastLoadedAssistant: Assistentes encontradas:", assistants.length, assistants.map(a => `${a.nome}(id=${a.id}, isAdmin=${a.isAdmin})`));
+  console.log("[v0] pickLeastLoadedAssistant: Contadores por assistente:", counts);
+  
+  if (!assistants.length) {
+    console.log("[v0] pickLeastLoadedAssistant: ⚠ Nenhuma assistente activa encontrada!");
+    return null;
+  }
 
   // Desempate: assistente que recebeu pedido há mais tempo tem prioridade
   const lastAssigned: Record<number, string> = {};
@@ -978,7 +985,10 @@ export async function pickLeastLoadedAssistant(): Promise<{ id: number; nome: st
          WHERE assignedToId IS NOT NULL GROUP BY assignedToId`
       ) as any[];
       for (const row of rows as any[]) lastAssigned[Number(row.assignedToId)] = String(row.lastAt ?? "");
-    } catch {}
+      console.log("[v0] pickLeastLoadedAssistant: Última atribuição por assistente:", lastAssigned);
+    } catch (e) {
+      console.error("[v0] pickLeastLoadedAssistant: Erro ao buscar lastAssigned:", e);
+    }
   }
 
   let best: { id: number; nome: string } | null = null;
@@ -988,12 +998,16 @@ export async function pickLeastLoadedAssistant(): Promise<{ id: number; nome: st
   for (const a of assistants) {
     const c = counts[a.id] ?? 0;
     const lastAt = lastAssigned[a.id] ?? "0000-01-01";
+    console.log(`[v0] pickLeastLoadedAssistant: Avaliando ${a.nome} (id=${a.id}): count=${c}, lastAt=${lastAt}`);
     if (c < bestCount || (c === bestCount && lastAt < bestLastAt)) {
       bestCount = c;
       bestLastAt = lastAt;
       best = { id: a.id, nome: a.nome };
+      console.log(`[v0] pickLeastLoadedAssistant: ✓ Novo melhor: ${a.nome} (count=${c})`);
     }
   }
+  
+  console.log("[v0] pickLeastLoadedAssistant: Resultado final:", best ? `${best.nome} (id=${best.id})` : "null");
   return best;
 }
 
@@ -1017,9 +1031,13 @@ export async function assignSimulatorOrder(
   assignee: { id: number; nome: string } | null,
   actor: { id: number; nome: string; role: string } | null
 ): Promise<void> {
+  console.log("[v0] assignSimulatorOrder: Iniciando para pedido #", orderId, "assignee=", assignee ? `${assignee.nome}(id=${assignee.id})` : "null");
   await ensureSimulatorOrdersTable();
   const pool = await getPool();
-  if (!pool) return;
+  if (!pool) {
+    console.error("[v0] assignSimulatorOrder: ❌ Pool indisponível!");
+    return;
+  }
   const newStatus = assignee ? "atribuido" : "pendente";
   const isAuto = actor === null;
   const message = assignee
@@ -1029,14 +1047,18 @@ export async function assignSimulatorOrder(
     : actor
       ? `Atribuição removida por ${actor.nome}.`
       : "Pedido sem assistente atribuído.";
+  
   const [rows] = await pool.execute("SELECT historyJson FROM simulatorOrders WHERE id = ? LIMIT 1", [orderId]) as any[];
   const existing: any[] = [];
   try { if ((rows as any[])[0]?.historyJson) existing.push(...JSON.parse((rows as any[])[0].historyJson)); } catch {}
   existing.push({ type: "assigned", by: actor ?? null, message, createdAt: new Date().toISOString() });
+  
+  console.log("[v0] assignSimulatorOrder: Actualizando pedido #", orderId, "com assignedToId=", assignee?.id, ", status=", newStatus);
   await pool.execute(
     `UPDATE simulatorOrders SET assignedToId=?, assignedToName=?, assignedAt=?, status=?, historyJson=?, updatedAt=NOW() WHERE id=?`,
     [assignee?.id ?? null, assignee?.nome ?? null, assignee ? new Date() : null, newStatus, JSON.stringify(existing), orderId]
   );
+  console.log("[v0] assignSimulatorOrder: ✓ Pedido #", orderId, " actualizado com sucesso");
 }
 
 export async function approveSimulatorOrder(

@@ -45,17 +45,23 @@ export async function GET(req: NextRequest) {
   const search = searchParams.get("search") ?? undefined;
 
   const isAdmin = colab!.isAdmin === 1;
+  console.log("[v0] GET /api/admin/pedidos: Utilizador=", colab!.nome, ", isAdmin=", isAdmin, ", status filter=", status, ", search=", search);
 
   if (isAdmin) {
     // Admin vê todos os pedidos
+    console.log("[v0] GET /api/admin/pedidos: Admin - carregando TODOS os pedidos");
     const [orders, counts] = await Promise.all([
       getAllSimulatorOrders({ status: status !== "todos" ? status : undefined, search }),
       countSimulatorOrdersByStatus(),
     ]);
+    console.log("[v0] GET /api/admin/pedidos: Admin - pedidos carregados:", orders.length, "contadores:", counts);
     return NextResponse.json({ orders, counts, role: "admin_geral" });
   } else {
     // Assistente vê apenas pedidos atribuídos a si
+    console.log("[v0] GET /api/admin/pedidos: Assistente (id=", colab!.id, ") - carregando seus pedidos");
     const orders = await getSimulatorOrdersByAssistant(colab!.id);
+    console.log("[v0] GET /api/admin/pedidos: Assistente - pedidos encontrados:", orders.length);
+    
     // Filtrar por status e pesquisa no lado do servidor
     const filtered = orders.filter((o) => {
       if (status && status !== "todos" && o.status !== status) return false;
@@ -70,9 +76,12 @@ export async function GET(req: NextRequest) {
       }
       return true;
     });
+    console.log("[v0] GET /api/admin/pedidos: Assistente - após filtro:", filtered.length);
+    
     // Contagens apenas dos pedidos do assistente
     const counts: Record<string, number> = { total: filtered.length };
     for (const o of filtered) counts[o.status] = (counts[o.status] ?? 0) + 1;
+    console.log("[v0] GET /api/admin/pedidos: Assistente - contadores:", counts);
     return NextResponse.json({ orders: filtered, counts, role: "assistente" });
   }
 }
