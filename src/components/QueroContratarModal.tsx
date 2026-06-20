@@ -234,7 +234,7 @@ export default function QueroContratarModal({ open, onClose }: Props) {
       role="dialog"
       aria-modal="true"
       aria-labelledby="modal-title"
-      className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
+      className="fixed inset-0 z-[9999] flex items-start justify-center overflow-y-auto p-4 pt-20 sm:items-center sm:pt-4"
       onClick={handleOverlayClick}
     >
       {/* Overlay */}
@@ -243,7 +243,7 @@ export default function QueroContratarModal({ open, onClose }: Props) {
       {/* Dialog */}
       <div
         ref={dialogRef}
-        className="relative z-10 w-full max-w-lg max-h-[90dvh] overflow-y-auto rounded-3xl bg-white shadow-2xl"
+        className="relative z-10 w-full max-w-lg rounded-3xl bg-white shadow-2xl sm:max-h-[90dvh] sm:overflow-y-auto"
       >
         {/* Barra de topo compacta — só botão fechar */}
         <div className="sticky top-0 z-10 flex items-center justify-between rounded-t-3xl bg-white px-5 pt-5 pb-3 border-b border-slate-100">
@@ -345,7 +345,7 @@ export default function QueroContratarModal({ open, onClose }: Props) {
                   autoComplete="address-level2"
                   value={form.localidade}
                   onChange={(e) => set("localidade", e.target.value)}
-                  placeholder="Cidade ou município"
+                  placeholder="Cidade ou Região"
                   className={`w-full rounded-2xl border px-4 py-3 text-sm outline-none transition placeholder:text-slate-400 focus:ring-2 focus:ring-cyan-300 ${errors.localidade ? "border-rose-400 bg-rose-50" : "border-slate-200 bg-white focus:border-cyan-400"}`}
                 />
                 {errors.localidade && <p className="mt-1 text-xs text-rose-600">{errors.localidade}</p>}
