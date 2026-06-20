@@ -234,7 +234,7 @@ export default function QueroContratarModal({ open, onClose }: Props) {
       role="dialog"
       aria-modal="true"
       aria-labelledby="modal-title"
-      className="fixed inset-0 z-[9999] flex items-start justify-center overflow-y-auto p-4 pt-20 sm:items-center sm:pt-4"
+      className="fixed inset-0 z-[9999] flex items-start justify-center overflow-y-auto p-4 pt-4 sm:items-center sm:pt-0"
       onClick={handleOverlayClick}
     >
       {/* Overlay */}
