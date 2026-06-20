@@ -166,7 +166,7 @@ export default function ColaboradorDashboard() {
     const nome = getColaboradorItem("nome");
     const id = getColaboradorItem("id");
     const isAdmin = getColaboradorItem("isAdmin");
-
+    const funcao = getColaboradorItem("funcao");
 
     if (!token) {
       router.push("/colaboradores");
@@ -178,10 +178,16 @@ export default function ColaboradorDashboard() {
       return;
     }
 
+    // Assistente não deve registar horas — redirecionar para painel de pedidos
+    if (funcao === "assistente") {
+      router.replace("/colaboradores/admin?section=pedidos");
+      return;
+    }
+
     setNomeColaborador(nome || "");
     if (id) setColaboradorId(parseInt(id));
     void carregarDados(token);
-  }, []);
+  }, [router]);
 
   const carregarDados = async (token: string) => {
     try {

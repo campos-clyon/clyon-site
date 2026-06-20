@@ -2,7 +2,7 @@
 
 import type { ComponentType, ReactNode } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { clearColaboradorStorage, getColaboradorItem } from "@/lib/colaborador-storage";
 import {
   AlertTriangle,
@@ -493,7 +493,7 @@ export default function ColaboradorAdminClient() {
   const [savingLeadStatus, setSavingLeadStatus] = useState(false);
   const [leadsLastUpdate, setLeadsLastUpdate] = useState<Date | null>(null);
   const [activeLeadsTab, setActiveLeadsTab] = useState<"leads" | "eventos">("leads");
-  // ── Pedidos state ─────────────────────────────────────────────────────────
+  // ── Pedidos state ─────────────────────────────────────────���───────────────
   type SimulatorOrder = {
     id: number;
     serviceType?: string | null;
@@ -574,14 +574,23 @@ export default function ColaboradorAdminClient() {
     setAdminNome(storedNome || "Administração");
     setIsAdminGeral(isAdminGeral);
 
+    // Verificar se há section no URL (ex: ?section=pedidos)
+    const searchParams = new URLSearchParams(window.location.search);
+    const sectionParam = searchParams.get("section") as AdminSection | null;
+    if (sectionParam && adminNavItems.some(item => item.id === sectionParam)) {
+      setActiveSection(sectionParam);
+    }
+
     // Admin geral carrega dados da equipa e configurações; assistente começa directamente nos pedidos
     if (isAdminGeral) {
       void carregarDados(storedToken);
       void carregarSimulatorSettings(storedToken);
       void carregarImageStats(storedToken);
     } else {
-      // Assistente: só tem acesso à aba pedidos
-      setActiveSection("pedidos");
+      // Assistente: só tem acesso à aba pedidos (definir se ainda não foi definido via URL)
+      if (!sectionParam) {
+        setActiveSection("pedidos");
+      }
       setLoading(false);
     }
 

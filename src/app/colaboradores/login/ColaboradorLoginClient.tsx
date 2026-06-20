@@ -55,12 +55,14 @@ export default function ColaboradorLoginClient() {
         localStorage.removeItem("colaborador_isAdmin");
         localStorage.removeItem("colaborador_funcao");
       }
-      if (data.colaborador.isAdmin) {
+      // Redirecionar baseado na função: admin geral → painel completo, assistente → aba Pedidos, outros → dashboard de horas
+      if (data.colaborador.isAdmin === 1) {
         router.push("/colaboradores/admin");
-        return;
+      } else if (data.colaborador.funcao === "assistente") {
+        router.push("/colaboradores/admin?section=pedidos");
+      } else {
+        router.push("/colaboradores/dashboard");
       }
-
-      router.push("/colaboradores/dashboard");
     } catch (err) {
       const message =
         err instanceof Error ? err.message : "Não foi possível iniciar sessão.";
