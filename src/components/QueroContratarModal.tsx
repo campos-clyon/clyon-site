@@ -383,10 +383,10 @@ export default function QueroContratarModal({ open, onClose }: Props) {
                           key={a}
                           type="button"
                           onClick={() => set("andar", a)}
-                          className={`rounded-xl border px-3 py-2 text-sm font-medium transition ${
+                          className={`rounded-xl border px-3 py-2 text-sm font-semibold transition ${
                             form.andar === a
-                              ? "border-cyan-500 bg-cyan-50 text-cyan-700"
-                              : "border-slate-200 bg-white text-slate-600 hover:border-cyan-300"
+                              ? "border-cyan-600 bg-cyan-600 text-white shadow-sm shadow-cyan-200"
+                              : "border-slate-200 bg-white text-slate-600 hover:border-cyan-400 hover:text-cyan-600"
                           }`}
                         >
                           {a}
@@ -404,10 +404,10 @@ export default function QueroContratarModal({ open, onClose }: Props) {
                           key={e}
                           type="button"
                           onClick={() => set("elevador", e)}
-                          className={`flex-1 rounded-xl border px-3 py-2 text-sm font-medium transition ${
+                          className={`flex-1 rounded-xl border px-3 py-2 text-sm font-semibold transition ${
                             form.elevador === e
-                              ? "border-cyan-500 bg-cyan-50 text-cyan-700"
-                              : "border-slate-200 bg-white text-slate-600 hover:border-cyan-300"
+                              ? "border-cyan-600 bg-cyan-600 text-white shadow-sm shadow-cyan-200"
+                              : "border-slate-200 bg-white text-slate-600 hover:border-cyan-400 hover:text-cyan-600"
                           }`}
                         >
                           {e}
@@ -429,10 +429,10 @@ export default function QueroContratarModal({ open, onClose }: Props) {
                       key={pref}
                       type="button"
                       onClick={() => set("preferenciaContacto", pref)}
-                      className={`rounded-2xl border px-3 py-2.5 text-sm font-medium transition ${
+                      className={`rounded-2xl border px-3 py-2.5 text-sm font-semibold transition ${
                         form.preferenciaContacto === pref
-                          ? "border-cyan-500 bg-cyan-50 text-cyan-700"
-                          : "border-slate-200 bg-white text-slate-600 hover:border-cyan-300 hover:text-cyan-600"
+                          ? "border-cyan-600 bg-cyan-600 text-white shadow-sm shadow-cyan-200"
+                          : "border-slate-200 bg-white text-slate-600 hover:border-cyan-400 hover:text-cyan-600"
                       }`}
                     >
                       {pref}
