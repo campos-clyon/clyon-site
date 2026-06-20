@@ -1,4 +1,5 @@
-import { generateText, type ModelMessage } from "ai";
+import { generateText } from "ai";
+import type { ModelMessage } from "ai";
 import { NextRequest, NextResponse } from "next/server";
 
 // Modelo via Vercel AI Gateway — sem quota do tier gratuito
@@ -80,28 +81,40 @@ export async function POST(request: NextRequest) {
       ? `${SYSTEM_INSTRUCTION}\n\nDADOS JÁ RECOLHIDOS (não voltes a perguntar sobre estes campos):\n${knownFields.join("\n")}`
       : SYSTEM_INSTRUCTION;
 
-    // Converter para ModelMessage[] do AI SDK
-    const modelMessages: ModelMessage[] = messages.map((msg) => {
-      const role = (msg.role === "assistant" ? "assistant" : "user") as "user" | "assistant";
+    // Converter para formato simples compatível com AI SDK
+    // Histórico: texto apenas. Última mensagem: pode ter imagens inline.
+    const rawMessages = messages.map((msg, idx) => {
+      const role = msg.role === "assistant" ? "assistant" : "user";
+      const isLast = idx === messages.length - 1;
+
       if (typeof msg.content === "string") {
         return { role, content: msg.content };
       }
-      // Conteúdo multimodal (texto + imagens base64)
-      const content = (msg.content as MsgPart[]).map((part) => {
-        if ("inlineData" in part) {
-          return {
-            type: "image" as const,
-            image: `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`,
-          };
-        }
-        return { type: "text" as const, text: (part as { text: string }).text };
-      });
-      return { role, content };
+
+      const parts = msg.content as MsgPart[];
+
+      if (isLast) {
+        // Última mensagem — preservar imagens para o Gemini ver
+        const content = parts.map((part) => {
+          if ("inlineData" in part) {
+            return { type: "image", image: `data:${part.inlineData.mimeType};base64,${part.inlineData.data}` };
+          }
+          return { type: "text", text: (part as { text: string }).text };
+        });
+        return { role, content };
+      }
+
+      // Mensagens do histórico — extrair só o texto
+      const text = parts
+        .filter((p): p is { text: string } => "text" in p)
+        .map((p) => p.text)
+        .join(" ");
+      return { role, content: text || "(imagem)" };
     });
 
     // A API exige que o histórico comece com 'user'
-    const firstUserIdx = modelMessages.findIndex((m) => m.role === "user");
-    const safeMessages = firstUserIdx >= 0 ? modelMessages.slice(firstUserIdx) : modelMessages;
+    const firstUserIdx = rawMessages.findIndex((m) => m.role === "user");
+    const safeMessages = (firstUserIdx >= 0 ? rawMessages.slice(firstUserIdx) : rawMessages) as ModelMessage[];
 
     const { text } = await generateText({
       model: MODEL,
