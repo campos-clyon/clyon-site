@@ -474,6 +474,10 @@ async function handleRequest(req: NextRequest, path: string[]) {
       return NextResponse.json({ error: "Acesso negado." }, { status: 403 });
     }
     try {
+      // Garantir schema actualizado antes de qualquer query
+      const { ensureColaboradoresSchema } = await import("@/lib/db");
+      await ensureColaboradoresSchema();
+      
       const data = await loadAdminDataset(db);
       return NextResponse.json(data);
     } catch (error) {
