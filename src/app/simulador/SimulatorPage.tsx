@@ -495,16 +495,51 @@ export default function SimulatorPage() {
   // ─── Guardar pedido na base de dados ────────────────────────────────────────
   const handleSaveOrder = async () => {
     if (savingOrder || orderSaved) return;
+    
+    // Validação de dados obrigatórios
+    const missingFields: string[] = [];
+    if (!order.receiver?.name) missingFields.push("Nome");
+    if (!order.receiver?.phone) missingFields.push("Telefone");
+    if (!order.receiver?.email) missingFields.push("Email");
+    if (!order.serviceType) missingFields.push("Tipo de serviço");
+    if (!order.description && (!order.files || order.files.length === 0)) missingFields.push("Descrição ou fotos");
+    if (!order.address?.formattedAddress) missingFields.push("Morada");
+    
+    if (missingFields.length > 0) {
+      setMessages((prev) => [
+        ...prev,
+        makeAssistantMessage(`⚠️ Faltam dados obrigatórios: ${missingFields.join(", ")}. Por favor, complete todos os campos antes de enviar.`),
+      ]);
+      return;
+    }
+
     setSavingOrder(true);
     try {
+      console.log("[v0] SimulatorPage.handleSaveOrder: Enviando pedido com dados:", {
+        servicoType: order.serviceType,
+        contactName: order.receiver?.name,
+        contactPhone: order.receiver?.phone,
+        address: order.address?.formattedAddress,
+        hasEstimate: !!estimate,
+        estimateStatus: estimate?.status,
+      });
+
       const res = await fetch("/api/simulador/pedido", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ order, estimate, chatHistory }),
       });
+
       if (res.ok) {
         const data = await res.json();
-        console.log("[v0] Pedido criado:", data);
+        console.log("[v0] SimulatorPage.handleSaveOrder: ✓ Pedido criado com sucesso:", {
+          id: data.id,
+          status: data.status,
+          assignedTo: data.assignedTo,
+          assignedToId: data.assignedToId,
+          message: data.message,
+        });
+
         setOrderSaved(true);
         
         const confirmationMsg = data.message || 
@@ -518,10 +553,18 @@ export default function SimulatorPage() {
         ]);
       } else {
         const error = await res.json();
-        console.error("[v0] Erro ao criar pedido:", error);
+        console.error("[v0] SimulatorPage.handleSaveOrder: ❌ Erro HTTP:", res.status, error);
+        setMessages((prev) => [
+          ...prev,
+          makeAssistantMessage(`Erro ao enviar pedido: ${error?.error || "Tente novamente mais tarde"}`),
+        ]);
       }
     } catch (err) {
-      console.error("[v0] Erro ao guardar pedido:", err);
+      console.error("[v0] SimulatorPage.handleSaveOrder: ❌ Erro ao guardar pedido:", err);
+      setMessages((prev) => [
+        ...prev,
+        makeAssistantMessage("Erro de conexão ao enviar pedido. Por favor, tente novamente."),
+      ]);
     } finally {
       setSavingOrder(false);
     }

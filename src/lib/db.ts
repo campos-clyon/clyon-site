@@ -826,6 +826,7 @@ async function ensureSimulatorOrdersTable() {
 }
 
 export async function createSimulatorOrder(data: InsertSimulatorOrder): Promise<number> {
+  console.log("[v0] createSimulatorOrder: Iniciando com", Object.keys(data).length, "campos");
   await ensureSimulatorOrdersTable();
   const pool = await getPool();
   if (!pool) throw new Error("DB not available");
@@ -833,17 +834,24 @@ export async function createSimulatorOrder(data: InsertSimulatorOrder): Promise<
   const vals = cols.map((k) => (data as Record<string, unknown>)[k]);
   const placeholders = cols.map(() => "?").join(", ");
   const sql = `INSERT INTO simulatorOrders (${cols.join(", ")}) VALUES (${placeholders})`;
+  console.log("[v0] createSimulatorOrder: SQL com", cols.length, "colunas: contactName, serviceType, status, priority...");
   const [result] = await pool.execute(sql, vals) as any[];
-  return result.insertId ?? 0;
+  const insertId = result.insertId ?? 0;
+  console.log("[v0] createSimulatorOrder: ✓ Pedido criado com insertId=", insertId, "tipo=", typeof insertId);
+  return insertId;
 }
 
 export async function getAllSimulatorOrders(filters?: {
   status?: string;
   search?: string;
 }): Promise<SimulatorOrder[]> {
+  console.log("[v0] getAllSimulatorOrders: Iniciando com filters=", filters);
   await ensureSimulatorOrdersTable();
   const pool = await getPool();
-  if (!pool) return [];
+  if (!pool) {
+    console.error("[v0] getAllSimulatorOrders: ❌ Pool indisponível!");
+    return [];
+  }
   const conditions: string[] = [];
   const params: unknown[] = [];
   if (filters?.status) {
@@ -860,7 +868,9 @@ export async function getAllSimulatorOrders(filters?: {
     `SELECT * FROM simulatorOrders ${where} ORDER BY createdAt DESC LIMIT 500`,
     params,
   ) as any[];
-  return rows as SimulatorOrder[];
+  const result = rows as SimulatorOrder[];
+  console.log("[v0] getAllSimulatorOrders: ✓ Retornando", result.length, "pedidos");
+  return result;
 }
 
 export async function getSimulatorOrderById(id: number): Promise<SimulatorOrder | undefined> {
@@ -932,7 +942,10 @@ export async function countSimulatorOrdersByStatus(): Promise<Record<string, num
 
 export async function getActiveAssistants(): Promise<Array<{ id: number; nome: string; funcao: string; isAdmin: number }>> {
   const pool = await getPool();
-  if (!pool) return [];
+  if (!pool) {
+    console.error("[v0] getActiveAssistants: ❌ Pool indisponível!");
+    return [];
+  }
   // Apenas assistentes activos que podem receber pedidos do simulador
   const [rows] = await pool.execute(
     `SELECT id, nome, funcao, isAdmin FROM colaboradores
@@ -942,13 +955,18 @@ export async function getActiveAssistants(): Promise<Array<{ id: number; nome: s
        AND (canReceiveSimulatorRequests IS NULL OR canReceiveSimulatorRequests = 1)
      ORDER BY nome ASC`
   ) as any[];
-  return rows as any[];
+  const result = rows as any[];
+  console.log("[v0] getActiveAssistants: ✓ Encontradas", result.length, "assistentes:", result.map(r => `${r.nome}(id=${r.id})`));
+  return result;
 }
 
 export async function countActiveOrdersByAssistant(): Promise<Record<number, number>> {
   await ensureSimulatorOrdersTable();
   const pool = await getPool();
-  if (!pool) return {};
+  if (!pool) {
+    console.error("[v0] countActiveOrdersByAssistant: ❌ Pool indisponível!");
+    return {};
+  }
   const [rows] = await pool.execute(
     `SELECT assignedToId, COUNT(*) AS total FROM simulatorOrders
      WHERE assignedToId IS NOT NULL
@@ -957,6 +975,7 @@ export async function countActiveOrdersByAssistant(): Promise<Record<number, num
   ) as any[];
   const result: Record<number, number> = {};
   for (const row of rows as any[]) result[Number(row.assignedToId)] = Number(row.total);
+  console.log("[v0] countActiveOrdersByAssistant: ✓ Contadores:", result);
   return result;
 }
 
@@ -1081,15 +1100,21 @@ export async function approveSimulatorOrder(
 }
 
 export async function getSimulatorOrdersByAssistant(assignedToId: number): Promise<SimulatorOrder[]> {
+  console.log("[v0] getSimulatorOrdersByAssistant: Iniciando para assistante id=", assignedToId);
   await ensureSimulatorOrdersTable();
   const pool = await getPool();
-  if (!pool) return [];
+  if (!pool) {
+    console.error("[v0] getSimulatorOrdersByAssistant: ❌ Pool indisponível!");
+    return [];
+  }
   // Assistente vê apenas os pedidos atribuídos a si — nunca pedidos de outros
   const [rows] = await pool.execute(
     "SELECT * FROM simulatorOrders WHERE assignedToId = ? ORDER BY createdAt DESC LIMIT 200",
     [assignedToId]
   ) as any[];
-  return rows as SimulatorOrder[];
+  const result = rows as SimulatorOrder[];
+  console.log("[v0] getSimulatorOrdersByAssistant: ✓ Retornando", result.length, "pedidos para assistente id=", assignedToId);
+  return result;
 }
 
 export function calculateOrderPriority(order: {
