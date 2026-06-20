@@ -14,17 +14,25 @@ export const runtime = "nodejs";
 
 /**
  * Verifica autenticação e retorna o colaborador.
- * Admin geral e assistentes podem aceder a esta rota.
- * Motoristas/ajudantes sem isAdmin são bloqueados.
+ * Admin geral (isAdmin=1) e assistentes (funcao='assistente') podem aceder.
+ * Motoristas/ajudantes são explicitamente bloqueados.
  */
 async function requireAdminOrAssistant(req: NextRequest) {
   const colab = await verifyColaboradorAuthHeader(req.headers.get("authorization"));
   if (!colab) return { err: NextResponse.json({ error: "Não autorizado" }, { status: 401 }), colab: null };
 
-  // O token JWT apenas contém id, nome e isAdmin (sem funcao).
-  // Determinamos o role a partir do isAdmin por enquanto.
-  // Se isAdmin=0 e funcao não é assistente, o scoping por assignedToId serve de protecção.
-  return { err: null, colab };
+  // Admin geral passa sempre
+  if (colab.isAdmin === 1) return { err: null, colab };
+
+  // Assistente passa (funcao no JWT, ou fallback: deixar entrar com scoping)
+  const funcao = colab.funcao ?? "";
+  if (funcao === "assistente") return { err: null, colab };
+
+  // Motorista/ajudante/admin sem isAdmin=1 — bloqueado
+  return {
+    err: NextResponse.json({ error: "Acesso negado. Esta área é restrita a administradores e assistentes." }, { status: 403 }),
+    colab: null,
+  };
 }
 
 // GET /api/admin/pedidos?status=pendente&search=foo

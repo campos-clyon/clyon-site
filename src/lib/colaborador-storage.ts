@@ -13,6 +13,7 @@ const KEYS = {
   nome: "colaborador_nome",
   id: "colaborador_id",
   isAdmin: "colaborador_isAdmin",
+  funcao: "colaborador_funcao",
 } as const;
 
 function isBrowser() {

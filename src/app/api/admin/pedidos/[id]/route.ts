@@ -7,6 +7,15 @@ export const runtime = "nodejs";
 async function authenticate(req: NextRequest) {
   const colab = await verifyColaboradorAuthHeader(req.headers.get("authorization"));
   if (!colab) return { err: NextResponse.json({ error: "Não autorizado" }, { status: 401 }), colab: null };
+
+  // Admin geral passa sempre; assistente passa; motorista/ajudante são bloqueados
+  if (colab.isAdmin !== 1 && colab.funcao !== "assistente") {
+    return {
+      err: NextResponse.json({ error: "Acesso negado." }, { status: 403 }),
+      colab: null,
+    };
+  }
+
   return { err: null, colab };
 }
 

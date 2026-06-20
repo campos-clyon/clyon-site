@@ -549,18 +549,27 @@ export default function ColaboradorAdminClient() {
     const storedToken = getColaboradorItem("token");
     const storedNome = getColaboradorItem("nome");
     const storedIsAdmin = getColaboradorItem("isAdmin");
+    const storedFuncao = getColaboradorItem("funcao") ?? "";
 
     if (!storedToken) {
       router.push("/colaboradores");
       return;
     }
 
+    // Motorista e ajudante não têm acesso a esta área — redirecionar para o dashboard
+    const isAdminGeral = storedIsAdmin === "1";
+    const isAssistente = storedFuncao === "assistente";
+    if (!isAdminGeral && !isAssistente) {
+      router.push("/colaboradores/dashboard");
+      return;
+    }
+
     setToken(storedToken);
     setAdminNome(storedNome || "Administração");
-    setIsAdminGeral(storedIsAdmin === "1");
+    setIsAdminGeral(isAdminGeral);
 
     // Admin geral carrega dados da equipa e configurações; assistente começa directamente nos pedidos
-    if (storedIsAdmin === "1") {
+    if (isAdminGeral) {
       void carregarDados(storedToken);
       void carregarSimulatorSettings(storedToken);
       void carregarImageStats(storedToken);

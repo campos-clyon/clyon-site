@@ -40,17 +40,20 @@ export default function ColaboradorLoginClient() {
       store.setItem("colaborador_nome", data.colaborador.nome);
       store.setItem("colaborador_id", String(data.colaborador.id));
       store.setItem("colaborador_isAdmin", isAdminNorm);
+      store.setItem("colaborador_funcao", data.colaborador.funcao ?? "");
       // Limpar o outro storage para evitar conflitos
       if (rememberMe) {
         sessionStorage.removeItem("colaborador_token");
         sessionStorage.removeItem("colaborador_nome");
         sessionStorage.removeItem("colaborador_id");
         sessionStorage.removeItem("colaborador_isAdmin");
+        sessionStorage.removeItem("colaborador_funcao");
       } else {
         localStorage.removeItem("colaborador_token");
         localStorage.removeItem("colaborador_nome");
         localStorage.removeItem("colaborador_id");
         localStorage.removeItem("colaborador_isAdmin");
+        localStorage.removeItem("colaborador_funcao");
       }
       if (data.colaborador.isAdmin) {
         router.push("/colaboradores/admin");
