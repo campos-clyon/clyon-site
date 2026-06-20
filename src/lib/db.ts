@@ -288,29 +288,117 @@ export async function getColaboradorByNome(nome: string) {
  * Garante que a tabela colaboradores tem todos os campos necessários.
  * Usa ALTER TABLE … ADD COLUMN IF NOT EXISTS (seguro para correr múltiplas vezes).
  */
+/**
+ * Verifica se coluna existe em tabela (compatível com MySQL/MariaDB antigos)
+ */
+async function hasColumn(tableName: string, columnName: string): Promise<boolean> {
+  const pool = await getPool();
+  if (!pool) return false;
+
+  try {
+    const [rows] = await pool.execute(
+      `SELECT COUNT(*) AS count
+       FROM information_schema.columns
+       WHERE table_schema = DATABASE()
+         AND table_name = ?
+         AND column_name = ?`,
+      [tableName, columnName]
+    );
+    const count = Number((rows as any[])[0]?.count ?? 0);
+    return count > 0;
+  } catch (error) {
+    console.error(`[v0] hasColumn erro: ${error}`);
+    return false;
+  }
+}
+
 export async function ensureColaboradoresSchema(): Promise<void> {
   const pool = await getPool();
   if (!pool) return;
 
-  const migrations = [
-    // Garantir enum actualizado
-    `ALTER TABLE colaboradores MODIFY COLUMN funcao ENUM('motorista','ajudante','admin','assistente') NOT NULL`,
-    // valorHora passa a ser opcional (DEFAULT 0 para retrocompatibilidade)
-    `ALTER TABLE colaboradores MODIFY COLUMN valorHora DECIMAL(6,2) DEFAULT '0.00'`,
-    // Novos campos — ADD COLUMN IF NOT EXISTS suportado no MySQL 8+
-    `ALTER TABLE colaboradores ADD COLUMN IF NOT EXISTS valorDiaria DECIMAL(6,2) DEFAULT NULL`,
-    `ALTER TABLE colaboradores ADD COLUMN IF NOT EXISTS paymentModel ENUM('hourly','daily','commission','none') DEFAULT 'hourly'`,
-    `ALTER TABLE colaboradores ADD COLUMN IF NOT EXISTS commissionType ENUM('profit_percent','gross_percent','fixed_per_closed_request','none') DEFAULT NULL`,
-    `ALTER TABLE colaboradores ADD COLUMN IF NOT EXISTS commissionPercent DECIMAL(5,2) DEFAULT NULL`,
-    `ALTER TABLE colaboradores ADD COLUMN IF NOT EXISTS commissionFixedAmount DECIMAL(8,2) DEFAULT NULL`,
-    `ALTER TABLE colaboradores ADD COLUMN IF NOT EXISTS commissionNotes TEXT DEFAULT NULL`,
-    `ALTER TABLE colaboradores ADD COLUMN IF NOT EXISTS canReceiveSimulatorRequests TINYINT(1) NOT NULL DEFAULT 0`,
-    `ALTER TABLE colaboradores ADD COLUMN IF NOT EXISTS participatesInTimeTracking TINYINT(1) NOT NULL DEFAULT 1`,
-    `ALTER TABLE colaboradores ADD COLUMN IF NOT EXISTS active TINYINT(1) NOT NULL DEFAULT 1`,
+  console.log("[v0] ensureColaboradoresSchema: Iniciando...");
+
+  try {
+    // Garantir enum actualizado (MODIFY sempre funciona)
+    await pool.execute(
+      `ALTER TABLE colaboradores MODIFY COLUMN funcao ENUM('motorista','ajudante','admin','assistente') NOT NULL`
+    );
+    console.log("[v0] ensureColaboradoresSchema: funcao enum actualizado");
+  } catch (error) {
+    console.log("[v0] ensureColaboradoresSchema: funcao enum já existe ou erro:", String(error).slice(0, 50));
+  }
+
+  try {
+    // valorHora passa a ser opcional
+    await pool.execute(
+      `ALTER TABLE colaboradores MODIFY COLUMN valorHora DECIMAL(6,2) DEFAULT '0.00'`
+    );
+    console.log("[v0] ensureColaboradoresSchema: valorHora modificado");
+  } catch (error) {
+    console.log("[v0] ensureColaboradoresSchema: valorHora já existe ou erro");
+  }
+
+  // Lista de colunas a adicionar com verificação
+  const columnsToAdd = [
+    {
+      name: "valorDiaria",
+      sql: `ALTER TABLE colaboradores ADD COLUMN valorDiaria DECIMAL(6,2) DEFAULT NULL`,
+    },
+    {
+      name: "paymentModel",
+      sql: `ALTER TABLE colaboradores ADD COLUMN paymentModel ENUM('hourly','daily','commission','none') DEFAULT 'hourly'`,
+    },
+    {
+      name: "commissionType",
+      sql: `ALTER TABLE colaboradores ADD COLUMN commissionType ENUM('profit_percent','gross_percent','fixed_per_closed_request','none') DEFAULT NULL`,
+    },
+    {
+      name: "commissionPercent",
+      sql: `ALTER TABLE colaboradores ADD COLUMN commissionPercent DECIMAL(5,2) DEFAULT NULL`,
+    },
+    {
+      name: "commissionFixedAmount",
+      sql: `ALTER TABLE colaboradores ADD COLUMN commissionFixedAmount DECIMAL(8,2) DEFAULT NULL`,
+    },
+    {
+      name: "commissionNotes",
+      sql: `ALTER TABLE colaboradores ADD COLUMN commissionNotes TEXT DEFAULT NULL`,
+    },
+    {
+      name: "canReceiveSimulatorRequests",
+      sql: `ALTER TABLE colaboradores ADD COLUMN canReceiveSimulatorRequests TINYINT(1) NOT NULL DEFAULT 0`,
+    },
+    {
+      name: "participatesInTimeTracking",
+      sql: `ALTER TABLE colaboradores ADD COLUMN participatesInTimeTracking TINYINT(1) NOT NULL DEFAULT 1`,
+    },
+    {
+      name: "active",
+      sql: `ALTER TABLE colaboradores ADD COLUMN active TINYINT(1) NOT NULL DEFAULT 1`,
+    },
+    {
+      name: "createdAt",
+      sql: `ALTER TABLE colaboradores ADD COLUMN createdAt DATETIME DEFAULT CURRENT_TIMESTAMP`,
+    },
+    {
+      name: "updatedAt",
+      sql: `ALTER TABLE colaboradores ADD COLUMN updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP`,
+    },
   ];
 
-  for (const sql of migrations) {
-    try { await pool.execute(sql); } catch { /* ignora se já existir */ }
+  // Verificar e adicionar cada coluna individualmente
+  for (const col of columnsToAdd) {
+    try {
+      const exists = await hasColumn("colaboradores", col.name);
+      if (!exists) {
+        await pool.execute(col.sql);
+        console.log(`[v0] ensureColaboradoresSchema: ✓ Coluna ${col.name} adicionada`);
+      } else {
+        console.log(`[v0] ensureColaboradoresSchema: Coluna ${col.name} já existe`);
+      }
+    } catch (error) {
+      console.error(`[v0] ensureColaboradoresSchema erro ao adicionar ${col.name}:`, String(error).slice(0, 100));
+    }
   }
 
   // Assistentes existentes: garantir canReceiveSimulatorRequests=1 e participatesInTimeTracking=0
@@ -318,7 +406,12 @@ export async function ensureColaboradoresSchema(): Promise<void> {
     await pool.execute(
       `UPDATE colaboradores SET canReceiveSimulatorRequests=1, participatesInTimeTracking=0 WHERE funcao='assistente' AND canReceiveSimulatorRequests=0`
     );
-  } catch { /* ignora */ }
+    console.log("[v0] ensureColaboradoresSchema: ✓ Assistentes configurados");
+  } catch (error) {
+    console.log("[v0] ensureColaboradoresSchema: Erro ao configurar assistentes");
+  }
+
+  console.log("[v0] ensureColaboradoresSchema: Completo");
 }
 
 /** @deprecated Use ensureColaboradoresSchema */
