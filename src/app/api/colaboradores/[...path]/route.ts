@@ -507,42 +507,97 @@ async function handleRequest(req: NextRequest, path: string[]) {
 
   if (route === "criar" && req.method === "POST") {
     if (!auth.isAdmin) {
-      return NextResponse.json({ error: "Acesso negado." }, { status: 403 });
+      return NextResponse.json({ ok: false, code: "FORBIDDEN", error: "Acesso negado." }, { status: 403 });
     }
 
-    const { nome, senha, funcao, valorHora, isAdmin } = await req.json();
+    const body = await req.json();
+    const { nome, senha, funcao, isAdmin: bodyIsAdmin,
+      paymentModel, valorHora, valorDiaria,
+      commissionType, commissionPercent, commissionFixedAmount, commissionNotes,
+      canReceiveSimulatorRequests, participatesInTimeTracking,
+    } = body;
+
+    // Validações
+    if (!nome || String(nome).trim() === "") {
+      return NextResponse.json({ ok: false, code: "MISSING_NOME", error: "Preencha o nome do colaborador." }, { status: 400 });
+    }
+    if (!senha || String(senha).trim() === "") {
+      return NextResponse.json({ ok: false, code: "MISSING_SENHA", error: "Preencha a palavra-passe inicial." }, { status: 400 });
+    }
+    const validFuncoes = ["motorista", "ajudante", "admin", "assistente"];
+    if (!funcao || !validFuncoes.includes(funcao)) {
+      return NextResponse.json({ ok: false, code: "INVALID_FUNCAO", error: "Função inválida. Use: motorista, ajudante, admin ou assistente." }, { status: 400 });
+    }
+    // Motoristas e ajudantes precisam de valorHora ou valorDiaria
+    if (["motorista", "ajudante"].includes(funcao)) {
+      const vh = parseFloat(String(valorHora ?? 0));
+      const vd = parseFloat(String(valorDiaria ?? 0));
+      if ((!valorHora && !valorDiaria) || (isNaN(vh) && isNaN(vd)) || (vh <= 0 && vd <= 0)) {
+        return NextResponse.json({ ok: false, code: "MISSING_VALOR_HORA", error: "Preencha o valor por hora ou diária para motoristas e ajudantes." }, { status: 400 });
+      }
+    }
+
     const passwordHash = await bcrypt.hash(String(senha), 10);
 
-    // Usar createColaborador (raw SQL) para suportar 'assistente' no enum
-    await createColaborador({
-      nome: String(nome).toUpperCase(),
-      senha: passwordHash,
-      funcao: funcao as "motorista" | "ajudante" | "admin" | "assistente",
-      valorHora: String(parseFloat(String(valorHora))),
-      isAdmin: isAdmin ? 1 : 0,
-    });
+    try {
+      await createColaborador({
+        nome: String(nome).toUpperCase().trim(),
+        senha: passwordHash,
+        funcao: funcao as "motorista" | "ajudante" | "admin" | "assistente",
+        isAdmin: bodyIsAdmin ? 1 : 0,
+        paymentModel: paymentModel ?? undefined,
+        valorHora: valorHora ? String(parseFloat(String(valorHora))) : null,
+        valorDiaria: valorDiaria ? String(parseFloat(String(valorDiaria))) : null,
+        commissionType: commissionType ?? null,
+        commissionPercent: commissionPercent != null ? String(parseFloat(String(commissionPercent))) : null,
+        commissionFixedAmount: commissionFixedAmount != null ? String(parseFloat(String(commissionFixedAmount))) : null,
+        commissionNotes: commissionNotes ?? null,
+        canReceiveSimulatorRequests: canReceiveSimulatorRequests != null ? Number(canReceiveSimulatorRequests) : undefined,
+        participatesInTimeTracking: participatesInTimeTracking != null ? Number(participatesInTimeTracking) : undefined,
+      });
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      if (msg.includes("Duplicate") || msg.includes("ER_DUP")) {
+        return NextResponse.json({ ok: false, code: "DUPLICATE_NOME", error: "Já existe um colaborador com este nome." }, { status: 409 });
+      }
+      return NextResponse.json({ ok: false, code: "DB_ERROR", error: "Erro ao guardar colaborador. Verifique os dados e tente novamente." }, { status: 500 });
+    }
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ ok: true });
   }
 
   if (route.match(/^\d+\/editar$/) && req.method === "PUT") {
     if (!auth.isAdmin) {
-      return NextResponse.json({ error: "Acesso negado." }, { status: 403 });
+      return NextResponse.json({ ok: false, code: "FORBIDDEN", error: "Acesso negado." }, { status: 403 });
     }
 
     const id = parseInt(route.split("/")[0], 10);
     const body = await req.json();
-    const payload = { ...body } as Record<string, unknown>;
 
-    if (payload.senha) {
-      payload.senha = await bcrypt.hash(String(payload.senha), 10);
-    } else {
-      delete payload.senha;
+    const updateData: Parameters<typeof updateColaborador>[1] = {};
+
+    if (body.nome) updateData.nome = String(body.nome).toUpperCase().trim();
+    if (body.senha) updateData.senha = await bcrypt.hash(String(body.senha), 10);
+    if (body.funcao) updateData.funcao = body.funcao;
+    if (body.isAdmin !== undefined) updateData.isAdmin = body.isAdmin ? 1 : 0;
+    if (body.paymentModel !== undefined) updateData.paymentModel = body.paymentModel;
+    if (body.valorHora !== undefined) updateData.valorHora = body.valorHora ? String(parseFloat(String(body.valorHora))) : null;
+    if (body.valorDiaria !== undefined) updateData.valorDiaria = body.valorDiaria ? String(parseFloat(String(body.valorDiaria))) : null;
+    if (body.commissionType !== undefined) updateData.commissionType = body.commissionType;
+    if (body.commissionPercent !== undefined) updateData.commissionPercent = body.commissionPercent != null ? String(parseFloat(String(body.commissionPercent))) : null;
+    if (body.commissionFixedAmount !== undefined) updateData.commissionFixedAmount = body.commissionFixedAmount != null ? String(parseFloat(String(body.commissionFixedAmount))) : null;
+    if (body.commissionNotes !== undefined) updateData.commissionNotes = body.commissionNotes;
+    if (body.canReceiveSimulatorRequests !== undefined) updateData.canReceiveSimulatorRequests = Number(body.canReceiveSimulatorRequests);
+    if (body.participatesInTimeTracking !== undefined) updateData.participatesInTimeTracking = Number(body.participatesInTimeTracking);
+    if (body.active !== undefined) updateData.active = Number(body.active);
+
+    try {
+      await updateColaborador(id, updateData);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      return NextResponse.json({ ok: false, code: "DB_ERROR", error: `Erro ao actualizar colaborador: ${msg}` }, { status: 500 });
     }
-
-    // Usar updateColaborador (raw SQL) para suportar 'assistente' no enum
-    await updateColaborador(id, payload as Parameters<typeof updateColaborador>[1]);
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ ok: true });
   }
 
   if (route.match(/^\d+\/deletar$/) && req.method === "DELETE") {

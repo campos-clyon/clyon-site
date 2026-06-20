@@ -98,7 +98,8 @@ type SimulatorSetting = {
   description?: string | null;
 };
 
-type AdminSection = "overview" | "pedidos" | "team" | "hours" | "leads" | "site";
+type AdminSection = "overview" | "pedidos" | "operacao" | "leads" | "site";
+type OperacaoTab = "equipa" | "horarios" | "pagamentos" | "funcoes";
 
 type Lead = {
   id: number;
@@ -162,8 +163,7 @@ const adminNavItems: Array<{
 }> = [
   { id: "overview", icon: LayoutDashboard },
   { id: "pedidos", icon: FileText },
-  { id: "team", icon: Users },
-  { id: "hours", icon: CalendarClock },
+  { id: "operacao", icon: Briefcase },
   { id: "leads", icon: TrendingUp },
   { id: "site", icon: Settings2 },
 ];
@@ -171,8 +171,7 @@ const adminNavItems: Array<{
 const sectionLabels: Record<AdminSection, string> = {
   overview: "Início",
   pedidos: "Pedidos",
-  team: "Equipa",
-  hours: "Horários",
+  operacao: "Operação",
   leads: "Leads",
   site: "Configurações",
 };
@@ -429,14 +428,21 @@ export default function ColaboradorAdminClient() {
   const [hoursDe, setHoursDe] = useState("");
   const [hoursAte, setHoursAte] = useState("");
 
+  const [operacaoTab, setOperacaoTab] = useState<OperacaoTab>("equipa");
   const [criarNovoVisivel, setCriarNovoVisivel] = useState(false);
   const [loadingCriar, setLoadingCriar] = useState(false);
   const [novoNome, setNovoNome] = useState("");
   const [novoValorHora, setNovoValorHora] = useState("");
+  const [novoValorDiaria, setNovoValorDiaria] = useState("");
   const [novoFuncao, setNovoFuncao] = useState<Colaborador["funcao"]>("ajudante");
   const [novoSenha, setNovoSenha] = useState("");
   const [novoIsAdmin, setNovoIsAdmin] = useState(false);
   const [mostrarSenhaNovoUsuario, setMostrarSenhaNovoUsuario] = useState(false);
+  // Campos de comissão (assistente)
+  const [novoCommissionType, setNovoCommissionType] = useState<"profit_percent"|"gross_percent"|"fixed_per_closed_request"|"none">("gross_percent");
+  const [novoCommissionPercent, setNovoCommissionPercent] = useState("");
+  const [novoCommissionFixed, setNovoCommissionFixed] = useState("");
+  const [novoCommissionNotes, setNovoCommissionNotes] = useState("");
 
   const [editandoId, setEditandoId] = useState<number | null>(null);
   const [editNome, setEditNome] = useState("");
@@ -1295,40 +1301,61 @@ export default function ColaboradorAdminClient() {
   };
 
   const criarNovoColaborador = async () => {
-    if (!novoNome || !novoValorHora || !novoSenha || !novoFuncao) {
-      setError("Preencha todos os campos do novo colaborador.");
+    if (!novoNome.trim()) { setError("Preencha o nome do colaborador."); return; }
+    if (!novoSenha.trim()) { setError("Preencha a palavra-passe inicial."); return; }
+    if (["motorista", "ajudante"].includes(novoFuncao) && !novoValorHora && !novoValorDiaria) {
+      setError("Preencha o valor por hora ou diária para motoristas e ajudantes.");
       return;
     }
 
     setLoadingCriar(true);
+    setError("");
     try {
+      const isAssistente = novoFuncao === "assistente";
+      const isAdminFuncao = novoFuncao === "admin";
+      const payload: Record<string, unknown> = {
+        nome: novoNome.toUpperCase().trim(),
+        senha: novoSenha,
+        funcao: novoFuncao,
+        isAdmin: novoIsAdmin ? 1 : 0,
+      };
+
+      if (isAssistente) {
+        payload.paymentModel = "commission";
+        payload.valorHora = null;
+        payload.commissionType = novoCommissionType;
+        payload.commissionPercent = novoCommissionPercent ? parseFloat(novoCommissionPercent) : null;
+        payload.commissionFixedAmount = novoCommissionFixed ? parseFloat(novoCommissionFixed) : null;
+        payload.commissionNotes = novoCommissionNotes || null;
+        payload.canReceiveSimulatorRequests = 1;
+        payload.participatesInTimeTracking = 0;
+      } else if (isAdminFuncao) {
+        payload.paymentModel = "none";
+        payload.valorHora = null;
+      } else {
+        payload.paymentModel = novoValorDiaria && !novoValorHora ? "daily" : "hourly";
+        payload.valorHora = novoValorHora ? parseFloat(novoValorHora) : null;
+        payload.valorDiaria = novoValorDiaria ? parseFloat(novoValorDiaria) : null;
+        payload.canReceiveSimulatorRequests = 0;
+        payload.participatesInTimeTracking = 1;
+      }
+
       const response = await fetch("/api/colaboradores/criar", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          nome: novoNome.toUpperCase(),
-          senha: novoSenha,
-          funcao: novoFuncao,
-          valorHora: parseFloat(novoValorHora),
-          isAdmin: novoIsAdmin ? 1 : 0,
-        }),
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify(payload),
       });
 
+      const data = await response.json().catch(() => ({}));
       if (!response.ok) {
-        const data = await response.json().catch(() => ({}));
         throw new Error(data.error || "Não foi possível criar o colaborador.");
       }
 
       setCriarNovoVisivel(false);
-      setNovoNome("");
-      setNovoValorHora("");
-      setNovoFuncao("ajudante");
-      setNovoSenha("");
-      setNovoIsAdmin(false);
-      setError("");
+      setNovoNome(""); setNovoValorHora(""); setNovoValorDiaria("");
+      setNovoFuncao("ajudante"); setNovoSenha(""); setNovoIsAdmin(false);
+      setNovoCommissionType("gross_percent"); setNovoCommissionPercent("");
+      setNovoCommissionFixed(""); setNovoCommissionNotes("");
       await carregarDados(token);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Não foi possível criar o colaborador.");
@@ -1449,26 +1476,25 @@ export default function ColaboradorAdminClient() {
   }
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(34,211,238,0.14),_transparent_18%),radial-gradient(circle_at_bottom_right,_rgba(103,232,249,0.08),_transparent_20%),linear-gradient(180deg,#07111d_0%,#0b1727_52%,#101d31_100%)] text-white">
+    <div className="min-h-screen bg-slate-950 text-white">
       <div className="mx-auto max-w-[1500px] px-3 py-5 [zoom:0.8] lg:px-6">
-        <header className="rounded-[28px] border border-cyan-300/20 bg-[linear-gradient(135deg,rgba(7,24,39,0.96)_0%,rgba(10,32,49,0.94)_100%)] px-5 py-4 shadow-[0_24px_80px_rgba(4,11,20,0.34)]">
+        <header className="rounded-[24px] border border-slate-800 bg-slate-900 px-5 py-4 shadow-lg">
           <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
             <div className="flex items-center gap-4">
-              <div className="flex h-14 w-14 items-center justify-center rounded-[20px] bg-cyan-400 text-slate-950">
-                <ShieldCheck className="h-7 w-7" />
+              <div className="flex h-12 w-12 items-center justify-center rounded-[16px] bg-sky-500 text-white">
+                <ShieldCheck className="h-6 w-6" />
               </div>
               <div>
-                <p className="text-sm font-semibold uppercase tracking-[0.28em] text-cyan-100">
+                <p className="text-xs font-semibold uppercase tracking-[0.24em] text-sky-400">
                   Backoffice CLYON
                 </p>
-                <h2 className="mt-1 text-[1.5rem] font-semibold text-white">Painel administrativo</h2>
-                <p className="mt-1 text-xs capitalize text-slate-400">{hojeLabel}</p>
+                <h2 className="mt-0.5 text-xl font-semibold text-white">Painel administrativo</h2>
+                <p className="mt-0.5 text-xs capitalize text-slate-500">{hojeLabel}</p>
               </div>
             </div>
 
-            <nav className="flex flex-wrap gap-2">
+            <nav className="flex flex-wrap gap-1.5">
               {adminNavItems
-                // Assistentes só veem a aba Pedidos; admin geral vê tudo
                 .filter((item) => isAdminGeral || item.id === "pedidos")
                 .map((item) => {
                   const Icon = item.icon;
@@ -1479,10 +1505,10 @@ export default function ColaboradorAdminClient() {
                       key={item.id}
                       type="button"
                       onClick={() => setActiveSection(item.id)}
-                      className={`flex items-center gap-2 rounded-[18px] px-4 py-3 text-sm font-semibold transition ${
+                      className={`flex items-center gap-2 rounded-[14px] px-4 py-2.5 text-sm font-medium transition ${
                         active
-                          ? "bg-cyan-400 text-slate-950 shadow-[0_18px_40px_rgba(34,211,238,0.22)]"
-                          : "border border-white/10 bg-white/[0.04] text-slate-100 hover:bg-white/[0.08]"
+                          ? "bg-sky-500 text-white shadow-md"
+                          : "border border-slate-800 bg-slate-800/60 text-slate-400 hover:bg-slate-800 hover:text-slate-200"
                       }`}
                     >
                       <Icon className="h-4 w-4" />
@@ -1492,23 +1518,22 @@ export default function ColaboradorAdminClient() {
                 })}
             </nav>
 
-            <div className="flex items-center gap-3 rounded-[22px] border border-cyan-400/15 bg-cyan-400/[0.08] px-4 py-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-cyan-400 text-sm font-semibold text-slate-950">
+            <div className="flex items-center gap-3 rounded-[18px] border border-slate-800 bg-slate-800/60 px-4 py-2.5">
+              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-sky-500 text-xs font-bold text-white">
                 {getInitials(adminNome)}
               </div>
               <div className="min-w-0">
-                <p className="truncate text-base font-semibold text-white">{adminNome}</p>
-                <p className="text-sm text-cyan-100/80">
+                <p className="truncate text-sm font-semibold text-white">{adminNome}</p>
+                <p className="text-xs text-slate-500">
                   {isAdminGeral ? "Admin geral" : "Assistente"}
                 </p>
               </div>
               <Button
                 onClick={handleLogout}
-                variant="outline"
-                className="h-10 rounded-[16px] border-white/10 bg-transparent px-4 text-white hover:bg-white/[0.08]"
+                variant="ghost"
+                className="h-9 rounded-[10px] px-3 text-slate-400 hover:bg-slate-700 hover:text-white"
               >
-                <LogOut className="mr-2 h-4 w-4" />
-                Sair
+                <LogOut className="h-4 w-4" />
               </Button>
             </div>
           </div>
@@ -1570,9 +1595,10 @@ export default function ColaboradorAdminClient() {
                     type="button"
                     onClick={() => {
                       setCriarNovoVisivel(true);
-                      setActiveSection("team");
+                      setOperacaoTab("equipa");
+                      setActiveSection("operacao");
                     }}
-                    className="h-11 rounded-[14px] bg-cyan-400 px-4 text-slate-950 hover:bg-cyan-300"
+                    className="h-11 rounded-[14px] bg-sky-500 px-4 text-white hover:bg-sky-400"
                   >
                     <UserPlus className="mr-2 h-4 w-4" />
                     Adicionar registo
@@ -1580,8 +1606,8 @@ export default function ColaboradorAdminClient() {
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={() => setActiveSection("hours")}
-                    className="h-11 rounded-[14px] border-white/10 bg-white/[0.03] px-4 text-white hover:bg-white/[0.08]"
+                    onClick={() => { setOperacaoTab("horarios"); setActiveSection("operacao"); }}
+                    className="h-11 rounded-[14px] border-slate-700 bg-slate-800/60 px-4 text-slate-200 hover:bg-slate-700"
                   >
                     <ListChecks className="mr-2 h-4 w-4" />
                     Validar pendências
@@ -1833,8 +1859,8 @@ export default function ColaboradorAdminClient() {
 
                   {/* Ações rápidas */}
                   <ActionCard title="Ações rápidas" description="Atalhos operacionais." compact>
-                    <QuickAction icon={CalendarClock} label="Abrir histórico e horários" onClick={() => setActiveSection("hours")} />
-                    <QuickAction icon={Users} label="Ver colaboradores" onClick={() => setActiveSection("team")} />
+                    <QuickAction icon={CalendarClock} label="Abrir histórico e horários" onClick={() => { setOperacaoTab("horarios"); setActiveSection("operacao"); }} />
+                    <QuickAction icon={Users} label="Ver colaboradores" onClick={() => { setOperacaoTab("equipa"); setActiveSection("operacao"); }} />
                     <QuickAction icon={TrendingUp} label="Ver leads e contactos" onClick={() => setActiveSection("leads")} />
                     <QuickAction icon={Settings2} label="Configurações" onClick={() => setActiveSection("site")} />
                   </ActionCard>
@@ -2311,18 +2337,50 @@ export default function ColaboradorAdminClient() {
             </div>
           )}
 
-          {activeSection === "hours" && (
-            <section className="space-y-4 rounded-[28px] border border-cyan-300/16 bg-[linear-gradient(180deg,rgba(9,25,40,0.94)_0%,rgba(11,30,47,0.92)_100%)] p-5 shadow-[0_20px_70px_rgba(3,10,18,0.22)]">
+          {activeSection === "operacao" && (
+            <section className="space-y-4 rounded-[28px] border border-slate-700/60 bg-slate-900/80 p-5 shadow-[0_8px_32px_rgba(0,0,0,0.28)]">
+              {/* Header e sub-navegação da Operação */}
+              <div className="flex flex-col gap-4">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-sky-400">
+                    Operação
+                  </p>
+                  <h2 className="mt-1 text-2xl font-semibold text-white">
+                    {operacaoTab === "equipa" ? "Equipa" : operacaoTab === "horarios" ? "Horários e registos" : operacaoTab === "pagamentos" ? "Pagamentos" : "Funções e comissões"}
+                  </h2>
+                  <p className="mt-1 text-sm text-slate-400">
+                    {operacaoTab === "equipa" ? "Gestão de colaboradores: assistentes, motoristas e ajudantes." : operacaoTab === "horarios" ? "Valide entradas, saídas, pausas e valores da equipa." : operacaoTab === "pagamentos" ? "Resumo de pagamentos por horas e comissões pendentes." : "Regras de comissão e valores padrão por função."}
+                  </p>
+                </div>
+                {/* Sub-tabs */}
+                <div className="flex flex-wrap gap-2 border-b border-slate-700/50 pb-3">
+                  {(["equipa", "horarios", "pagamentos", "funcoes"] as OperacaoTab[]).map((tab) => {
+                    const labels: Record<OperacaoTab, string> = { equipa: "Equipa", horarios: "Horários", pagamentos: "Pagamentos", funcoes: "Funções" };
+                    return (
+                      <button
+                        key={tab}
+                        type="button"
+                        onClick={() => setOperacaoTab(tab)}
+                        className={`rounded-[10px] px-4 py-2 text-sm font-medium transition ${
+                          operacaoTab === tab
+                            ? "bg-sky-500 text-white shadow-sm"
+                            : "bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-slate-200"
+                        }`}
+                      >
+                        {labels[tab]}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Sub-aba Horários */}
+              {operacaoTab === "horarios" && (
+              <div>
               <div className="flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.24em] text-cyan-200">
+                  <p className="text-xs font-semibold uppercase tracking-[0.24em] text-sky-400 hidden">
                     Gestão operacional
-                  </p>
-                  <h2 className="mt-2 text-[1.85rem] font-semibold text-white">
-                    Horários, pausas e valores por registo
-                  </h2>
-                  <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-300">
-                    Valide entradas, saídas, horas trabalhadas e valores estimados da equipa.
                   </p>
                 </div>
                 <div className="flex flex-wrap gap-2">
@@ -2624,25 +2682,18 @@ export default function ColaboradorAdminClient() {
                   </div>
                 </CardContent>
               </Card>
-            </section>
-          )}
+              </div>
+              )}
 
-          {activeSection === "team" && (
-            <section className="space-y-4 rounded-[28px] border border-cyan-300/16 bg-[linear-gradient(180deg,rgba(9,25,40,0.94)_0%,rgba(11,30,47,0.92)_100%)] p-5 shadow-[0_20px_70px_rgba(3,10,18,0.22)]">
+              {/* Sub-aba Equipa */}
+              {operacaoTab === "equipa" && (
+              <div className="space-y-4">
               <div className="flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.24em] text-cyan-200">
-                    Gestão da equipa
-                  </p>
-                  <h2 className="mt-2 text-[1.6rem] font-semibold text-white">Gestão da equipa</h2>
-                  <p className="mt-1 max-w-2xl text-sm leading-6 text-slate-300">
-                    Consulte, edite e acompanhe os colaboradores da CLYON.
-                  </p>
-                </div>
+                <div />
                 <Button
                   type="button"
                   onClick={() => setCriarNovoVisivel((state) => !state)}
-                  className="h-12 rounded-2xl bg-cyan-400 px-6 text-slate-950 hover:bg-cyan-300"
+                  className="h-11 rounded-[14px] bg-sky-500 px-5 text-white hover:bg-sky-400"
                 >
                   {criarNovoVisivel ? <X className="mr-2 h-4 w-4" /> : <UserPlus className="mr-2 h-4 w-4" />}
                   {criarNovoVisivel ? "Fechar criação" : "Novo colaborador"}
@@ -2650,95 +2701,175 @@ export default function ColaboradorAdminClient() {
               </div>
 
               {criarNovoVisivel && (
-                <Card className="rounded-[30px] border-cyan-300/14 bg-[linear-gradient(180deg,rgba(12,34,52,0.96)_0%,rgba(9,27,43,0.94)_100%)] text-white">
-                  <CardHeader>
-                    <CardTitle className="text-2xl text-white">Criar colaborador</CardTitle>
+                <Card className="rounded-[24px] border-slate-700/60 bg-slate-900/90 text-white shadow-lg">
+                  <CardHeader className="pb-4">
+                    <CardTitle className="text-xl font-semibold text-white">Novo colaborador</CardTitle>
                     <CardDescription className="text-slate-400">
-                      Adiciona um novo elemento à operação com acesso ao sistema e estrutura salarial definida.
+                      Os campos exibidos adaptam-se automaticamente à função seleccionada.
                     </CardDescription>
                   </CardHeader>
-                  <CardContent className="grid gap-4 md:grid-cols-2">
-                    <Field label="Nome">
-                      <input
-                        value={novoNome}
-                        onChange={(event) => setNovoNome(event.target.value)}
-                        className="h-12 w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 text-white outline-none transition focus:border-cyan-300"
-                        placeholder="Ex.: WANDERSON"
-                      />
-                    </Field>
-                    <Field label="Valor por hora">
-                      <input
-                        type="number"
-                        step="0.01"
-                        value={novoValorHora}
-                        onChange={(event) => setNovoValorHora(event.target.value)}
-                        className="h-12 w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 text-white outline-none transition focus:border-cyan-300"
-                        placeholder="Ex.: 8.50"
-                      />
-                    </Field>
-                    <Field label="Função">
-                      <div className="grid gap-2 sm:grid-cols-3">
-                        {functionOptions.map((funcao) => (
-                          <button
-                            key={funcao}
-                            type="button"
-                            onClick={() => setNovoFuncao(funcao)}
-                            className={`rounded-2xl border px-4 py-3 text-sm font-medium capitalize transition ${
-                              novoFuncao === funcao
-                                ? "border-cyan-300 bg-cyan-400 text-slate-950"
-                                : "border-white/10 bg-white/[0.03] text-white hover:bg-white/[0.06]"
-                            }`}
-                          >
-                            {formatRoleLabel(funcao)}
-                          </button>
-                        ))}
+                  <CardContent className="space-y-5">
+                    {/* Função — primeiro para adaptar os outros campos */}
+                    <div>
+                      <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-slate-400">Função</p>
+                      <div className="flex flex-wrap gap-2">
+                        {(["assistente", "motorista", "ajudante", "admin"] as Array<Colaborador["funcao"]>).map((funcao) => {
+                          const descricoes: Record<Colaborador["funcao"], string> = {
+                            assistente: "Recebe pedidos do simulador, comissão por pedido fechado",
+                            motorista: "Operação, horários, valor por hora ou diária",
+                            ajudante: "Operação, horários, valor por hora ou diária",
+                            admin: "Acesso total ao backoffice",
+                          };
+                          return (
+                            <button
+                              key={funcao}
+                              type="button"
+                              onClick={() => setNovoFuncao(funcao)}
+                              title={descricoes[funcao]}
+                              className={`rounded-[12px] border px-4 py-2.5 text-sm font-medium transition ${
+                                novoFuncao === funcao
+                                  ? "border-sky-500 bg-sky-500/20 text-sky-300"
+                                  : "border-slate-700 bg-slate-800/60 text-slate-400 hover:border-slate-600 hover:text-slate-200"
+                              }`}
+                            >
+                              {formatRoleLabel(funcao)}
+                            </button>
+                          );
+                        })}
                       </div>
-                    </Field>
-                    <Field label="Palavra-passe inicial">
-                      <div className="relative">
-                        <input
-                          type={mostrarSenhaNovoUsuario ? "text" : "password"}
-                          value={novoSenha}
-                          onChange={(event) => setNovoSenha(event.target.value)}
-                          className="h-12 w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 pr-12 text-white outline-none transition focus:border-cyan-300"
-                          placeholder="Defina uma palavra-passe"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setMostrarSenhaNovoUsuario((state) => !state)}
-                          className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 transition hover:text-white"
-                        >
-                          {mostrarSenhaNovoUsuario ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                        </button>
-                      </div>
-                    </Field>
-
-                    <div className="md:col-span-2">
-                      <button
-                        type="button"
-                        onClick={() => setNovoIsAdmin((state) => !state)}
-                        className={`flex items-center gap-3 rounded-2xl border px-4 py-3 text-sm transition ${
-                          novoIsAdmin
-                            ? "border-cyan-300 bg-cyan-400/[0.14] text-white"
-                            : "border-white/10 bg-white/[0.03] text-slate-300"
-                        }`}
-                      >
-                        <div
-                          className={`h-5 w-5 rounded-full border ${
-                            novoIsAdmin ? "border-cyan-300 bg-cyan-300" : "border-white/30"
-                          }`}
-                        />
-                        Dar acesso de administrador a este utilizador
-                      </button>
+                      <p className="mt-2 text-xs text-slate-500">
+                        {novoFuncao === "assistente" && "Assistentes recebem pedidos do simulador e podem ganhar comissão por pedido fechado."}
+                        {novoFuncao === "motorista" && "Motoristas participam na operação e podem receber por hora ou diária."}
+                        {novoFuncao === "ajudante" && "Ajudantes participam na operação e podem receber por hora ou diária."}
+                        {novoFuncao === "admin" && "Administradores têm acesso total ao backoffice."}
+                      </p>
                     </div>
 
-                    <div className="md:col-span-2 flex justify-end">
-                      <Button
-                        type="button"
-                        disabled={loadingCriar}
-                        onClick={criarNovoColaborador}
-                        className="h-12 rounded-2xl bg-cyan-400 px-6 text-slate-950 hover:bg-cyan-300"
-                      >
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <Field label="Nome">
+                        <input
+                          value={novoNome}
+                          onChange={(event) => setNovoNome(event.target.value)}
+                          className="h-11 w-full rounded-[12px] border border-slate-700 bg-slate-800/60 px-4 text-white outline-none transition focus:border-sky-500 placeholder:text-slate-500"
+                          placeholder="Ex.: MIRIAM"
+                        />
+                      </Field>
+                      <Field label="Palavra-passe inicial">
+                        <div className="relative">
+                          <input
+                            type={mostrarSenhaNovoUsuario ? "text" : "password"}
+                            value={novoSenha}
+                            onChange={(event) => setNovoSenha(event.target.value)}
+                            className="h-11 w-full rounded-[12px] border border-slate-700 bg-slate-800/60 px-4 pr-11 text-white outline-none transition focus:border-sky-500 placeholder:text-slate-500"
+                            placeholder="Palavra-passe inicial"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setMostrarSenhaNovoUsuario((s) => !s)}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
+                          >
+                            {mostrarSenhaNovoUsuario ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                          </button>
+                        </div>
+                      </Field>
+                    </div>
+
+                    {/* Campos condicionais por função */}
+                    {(novoFuncao === "motorista" || novoFuncao === "ajudante") && (
+                      <div className="grid gap-4 md:grid-cols-2">
+                        <Field label="Valor por hora (€)">
+                          <input
+                            type="number" step="0.01" min="0"
+                            value={novoValorHora}
+                            onChange={(e) => setNovoValorHora(e.target.value)}
+                            className="h-11 w-full rounded-[12px] border border-slate-700 bg-slate-800/60 px-4 text-white outline-none transition focus:border-sky-500 placeholder:text-slate-500"
+                            placeholder="Ex.: 8.50"
+                          />
+                        </Field>
+                        <Field label="Valor por diária (€) — opcional">
+                          <input
+                            type="number" step="0.01" min="0"
+                            value={novoValorDiaria}
+                            onChange={(e) => setNovoValorDiaria(e.target.value)}
+                            className="h-11 w-full rounded-[12px] border border-slate-700 bg-slate-800/60 px-4 text-white outline-none transition focus:border-sky-500 placeholder:text-slate-500"
+                            placeholder="Ex.: 60.00"
+                          />
+                        </Field>
+                      </div>
+                    )}
+
+                    {novoFuncao === "assistente" && (
+                      <div className="space-y-4 rounded-[16px] border border-sky-500/20 bg-sky-500/5 p-4">
+                        <p className="text-xs font-semibold uppercase tracking-widest text-sky-400">Modelo de comissão</p>
+                        <div className="grid gap-4 md:grid-cols-2">
+                          <Field label="Tipo de comissão">
+                            <select
+                              value={novoCommissionType}
+                              onChange={(e) => setNovoCommissionType(e.target.value as typeof novoCommissionType)}
+                              className="h-11 w-full rounded-[12px] border border-slate-700 bg-slate-800 px-3 text-sm text-white outline-none focus:border-sky-500 [color-scheme:dark]"
+                            >
+                              <option value="gross_percent">Percentagem sobre valor fechado</option>
+                              <option value="profit_percent">Percentagem sobre lucro</option>
+                              <option value="fixed_per_closed_request">Valor fixo por pedido fechado</option>
+                              <option value="none">Sem comissão (por agora)</option>
+                            </select>
+                          </Field>
+                          {(novoCommissionType === "gross_percent" || novoCommissionType === "profit_percent") && (
+                            <Field label="Percentagem (%)">
+                              <input
+                                type="number" step="0.1" min="0" max="100"
+                                value={novoCommissionPercent}
+                                onChange={(e) => setNovoCommissionPercent(e.target.value)}
+                                className="h-11 w-full rounded-[12px] border border-slate-700 bg-slate-800/60 px-4 text-white outline-none transition focus:border-sky-500 placeholder:text-slate-500"
+                                placeholder="Ex.: 5"
+                              />
+                            </Field>
+                          )}
+                          {novoCommissionType === "fixed_per_closed_request" && (
+                            <Field label="Valor fixo por pedido (€)">
+                              <input
+                                type="number" step="0.01" min="0"
+                                value={novoCommissionFixed}
+                                onChange={(e) => setNovoCommissionFixed(e.target.value)}
+                                className="h-11 w-full rounded-[12px] border border-slate-700 bg-slate-800/60 px-4 text-white outline-none transition focus:border-sky-500 placeholder:text-slate-500"
+                                placeholder="Ex.: 15.00"
+                              />
+                            </Field>
+                          )}
+                        </div>
+                        <Field label="Observações internas — opcional">
+                          <input
+                            value={novoCommissionNotes}
+                            onChange={(e) => setNovoCommissionNotes(e.target.value)}
+                            className="h-11 w-full rounded-[12px] border border-slate-700 bg-slate-800/60 px-4 text-white outline-none transition focus:border-sky-500 placeholder:text-slate-500"
+                            placeholder="Ex.: Comissão paga apenas quando o pedido for confirmado"
+                          />
+                        </Field>
+                      </div>
+                    )}
+
+                    {novoFuncao === "admin" && (
+                      <div className="rounded-[16px] border border-slate-700/50 bg-slate-800/30 p-4">
+                        <button
+                          type="button"
+                          onClick={() => setNovoIsAdmin((s) => !s)}
+                          className={`flex items-center gap-3 text-sm transition ${novoIsAdmin ? "text-sky-300" : "text-slate-400 hover:text-slate-200"}`}
+                        >
+                          <div className={`h-5 w-5 rounded border-2 flex items-center justify-center ${novoIsAdmin ? "border-sky-400 bg-sky-400" : "border-slate-600"}`}>
+                            {novoIsAdmin && <span className="text-xs font-bold text-slate-900">✓</span>}
+                          </div>
+                          Dar acesso total de administrador a este utilizador
+                        </button>
+                      </div>
+                    )}
+
+                    <div className="flex justify-end gap-3 pt-2">
+                      <Button type="button" variant="outline" onClick={() => setCriarNovoVisivel(false)}
+                        className="h-10 rounded-[12px] border-slate-700 bg-transparent px-5 text-slate-300 hover:bg-slate-800">
+                        Cancelar
+                      </Button>
+                      <Button type="button" disabled={loadingCriar} onClick={criarNovoColaborador}
+                        className="h-10 rounded-[12px] bg-sky-500 px-6 text-white hover:bg-sky-400">
                         {loadingCriar ? "A criar..." : "Criar colaborador"}
                       </Button>
                     </div>
@@ -2771,6 +2902,7 @@ export default function ColaboradorAdminClient() {
                 >
                   <option value="todas">Todas as funções</option>
                   <option value="admin">Administradores</option>
+                  <option value="assistente">Assistentes</option>
                   <option value="motorista">Motoristas</option>
                   <option value="ajudante">Ajudantes</option>
                 </select>
@@ -2957,6 +3089,27 @@ export default function ColaboradorAdminClient() {
                   </tbody>
                 </table>
               </div>
+              </div>
+              )}
+
+              {/* Sub-aba Pagamentos */}
+              {operacaoTab === "pagamentos" && (
+              <div className="rounded-[18px] border border-slate-700/50 bg-slate-800/40 p-6 text-center">
+                <Wallet className="mx-auto mb-3 h-10 w-10 text-slate-500" />
+                <p className="text-base font-semibold text-slate-300">Pagamentos — em construção</p>
+                <p className="mt-1 text-sm text-slate-500">Esta área apresentará os pagamentos pendentes por hora e comissão.</p>
+              </div>
+              )}
+
+              {/* Sub-aba Funções */}
+              {operacaoTab === "funcoes" && (
+              <div className="rounded-[18px] border border-slate-700/50 bg-slate-800/40 p-6 text-center">
+                <Settings2 className="mx-auto mb-3 h-10 w-10 text-slate-500" />
+                <p className="text-base font-semibold text-slate-300">Funções e comissões — em construção</p>
+                <p className="mt-1 text-sm text-slate-500">Esta área permitirá definir regras de comissão e valores padrão por função.</p>
+              </div>
+              )}
+
             </section>
           )}
 
@@ -3893,7 +4046,7 @@ export default function ColaboradorAdminClient() {
                             <p className="font-medium text-white">{r.horaEntrada || "—"}</p>
                           </div>
                           <div>
-                            <p className="text-[11px] uppercase tracking-wide text-slate-500">Saída</p>
+                            <p className="text-[11px] uppercase tracking-wide text-slate-500">Sa��da</p>
                             <p className="font-medium text-white">{r.horaSaida || "—"}</p>
                           </div>
                           <div>
@@ -3932,9 +4085,10 @@ export default function ColaboradorAdminClient() {
                   onClick={() => {
                     setFiltroColaborador(String(drawerColaborador.id));
                     setColaboradorDrawerId(null);
-                    setActiveSection("hours");
+                    setOperacaoTab("horarios");
+                    setActiveSection("operacao");
                   }}
-                  className="h-11 flex-1 rounded-[14px] bg-cyan-400 text-slate-950 hover:bg-cyan-300"
+                  className="h-11 flex-1 rounded-[14px] bg-sky-500 text-white hover:bg-sky-400"
                 >
                   <History className="mr-2 h-4 w-4" />
                   Ver histórico completo
@@ -3945,9 +4099,10 @@ export default function ColaboradorAdminClient() {
                   onClick={() => {
                     setFiltroColaborador(String(drawerColaborador.id));
                     setColaboradorDrawerId(null);
-                    setActiveSection("hours");
+                    setOperacaoTab("horarios");
+                    setActiveSection("operacao");
                   }}
-                  className="h-11 rounded-[14px] border-white/10 bg-white/[0.03] px-4 text-white hover:bg-white/[0.08]"
+                  className="h-11 rounded-[14px] border-slate-700 bg-slate-800/60 px-4 text-slate-200 hover:bg-slate-700"
                 >
                   <Pencil className="mr-2 h-4 w-4" />
                   Corrigir registo

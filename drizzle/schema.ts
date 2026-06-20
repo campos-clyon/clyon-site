@@ -1,4 +1,4 @@
-import { int, mysqlEnum, mysqlTable, text, timestamp, varchar, decimal } from "drizzle-orm/mysql-core";
+import { int, mysqlEnum, mysqlTable, text, timestamp, varchar, decimal, tinyint } from "drizzle-orm/mysql-core";
 
 /**
  * Core user table backing auth flow.
@@ -29,10 +29,22 @@ export type InsertUser = typeof users.$inferInsert;
 export const colaboradores = mysqlTable('colaboradores', {
   id: int('id').autoincrement().primaryKey(),
   nome: varchar('nome', { length: 100 }).notNull().unique(),
-  senha: text('senha').notNull(), // Hash da senha
+  senha: text('senha').notNull(),
   funcao: mysqlEnum('funcao', ['motorista', 'ajudante', 'admin', 'assistente']).notNull(),
-  valorHora: decimal('valorHora', { precision: 5, scale: 2 }).notNull(), // 8.00 ou 7.00
-  isAdmin: int('isAdmin').notNull().default(0), // 0 = false, 1 = true
+  valorHora: decimal('valorHora', { precision: 6, scale: 2 }).default('0.00'), // null para assistentes
+  valorDiaria: decimal('valorDiaria', { precision: 6, scale: 2 }), // opcional para motoristas/ajudantes
+  isAdmin: int('isAdmin').notNull().default(0),
+  // Modelo de pagamento
+  paymentModel: mysqlEnum('paymentModel', ['hourly', 'daily', 'commission', 'none']).default('hourly'),
+  // Campos de comissão (para assistentes)
+  commissionType: mysqlEnum('commissionType', ['profit_percent', 'gross_percent', 'fixed_per_closed_request', 'none']),
+  commissionPercent: decimal('commissionPercent', { precision: 5, scale: 2 }),
+  commissionFixedAmount: decimal('commissionFixedAmount', { precision: 8, scale: 2 }),
+  commissionNotes: text('commissionNotes'),
+  // Flags operacionais
+  canReceiveSimulatorRequests: tinyint('canReceiveSimulatorRequests').default(0),
+  participatesInTimeTracking: tinyint('participatesInTimeTracking').default(1),
+  active: tinyint('active').notNull().default(1),
   createdAt: timestamp('createdAt').defaultNow().notNull(),
   updatedAt: timestamp('updatedAt').defaultNow().onUpdateNow().notNull(),
 });

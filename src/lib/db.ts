@@ -284,16 +284,46 @@ export async function getColaboradorByNome(nome: string) {
  * Garante que a coluna funcao da tabela colaboradores aceita o valor 'assistente'.
  * Seguro para correr múltiplas vezes — falha silenciosamente se o enum já existir.
  */
-export async function ensureColaboradoresEnum(): Promise<void> {
+/**
+ * Garante que a tabela colaboradores tem todos os campos necessários.
+ * Usa ALTER TABLE … ADD COLUMN IF NOT EXISTS (seguro para correr múltiplas vezes).
+ */
+export async function ensureColaboradoresSchema(): Promise<void> {
   const pool = await getPool();
   if (!pool) return;
+
+  const migrations = [
+    // Garantir enum actualizado
+    `ALTER TABLE colaboradores MODIFY COLUMN funcao ENUM('motorista','ajudante','admin','assistente') NOT NULL`,
+    // valorHora passa a ser opcional (DEFAULT 0 para retrocompatibilidade)
+    `ALTER TABLE colaboradores MODIFY COLUMN valorHora DECIMAL(6,2) DEFAULT '0.00'`,
+    // Novos campos — ADD COLUMN IF NOT EXISTS suportado no MySQL 8+
+    `ALTER TABLE colaboradores ADD COLUMN IF NOT EXISTS valorDiaria DECIMAL(6,2) DEFAULT NULL`,
+    `ALTER TABLE colaboradores ADD COLUMN IF NOT EXISTS paymentModel ENUM('hourly','daily','commission','none') DEFAULT 'hourly'`,
+    `ALTER TABLE colaboradores ADD COLUMN IF NOT EXISTS commissionType ENUM('profit_percent','gross_percent','fixed_per_closed_request','none') DEFAULT NULL`,
+    `ALTER TABLE colaboradores ADD COLUMN IF NOT EXISTS commissionPercent DECIMAL(5,2) DEFAULT NULL`,
+    `ALTER TABLE colaboradores ADD COLUMN IF NOT EXISTS commissionFixedAmount DECIMAL(8,2) DEFAULT NULL`,
+    `ALTER TABLE colaboradores ADD COLUMN IF NOT EXISTS commissionNotes TEXT DEFAULT NULL`,
+    `ALTER TABLE colaboradores ADD COLUMN IF NOT EXISTS canReceiveSimulatorRequests TINYINT(1) NOT NULL DEFAULT 0`,
+    `ALTER TABLE colaboradores ADD COLUMN IF NOT EXISTS participatesInTimeTracking TINYINT(1) NOT NULL DEFAULT 1`,
+    `ALTER TABLE colaboradores ADD COLUMN IF NOT EXISTS active TINYINT(1) NOT NULL DEFAULT 1`,
+  ];
+
+  for (const sql of migrations) {
+    try { await pool.execute(sql); } catch { /* ignora se já existir */ }
+  }
+
+  // Assistentes existentes: garantir canReceiveSimulatorRequests=1 e participatesInTimeTracking=0
   try {
     await pool.execute(
-      `ALTER TABLE colaboradores MODIFY COLUMN funcao ENUM('motorista','ajudante','admin','assistente') NOT NULL`
+      `UPDATE colaboradores SET canReceiveSimulatorRequests=1, participatesInTimeTracking=0 WHERE funcao='assistente' AND canReceiveSimulatorRequests=0`
     );
-  } catch {
-    // Ignora se o enum já contém os valores
-  }
+  } catch { /* ignora */ }
+}
+
+/** @deprecated Use ensureColaboradoresSchema */
+export async function ensureColaboradoresEnum(): Promise<void> {
+  return ensureColaboradoresSchema();
 }
 
 /**
@@ -340,44 +370,104 @@ export async function getAllColaboradores() {
 }
 
 export type ColaboradorFuncao = "motorista" | "ajudante" | "admin" | "assistente";
+export type PaymentModel = "hourly" | "daily" | "commission" | "none";
+export type CommissionType = "profit_percent" | "gross_percent" | "fixed_per_closed_request" | "none";
 
-export async function createColaborador(data: {
+export interface CreateColaboradorData {
   nome: string;
   senha: string;
   funcao: ColaboradorFuncao;
-  valorHora: string;
   isAdmin?: number;
-}) {
+  // Modelo de pagamento
+  paymentModel?: PaymentModel;
+  valorHora?: string | null;
+  valorDiaria?: string | null;
+  // Comissão (para assistentes)
+  commissionType?: CommissionType | null;
+  commissionPercent?: string | null;
+  commissionFixedAmount?: string | null;
+  commissionNotes?: string | null;
+  // Flags
+  canReceiveSimulatorRequests?: number;
+  participatesInTimeTracking?: number;
+  active?: number;
+}
+
+export async function createColaborador(data: CreateColaboradorData) {
   const pool = await getPool();
   if (!pool) throw new Error("Database not available");
-  // Garantir que a coluna funcao aceita 'assistente' (migração inline)
-  try {
-    await pool.execute(
-      `ALTER TABLE colaboradores MODIFY COLUMN funcao ENUM('motorista','ajudante','admin','assistente') NOT NULL`
-    );
-  } catch {}
+
+  // Garantir schema actualizado (incluindo novos campos)
+  await ensureColaboradoresSchema();
+
+  // Derivar defaults por funcao
+  const isAssistente = data.funcao === "assistente";
+  const isAdmin = data.funcao === "admin";
+  const paymentModel = data.paymentModel ?? (isAssistente ? "commission" : isAdmin ? "none" : "hourly");
+  const valorHora = isAssistente || isAdmin ? "0.00" : (data.valorHora ? String(parseFloat(data.valorHora)) : "0.00");
+  const canReceive = data.canReceiveSimulatorRequests ?? (isAssistente ? 1 : 0);
+  const participates = data.participatesInTimeTracking ?? (isAssistente ? 0 : 1);
+
   await pool.execute(
-    "INSERT INTO colaboradores (nome, senha, funcao, valorHora, isAdmin) VALUES (?, ?, ?, ?, ?)",
-    [data.nome, data.senha, data.funcao, data.valorHora, data.isAdmin ?? 0]
+    `INSERT INTO colaboradores
+      (nome, senha, funcao, valorHora, valorDiaria, isAdmin, paymentModel,
+       commissionType, commissionPercent, commissionFixedAmount, commissionNotes,
+       canReceiveSimulatorRequests, participatesInTimeTracking, active)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)`,
+    [
+      data.nome,
+      data.senha,
+      data.funcao,
+      valorHora,
+      data.valorDiaria ?? null,
+      data.isAdmin ?? 0,
+      paymentModel,
+      data.commissionType ?? null,
+      data.commissionPercent ?? null,
+      data.commissionFixedAmount ?? null,
+      data.commissionNotes ?? null,
+      canReceive,
+      participates,
+    ]
   );
 }
 
-export async function updateColaborador(
-  id: number,
-  data: Partial<{ nome: string; senha: string; funcao: ColaboradorFuncao; valorHora: string; isAdmin: number }>
-) {
+export interface UpdateColaboradorData {
+  nome?: string;
+  senha?: string;
+  funcao?: ColaboradorFuncao;
+  isAdmin?: number;
+  paymentModel?: PaymentModel;
+  valorHora?: string | null;
+  valorDiaria?: string | null;
+  commissionType?: CommissionType | null;
+  commissionPercent?: string | null;
+  commissionFixedAmount?: string | null;
+  commissionNotes?: string | null;
+  canReceiveSimulatorRequests?: number;
+  participatesInTimeTracking?: number;
+  active?: number;
+}
+
+export async function updateColaborador(id: number, data: UpdateColaboradorData) {
   const pool = await getPool();
   if (!pool) throw new Error("Database not available");
-  // Garantir que a coluna funcao aceita 'assistente'
-  try {
-    await pool.execute(
-      `ALTER TABLE colaboradores MODIFY COLUMN funcao ENUM('motorista','ajudante','admin','assistente') NOT NULL`
-    );
-  } catch {}
-  const fields = Object.keys(data) as Array<keyof typeof data>;
-  if (!fields.length) return;
-  const setParts = fields.map((f) => `${f} = ?`).join(", ");
-  const values = fields.map((f) => data[f]);
+  await ensureColaboradoresSchema();
+
+  const allowed = [
+    "nome", "senha", "funcao", "isAdmin", "paymentModel",
+    "valorHora", "valorDiaria", "commissionType", "commissionPercent",
+    "commissionFixedAmount", "commissionNotes",
+    "canReceiveSimulatorRequests", "participatesInTimeTracking", "active",
+  ] as const;
+
+  const entries = Object.entries(data).filter(
+    ([k, v]) => allowed.includes(k as typeof allowed[number]) && v !== undefined
+  );
+  if (!entries.length) return;
+
+  const setParts = entries.map(([k]) => `${k} = ?`).join(", ");
+  const values = entries.map(([, v]) => v ?? null);
   await pool.execute(`UPDATE colaboradores SET ${setParts}, updatedAt = NOW() WHERE id = ?`, [...values, id]);
 }
 
@@ -424,7 +514,7 @@ export async function getRegistrosHorasByColaborador(
     .from(colaboradores)
     .where(eq(colaboradores.id, colaboradorId))
     .limit(1);
-  const valorHora = colab[0] ? parseFloat(colab[0].valorHora) : 0;
+  const valorHora = colab[0] ? parseFloat(colab[0].valorHora ?? "0") : 0;
 
   return result.map((reg) => {
     const horas = reg.horaSaida ? calcularHoras(reg.horaEntrada, reg.horaSaida, reg.horaPausa) : 0;
@@ -750,9 +840,14 @@ export async function countSimulatorOrdersByStatus(): Promise<Record<string, num
 export async function getActiveAssistants(): Promise<Array<{ id: number; nome: string; funcao: string; isAdmin: number }>> {
   const pool = await getPool();
   if (!pool) return [];
-  // Apenas colaboradores com funcao='assistente' podem receber pedidos do simulador
+  // Apenas assistentes activos que podem receber pedidos do simulador
   const [rows] = await pool.execute(
-    "SELECT id, nome, funcao, isAdmin FROM colaboradores WHERE funcao = 'assistente' ORDER BY nome ASC"
+    `SELECT id, nome, funcao, isAdmin FROM colaboradores
+     WHERE funcao = 'assistente'
+       AND isAdmin = 0
+       AND (active IS NULL OR active = 1)
+       AND (canReceiveSimulatorRequests IS NULL OR canReceiveSimulatorRequests = 1)
+     ORDER BY nome ASC`
   ) as any[];
   return rows as any[];
 }
