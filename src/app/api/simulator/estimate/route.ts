@@ -1,81 +1,69 @@
 import { NextRequest, NextResponse } from "next/server";
-import { GoogleGenAI } from "@google/genai";
+import { generateText } from "ai";
 import { calculateLocalEstimate, detectZone } from "@/app/simulador/pricingRules";
 import type { OrderData, EstimateResult } from "@/app/simulador/types";
 
 export const runtime = "nodejs";
 
-const MODEL = process.env.GEMINI_MODEL || "gemini-2.5-flash";
+const MODEL = process.env.CHAT_MODEL || "google/gemini-2.0-flash";
 
-async function generateEstimateWithGemini(
+async function generateEstimateWithAI(
   order: OrderData
 ): Promise<EstimateResult | null> {
-  const apiKey = process.env.GEMINI_API_KEY ?? process.env.GOOGLE_API_KEY;
-  if (!apiKey) return null;
-
   try {
-    const ai = new GoogleGenAI({ apiKey });
-
-    const prompt = `
-És um orçamentista sénior da empresa CLYON em Portugal.
-Com base nos dados abaixo, calcula uma estimativa de preço para o serviço de recolha/transporte.
+    const prompt = `És um orçamentista sénior da CLYON em Portugal. Calcula uma estimativa de preço para o pedido abaixo.
 
 DADOS DO PEDIDO:
 ${JSON.stringify(order, null, 2)}
 
-PREÇÁRIO BASE CLYON (valores sem IVA, IVA = 23%):
-- Zona A (Amora, Fernão Ferro): base 220€
-- Zona B (Lisboa normal): base 250€
-- Zona C (Lisboa difícil, regiões distantes): base 270€
-- Zona D: orçamento personalizado
+PREÇÁRIO CLYON (valores sem IVA, IVA = 23%):
 
-MULTIPLICADOR DE VOLUME (aplicado ao preço base ANTES dos extras):
-- Até 5 itens/sacos: ×1.0 (sem ajuste)
-- 6–15 itens/sacos: ×1.15
-- 16–30 itens/sacos: ×1.35
-- 31–60 sacos/itens: ×1.60
-- 61–100 sacos: ×2.0
-- Mais de 100 sacos: ×2.6 (possível 2.ª viagem)
-IMPORTANTE: Lê a descrição e extrai a quantidade. 50 sacos e 100 sacos TÊM valores diferentes.
+ENTULHO (sacos ~50 L):
+- Preço: 3 € por saco. Mínimo 90 €.
+- Exemplo: 50 sacos = 150 € s/IVA = 184,50 € c/IVA
 
-EXTRAS (após o multiplicador):
-- Urgente hoje: +30€ a +60€
-- Sem elevador, carga leve: +15€ a +25€ por andar
-- Sem elevador, carga pesada: +25€ a +50€ por andar
-- Desmontagem simples: +30€ a +50€
-- Desmontagem média: +60€ a +120€
-- Estacionamento difícil: +30€ a +80€
+MÓVEIS / MONOS (por item):
+- Sofá: 60 € | Cama: 50 € | Colchão: 40 € | Arca/Frigorifico: 50-55 €
+- Armário: 70 € | Mesa: 45 € | Cadeira: 20 € | Mono genérico: 25-35 €
+- Mínimo: 80 €
 
-Responde APENAS com JSON válido neste formato exato:
+DESLOCAÇÃO (incluída):
+- Zona A (Amora, Fernão Ferro, Seixal): 0 € extra
+- Zona B (Lisboa, Oeiras, Amadora): +20 €
+- Zona C (Cascais, Sintra, Almada, Setúbal): +40 €
+
+ACESSO:
+- Sem elevador + andar: +25 € (normal) a +60 € (pesado/alto)
+- Estacionamento difícil: +30 €
+
+URGÊNCIA:
+- Hoje: +40 € | Amanhã: +20 €
+
+Responde APENAS com JSON válido neste formato (sem markdown, sem explicações):
 {
   "status": "estimated",
-  "estimatedPriceWithoutVat": 220,
-  "vatAmount": 50.6,
-  "estimatedPriceWithVat": 270.6,
-  "difficultyLevel": 2,
-  "summary": "Recolha de mobiliário, 2.º andar com elevador, Lisboa.",
-  "assumptions": ["Elevador funcional", "Acesso razoável à porta"],
+  "estimatedPriceWithoutVat": 150,
+  "vatAmount": 34.5,
+  "estimatedPriceWithVat": 184.5,
+  "difficultyLevel": 1,
+  "summary": "50 sacos de entulho, rés-do-chão.",
+  "assumptions": ["50 sacos × 3 €/saco = 150 €", "Sem acesso difícil"],
   "missingFields": [],
-  "customerMessage": "A estimativa prevista para este serviço é entre 220€ e 270€ + IVA, sujeito a confirmação.",
-  "internalNotes": ["Verificar peso dos sofás"]
-}
+  "customerMessage": "A estimativa para este pedido é entre 140 € e 160 € + IVA (23%). Sujeito a confirmação pela equipa CLYON.",
+  "internalNotes": ["50 sacos de entulho"]
+}`;
 
-Usa linguagem natural em português de Portugal no customerMessage.
-Nunca uses "valor definitivo" — usa sempre "estimativa" ou "sujeito a confirmação".
-`;
-
-    const response = await ai.models.generateContent({
+    const { text } = await generateText({
       model: MODEL,
-      contents: prompt,
+      messages: [{ role: "user", content: prompt }],
     });
 
-    const text = (response.text ?? "").trim();
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    const jsonMatch = text.trim().match(/\{[\s\S]*\}/);
     if (!jsonMatch) return null;
 
     return JSON.parse(jsonMatch[0]) as EstimateResult;
   } catch (err) {
-    console.error("[simulator/estimate] Gemini error:", err);
+    console.error("[simulator/estimate] AI error:", err);
     return null;
   }
 }
@@ -89,8 +77,8 @@ export async function POST(req: NextRequest) {
       order.locationZone = detectZone(order.city ?? order.address?.city);
     }
 
-    const geminiResult = await generateEstimateWithGemini(order);
-    const result = geminiResult ?? calculateLocalEstimate(order);
+    const aiResult = await generateEstimateWithAI(order);
+    const result = aiResult ?? calculateLocalEstimate(order);
 
     return NextResponse.json(result);
   } catch (err) {

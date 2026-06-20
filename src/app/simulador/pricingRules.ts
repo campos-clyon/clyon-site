@@ -2,16 +2,22 @@ import type { OrderData, EstimateResult, DifficultyLevel, LocationZone } from ".
 
 export const TAX_RATE = 0.23;
 
-// Bases por zona (sem IVA)
-const ZONE_BASE: Record<Exclude<LocationZone, "D">, number> = {
-  A: 220,
-  B: 250,
-  C: 270,
+// ─── Preçário CLYON (valores sem IVA) ────────────────────────────────────────
+//
+// Entulho : ~3 € por saco standard (50 L). Mínimo 90 €.
+// Monos / móveis: preço por item (ver tabela abaixo). Mínimo 80 €.
+// Esvaziamento: sempre visita presencial.
+//
+// Deslocação base por zona (incluída no serviço)
+const ZONE_TRAVEL: Record<Exclude<LocationZone, "D">, number> = {
+  A: 0,   // Amora / Fernão Ferro — base da empresa
+  B: 20,  // Lisboa / Oeiras / Amadora / Odivelas
+  C: 40,  // Cascais / Sintra / Loures / Almada / Setúbal / Montijo / Barreiro
 };
 
-function getZoneBase(zone: LocationZone | undefined): number | null {
-  if (!zone || zone === "D") return null;
-  return ZONE_BASE[zone];
+function getZoneTravel(zone: LocationZone | undefined): number {
+  if (!zone || zone === "D") return 0;
+  return ZONE_TRAVEL[zone];
 }
 
 // Determina zona com base na cidade/morada
@@ -52,61 +58,75 @@ export function detectZone(city: string | undefined): LocationZone {
 export function extractQuantityFromDescription(description: string | undefined): number | null {
   if (!description) return null;
   const t = description.toLowerCase();
-  // "100 sacos", "50 sacos de entulho", "20 caixas", "30 monos", "5 móveis"
   const m = t.match(/(\d+)\s*(sacos?|caixas?|monos?|móveis?|peças?|unidades?|cadeiras?|sofás?|armários?|mesas?|estantes?|camas?)/);
   if (m) return parseInt(m[1], 10);
-  // Número sozinho no início: "100 ..." 
   const m2 = t.match(/^(\d+)\s/);
   if (m2) return parseInt(m2[1], 10);
   return null;
 }
 
-// Multiplicador de volume com base na quantidade
-export function volumeMultiplier(qty: number | null): { multiplier: number; label: string } {
-  if (!qty || qty <= 5)   return { multiplier: 1.0,  label: "" };
-  if (qty <= 15)          return { multiplier: 1.15, label: `Volume médio (~${qty} itens)` };
-  if (qty <= 30)          return { multiplier: 1.35, label: `Volume considerável (~${qty} itens)` };
-  if (qty <= 60)          return { multiplier: 1.60, label: `Volume elevado (~${qty} sacos/itens)` };
-  if (qty <= 100)         return { multiplier: 2.00, label: `Volume muito elevado (~${qty} sacos)` };
-  return               { multiplier: 2.60, label: `Volume excepcional (~${qty} sacos — possível 2ª viagem)` };
+// ─── Cálculo por tipo de serviço ──────────────────────────────────────────────
+
+// Entulho: 3 € por saco de ~50 L, mínimo 90 €
+function calcEntulhoBase(qty: number | null): { price: number; note: string } {
+  const sacos = qty ?? 10;
+  const price = Math.max(90, sacos * 3);
+  return { price, note: `${sacos} sacos × 3 €/saco` };
 }
 
-// Calcula dificuldade 1-5
+// Preço unitário por tipo de item (móveis/monos)
+const ITEM_PRICE: Record<string, number> = {
+  sofa:        60,
+  sofá:        60,
+  cama:        50,
+  colchao:     40,
+  colchão:     40,
+  armario:     70,
+  armário:     70,
+  arca:        50,
+  frigorifico: 55,
+  frigorífico: 55,
+  maquina:     45,
+  máquina:     45,
+  televisao:   35,
+  televisão:   35,
+  computador:  30,
+  mesa:        45,
+  cadeira:     20,
+  mono:        25,
+};
+
+function calcMovelBase(qty: number | null, description: string): { price: number; note: string } {
+  const t = description.toLowerCase();
+  const n = qty ?? 1;
+  for (const [key, unitPrice] of Object.entries(ITEM_PRICE)) {
+    if (t.includes(key)) {
+      return { price: Math.max(80, n * unitPrice), note: `${n} × ${key} (~${unitPrice} €/item)` };
+    }
+  }
+  // Genérico: 35 € por item, mínimo 90 €
+  return { price: Math.max(90, n * 35), note: `${n} item(s) de mobiliário/monos (~35 €/item)` };
+}
+
+// ─── Dificuldade de acesso ────────────────────────────────────────────────────
+
 function calcDifficulty(order: OrderData): DifficultyLevel {
   let score = 0;
 
-  // Elevador
   if (order.hasElevator === "no") score += 2;
   else if (order.hasElevator === "small") score += 1;
 
-  // Andar
   const floor = order.floor ?? "";
   if (floor.includes("4") || floor.includes("5") || floor.includes("superior")) score += 2;
   else if (floor.includes("3")) score += 1;
   else if (floor.includes("2")) score += 1;
 
-  // Estacionamento
   if (order.parkingDistance === "difficult") score += 2;
   else if (order.parkingDistance === "over_30m") score += 1;
 
-  // Desmontagem
   if (order.needsDismantling === "complex") score += 2;
   else if (order.needsDismantling === "medium") score += 1;
 
-  // Itens pesados
-  const heavy = order.heavyItems ?? [];
-  if (heavy.length >= 3) score += 2;
-  else if (heavy.length >= 1) score += 1;
-
-  // Volume / quantidade
-  const qty = extractQuantityFromDescription(order.description);
-  if (qty !== null) {
-    if (qty > 100) score += 3;
-    else if (qty > 60) score += 2;
-    else if (qty > 30) score += 1;
-  }
-
-  // Urgência
   if (order.urgency === "today") score += 1;
 
   if (score <= 1) return 1;
@@ -119,22 +139,20 @@ function calcDifficulty(order: OrderData): DifficultyLevel {
 const DIFFICULTY_LABELS: Record<DifficultyLevel, string> = {
   1: "Fácil",
   2: "Normal",
-  3: "Médio",
-  4: "Difícil",
+  3: "Acesso moderado",
+  4: "Acesso difícil",
   5: "Muito difícil",
 };
 
 function needsOnsiteVisit(order: OrderData): boolean {
   const svc = order.serviceType;
-  if (
-    svc === "esvaziamento_casa" ||
-    svc === "esvaziamento_apartamento"
-  ) return true;
-  if ((order.heavyItems ?? []).some((h) => h.includes("entulho"))) return true;
+  if (svc === "esvaziamento_casa" || svc === "esvaziamento_apartamento") return true;
   if (order.needsDismantling === "complex") return true;
   if (order.locationZone === "D") return true;
   return false;
 }
+
+// ─── Função principal ─────────────────────────────────────────────────────────
 
 export function calculateLocalEstimate(order: OrderData): EstimateResult {
   const missingFields: string[] = [];
@@ -142,47 +160,58 @@ export function calculateLocalEstimate(order: OrderData): EstimateResult {
   if (!order.serviceType) missingFields.push("Tipo de serviço");
   if (!order.description && (!order.files || order.files.length === 0))
     missingFields.push("Descrição ou fotos");
-  if (!order.city && !order.address?.formattedAddress) missingFields.push("Localidade ou morada");
-  if (!order.floor) missingFields.push("Andar");
-  // hasElevator e parkingDistance podem ter valor "no", "under_20m", etc. — strings truthy mesmo quando indicam "sem"
-  // só está em falta se for undefined, null ou "unknown"
-  if (!order.hasElevator || order.hasElevator === "unknown") missingFields.push("Elevador");
-  if (!order.parkingDistance || order.parkingDistance === "unknown") missingFields.push("Estacionamento");
-  if (!order.receiver?.name || !order.receiver?.phone) missingFields.push("Nome e contacto");
 
-  if (missingFields.length > 0) {
-    return {
-      status: "needs_more_info",
-      estimatedPriceWithoutVat: null,
-      vatAmount: null,
-      estimatedPriceWithVat: null,
-      difficultyLevel: 2,
-      summary: "Faltam dados para calcular a estimativa.",
-      assumptions: [],
-      missingFields,
-      customerMessage:
-        "Para calcular a estimativa precisamos de mais alguns detalhes: " +
-        missingFields.join(", ") +
-        ".",
-      internalNotes: ["Dados insuficientes para estimar."],
-    };
+  // Para entulho não é obrigatório ter morada — podemos dar preço só com sacos
+  const isEntulho =
+    order.serviceType === "entulho" ||
+    order.description?.toLowerCase().includes("entulho") ||
+    order.description?.toLowerCase().includes("saco");
+
+  if (!isEntulho) {
+    if (!order.floor) missingFields.push("Andar");
+    if (!order.hasElevator || order.hasElevator === "unknown") missingFields.push("Elevador");
+    if (!order.parkingDistance || order.parkingDistance === "unknown") missingFields.push("Estacionamento");
   }
 
-  const zone = order.locationZone ?? detectZone(order.city);
-  const difficulty = calcDifficulty(order);
+  if (!order.receiver?.name || !order.receiver?.phone) missingFields.push("Nome e contacto");
 
-  if (needsOnsiteVisit(order) || difficulty === 5) {
+  if (missingFields.length > 2) {
+    // Se faltam mais do que 2 campos não-contacto, ainda não temos dados suficientes
+    const nonContactMissing = missingFields.filter(
+      (f) => f !== "Nome e contacto"
+    );
+    if (nonContactMissing.length > 0) {
+      return {
+        status: "needs_more_info",
+        estimatedPriceWithoutVat: null,
+        vatAmount: null,
+        estimatedPriceWithVat: null,
+        difficultyLevel: 2,
+        summary: "Faltam dados para calcular a estimativa.",
+        assumptions: [],
+        missingFields,
+        customerMessage:
+          "Para calcular a estimativa precisamos de mais alguns detalhes: " +
+          nonContactMissing.join(", ") + ".",
+        internalNotes: ["Dados insuficientes para estimar."],
+      };
+    }
+  }
+
+  const zone = order.locationZone ?? detectZone(order.city ?? order.address?.city);
+
+  if (needsOnsiteVisit(order)) {
     return {
       status: "onsite_required",
       estimatedPriceWithoutVat: null,
       vatAmount: null,
       estimatedPriceWithVat: null,
-      difficultyLevel: difficulty,
-      summary: DIFFICULTY_LABELS[difficulty],
+      difficultyLevel: calcDifficulty(order),
+      summary: "Visita presencial recomendada",
       assumptions: [],
       missingFields: [],
       customerMessage:
-        "Este pedido necessita de validação presencial ou análise por vídeo, devido ao volume, acesso ou complexidade do serviço. A nossa equipa irá contactá-lo para combinar uma visita gratuita.",
+        "Este pedido requer validação presencial ou análise por vídeo, devido ao volume, acesso ou complexidade. A nossa equipa irá contactá-lo para combinar uma visita gratuita.",
       internalNotes: ["Recomendada visita presencial."],
     };
   }
@@ -193,7 +222,7 @@ export function calculateLocalEstimate(order: OrderData): EstimateResult {
       estimatedPriceWithoutVat: null,
       vatAmount: null,
       estimatedPriceWithVat: null,
-      difficultyLevel: difficulty,
+      difficultyLevel: calcDifficulty(order),
       summary: "Fora da zona padrão",
       assumptions: [],
       missingFields: [],
@@ -203,55 +232,65 @@ export function calculateLocalEstimate(order: OrderData): EstimateResult {
     };
   }
 
-  let base = getZoneBase(zone) ?? 250;
+  const difficulty = calcDifficulty(order);
   const assumptions: string[] = [];
   const internalNotes: string[] = [];
 
-  internalNotes.push(`Zona ${zone}, base ${base}€`);
-  assumptions.push(
-    `Localidade em Zona ${zone} (${zone === "A" ? "Amora / Fernão Ferro" : zone === "B" ? "Lisboa" : "Lisboa difícil / região mais distante"})`
-  );
-
-  // Ajuste por volume/quantidade
   const qty = extractQuantityFromDescription(order.description);
-  const vol = volumeMultiplier(qty);
-  if (vol.multiplier > 1.0) {
-    base = Math.round(base * vol.multiplier);
-    if (vol.label) assumptions.push(vol.label);
-    internalNotes.push(`Multiplicador de volume: ×${vol.multiplier} (${qty} itens)`);
+
+  // ── Preço base por tipo de serviço ──
+  let base = 0;
+
+  if (isEntulho) {
+    const r = calcEntulhoBase(qty);
+    base = r.price;
+    assumptions.push(r.note);
+    internalNotes.push(`Entulho: ${r.note}`);
+  } else {
+    const r = calcMovelBase(qty, order.description ?? "");
+    base = r.price;
+    assumptions.push(r.note);
+    internalNotes.push(`Móveis/monos: ${r.note}`);
   }
 
-  // Ajuste por dificuldade
-  if (difficulty === 2) {
-    base += 30;
-    assumptions.push("Acesso e volume razoáveis");
-  } else if (difficulty === 3) {
-    base += 100;
-    assumptions.push("Acesso moderado — escadas, algum peso");
+  // ── Deslocação por zona ──
+  const travel = getZoneTravel(zone);
+  if (travel > 0) {
+    base += travel;
+    assumptions.push(
+      `Deslocação Zona ${zone} (+${travel} €)`
+    );
+    internalNotes.push(`Zona ${zone}, deslocação: +${travel} €`);
+  }
+
+  // ── Extra por acesso difícil ──
+  if (difficulty === 3) {
+    base += 25;
+    assumptions.push("Acesso moderado (+25 €)");
   } else if (difficulty === 4) {
-    base += 200;
-    assumptions.push("Acesso difícil — sem elevador, peso ou distância");
+    base += 60;
+    assumptions.push("Acesso difícil — sem elevador ou peso (+60 €)");
   }
 
-  // Extras de urgência
+  // ── Extra por urgência ──
   if (order.urgency === "today") {
-    base += 45;
-    assumptions.push("Serviço urgente (mesmo dia)");
+    base += 40;
+    assumptions.push("Urgente — mesmo dia (+40 €)");
   } else if (order.urgency === "tomorrow") {
     base += 20;
-    assumptions.push("Serviço urgente (amanhã)");
+    assumptions.push("Urgente — amanhã (+20 €)");
   }
 
-  // Extras de desmontagem
+  // ── Desmontagem ──
   if (order.needsDismantling === "simple") {
-    base += 40;
-    assumptions.push("Desmontagem simples incluída");
+    base += 35;
+    assumptions.push("Desmontagem simples (+35 €)");
   } else if (order.needsDismantling === "medium") {
-    base += 90;
-    assumptions.push("Desmontagem média incluída");
+    base += 80;
+    assumptions.push("Desmontagem média (+80 €)");
   }
 
-  // Ajuste por distância (se calculada)
+  // ── Ajuste por distância real ──
   const distKm = order.distanceFromBase?.distanceKm;
   if (distKm !== undefined) {
     if (distKm > 50) {
@@ -265,43 +304,39 @@ export function calculateLocalEstimate(order: OrderData): EstimateResult {
         assumptions: [],
         missingFields: [],
         customerMessage:
-          "A distância da base CLYON até à morada indicada é elevada. Iremos apresentar um orçamento personalizado.",
+          "A distância até à morada indicada é elevada. Iremos apresentar um orçamento personalizado.",
         internalNotes: [`Distância: ${distKm} km — orçamento personalizado.`],
       };
     } else if (distKm > 35) {
-      base += 60;
-      assumptions.push(`Deslocação de ${distKm} km (ajuste de 40€ a 80€)`);
+      base += 40;
+      assumptions.push(`Distância de ${distKm} km (+40 €)`);
     } else if (distKm > 20) {
-      base += 30;
-      assumptions.push(`Deslocação de ${distKm} km (ajuste de 20€ a 40€)`);
+      base += 20;
+      assumptions.push(`Distância de ${distKm} km (+20 €)`);
     }
-    internalNotes.push(`Distância calculada: ${distKm} km`);
-    assumptions.push("A estimativa considera a distância aproximada entre a base CLYON e a morada indicada.");
+    internalNotes.push(`Distância: ${distKm} km`);
   }
 
-  // Dar intervalo (±10%)
-  const low = Math.floor(base * 0.9 / 10) * 10;
-  const high = Math.ceil(base * 1.1 / 10) * 10;
-
-  const midPrice = (low + high) / 2;
-  const vat = Math.round(midPrice * TAX_RATE);
-  const total = midPrice + vat;
-
-  const diffLabel = DIFFICULTY_LABELS[difficulty];
+  // ── Intervalo de ±10% ──
+  const low = Math.floor(base * 0.9 / 5) * 5;
+  const high = Math.ceil(base * 1.1 / 5) * 5;
+  const mid = (low + high) / 2;
+  const vat = Math.round(mid * TAX_RATE);
+  const total = Math.round(mid + vat);
 
   return {
     status: "estimated",
-    estimatedPriceWithoutVat: midPrice,
+    estimatedPriceWithoutVat: mid,
     vatAmount: vat,
     estimatedPriceWithVat: total,
     difficultyLevel: difficulty,
-    summary: diffLabel,
+    summary: DIFFICULTY_LABELS[difficulty],
     assumptions,
     missingFields: [],
     customerMessage:
-      `Com base nas informações enviadas, a estimativa para este pedido é de ${low}€ a ${high}€ + IVA. ` +
-      `O valor considera ${assumptions.join(", ")}. ` +
-      `Caso existam volumes adicionais, peso excessivo ou acesso diferente do informado, a equipa confirma antes de iniciar.`,
+      `Com base nas informações enviadas, a estimativa para este pedido é de ${low} € a ${high} € + IVA. ` +
+      `O valor considera: ${assumptions.join("; ")}. ` +
+      `Sujeito a confirmação pela equipa CLYON após verificação no local.`,
     internalNotes,
   };
 }
