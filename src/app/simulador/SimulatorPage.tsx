@@ -503,16 +503,25 @@ export default function SimulatorPage() {
         body: JSON.stringify({ order, estimate, chatHistory }),
       });
       if (res.ok) {
+        const data = await res.json();
+        console.log("[v0] Pedido criado:", data);
         setOrderSaved(true);
+        
+        const confirmationMsg = data.message || 
+          `Pedido #${data.id} enviado com sucesso para a equipa CLYON.${
+            data.assignedTo ? ` Assistente atribuída: ${data.assignedTo}.` : " Será atribuído em breve."
+          }`;
+        
         setMessages((prev) => [
           ...prev,
-          makeAssistantMessage(
-            "Pedido enviado com sucesso para a equipa CLYON. Entraremos em contacto em breve para confirmar os detalhes."
-          ),
+          makeAssistantMessage(confirmationMsg),
         ]);
+      } else {
+        const error = await res.json();
+        console.error("[v0] Erro ao criar pedido:", error);
       }
-    } catch {
-      // silencioso — não interrompe o fluxo
+    } catch (err) {
+      console.error("[v0] Erro ao guardar pedido:", err);
     } finally {
       setSavingOrder(false);
     }

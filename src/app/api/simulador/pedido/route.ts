@@ -44,10 +44,11 @@ export async function POST(req: NextRequest) {
       distanceText: order.distanceFromBase?.durationText ?? null,
       chatJson: chatHistory ? JSON.stringify(chatHistory) : null,
       priority,
-      status: "pendente",
+      status: "pendente", // Status inicial: sempre "pendente", depois muda para "atribuido" se atribuído
     };
 
     const id = await createSimulatorOrder(row);
+    console.log("[v0] simulador/pedido: Pedido #", id, " criado com status 'pendente'");
 
     // Registar no histórico que o pedido foi criado
     await appendOrderHistory(id, {
@@ -59,10 +60,27 @@ export async function POST(req: NextRequest) {
     // Atribuição automática ao assistente com menos carga
     const assignee = await pickLeastLoadedAssistant();
     if (assignee) {
+      console.log("[v0] simulador/pedido: Atribuindo pedido #", id, " a ", assignee.nome);
       await assignSimulatorOrder(id, assignee, null);
+      return NextResponse.json({
+        ok: true,
+        id,
+        priority,
+        status: "atribuido",
+        assignedTo: assignee.nome,
+        message: `Pedido #${id} enviado para análise. Assistente atribuída: ${assignee.nome}.`,
+      });
+    } else {
+      console.log("[v0] simulador/pedido: Sem assistente disponível para pedido #", id);
+      return NextResponse.json({
+        ok: true,
+        id,
+        priority,
+        status: "pendente",
+        assignedTo: null,
+        message: `Pedido #${id} enviado para análise. Será atribuído a um assistente em breve.`,
+      });
     }
-
-    return NextResponse.json({ ok: true, id, priority, assignedTo: assignee?.nome ?? null });
   } catch (err: any) {
     console.error("[simulador/pedido] Erro ao guardar pedido:", err);
     return NextResponse.json({ ok: false, error: err.message }, { status: 500 });
