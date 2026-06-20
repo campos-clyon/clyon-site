@@ -125,55 +125,71 @@ function getLisbonPeriodAnchors() {
 }
 
 async function loadAdminDataset(db: Awaited<ReturnType<typeof getDb>>) {
-  if (!db) return { colaboradores: [] };
+  try {
+    if (!db) {
+      console.error("[v0] loadAdminDataset: db nao disponível");
+      return { colaboradores: [], error: "Database not available" };
+    }
 
-  const team = await db.select().from(colaboradores);
-  const allRecords = await db.select().from(registrosHoras).orderBy(desc(registrosHoras.data));
+    console.log("[v0] loadAdminDataset: Iniciando carregamento de team...");
+    const team = await db.select().from(colaboradores);
+    console.log("[v0] loadAdminDataset: Team carregado, ", team.length, " colaboradores");
 
-  const { weekStart, monthStart, fifteenDaysStart } = getLisbonPeriodAnchors();
+    console.log("[v0] loadAdminDataset: Iniciando carregamento de registrosHoras...");
+    const allRecords = await db.select().from(registrosHoras).orderBy(desc(registrosHoras.data));
+    console.log("[v0] loadAdminDataset: RegistrosHoras carregado, ", allRecords.length, " registros");
 
-  const calcPeriod = (records: typeof allRecords) => {
-    const hours = records.reduce((sum, item) => sum + parseFloat(item.horasTrabalhadas || "0"), 0);
-    const value = records.reduce((sum, item) => sum + parseFloat(item.valorTotal || "0"), 0);
-    const jobs = records.reduce((sum, item) => sum + (item.numeroTrabalhos || 0), 0);
+    const { weekStart, monthStart, fifteenDaysStart } = getLisbonPeriodAnchors();
 
-    return {
-      horas: hours.toFixed(2),
-      valor: value.toFixed(2),
-      trabalhos: jobs,
-    };
-  };
+    const calcPeriod = (records: typeof allRecords) => {
+      const hours = records.reduce((sum, item) => sum + parseFloat(item.horasTrabalhadas || "0"), 0);
+      const value = records.reduce((sum, item) => sum + parseFloat(item.valorTotal || "0"), 0);
+      const jobs = records.reduce((sum, item) => sum + (item.numeroTrabalhos || 0), 0);
 
-  return {
-    colaboradores: team.map((member) => {
-      const memberRecords = allRecords.filter((record) => record.colaboradorId === member.id);
       return {
-        id: member.id,
-        nome: member.nome,
-        funcao: member.funcao,
-        valorHora: member.valorHora,
-        isAdmin: member.isAdmin,
-        createdAt: member.createdAt,
-        updatedAt: member.updatedAt,
-        registros: memberRecords.map((record) => ({
-          id: record.id,
-          colaboradorId: record.colaboradorId,
-          data: record.data?.toISOString() || "",
-          horaEntrada: record.horaEntrada,
-          horaPausa: record.horaPausa,
-          horaSaida: record.horaSaida,
-          numeroTrabalhos: record.numeroTrabalhos || 0,
-          horasTrabalhadas: record.horasTrabalhadas || "0",
-          valorTotal: record.valorTotal || "0",
-        })),
-        estatisticas: {
-          semana: calcPeriod(memberRecords.filter((record) => record.data && record.data >= weekStart)),
-          ultimos15Dias: calcPeriod(memberRecords.filter((record) => record.data && record.data >= fifteenDaysStart)),
-          mes: calcPeriod(memberRecords.filter((record) => record.data && record.data >= monthStart)),
-        },
+        horas: hours.toFixed(2),
+        valor: value.toFixed(2),
+        trabalhos: jobs,
       };
-    }),
-  };
+    };
+
+    const result = {
+      colaboradores: team.map((member) => {
+        const memberRecords = allRecords.filter((record) => record.colaboradorId === member.id);
+        return {
+          id: member.id,
+          nome: member.nome,
+          funcao: member.funcao,
+          valorHora: member.valorHora,
+          isAdmin: member.isAdmin,
+          createdAt: member.createdAt,
+          updatedAt: member.updatedAt,
+          registros: memberRecords.map((record) => ({
+            id: record.id,
+            colaboradorId: record.colaboradorId,
+            data: record.data?.toISOString() || "",
+            horaEntrada: record.horaEntrada,
+            horaPausa: record.horaPausa,
+            horaSaida: record.horaSaida,
+            numeroTrabalhos: record.numeroTrabalhos || 0,
+            horasTrabalhadas: record.horasTrabalhadas || "0",
+            valorTotal: record.valorTotal || "0",
+          })),
+          estatisticas: {
+            semana: calcPeriod(memberRecords.filter((record) => record.data && record.data >= weekStart)),
+            ultimos15Dias: calcPeriod(memberRecords.filter((record) => record.data && record.data >= fifteenDaysStart)),
+            mes: calcPeriod(memberRecords.filter((record) => record.data && record.data >= monthStart)),
+          },
+        };
+      }),
+    };
+
+    console.log("[v0] loadAdminDataset: Carregamento completo");
+    return result;
+  } catch (error) {
+    console.error("[v0] loadAdminDataset erro:", error instanceof Error ? error.message : String(error));
+    throw error;
+  }
 }
 
 async function handleRequest(req: NextRequest, path: string[]) {
@@ -457,7 +473,16 @@ async function handleRequest(req: NextRequest, path: string[]) {
     if (!auth.isAdmin) {
       return NextResponse.json({ error: "Acesso negado." }, { status: 403 });
     }
-    return NextResponse.json(await loadAdminDataset(db));
+    try {
+      const data = await loadAdminDataset(db);
+      return NextResponse.json(data);
+    } catch (error) {
+      console.error("[v0] GET admin/todos erro:", error instanceof Error ? error.message : String(error), error);
+      return NextResponse.json(
+        { error: error instanceof Error ? error.message : "Erro ao carregar dados do painel", debug: String(error) },
+        { status: 500 }
+      );
+    }
   }
 
   if (route === "admin/settings/simulador" && req.method === "GET") {
