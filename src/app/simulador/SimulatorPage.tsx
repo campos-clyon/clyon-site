@@ -683,43 +683,51 @@ export default function SimulatorPage() {
                     Pode escrever tudo de uma vez ou usar o <span className="font-medium">+</span> para adicionar fotos
                   </p>
 
-                  {/* Strip de resumo mobile — só aparece quando há dados preenchidos */}
-                  {filledCount > 0 && (
-                    <button
-                      type="button"
-                      onClick={() => setShowMobileDrawer(true)}
-                      className="lg:hidden w-full mt-2 flex items-center gap-1.5 bg-[#F0F9FF] border border-[#BAE6FD] rounded-lg px-2.5 py-1.5 text-left hover:bg-[#E0F2FE] transition-colors"
-                    >
-                      <svg className="w-3 h-3 text-[#0487D9] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                      </svg>
-                      <div className="flex-1 flex items-center gap-1.5 overflow-hidden min-w-0">
-                        {/* Chips dos campos preenchidos */}
-                        {order.serviceType && (
-                          <span className="text-[10px] bg-white border border-[#BAE6FD] text-[#0487D9] px-1.5 py-0.5 rounded-full whitespace-nowrap font-medium">
-                            {order.serviceType.replace(/_/g, " ")}
-                          </span>
-                        )}
-                        {order.floor && (
-                          <span className="text-[10px] bg-white border border-[#BAE6FD] text-[#0487D9] px-1.5 py-0.5 rounded-full whitespace-nowrap font-medium">
-                            {order.floor}
-                          </span>
-                        )}
-                        {order.address?.formattedAddress && (
-                          <span className="text-[10px] bg-white border border-[#BAE6FD] text-[#0487D9] px-1.5 py-0.5 rounded-full whitespace-nowrap font-medium truncate max-w-[100px]">
-                            {order.address.formattedAddress}
-                          </span>
-                        )}
-                        {order.urgency && (
-                          <span className="text-[10px] bg-white border border-[#BAE6FD] text-[#0487D9] px-1.5 py-0.5 rounded-full whitespace-nowrap font-medium">
-                            {order.urgency === "today" ? "Urgente hoje" : order.urgency === "tomorrow" ? "Amanhã" : order.urgency === "this_week" ? "Esta semana" : "Flexível"}
-                          </span>
-                        )}
-                      </div>
-                      <span className="text-[10px] text-[#0487D9] font-semibold flex-shrink-0">
-                        {filledCount} campo{filledCount !== 1 ? "s" : ""} ›
-                      </span>
-                    </button>
+                  {/* Footer de estimativa mobile — só aparece quando há estimativa ou está a calcular */}
+                  {(estimate || estimateLoading) && (
+                    <div className="lg:hidden mt-2 w-full rounded-xl border border-[#BAE6FD] bg-[#F0F9FF] overflow-hidden">
+                      {estimateLoading ? (
+                        <div className="flex items-center gap-2 px-3 py-2.5">
+                          <svg className="w-3.5 h-3.5 text-[#0487D9] animate-spin flex-shrink-0" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                          </svg>
+                          <span className="text-[11px] text-[#0487D9] font-medium">A calcular estimativa...</span>
+                        </div>
+                      ) : estimate?.estimatedPriceWithVat != null ? (
+                        <div className="flex items-center justify-between px-3 py-2.5 gap-2">
+                          <div className="min-w-0">
+                            <p className="text-[10px] text-[#64748B] font-medium uppercase tracking-wide leading-none mb-0.5">Estimativa</p>
+                            <p className="text-[15px] font-bold text-[#0487D9] leading-none">
+                              {estimate.estimatedPriceWithVat.toLocaleString("pt-PT", { style: "currency", currency: "EUR" })}
+                              <span className="text-[10px] font-normal text-[#94A3B8] ml-1">c/ IVA</span>
+                            </p>
+                            {estimate.estimatedPriceWithoutVat != null && (
+                              <p className="text-[10px] text-[#94A3B8] leading-none mt-0.5">
+                                {estimate.estimatedPriceWithoutVat.toLocaleString("pt-PT", { style: "currency", currency: "EUR" })} s/ IVA
+                              </p>
+                            )}
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setShowMobileDrawer(true)}
+                            className="flex-shrink-0 text-[11px] font-semibold text-[#0487D9] border border-[#BAE6FD] bg-white rounded-lg px-2.5 py-1.5 hover:bg-[#EFF8FF] transition-colors whitespace-nowrap"
+                          >
+                            Ver detalhes
+                          </button>
+                        </div>
+                      ) : estimate?.status === "onsite_required" ? (
+                        <div className="flex items-center gap-2 px-3 py-2.5">
+                          <svg className="w-3.5 h-3.5 text-[#F59E0B] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          <span className="text-[11px] text-[#92400E] font-medium">Requer visita presencial</span>
+                          <button type="button" onClick={() => setShowMobileDrawer(true)} className="ml-auto flex-shrink-0 text-[11px] font-semibold text-[#0487D9] border border-[#BAE6FD] bg-white rounded-lg px-2.5 py-1.5 hover:bg-[#EFF8FF] transition-colors whitespace-nowrap">
+                            Ver detalhes
+                          </button>
+                        </div>
+                      ) : null}
+                    </div>
                   )}
                 </div>
 
@@ -742,13 +750,13 @@ export default function SimulatorPage() {
 
 
 
-            {/* Drawer mobile — resumo + estimativa */}
+            {/* Drawer mobile — só estimativa detalhada */}
             {showMobileDrawer && (
               <div className="lg:hidden fixed inset-0 z-40 flex flex-col justify-end">
                 <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShowMobileDrawer(false)} />
                 <div className="relative bg-[#F7FBFF] rounded-t-2xl max-h-[85dvh] overflow-y-auto p-4 space-y-3">
                   <div className="flex items-center justify-between mb-1">
-                    <h2 className="text-[14px] font-bold text-[#102033]">Resumo do pedido</h2>
+                    <h2 className="text-[14px] font-bold text-[#102033]">Estimativa de preço</h2>
                     <button
                       type="button"
                       onClick={() => setShowMobileDrawer(false)}
@@ -759,7 +767,6 @@ export default function SimulatorPage() {
                       </svg>
                     </button>
                   </div>
-                  <OrderSummaryCard key={`summary-mob-${resetVersion}`} order={order} />
                   <EstimateCard
                     key={`estimate-mob-${resetVersion}`}
                     estimate={estimate}
