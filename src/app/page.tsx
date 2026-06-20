@@ -20,6 +20,7 @@ import RotatingHeroCopy from "@/components/RotatingHeroCopy";
 import { InstagramFeed } from "@/components/InstagramFeed";
 import ImageCarousel from "@/components/ImageCarousel";
 import { getHeroCarouselImages } from "@/lib/work-gallery";
+import HeroCTAButton from "@/components/HeroCTAButton";
 
 export const metadata: Metadata = {
   title: "CLYON — Recolha de Móveis, Entulho, Monos e Esvaziamento de Casas em Lisboa e Setúbal",
@@ -244,12 +245,7 @@ export default async function HomePage() {
               </p>
 
               <div className="mt-6 flex flex-col gap-2 sm:flex-row">
-                <Link
-                  href="/simulador"
-                  className="inline-flex h-[46px] items-center justify-center gap-2 rounded-xl bg-[#0891b2] px-6 text-sm font-semibold text-white shadow-lg shadow-cyan-600/25 transition-all hover:-translate-y-0.5 hover:bg-[#0e7490] hover:shadow-xl"
-                >
-                  <span className="text-white">Pedir Orçamento Grátis</span>
-                </Link>
+                <HeroCTAButton />
                 <a
                   href="https://wa.me/351965785395?text=Ol%C3%A1!%20Gostava%20de%20pedir%20um%20or%C3%A7amento%20%C3%A0%20CLYON."
                   target="_blank"
