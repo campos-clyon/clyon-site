@@ -71,7 +71,7 @@ type PeriodoStats = {
 type Colaborador = {
   id: number;
   nome: string;
-  funcao: "motorista" | "ajudante" | "admin";
+  funcao: "motorista" | "ajudante" | "admin" | "assistente";
   valorHora: string;
   isAdmin: number;
   createdAt?: string;
@@ -154,7 +154,7 @@ type EventTotals = {
   total?: number;
 };
 
-const functionOptions: Array<Colaborador["funcao"]> = ["admin", "motorista", "ajudante"];
+const functionOptions: Array<Colaborador["funcao"]> = ["admin", "assistente", "motorista", "ajudante"];
 
 const adminNavItems: Array<{
   id: AdminSection;
@@ -392,6 +392,7 @@ const getInitials = (name: string) =>
 
 const formatRoleLabel = (role: Colaborador["funcao"]) => {
   if (role === "admin") return "Administrador";
+  if (role === "assistente") return "Assistente";
   if (role === "motorista") return "Motorista";
   return "Ajudante";
 };
@@ -527,7 +528,9 @@ export default function ColaboradorAdminClient() {
   const [pedidoStatusFilter, setPedidoStatusFilter] = useState("todos");
   const [pedidoSearch, setPedidoSearch] = useState("");
   const [pedidoSearchDebounced, setPedidoSearchDebounced] = useState("");
-  const [pedidoSearchDebounced, setPedidoSearchDebounced] = useState("");
+  const [selectedPedido, setSelectedPedido] = useState<SimulatorOrder | null>(null);
+  const [pedidoDetalheOpen, setPedidoDetalheOpen] = useState(false);
+  const [assistentes, setAssistentes] = useState<Array<{ id: number; nome: string; funcao: string }>>([]);
   const pedidoSearchRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const handlePedidoSearch = (value: string) => {
     setPedidoSearch(value);
@@ -551,16 +554,19 @@ export default function ColaboradorAdminClient() {
       return;
     }
 
-    if (storedIsAdmin !== "1") {
-      router.push("/colaboradores/dashboard");
-      return;
-    }
-
     setToken(storedToken);
     setAdminNome(storedNome || "Administração");
-    void carregarDados(storedToken);
-    void carregarSimulatorSettings(storedToken);
-    void carregarImageStats(storedToken);
+
+    // Admin completo carrega dados da equipa e configurações; assistente começa na aba pedidos
+    if (storedIsAdmin === "1") {
+      void carregarDados(storedToken);
+      void carregarSimulatorSettings(storedToken);
+      void carregarImageStats(storedToken);
+    } else {
+      // Assistente só tem acesso à aba pedidos
+      setActiveSection("pedidos");
+      setLoading(false);
+    }
 
     return () => {
       document.head.removeChild(metaRobots);
