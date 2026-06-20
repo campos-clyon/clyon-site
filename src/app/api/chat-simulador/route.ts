@@ -1,7 +1,8 @@
-import { GoogleGenAI } from "@google/genai";
+import { generateText } from "ai";
 import { NextRequest, NextResponse } from "next/server";
 
-const MODEL = process.env.GEMINI_MODEL || "gemini-2.5-flash";
+// Modelo via Vercel AI Gateway — sem quota do tier gratuito
+const MODEL = process.env.CHAT_MODEL || "google/gemini-2.0-flash";
 
 const SYSTEM_INSTRUCTION = `És o Orçamentista da CLYON — um assistente especializado EXCLUSIVAMENTE em recolha de móveis, monos, entulho, esvaziamentos e mudanças em Portugal.
 
@@ -37,101 +38,85 @@ Recolhe-os pela ordem indicada, um de cada vez:
 - Tudo preenchido: "Perfeito, já tenho toda a informação. Vou precisar dos seus dados de contacto e morada." [ABRIR_FORMULARIO]`;
 
 
-type MessagePart =
+type MsgPart =
   | { text: string }
   | { inlineData: { mimeType: string; data: string } };
 
-type Message = {
+type IncomingMessage = {
   role: "user" | "assistant";
-  content: string | MessagePart[];
+  content: string | MsgPart[];
 };
 
 export const runtime = "nodejs";
 
 export async function POST(request: NextRequest) {
-  if (!process.env.GEMINI_API_KEY && !process.env.GOOGLE_API_KEY) {
-    return NextResponse.json(
-      { error: "GEMINI_KEY_MISSING" },
-      { status: 503 }
-    );
-  }
-
   try {
-    const body = (await request.json()) as { messages: Message[]; order?: Record<string, unknown> };
+    const body = (await request.json()) as {
+      messages: IncomingMessage[];
+      order?: Record<string, unknown>;
+    };
     const { messages, order } = body;
 
-    if (!messages || !Array.isArray(messages)) {
+    if (!messages || !Array.isArray(messages) || messages.length === 0) {
       return NextResponse.json({ error: "Formato inválido" }, { status: 400 });
     }
 
-    // Injectar contexto do order já recolhido como mensagem de sistema adicional
+    // Contexto do pedido já recolhido — passado ao Gemini para não repetir perguntas
     const knownFields: string[] = [];
     if (order) {
       if (order.serviceType) knownFields.push(`Serviço: ${order.serviceType}`);
       if (order.description) knownFields.push(`Descrição: ${order.description}`);
       if (order.floor) knownFields.push(`Andar: ${order.floor}`);
-      if (order.hasElevator) knownFields.push(`Elevador: ${order.hasElevator}`);
-      if (order.parkingDistance) knownFields.push(`Estacionamento: ${order.parkingDistance}`);
+      if (order.hasElevator && order.hasElevator !== "unknown") knownFields.push(`Elevador: ${order.hasElevator}`);
+      if (order.parkingDistance && order.parkingDistance !== "unknown") knownFields.push(`Estacionamento: ${order.parkingDistance}`);
       if (order.urgency) knownFields.push(`Urgência: ${order.urgency}`);
       if (order.city) knownFields.push(`Cidade: ${order.city}`);
-      if ((order.receiver as { name?: string })?.name) knownFields.push(`Nome: ${(order.receiver as { name?: string }).name}`);
+      const receiver = order.receiver as { name?: string; phone?: string } | undefined;
+      if (receiver?.name) knownFields.push(`Nome: ${receiver.name}`);
+      if (receiver?.phone) knownFields.push(`Telefone: ${receiver.phone}`);
     }
 
-    const apiKey =
-      process.env.GEMINI_API_KEY ?? process.env.GOOGLE_API_KEY ?? "";
-    const ai = new GoogleGenAI({ apiKey });
-
-    // Converter histórico para o formato do novo SDK
-    const contents = messages.map((msg) => ({
-      role: msg.role === "user" ? "user" : "model",
-      parts: Array.isArray(msg.content)
-        ? (msg.content as MessagePart[]).map((part) => {
-            if ("inlineData" in part) {
-              return {
-                inlineData: {
-                  mimeType: part.inlineData.mimeType,
-                  data: part.inlineData.data,
-                },
-              };
-            }
-            return { text: (part as { text: string }).text || "" };
-          })
-        : [{ text: String(msg.content) }],
-    }));
-
-    // Gemini exige que o histórico comece com role 'user' — remover mensagens
-    // 'model' iniciais (como a saudação automática da IA)
-    const historyRaw = contents.slice(0, -1);
-    const firstUserIdx = historyRaw.findIndex((m) => m.role === "user");
-    const safeHistory = firstUserIdx === -1 ? [] : historyRaw.slice(firstUserIdx);
-
-    const lastMsg = contents[contents.length - 1];
-
     const systemWithContext = knownFields.length > 0
-      ? `${SYSTEM_INSTRUCTION}\n\nDADOS JÁ RECOLHIDOS (não perguntes sobre estes):\n${knownFields.join("\n")}`
+      ? `${SYSTEM_INSTRUCTION}\n\nDADOS JÁ RECOLHIDOS (não voltes a perguntar sobre estes campos):\n${knownFields.join("\n")}`
       : SYSTEM_INSTRUCTION;
 
-    const response = await ai.models.generateContent({
-      model: MODEL,
-      config: {
-        systemInstruction: systemWithContext,
-      },
-      contents: [
-        ...safeHistory,
-        { role: lastMsg.role, parts: lastMsg.parts },
-      ],
+    // Converter para formato ModelMessage do AI SDK
+    // AI SDK espera { role, content } onde content é string ou array de parts
+    const modelMessages = messages.map((msg) => {
+      const role = msg.role === "assistant" ? "assistant" : "user";
+      if (typeof msg.content === "string") {
+        return { role, content: msg.content } as { role: "user" | "assistant"; content: string };
+      }
+      // Conteúdo multimodal (texto + imagens)
+      const parts = (msg.content as MsgPart[]).map((part) => {
+        if ("inlineData" in part) {
+          return {
+            type: "image" as const,
+            image: `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`,
+          };
+        }
+        return { type: "text" as const, text: part.text };
+      });
+      return { role, content: parts } as { role: "user" | "assistant"; content: typeof parts };
     });
 
-    const responseText = response.text ?? "";
+    // Garantir que o histórico começa com 'user' (exigência da API)
+    const firstUserIdx = modelMessages.findIndex((m) => m.role === "user");
+    const safeMessages = firstUserIdx >= 0 ? modelMessages.slice(firstUserIdx) : modelMessages;
 
-    return NextResponse.json({ message: responseText, role: "assistant" });
+    const { text } = await generateText({
+      model: MODEL,
+      system: systemWithContext,
+      messages: safeMessages,
+    });
+
+    return NextResponse.json({ message: text ?? "", role: "assistant" });
   } catch (error) {
-    console.error("[chat-simulador] Erro detalhado do Gemini:", error);
+    console.error("[chat-simulador] Erro:", error);
     return NextResponse.json(
       {
-        error: "GEMINI_REQUEST_FAILED",
-        customerMessage:
-          "Não consegui calcular a estimativa agora. Pode continuar a enviar os detalhes e a equipa CLYON confirma o valor.",
+        error: "AI_REQUEST_FAILED",
+        customerMessage: "Não consegui processar o pedido agora. Tente novamente ou contacte a CLYON diretamente.",
       },
       { status: 500 }
     );
