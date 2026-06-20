@@ -531,15 +531,40 @@ async function ensureSimulatorOrdersTable() {
       estimateJson TEXT,
       distanceKm DECIMAL(8,2),
       distanceText VARCHAR(60),
-      status ENUM('pendente','aprovado','rejeitado','em_execucao','concluido','cancelado') NOT NULL DEFAULT 'pendente',
+      status VARCHAR(40) NOT NULL DEFAULT 'pendente',
+      priority VARCHAR(20) DEFAULT 'normal',
       notasInternas TEXT,
       precoFinal DECIMAL(10,2),
+      precoFinalIva DECIMAL(10,2),
+      mensagemCliente TEXT,
+      assignedToId INT,
+      assignedToName VARCHAR(120),
+      assignedAt TIMESTAMP NULL DEFAULT NULL,
+      chatJson LONGTEXT,
+      historyJson LONGTEXT,
+      reviewJson TEXT,
       colaboradorId INT,
       dataAgendada TIMESTAMP NULL DEFAULT NULL,
       createdAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
       updatedAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
     )
   `);
+  // Migração: adicionar colunas novas se a tabela já existia (sem falhar se já existem)
+  const migrations = [
+    `ALTER TABLE simulatorOrders MODIFY COLUMN status VARCHAR(40) NOT NULL DEFAULT 'pendente'`,
+    `ALTER TABLE simulatorOrders ADD COLUMN IF NOT EXISTS priority VARCHAR(20) DEFAULT 'normal'`,
+    `ALTER TABLE simulatorOrders ADD COLUMN IF NOT EXISTS precoFinalIva DECIMAL(10,2)`,
+    `ALTER TABLE simulatorOrders ADD COLUMN IF NOT EXISTS mensagemCliente TEXT`,
+    `ALTER TABLE simulatorOrders ADD COLUMN IF NOT EXISTS assignedToId INT`,
+    `ALTER TABLE simulatorOrders ADD COLUMN IF NOT EXISTS assignedToName VARCHAR(120)`,
+    `ALTER TABLE simulatorOrders ADD COLUMN IF NOT EXISTS assignedAt TIMESTAMP NULL DEFAULT NULL`,
+    `ALTER TABLE simulatorOrders ADD COLUMN IF NOT EXISTS chatJson LONGTEXT`,
+    `ALTER TABLE simulatorOrders ADD COLUMN IF NOT EXISTS historyJson LONGTEXT`,
+    `ALTER TABLE simulatorOrders ADD COLUMN IF NOT EXISTS reviewJson TEXT`,
+  ];
+  for (const sql of migrations) {
+    try { await pool.execute(sql); } catch {}
+  }
   _simulatorOrdersEnsured = true;
 }
 
@@ -636,6 +661,127 @@ export async function countSimulatorOrdersByStatus(): Promise<Record<string, num
     result[row.status] = Number(row.total);
   }
   return result;
+}
+
+// ─── Assistentes (colaboradores que gerem pedidos) ───────────────────────────
+
+export async function getActiveAssistants(): Promise<Array<{ id: number; nome: string; funcao: string; isAdmin: number }>> {
+  const pool = await getPool();
+  if (!pool) return [];
+  const [rows] = await pool.execute(
+    "SELECT id, nome, funcao, isAdmin FROM colaboradores ORDER BY nome ASC"
+  ) as any[];
+  return rows as any[];
+}
+
+export async function countActiveOrdersByAssistant(): Promise<Record<number, number>> {
+  await ensureSimulatorOrdersTable();
+  const pool = await getPool();
+  if (!pool) return {};
+  const [rows] = await pool.execute(
+    `SELECT assignedToId, COUNT(*) AS total FROM simulatorOrders
+     WHERE assignedToId IS NOT NULL
+       AND status NOT IN ('confirmado','concluido','cancelado','rejeitado')
+     GROUP BY assignedToId`
+  ) as any[];
+  const result: Record<number, number> = {};
+  for (const row of rows as any[]) result[Number(row.assignedToId)] = Number(row.total);
+  return result;
+}
+
+export async function pickLeastLoadedAssistant(): Promise<{ id: number; nome: string } | null> {
+  const [assistants, counts] = await Promise.all([getActiveAssistants(), countActiveOrdersByAssistant()]);
+  if (!assistants.length) return null;
+  let best: { id: number; nome: string } | null = null;
+  let bestCount = Infinity;
+  for (const a of assistants) {
+    const c = counts[a.id] ?? 0;
+    if (c < bestCount) { bestCount = c; best = { id: a.id, nome: a.nome }; }
+  }
+  return best;
+}
+
+export async function appendOrderHistory(
+  orderId: number,
+  entry: { type: string; by?: { id: number; nome: string; role: string } | null; message: string }
+): Promise<void> {
+  await ensureSimulatorOrdersTable();
+  const pool = await getPool();
+  if (!pool) return;
+  const now = new Date().toISOString();
+  const [rows] = await pool.execute("SELECT historyJson FROM simulatorOrders WHERE id = ? LIMIT 1", [orderId]) as any[];
+  const existing: any[] = [];
+  try { if ((rows as any[])[0]?.historyJson) existing.push(...JSON.parse((rows as any[])[0].historyJson)); } catch {}
+  existing.push({ ...entry, createdAt: now });
+  await pool.execute("UPDATE simulatorOrders SET historyJson=?, updatedAt=NOW() WHERE id=?", [JSON.stringify(existing), orderId]);
+}
+
+export async function assignSimulatorOrder(
+  orderId: number,
+  assignee: { id: number; nome: string } | null,
+  actor: { id: number; nome: string; role: string } | null
+): Promise<void> {
+  await ensureSimulatorOrdersTable();
+  const pool = await getPool();
+  if (!pool) return;
+  const newStatus = assignee ? "atribuido" : "pendente";
+  const message = assignee
+    ? `Pedido atribuído automaticamente a ${assignee.nome}.`
+    : "Pedido sem assistente atribuído.";
+  const [rows] = await pool.execute("SELECT historyJson FROM simulatorOrders WHERE id = ? LIMIT 1", [orderId]) as any[];
+  const existing: any[] = [];
+  try { if ((rows as any[])[0]?.historyJson) existing.push(...JSON.parse((rows as any[])[0].historyJson)); } catch {}
+  existing.push({ type: "assigned", by: actor ?? null, message, createdAt: new Date().toISOString() });
+  await pool.execute(
+    `UPDATE simulatorOrders SET assignedToId=?, assignedToName=?, assignedAt=?, status=?, historyJson=?, updatedAt=NOW() WHERE id=?`,
+    [assignee?.id ?? null, assignee?.nome ?? null, assignee ? new Date() : null, newStatus, JSON.stringify(existing), orderId]
+  );
+}
+
+export async function approveSimulatorOrder(
+  orderId: number,
+  data: { precoFinal: number; precoFinalIva: number; mensagemCliente: string; notasInternas?: string; reviewedBy: { id: number; nome: string; role: string } }
+): Promise<void> {
+  await ensureSimulatorOrdersTable();
+  const pool = await getPool();
+  if (!pool) return;
+  const reviewJson = JSON.stringify({ ...data, reviewedAt: new Date().toISOString() });
+  await pool.execute(
+    `UPDATE simulatorOrders SET status='aprovado', precoFinal=?, precoFinalIva=?, mensagemCliente=?, notasInternas=COALESCE(?,notasInternas), reviewJson=?, updatedAt=NOW() WHERE id=?`,
+    [data.precoFinal, data.precoFinalIva, data.mensagemCliente, data.notasInternas ?? null, reviewJson, orderId]
+  );
+  await appendOrderHistory(orderId, {
+    type: "approved",
+    by: data.reviewedBy,
+    message: `Pedido aprovado por ${data.reviewedBy.nome}. Valor: ${data.precoFinal}€ + IVA.`,
+  });
+}
+
+export async function getSimulatorOrdersByAssistant(assignedToId: number): Promise<SimulatorOrder[]> {
+  await ensureSimulatorOrdersTable();
+  const pool = await getPool();
+  if (!pool) return [];
+  const [rows] = await pool.execute(
+    "SELECT * FROM simulatorOrders WHERE assignedToId = ? OR assignedToId IS NULL ORDER BY createdAt DESC LIMIT 200",
+    [assignedToId]
+  ) as any[];
+  return rows as SimulatorOrder[];
+}
+
+export function calculateOrderPriority(order: {
+  urgency?: string | null;
+  description?: string | null;
+  estimateTotal?: string | null;
+}): "baixa" | "normal" | "alta" | "urgente" {
+  const desc = (order.description ?? "").toLowerCase();
+  const urgency = (order.urgency ?? "").toLowerCase();
+  if (urgency.includes("hoje") || urgency.includes("urgente")) return "urgente";
+  if (urgency.includes("amanh")) return "alta";
+  if (desc.includes("casa cheia") || desc.includes("esvaziamento") || desc.includes("obra pesada")) return "alta";
+  const total = parseFloat(order.estimateTotal ?? "0");
+  if (total > 400) return "alta";
+  if (!order.description && !order.urgency) return "baixa";
+  return "normal";
 }
 
 // ─── SimulatorOrders END ──────────────────────────────────────────────────────

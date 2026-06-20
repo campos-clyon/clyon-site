@@ -91,7 +91,29 @@ export type InsertGalleryMedia = typeof galleryMedia.$inferInsert;
 
 // ─── SimulatorOrders (gerido com raw SQL — só os tipos aqui) ─────────────────
 
-export type OrderStatus = "pendente" | "aprovado" | "rejeitado" | "em_execucao" | "concluido" | "cancelado";
+export type OrderStatus =
+  | "pendente"
+  | "atribuido"
+  | "em_analise"
+  | "precisa_info"
+  | "estimativa_pronta"
+  | "presencial_recomendado"
+  | "aprovado"
+  | "enviado_cliente"
+  | "confirmado"
+  | "em_execucao"
+  | "concluido"
+  | "cancelado"
+  | "rejeitado";
+
+export type OrderPriority = "baixa" | "normal" | "alta" | "urgente";
+
+export interface OrderHistoryEntry {
+  type: string;
+  by?: { id: number; nome: string; role: string } | null;
+  message: string;
+  createdAt: string;
+}
 
 export interface SimulatorOrder {
   id: number;
@@ -114,8 +136,17 @@ export interface SimulatorOrder {
   distanceKm?: string | null;
   distanceText?: string | null;
   status: OrderStatus;
+  priority?: OrderPriority | null;
   notasInternas?: string | null;
   precoFinal?: string | null;
+  precoFinalIva?: string | null;
+  mensagemCliente?: string | null;
+  assignedToId?: number | null;
+  assignedToName?: string | null;
+  assignedAt?: Date | null;
+  chatJson?: string | null;
+  historyJson?: string | null;
+  reviewJson?: string | null;
   colaboradorId?: number | null;
   dataAgendada?: Date | null;
   createdAt: Date;
@@ -142,8 +173,17 @@ export interface InsertSimulatorOrder {
   distanceKm?: string | null;
   distanceText?: string | null;
   status?: OrderStatus;
+  priority?: OrderPriority | null;
   notasInternas?: string | null;
   precoFinal?: string | null;
+  precoFinalIva?: string | null;
+  mensagemCliente?: string | null;
+  assignedToId?: number | null;
+  assignedToName?: string | null;
+  assignedAt?: Date | null;
+  chatJson?: string | null;
+  historyJson?: string | null;
+  reviewJson?: string | null;
   colaboradorId?: number | null;
   dataAgendada?: Date | null;
 }
