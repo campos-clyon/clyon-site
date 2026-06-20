@@ -840,7 +840,7 @@ export default function SimulatorPage() {
 
       {/* Modal de confirmação de reset */}
       {showResetConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShowResetConfirm(false)} />
           <div className="relative bg-white rounded-2xl shadow-2xl border border-[#E2E8F0] w-full max-w-sm p-6">
             <div className="flex items-center gap-3 mb-3">

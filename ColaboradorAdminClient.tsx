@@ -493,7 +493,7 @@ export default function ColaboradorAdminClient() {
   const [savingLeadStatus, setSavingLeadStatus] = useState(false);
   const [leadsLastUpdate, setLeadsLastUpdate] = useState<Date | null>(null);
   const [activeLeadsTab, setActiveLeadsTab] = useState<"leads" | "eventos">("leads");
-  // ── Pedidos state ─────────────────────────────────────────���───────────────
+  // ── Pedidos state ───────────────────────────────────��─────���───────────────
   type SimulatorOrder = {
     id: number;
     serviceType?: string | null;
@@ -602,19 +602,24 @@ export default function ColaboradorAdminClient() {
   const carregarDados = async (authToken: string) => {
     try {
       setLoading(true);
+      setError(""); // Limpar erro anterior
       const response = await fetch("/api/colaboradores/admin/todos", {
         headers: { Authorization: `Bearer ${authToken}` },
       });
 
       if (!response.ok) {
-        throw new Error("Não foi possível carregar os dados do painel.");
+        const errorData = await response.json().catch(() => ({}));
+        console.error("[v0] carregarDados erro:", response.status, errorData);
+        throw new Error(errorData?.error || `Erro ao carregar dados: ${response.status}`);
       }
 
       const data = await response.json();
       setColaboradores(Array.isArray(data) ? data : data.colaboradores || []);
       setError("");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Não foi possível carregar os dados do painel.");
+      const errorMsg = err instanceof Error ? err.message : "Não foi possível carregar os dados do painel.";
+      console.error("[v0] carregarDados catch:", errorMsg);
+      setError(errorMsg);
     } finally {
       setLoading(false);
     }
@@ -1661,7 +1666,7 @@ export default function ColaboradorAdminClient() {
                     { label: "Novos", key: "pendente", color: "text-blue-400", bg: "bg-blue-400/10 border-blue-400/20" },
                     { label: "Atribuídos", key: "atribuido", color: "text-purple-400", bg: "bg-purple-400/10 border-purple-400/20" },
                     { label: "Em análise", key: "em_analise", color: "text-yellow-400", bg: "bg-yellow-400/10 border-yellow-400/20" },
-                    { label: "Aprovados", key: "aprovado", color: "text-emerald-400", bg: "bg-emerald-400/10 border-emerald-400/20" },
+                    { label: "Aprovados", key: "aprovado", color: "text-cyan-300 font-semibold", bg: "bg-cyan-400/15 border-cyan-400/30" },
                     { label: "Confirmados", key: "confirmado", color: "text-green-400", bg: "bg-green-400/10 border-green-400/20" },
                     { label: "Presencial", key: "presencial_recomendado", color: "text-orange-400", bg: "bg-orange-400/10 border-orange-400/20" },
                   ].map((m) => (
@@ -1702,7 +1707,7 @@ export default function ColaboradorAdminClient() {
                         pendente: "bg-blue-500/20 text-blue-300",
                         atribuido: "bg-purple-500/20 text-purple-300",
                         em_analise: "bg-yellow-500/20 text-yellow-300",
-                        aprovado: "bg-emerald-500/20 text-emerald-300",
+                        aprovado: "bg-cyan-500/20 text-cyan-200 font-semibold",
                         confirmado: "bg-green-500/20 text-green-300",
                         cancelado: "bg-slate-500/20 text-slate-400",
                         presencial_recomendado: "bg-orange-500/20 text-orange-300",
@@ -1972,7 +1977,7 @@ export default function ColaboradorAdminClient() {
                   { label: "Atribuídos", key: "atribuido", color: "text-purple-400", bg: "border-purple-400/20 bg-purple-400/10" },
                   { label: "Em análise", key: "em_analise", color: "text-yellow-400", bg: "border-yellow-400/20 bg-yellow-400/10" },
                   { label: "Sem assistente", key: "sem_assistente", color: "text-rose-400", bg: "border-rose-400/20 bg-rose-400/10" },
-                  { label: "Aprovados", key: "aprovado", color: "text-emerald-400", bg: "border-emerald-400/20 bg-emerald-400/10" },
+                  { label: "Aprovados", key: "aprovado", color: "text-cyan-300 font-semibold", bg: "border-cyan-400/30 bg-cyan-400/15" },
                   { label: "Confirmados", key: "confirmado", color: "text-green-400", bg: "border-green-400/20 bg-green-400/10" },
                   { label: "Presencial", key: "presencial_recomendado", color: "text-orange-400", bg: "border-orange-400/20 bg-orange-400/10" },
                 ].map((m) => (
@@ -2072,7 +2077,7 @@ export default function ColaboradorAdminClient() {
                             precisa_info: "bg-orange-500/20 text-orange-300 border-orange-500/30",
                             presencial_recomendado: "bg-red-500/20 text-red-300 border-red-500/30",
                             estimativa_pronta: "bg-cyan-500/20 text-cyan-300 border-cyan-500/30",
-                            aprovado: "bg-emerald-500/20 text-emerald-300 border-emerald-500/30",
+                            aprovado: "bg-cyan-500/20 text-cyan-200 border-cyan-500/30 font-semibold",
                             enviado_cliente: "bg-teal-500/20 text-teal-300 border-teal-500/30",
                             confirmado: "bg-green-500/20 text-green-300 border-green-500/30",
                             cancelado: "bg-slate-500/20 text-slate-400 border-slate-500/30",
