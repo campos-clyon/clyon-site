@@ -286,25 +286,46 @@ export async function getAllColaboradores() {
   return db.select().from(colaboradores);
 }
 
+export type ColaboradorFuncao = "motorista" | "ajudante" | "admin" | "assistente";
+
 export async function createColaborador(data: {
   nome: string;
   senha: string;
-  funcao: "motorista" | "ajudante" | "admin";
+  funcao: ColaboradorFuncao;
   valorHora: string;
   isAdmin?: number;
 }) {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-  await db.insert(colaboradores).values(data);
+  const pool = await getPool();
+  if (!pool) throw new Error("Database not available");
+  // Garantir que a coluna funcao aceita 'assistente' (migração inline)
+  try {
+    await pool.execute(
+      `ALTER TABLE colaboradores MODIFY COLUMN funcao ENUM('motorista','ajudante','admin','assistente') NOT NULL`
+    );
+  } catch {}
+  await pool.execute(
+    "INSERT INTO colaboradores (nome, senha, funcao, valorHora, isAdmin) VALUES (?, ?, ?, ?, ?)",
+    [data.nome, data.senha, data.funcao, data.valorHora, data.isAdmin ?? 0]
+  );
 }
 
 export async function updateColaborador(
   id: number,
-  data: Partial<{ nome: string; senha: string; funcao: "motorista" | "ajudante" | "admin"; valorHora: string; isAdmin: number }>
+  data: Partial<{ nome: string; senha: string; funcao: ColaboradorFuncao; valorHora: string; isAdmin: number }>
 ) {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-  await db.update(colaboradores).set(data).where(eq(colaboradores.id, id));
+  const pool = await getPool();
+  if (!pool) throw new Error("Database not available");
+  // Garantir que a coluna funcao aceita 'assistente'
+  try {
+    await pool.execute(
+      `ALTER TABLE colaboradores MODIFY COLUMN funcao ENUM('motorista','ajudante','admin','assistente') NOT NULL`
+    );
+  } catch {}
+  const fields = Object.keys(data) as Array<keyof typeof data>;
+  if (!fields.length) return;
+  const setParts = fields.map((f) => `${f} = ?`).join(", ");
+  const values = fields.map((f) => data[f]);
+  await pool.execute(`UPDATE colaboradores SET ${setParts}, updatedAt = NOW() WHERE id = ?`, [...values, id]);
 }
 
 export async function deleteColaborador(id: number) {
@@ -657,9 +678,17 @@ export async function countSimulatorOrdersByStatus(): Promise<Record<string, num
     "SELECT status, COUNT(*) AS total FROM simulatorOrders GROUP BY status"
   ) as any[];
   const result: Record<string, number> = {};
+  let grand = 0;
   for (const row of (rows as { status: string; total: string | number }[])) {
     result[row.status] = Number(row.total);
+    grand += Number(row.total);
   }
+  result["total"] = grand;
+  // Contar pedidos sem assistente
+  const [[semRow]] = await pool.execute(
+    "SELECT COUNT(*) AS total FROM simulatorOrders WHERE (assignedToId IS NULL OR assignedToId = 0) AND status NOT IN ('cancelado','confirmado','concluido','arquivado')"
+  ) as any[];
+  result["sem_assistente"] = Number(semRow?.total ?? 0);
   return result;
 }
 
@@ -813,6 +842,28 @@ export function calculateOrderPriority(order: {
   if (total > 400) return "alta";
   if (!order.description && !order.urgency) return "baixa";
   return "normal";
+}
+
+// ─── Helpers de permissão ────────────────────────────────────────────────────
+
+export function canViewRequest(
+  user: { isAdmin: number; id: number },
+  request: { assignedToId?: number | null }
+): boolean {
+  if (user.isAdmin) return true;
+  return request.assignedToId === user.id;
+}
+
+export function canEditRequest(
+  user: { isAdmin: number; id: number },
+  request: { assignedToId?: number | null }
+): boolean {
+  if (user.isAdmin) return true;
+  return request.assignedToId === user.id;
+}
+
+export function canManageUsers(user: { isAdmin: number }): boolean {
+  return !!user.isAdmin;
 }
 
 // ─── SimulatorOrders END ──────────────────────────────────────────────────────

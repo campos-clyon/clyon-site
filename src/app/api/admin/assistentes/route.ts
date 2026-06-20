@@ -24,7 +24,8 @@ export async function GET(req: NextRequest) {
   if (err) return err;
   const [assistants, counts] = await Promise.all([getActiveAssistants(), countActiveOrdersByAssistant()]);
   const enriched = assistants.map((a) => ({ ...a, activePedidos: counts[a.id] ?? 0 }));
-  return NextResponse.json({ assistants: enriched });
+  // Retorna ambos os campos para retrocompatibilidade
+  return NextResponse.json({ assistants: enriched, assistentes: enriched });
 }
 
 // POST — criar novo assistente

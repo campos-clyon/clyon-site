@@ -1,7 +1,7 @@
 "use client";
 
 import type { ComponentType, ReactNode } from "react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { clearColaboradorStorage, getColaboradorItem } from "@/lib/colaborador-storage";
 import {
@@ -19,6 +19,7 @@ import {
   Eye,
   EyeOff,
   ExternalLink,
+  FileText,
   Filter,
   History,
   ImagePlus,
@@ -97,7 +98,7 @@ type SimulatorSetting = {
   description?: string | null;
 };
 
-type AdminSection = "overview" | "team" | "hours" | "leads" | "site";
+type AdminSection = "overview" | "pedidos" | "team" | "hours" | "leads" | "site";
 
 type Lead = {
   id: number;
@@ -160,6 +161,7 @@ const adminNavItems: Array<{
   icon: ComponentType<{ className?: string }>;
 }> = [
   { id: "overview", icon: LayoutDashboard },
+  { id: "pedidos", icon: FileText },
   { id: "team", icon: Users },
   { id: "hours", icon: CalendarClock },
   { id: "leads", icon: TrendingUp },
@@ -168,6 +170,7 @@ const adminNavItems: Array<{
 
 const sectionLabels: Record<AdminSection, string> = {
   overview: "Início",
+  pedidos: "Pedidos",
   team: "Equipa",
   hours: "Horários",
   leads: "Leads",
@@ -482,6 +485,55 @@ export default function ColaboradorAdminClient() {
   const [savingLeadStatus, setSavingLeadStatus] = useState(false);
   const [leadsLastUpdate, setLeadsLastUpdate] = useState<Date | null>(null);
   const [activeLeadsTab, setActiveLeadsTab] = useState<"leads" | "eventos">("leads");
+  // ── Pedidos state ─────────────────────────────────────────────────────────
+  type SimulatorOrder = {
+    id: number;
+    serviceType?: string | null;
+    description?: string | null;
+    address?: string | null;
+    city?: string | null;
+    contactName?: string | null;
+    contactPhone?: string | null;
+    contactEmail?: string | null;
+    urgency?: string | null;
+    estimateMin?: string | null;
+    estimateMax?: string | null;
+    estimateTotal?: string | null;
+    estimateJson?: string | null;
+    distanceKm?: string | null;
+    distanceText?: string | null;
+    floor?: string | null;
+    hasElevator?: string | null;
+    parkingDistance?: string | null;
+    filesJson?: string | null;
+    chatJson?: string | null;
+    historyJson?: string | null;
+    status: string;
+    priority?: string | null;
+    notasInternas?: string | null;
+    precoFinal?: string | null;
+    precoFinalIva?: string | null;
+    mensagemCliente?: string | null;
+    assignedToId?: number | null;
+    assignedToName?: string | null;
+    assignedAt?: string | null;
+    createdAt: string;
+    updatedAt: string;
+  };
+  const [pedidos, setPedidos] = useState<SimulatorOrder[]>([]);
+  const [pedidosCounts, setPedidosCounts] = useState<Record<string, number>>({});
+  const [pedidosLoading, setPedidosLoading] = useState(false);
+  const [pedidosError, setPedidosError] = useState<string | null>(null);
+  const [pedidoStatusFilter, setPedidoStatusFilter] = useState("todos");
+  const [pedidoSearch, setPedidoSearch] = useState("");
+  const [pedidoSearchDebounced, setPedidoSearchDebounced] = useState("");
+  const [pedidoSearchDebounced, setPedidoSearchDebounced] = useState("");
+  const pedidoSearchRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const handlePedidoSearch = (value: string) => {
+    setPedidoSearch(value);
+    if (pedidoSearchRef.current) clearTimeout(pedidoSearchRef.current);
+    pedidoSearchRef.current = setTimeout(() => setPedidoSearchDebounced(value), 350);
+  };
   // ────────────────────────────────────────────────────────────────────────
 
   useEffect(() => {
@@ -588,6 +640,41 @@ export default function ColaboradorAdminClient() {
     }
   };
 
+  const carregarPedidos = async (authToken: string, status = "todos", search = "") => {
+    if (!authToken) return;
+    try {
+      setPedidosLoading(true);
+      setPedidosError(null);
+      const params = new URLSearchParams();
+      if (status && status !== "todos") params.set("status", status);
+      if (search) params.set("search", search);
+      const res = await fetch(`/api/admin/pedidos?${params}&_=${Date.now()}`, {
+        cache: "no-store",
+        headers: { Authorization: `Bearer ${authToken}` },
+      });
+      if (!res.ok) throw new Error("Erro ao carregar pedidos");
+      const data = await res.json();
+      setPedidos(data.orders ?? []);
+      setPedidosCounts(data.counts ?? {});
+    } catch {
+      setPedidosError("Não foi possível carregar os pedidos.");
+    } finally {
+      setPedidosLoading(false);
+    }
+  };
+
+  const carregarAssistentes = async (authToken: string) => {
+    try {
+      const res = await fetch("/api/admin/assistentes", {
+        headers: { Authorization: `Bearer ${authToken}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setAssistentes(data.assistentes ?? []);
+      }
+    } catch {}
+  };
+
   const carregarLeads = async (authToken: string, periodo = leadPeriodo, status = leadStatusFilter) => {
     if (!authToken) return;
     try {
@@ -663,6 +750,23 @@ export default function ColaboradorAdminClient() {
     return () => clearInterval(interval);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeSection, token, leadPeriodo, leadStatusFilter, leadEventTypeFilter]);
+
+  // Carregar pedidos quando a aba Pedidos fica activa
+  useEffect(() => {
+    if (activeSection !== "pedidos" || !token) return;
+    carregarPedidos(token, pedidoStatusFilter, pedidoSearchDebounced);
+    carregarAssistentes(token);
+    const interval = setInterval(() => carregarPedidos(token, pedidoStatusFilter, pedidoSearchDebounced), 20000);
+    return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeSection, token, pedidoStatusFilter, pedidoSearchDebounced]);
+
+  // Carregar resumo de pedidos para o overview (5 mais recentes)
+  useEffect(() => {
+    if (!token) return;
+    carregarPedidos(token, "todos", "");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token]);
 
   const colaboradoresFiltrados = useMemo(() => {
     if (filtroColaborador === "todos") return colaboradores;
@@ -1374,7 +1478,9 @@ export default function ColaboradorAdminClient() {
               </div>
               <div className="min-w-0">
                 <p className="truncate text-base font-semibold text-white">{adminNome}</p>
-                <p className="text-sm text-cyan-100/80">Administrador do sistema</p>
+                <p className="text-sm text-cyan-100/80">
+                  {adminNome.toUpperCase() === "WANDERSON" ? "Admin geral" : "Administrador"}
+                </p>
               </div>
               <Button
                 onClick={handleLogout}
@@ -1471,6 +1577,98 @@ export default function ColaboradorAdminClient() {
                 <SummaryStat icon={Briefcase} label="Registos" value={String(weekSummary.totalRegistos)} helper="turnos da semana" />
                 <SummaryStat icon={AlertTriangle} label="Pendentes" value={String(weekSummary.pendentes)} helper="por validar" tone="amber" />
                 <SummaryStat icon={CheckCircle2} label="Ativos hoje" value={String(weekSummary.ativosHoje)} helper="com registo hoje" tone="cyan" />
+              </section>
+
+              {/* Bloco de resumo de pedidos do simulador */}
+              <section className="rounded-[24px] border border-cyan-300/16 bg-[linear-gradient(135deg,rgba(9,27,43,0.96)_0%,rgba(12,34,52,0.94)_100%)] p-5 shadow-[0_20px_70px_rgba(3,10,18,0.24)]">
+                <div className="mb-4 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-blue-500 text-white">
+                      <FileText className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-[0.24em] text-cyan-200">Simulador</p>
+                      <h3 className="text-base font-semibold text-white">Pedidos do simulador</h3>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setActiveSection("pedidos")}
+                    className="flex items-center gap-2 rounded-[14px] border border-white/10 bg-white/[0.04] px-3 py-2 text-sm font-medium text-cyan-100 transition hover:bg-white/[0.08]"
+                  >
+                    Ver todos
+                    <ChevronRight className="h-4 w-4" />
+                  </button>
+                </div>
+                {/* Métricas rápidas */}
+                <div className="mb-4 grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
+                  {[
+                    { label: "Novos", key: "pendente", color: "text-blue-400", bg: "bg-blue-400/10 border-blue-400/20" },
+                    { label: "Atribuídos", key: "atribuido", color: "text-purple-400", bg: "bg-purple-400/10 border-purple-400/20" },
+                    { label: "Em análise", key: "em_analise", color: "text-yellow-400", bg: "bg-yellow-400/10 border-yellow-400/20" },
+                    { label: "Aprovados", key: "aprovado", color: "text-emerald-400", bg: "bg-emerald-400/10 border-emerald-400/20" },
+                    { label: "Confirmados", key: "confirmado", color: "text-green-400", bg: "bg-green-400/10 border-green-400/20" },
+                    { label: "Presencial", key: "presencial_recomendado", color: "text-orange-400", bg: "bg-orange-400/10 border-orange-400/20" },
+                  ].map((m) => (
+                    <button
+                      key={m.key}
+                      type="button"
+                      onClick={() => { setPedidoStatusFilter(m.key); setActiveSection("pedidos"); }}
+                      className={`flex flex-col items-center justify-center rounded-[16px] border px-2 py-3 transition hover:scale-105 ${m.bg}`}
+                    >
+                      <span className={`text-xl font-bold ${m.color}`}>{pedidosCounts[m.key] ?? 0}</span>
+                      <span className="mt-0.5 text-xs text-slate-400">{m.label}</span>
+                    </button>
+                  ))}
+                </div>
+                {/* Últimos 5 pedidos */}
+                {pedidosLoading ? (
+                  <div className="py-4 text-center text-sm text-slate-400">A carregar...</div>
+                ) : pedidos.length === 0 ? (
+                  <div className="rounded-2xl border border-dashed border-white/10 py-6 text-center text-sm text-slate-400">
+                    Nenhum pedido recebido ainda.
+                  </div>
+                ) : (
+                  <div className="space-y-1.5">
+                    {pedidos.slice(0, 5).map((p) => {
+                      const statusColors: Record<string, string> = {
+                        pendente: "bg-blue-500/20 text-blue-300",
+                        atribuido: "bg-purple-500/20 text-purple-300",
+                        em_analise: "bg-yellow-500/20 text-yellow-300",
+                        aprovado: "bg-emerald-500/20 text-emerald-300",
+                        confirmado: "bg-green-500/20 text-green-300",
+                        cancelado: "bg-slate-500/20 text-slate-400",
+                        presencial_recomendado: "bg-orange-500/20 text-orange-300",
+                      };
+                      const statusLabel: Record<string, string> = {
+                        pendente: "Novo",
+                        atribuido: "Atribuído",
+                        em_analise: "Em análise",
+                        aprovado: "Aprovado",
+                        confirmado: "Confirmado",
+                        cancelado: "Cancelado",
+                        presencial_recomendado: "Presencial",
+                        precisa_info: "Info",
+                      };
+                      return (
+                        <button
+                          key={p.id}
+                          type="button"
+                          onClick={() => { setSelectedPedido(p); setPedidoDetalheOpen(true); setActiveSection("pedidos"); }}
+                          className="flex w-full items-center gap-3 rounded-[14px] border border-white/10 bg-white/[0.03] px-3 py-2.5 text-left text-sm transition hover:border-cyan-400/30 hover:bg-white/[0.06]"
+                        >
+                          <span className="w-8 text-right text-xs font-mono text-slate-500">#{p.id}</span>
+                          <span className="flex-1 truncate font-medium text-white">{p.contactName ?? "—"}</span>
+                          <span className="hidden truncate text-slate-400 sm:block">{p.serviceType ?? "—"}</span>
+                          <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${statusColors[p.status] ?? "bg-slate-500/20 text-slate-400"}`}>
+                            {statusLabel[p.status] ?? p.status}
+                          </span>
+                          <ChevronRight className="h-3.5 w-3.5 shrink-0 text-slate-600" />
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
               </section>
 
               {/* Layout principal: colaboradores + lateral de pendências */}
@@ -1676,6 +1874,397 @@ export default function ColaboradorAdminClient() {
                 )}
               </ActionCard>
             </>
+          )}
+
+          {activeSection === "pedidos" && (
+            <section className="space-y-4 rounded-[28px] border border-cyan-300/16 bg-[linear-gradient(180deg,rgba(9,25,40,0.94)_0%,rgba(11,30,47,0.92)_100%)] p-5 shadow-[0_20px_70px_rgba(3,10,18,0.22)]">
+              <div className="flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.24em] text-cyan-200">
+                    Gestão de pedidos
+                  </p>
+                  <h2 className="mt-2 text-[1.85rem] font-semibold text-white">
+                    Pedidos do simulador
+                  </h2>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => carregarPedidos(token, pedidoStatusFilter, pedidoSearchDebounced)}
+                  className="flex h-11 items-center gap-2 rounded-[14px] border border-white/10 bg-white/[0.04] px-4 text-sm font-medium text-cyan-100 transition hover:bg-white/[0.08]"
+                >
+                  <RefreshCw className="h-4 w-4" />
+                  Actualizar
+                </button>
+              </div>
+
+              {/* Métricas de pedidos */}
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 xl:grid-cols-8">
+                {[
+                  { label: "Total", key: "total", color: "text-slate-300", bg: "border-white/10 bg-white/[0.04]" },
+                  { label: "Novos", key: "pendente", color: "text-blue-400", bg: "border-blue-400/20 bg-blue-400/10" },
+                  { label: "Atribuídos", key: "atribuido", color: "text-purple-400", bg: "border-purple-400/20 bg-purple-400/10" },
+                  { label: "Em análise", key: "em_analise", color: "text-yellow-400", bg: "border-yellow-400/20 bg-yellow-400/10" },
+                  { label: "Sem assistente", key: "sem_assistente", color: "text-rose-400", bg: "border-rose-400/20 bg-rose-400/10" },
+                  { label: "Aprovados", key: "aprovado", color: "text-emerald-400", bg: "border-emerald-400/20 bg-emerald-400/10" },
+                  { label: "Confirmados", key: "confirmado", color: "text-green-400", bg: "border-green-400/20 bg-green-400/10" },
+                  { label: "Presencial", key: "presencial_recomendado", color: "text-orange-400", bg: "border-orange-400/20 bg-orange-400/10" },
+                ].map((m) => (
+                  <button
+                    key={m.key}
+                    type="button"
+                    onClick={() => setPedidoStatusFilter(m.key === pedidoStatusFilter ? "todos" : m.key)}
+                    className={`flex flex-col items-center justify-center rounded-[16px] border px-2 py-3 transition hover:scale-105 ${m.bg} ${pedidoStatusFilter === m.key ? "ring-2 ring-cyan-400" : ""}`}
+                  >
+                    <span className={`text-2xl font-bold ${m.color}`}>{pedidosCounts[m.key] ?? 0}</span>
+                    <span className="mt-0.5 text-center text-xs text-slate-400">{m.label}</span>
+                  </button>
+                ))}
+              </div>
+
+              {/* Filtros e pesquisa */}
+              <div className="flex flex-col gap-2 sm:flex-row">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                  <input
+                    value={pedidoSearch}
+                    onChange={(e) => handlePedidoSearch(e.target.value)}
+                    placeholder="Pesquisar por nome, telefone, morada, serviço..."
+                    className="h-11 w-full rounded-[14px] border border-cyan-300/20 bg-[#0d1f35] pl-9 pr-4 text-sm font-medium text-white outline-none focus:border-cyan-400 [color-scheme:dark]"
+                  />
+                </div>
+                <select
+                  value={pedidoStatusFilter}
+                  onChange={(e) => setPedidoStatusFilter(e.target.value)}
+                  className="h-11 rounded-[14px] border border-cyan-300/20 bg-[#0d1f35] px-3 text-sm font-medium text-white outline-none focus:border-cyan-400 [color-scheme:dark]"
+                >
+                  <option value="todos">Todos</option>
+                  <option value="pendente">Novos</option>
+                  <option value="atribuido">Atribuídos</option>
+                  <option value="em_analise">Em análise</option>
+                  <option value="sem_assistente">Sem assistente</option>
+                  <option value="precisa_info">Precisa informação</option>
+                  <option value="presencial_recomendado">Presencial recomendado</option>
+                  <option value="estimativa_pronta">Estimativa pronta</option>
+                  <option value="aprovado">Aprovados</option>
+                  <option value="enviado_cliente">Enviados ao cliente</option>
+                  <option value="confirmado">Confirmados</option>
+                  <option value="cancelado">Cancelados</option>
+                </select>
+              </div>
+
+              {/* Lista de pedidos */}
+              {pedidosError && (
+                <div className="rounded-2xl border border-rose-400/30 bg-rose-400/10 p-4 text-sm text-rose-200">
+                  {pedidosError}
+                </div>
+              )}
+              {pedidosLoading ? (
+                <div className="py-10 text-center text-sm text-slate-400">A carregar pedidos...</div>
+              ) : pedidos.filter((p) => {
+                if (pedidoStatusFilter === "todos") return true;
+                if (pedidoStatusFilter === "sem_assistente") return !p.assignedToId;
+                return p.status === pedidoStatusFilter;
+              }).length === 0 ? (
+                <div className="rounded-2xl border border-dashed border-white/10 py-10 text-center text-sm text-slate-400">
+                  Nenhum pedido encontrado.
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[900px] border-separate border-spacing-y-1 text-sm">
+                    <thead>
+                      <tr>
+                        {["Nº", "Cliente", "Telefone", "Serviço", "Localidade", "Urgência", "Status", "Assistente", "Data", "Ação"].map((h) => (
+                          <th key={h} className="px-3 pb-2 text-left text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {pedidos
+                        .filter((p) => {
+                          if (pedidoStatusFilter === "sem_assistente") return !p.assignedToId;
+                          if (pedidoStatusFilter !== "todos") return p.status === pedidoStatusFilter;
+                          return true;
+                        })
+                        .map((p) => {
+                          const statusColors: Record<string, string> = {
+                            pendente: "bg-blue-500/20 text-blue-300 border-blue-500/30",
+                            atribuido: "bg-purple-500/20 text-purple-300 border-purple-500/30",
+                            em_analise: "bg-yellow-500/20 text-yellow-300 border-yellow-500/30",
+                            precisa_info: "bg-orange-500/20 text-orange-300 border-orange-500/30",
+                            presencial_recomendado: "bg-red-500/20 text-red-300 border-red-500/30",
+                            estimativa_pronta: "bg-cyan-500/20 text-cyan-300 border-cyan-500/30",
+                            aprovado: "bg-emerald-500/20 text-emerald-300 border-emerald-500/30",
+                            enviado_cliente: "bg-teal-500/20 text-teal-300 border-teal-500/30",
+                            confirmado: "bg-green-500/20 text-green-300 border-green-500/30",
+                            cancelado: "bg-slate-500/20 text-slate-400 border-slate-500/30",
+                          };
+                          const statusLabel: Record<string, string> = {
+                            pendente: "Novo",
+                            atribuido: "Atribuído",
+                            em_analise: "Em análise",
+                            precisa_info: "Precisa info",
+                            presencial_recomendado: "Presencial",
+                            estimativa_pronta: "Estimativa pronta",
+                            aprovado: "Aprovado",
+                            enviado_cliente: "Enviado",
+                            confirmado: "Confirmado",
+                            cancelado: "Cancelado",
+                          };
+                          const urgencyColors: Record<string, string> = {
+                            urgente: "text-rose-400",
+                            alta: "text-orange-400",
+                            normal: "text-slate-400",
+                            baixa: "text-slate-500",
+                          };
+                          return (
+                            <tr
+                              key={p.id}
+                              className="group cursor-pointer rounded-[16px] transition hover:bg-white/[0.04]"
+                              onClick={() => { setSelectedPedido(p); setPedidoDetalheOpen(true); }}
+                            >
+                              <td className="rounded-l-[14px] px-3 py-3 text-xs font-mono text-slate-500">#{p.id}</td>
+                              <td className="px-3 py-3 font-medium text-white">{p.contactName ?? "—"}</td>
+                              <td className="px-3 py-3 text-slate-300">{p.contactPhone ?? "—"}</td>
+                              <td className="px-3 py-3 text-slate-300">{p.serviceType ?? "—"}</td>
+                              <td className="px-3 py-3 text-slate-400">{p.city ?? "—"}</td>
+                              <td className={`px-3 py-3 font-semibold capitalize ${urgencyColors[p.urgency ?? "normal"] ?? "text-slate-400"}`}>{p.urgency ?? "—"}</td>
+                              <td className="px-3 py-3">
+                                <span className={`rounded-full border px-2 py-0.5 text-xs font-semibold ${statusColors[p.status] ?? "bg-slate-500/20 text-slate-400"}`}>
+                                  {statusLabel[p.status] ?? p.status}
+                                </span>
+                              </td>
+                              <td className="px-3 py-3 text-slate-400">{p.assignedToName ?? <span className="text-rose-400">Sem assistente</span>}</td>
+                              <td className="px-3 py-3 text-xs text-slate-500">{p.createdAt ? new Intl.DateTimeFormat("pt-PT", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }).format(new Date(p.createdAt)) : "—"}</td>
+                              <td className="rounded-r-[14px] px-3 py-3 text-right">
+                                <button
+                                  type="button"
+                                  className="rounded-[10px] border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs font-medium text-cyan-100 transition group-hover:border-cyan-400/30 group-hover:bg-cyan-400/10"
+                                  onClick={(e) => { e.stopPropagation(); setSelectedPedido(p); setPedidoDetalheOpen(true); }}
+                                >
+                                  Abrir
+                                </button>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </section>
+          )}
+
+          {/* Modal de detalhe do pedido */}
+          {pedidoDetalheOpen && selectedPedido && (
+            <div
+              className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/70 px-3 py-8 backdrop-blur-sm"
+              onClick={(e) => { if (e.target === e.currentTarget) setPedidoDetalheOpen(false); }}
+            >
+              <div className="w-full max-w-3xl rounded-[28px] border border-cyan-300/20 bg-[#07111d] p-6 shadow-[0_40px_120px_rgba(4,11,20,0.7)]">
+                <div className="mb-5 flex items-start justify-between gap-4">
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.24em] text-cyan-200">Pedido #{selectedPedido.id}</p>
+                    <h3 className="mt-1 text-xl font-semibold text-white">{selectedPedido.contactName ?? "Cliente"}</h3>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setPedidoDetalheOpen(false)}
+                    className="rounded-full border border-white/10 bg-white/[0.04] p-2 text-slate-400 transition hover:text-white"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+
+                <div className="grid gap-5 md:grid-cols-2">
+                  {/* Dados do cliente */}
+                  <div className="space-y-3 rounded-[20px] border border-white/10 bg-white/[0.03] p-4">
+                    <h4 className="text-xs font-semibold uppercase tracking-[0.2em] text-cyan-200">Dados do cliente</h4>
+                    <div className="space-y-2 text-sm">
+                      {[
+                        { label: "Nome", value: selectedPedido.contactName },
+                        { label: "Telefone", value: selectedPedido.contactPhone },
+                        { label: "Email", value: selectedPedido.contactEmail },
+                      ].map((row) => row.value ? (
+                        <div key={row.label} className="flex items-center justify-between gap-2">
+                          <span className="text-slate-500">{row.label}</span>
+                          <span className="font-medium text-white">{row.value}</span>
+                        </div>
+                      ) : null)}
+                    </div>
+                    {selectedPedido.contactPhone && (
+                      <a
+                        href={`https://wa.me/351${selectedPedido.contactPhone.replace(/\D/g, "")}?text=${encodeURIComponent(`Olá ${selectedPedido.contactName ?? ""}! Estamos a analisar o seu pedido #${selectedPedido.id} (${selectedPedido.serviceType ?? "serviço"}). Entraremos em contacto em breve.`)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="mt-2 flex w-full items-center justify-center gap-2 rounded-[14px] bg-emerald-500 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-400"
+                      >
+                        <Phone className="h-4 w-4" />
+                        Enviar WhatsApp
+                      </a>
+                    )}
+                  </div>
+
+                  {/* Dados do serviço */}
+                  <div className="space-y-3 rounded-[20px] border border-white/10 bg-white/[0.03] p-4">
+                    <h4 className="text-xs font-semibold uppercase tracking-[0.2em] text-cyan-200">Serviço</h4>
+                    <div className="space-y-2 text-sm">
+                      {[
+                        { label: "Tipo", value: selectedPedido.serviceType },
+                        { label: "Urgência", value: selectedPedido.urgency },
+                        { label: "Descrição", value: selectedPedido.description },
+                        { label: "Morada", value: selectedPedido.address },
+                        { label: "Localidade", value: selectedPedido.city },
+                        { label: "Andar", value: selectedPedido.floor },
+                        { label: "Elevador", value: selectedPedido.hasElevator },
+                        { label: "Distância", value: selectedPedido.distanceText },
+                      ].map((row) => row.value ? (
+                        <div key={row.label} className="flex items-start justify-between gap-2">
+                          <span className="shrink-0 text-slate-500">{row.label}</span>
+                          <span className="text-right font-medium text-white">{row.value}</span>
+                        </div>
+                      ) : null)}
+                    </div>
+                  </div>
+
+                  {/* Estimativa IA */}
+                  <div className="space-y-3 rounded-[20px] border border-white/10 bg-white/[0.03] p-4">
+                    <h4 className="text-xs font-semibold uppercase tracking-[0.2em] text-cyan-200">Estimativa IA</h4>
+                    <div className="space-y-2 text-sm">
+                      {[
+                        { label: "Mínimo", value: selectedPedido.estimateMin ? `${selectedPedido.estimateMin} €` : null },
+                        { label: "Máximo", value: selectedPedido.estimateMax ? `${selectedPedido.estimateMax} €` : null },
+                        { label: "Total", value: selectedPedido.estimateTotal ? `${selectedPedido.estimateTotal} €` : null },
+                      ].map((row) => row.value ? (
+                        <div key={row.label} className="flex items-center justify-between gap-2">
+                          <span className="text-slate-500">{row.label}</span>
+                          <span className="font-semibold text-emerald-400">{row.value}</span>
+                        </div>
+                      ) : null)}
+                    </div>
+                  </div>
+
+                  {/* Atribuição */}
+                  <div className="space-y-3 rounded-[20px] border border-white/10 bg-white/[0.03] p-4">
+                    <h4 className="text-xs font-semibold uppercase tracking-[0.2em] text-cyan-200">Atribuição</h4>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-slate-500">Assistente</span>
+                        <span className="font-medium text-white">{selectedPedido.assignedToName ?? <span className="text-rose-400">Sem assistente</span>}</span>
+                      </div>
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-slate-500">Status</span>
+                        <span className="font-medium text-white capitalize">{selectedPedido.status}</span>
+                      </div>
+                    </div>
+                    {assistentes.length > 0 && (
+                      <div className="mt-3">
+                        <p className="mb-1.5 text-xs text-slate-500">Reatribuir a:</p>
+                        <select
+                          defaultValue=""
+                          onChange={async (e) => {
+                            const assistenteId = e.target.value;
+                            if (!assistenteId || !token) return;
+                            try {
+                              const res = await fetch(`/api/admin/pedidos/${selectedPedido.id}/assign`, {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+                                body: JSON.stringify({ assistenteId: Number(assistenteId) }),
+                              });
+                              if (res.ok) {
+                                const data = await res.json();
+                                setSelectedPedido((prev) => prev ? { ...prev, assignedToId: data.assignedToId, assignedToName: data.assignedToName, status: "atribuido" } : prev);
+                                setPedidos((prev) => prev.map((p) => p.id === selectedPedido.id ? { ...p, assignedToId: data.assignedToId, assignedToName: data.assignedToName, status: "atribuido" } : p));
+                              }
+                            } catch {}
+                          }}
+                          className="h-10 w-full rounded-[12px] border border-cyan-300/20 bg-[#0d1f35] px-3 text-sm text-white outline-none focus:border-cyan-400 [color-scheme:dark]"
+                        >
+                          <option value="">Selecionar assistente</option>
+                          {assistentes.map((a) => (
+                            <option key={a.id} value={a.id}>{a.nome}</option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Botões de acção */}
+                <div className="mt-5 flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      if (!token) return;
+                      try {
+                        const res = await fetch(`/api/admin/pedidos/${selectedPedido.id}/approve`, {
+                          method: "POST",
+                          headers: { Authorization: `Bearer ${token}` },
+                        });
+                        if (res.ok) {
+                          setSelectedPedido((prev) => prev ? { ...prev, status: "aprovado" } : prev);
+                          setPedidos((prev) => prev.map((p) => p.id === selectedPedido.id ? { ...p, status: "aprovado" } : p));
+                        }
+                      } catch {}
+                    }}
+                    className="flex items-center gap-2 rounded-[14px] bg-emerald-500 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-400"
+                  >
+                    <CheckCircle2 className="h-4 w-4" />
+                    Aprovar orçamento
+                  </button>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      if (!token) return;
+                      await fetch(`/api/admin/pedidos/${selectedPedido.id}`, {
+                        method: "PATCH",
+                        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+                        body: JSON.stringify({ status: "precisa_info" }),
+                      });
+                      setSelectedPedido((prev) => prev ? { ...prev, status: "precisa_info" } : prev);
+                      setPedidos((prev) => prev.map((p) => p.id === selectedPedido.id ? { ...p, status: "precisa_info" } : p));
+                    }}
+                    className="flex items-center gap-2 rounded-[14px] border border-orange-400/30 bg-orange-400/10 px-4 py-2.5 text-sm font-semibold text-orange-300 transition hover:bg-orange-400/20"
+                  >
+                    <MessageCircle className="h-4 w-4" />
+                    Pedir mais info
+                  </button>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      if (!token) return;
+                      await fetch(`/api/admin/pedidos/${selectedPedido.id}`, {
+                        method: "PATCH",
+                        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+                        body: JSON.stringify({ status: "presencial_recomendado" }),
+                      });
+                      setSelectedPedido((prev) => prev ? { ...prev, status: "presencial_recomendado" } : prev);
+                      setPedidos((prev) => prev.map((p) => p.id === selectedPedido.id ? { ...p, status: "presencial_recomendado" } : p));
+                    }}
+                    className="flex items-center gap-2 rounded-[14px] border border-red-400/30 bg-red-400/10 px-4 py-2.5 text-sm font-semibold text-red-300 transition hover:bg-red-400/20"
+                  >
+                    <MapPin className="h-4 w-4" />
+                    Recomendar presencial
+                  </button>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      if (!token) return;
+                      await fetch(`/api/admin/pedidos/${selectedPedido.id}`, {
+                        method: "PATCH",
+                        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+                        body: JSON.stringify({ status: "cancelado" }),
+                      });
+                      setSelectedPedido((prev) => prev ? { ...prev, status: "cancelado" } : prev);
+                      setPedidos((prev) => prev.map((p) => p.id === selectedPedido.id ? { ...p, status: "cancelado" } : p));
+                    }}
+                    className="ml-auto flex items-center gap-2 rounded-[14px] border border-rose-600/30 bg-rose-600/10 px-4 py-2.5 text-sm font-semibold text-rose-400 transition hover:bg-rose-600/20"
+                  >
+                    <X className="h-4 w-4" />
+                    Cancelar pedido
+                  </button>
+                </div>
+              </div>
+            </div>
           )}
 
           {activeSection === "hours" && (

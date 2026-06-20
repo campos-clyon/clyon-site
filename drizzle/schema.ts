@@ -30,7 +30,7 @@ export const colaboradores = mysqlTable('colaboradores', {
   id: int('id').autoincrement().primaryKey(),
   nome: varchar('nome', { length: 100 }).notNull().unique(),
   senha: text('senha').notNull(), // Hash da senha
-  funcao: mysqlEnum('funcao', ['motorista', 'ajudante', 'admin']).notNull(),
+  funcao: mysqlEnum('funcao', ['motorista', 'ajudante', 'admin', 'assistente']).notNull(),
   valorHora: decimal('valorHora', { precision: 5, scale: 2 }).notNull(), // 8.00 ou 7.00
   isAdmin: int('isAdmin').notNull().default(0), // 0 = false, 1 = true
   createdAt: timestamp('createdAt').defaultNow().notNull(),
