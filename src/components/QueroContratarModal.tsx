@@ -25,12 +25,20 @@ interface Props {
   onClose: () => void;
 }
 
+const ANDARES = ["R/C", "1.º", "2.º", "3.º", "4.º+"] as const;
+const ELEVADOR_OPTS = ["Sim", "Não"] as const;
+
+// Tipos de serviço que não precisam de andar/elevador
+const SEM_ACESSO = ["Recolha de entulho", "Limpeza pós-obra"] as const;
+
 interface FormData {
   nome: string;
   telefone: string;
   email: string;
   localidade: string;
   tipoServico: string;
+  andar: string;
+  elevador: string;
   preferenciaContacto: string;
   mensagem: string;
   consentimento: boolean;
@@ -42,6 +50,8 @@ const EMPTY_FORM: FormData = {
   email: "",
   localidade: "",
   tipoServico: "",
+  andar: "",
+  elevador: "",
   preferenciaContacto: "",
   mensagem: "",
   consentimento: false,
@@ -146,6 +156,8 @@ export default function QueroContratarModal({ open, onClose }: Props) {
           email: form.email.trim(),
           localidade: form.localidade.trim(),
           tipoServico: form.tipoServico,
+          andar: form.andar || null,
+          elevador: form.elevador || null,
           preferenciaContacto: form.preferenciaContacto,
           mensagem: form.mensagem.trim() || null,
           pagePath: window.location.pathname,
@@ -233,36 +245,31 @@ export default function QueroContratarModal({ open, onClose }: Props) {
         ref={dialogRef}
         className="relative z-10 w-full max-w-lg max-h-[90dvh] overflow-y-auto rounded-3xl bg-white shadow-2xl"
       >
-        {/* Header do modal */}
-        <div className="sticky top-0 z-10 flex items-start justify-between gap-4 rounded-t-3xl bg-gradient-to-r from-cyan-600 to-cyan-500 px-6 py-5">
-          <div>
-            <h2 id="modal-title" className="text-xl font-bold text-white">
-              Pedir contacto da CLYON
-            </h2>
-            <p className="mt-1 text-sm leading-relaxed text-cyan-100">
-              Preencha os seus dados e a equipa CLYON entra em contacto consigo para recolha de móveis, esvaziamento de casas, monos ou outros serviços.
-            </p>
-          </div>
+        {/* Barra de topo compacta — só botão fechar */}
+        <div className="sticky top-0 z-10 flex items-center justify-between rounded-t-3xl bg-white px-5 pt-5 pb-3 border-b border-slate-100">
+          <h2 id="modal-title" className="text-base font-bold text-slate-800">
+            Orçamento gratuito
+          </h2>
           <button
             type="button"
             onClick={handleClose}
-            aria-label="Fechar modal"
-            className="mt-0.5 flex-shrink-0 rounded-xl bg-white/20 p-2 text-white transition hover:bg-white/30"
+            aria-label="Fechar"
+            className="flex-shrink-0 rounded-xl bg-slate-100 p-2 text-slate-500 transition hover:bg-slate-200"
           >
-            <X className="h-5 w-5" />
+            <X className="h-4 w-4" />
           </button>
         </div>
 
         {/* Conteúdo */}
-        <div className="px-6 py-6">
+        <div className="px-6 py-5">
           {success ? (
             <div className="flex flex-col items-center py-8 text-center">
               <div className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100">
                 <CheckCircle2 className="h-9 w-9 text-emerald-600" />
               </div>
-              <h3 className="mt-5 text-xl font-bold text-slate-800">Pedido enviado com sucesso</h3>
+              <h3 className="mt-5 text-xl font-bold text-slate-800">Pedido recebido!</h3>
               <p className="mt-2 text-sm leading-relaxed text-slate-500">
-                A equipa CLYON irá entrar em contacto consigo brevemente.
+                A equipa CLYON entrará em contacto consigo em breve.
               </p>
               <button
                 type="button"
@@ -362,6 +369,54 @@ export default function QueroContratarModal({ open, onClose }: Props) {
                 </select>
                 {errors.tipoServico && <p className="mt-1 text-xs text-rose-600">{errors.tipoServico}</p>}
               </div>
+
+              {/* Andar + Elevador — só para serviços que implicam acesso ao imóvel */}
+              {form.tipoServico && !(SEM_ACESSO as readonly string[]).includes(form.tipoServico) && (
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div>
+                    <p className="mb-2 text-sm font-semibold text-slate-700">
+                      Piso / Andar
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {ANDARES.map((a) => (
+                        <button
+                          key={a}
+                          type="button"
+                          onClick={() => set("andar", a)}
+                          className={`rounded-xl border px-3 py-2 text-sm font-medium transition ${
+                            form.andar === a
+                              ? "border-cyan-500 bg-cyan-50 text-cyan-700"
+                              : "border-slate-200 bg-white text-slate-600 hover:border-cyan-300"
+                          }`}
+                        >
+                          {a}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <p className="mb-2 text-sm font-semibold text-slate-700">
+                      Tem elevador?
+                    </p>
+                    <div className="flex gap-2">
+                      {ELEVADOR_OPTS.map((e) => (
+                        <button
+                          key={e}
+                          type="button"
+                          onClick={() => set("elevador", e)}
+                          className={`flex-1 rounded-xl border px-3 py-2 text-sm font-medium transition ${
+                            form.elevador === e
+                              ? "border-cyan-500 bg-cyan-50 text-cyan-700"
+                              : "border-slate-200 bg-white text-slate-600 hover:border-cyan-300"
+                          }`}
+                        >
+                          {e}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* Preferência de contacto */}
               <div>
