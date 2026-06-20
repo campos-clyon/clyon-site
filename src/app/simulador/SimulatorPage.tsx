@@ -50,7 +50,7 @@ function makeAssistantMessage(content: string, extra?: Partial<ChatMessage>): Ch
   return { id: uid(), role: "assistant", content, timestamp: new Date(), ...extra };
 }
 
-const WELCOME_MESSAGE = "Olá! Sou o orçamentista da CLYON. Descreva o serviço que precisa (pode escrever tudo de uma vez: tipo de serviço, o que tem para recolher, morada, andar, elevador, urgência) ou vá respondendo às perguntas. Também pode enviar fotos.";
+const WELCOME_MESSAGE = "Qual é o serviço que precisa? Pode escrever tudo de uma vez — por exemplo: \"recolha de sofá em Lisboa, 2.º andar com elevador, para amanhã\". Também pode enviar fotos.";
 
 // Pergunta pelo próximo campo em falta — usado como fallback quando Gemini falha
 function getNextMissingFieldQuestion(order: OrderData): string {
@@ -128,6 +128,25 @@ function extractOrderFieldsFromText(text: string, current: OrderData): Partial<O
   return updates;
 }
 
+// ─── Merge seguro do patch — nunca apaga campos preenchidos com undefined ─────
+function mergeOrderPatch(current: OrderData, patch: Partial<OrderData>): OrderData {
+  const next: OrderData = { ...current, ...patch };
+  // Merge profundo de sub-objectos
+  next.address = { ...current.address, ...(patch.address ?? {}) };
+  next.receiver = { ...current.receiver, ...(patch.receiver ?? {}) };
+  if (patch.distanceFromBase || current.distanceFromBase) {
+    next.distanceFromBase = { ...current.distanceFromBase, ...(patch.distanceFromBase ?? {}) };
+  }
+  // Limpar valores string vazios para não sobrescrever dados existentes
+  (Object.keys(next) as Array<keyof OrderData>).forEach((k) => {
+    if (next[k] === "" || next[k] === undefined) {
+      const cur = current[k];
+      if (cur !== undefined && cur !== "") (next as Record<string, unknown>)[k] = cur;
+    }
+  });
+  return next;
+}
+
 // ─── Componente ─────────────────────────────────────────────────────────────
 export default function SimulatorPage() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -140,8 +159,10 @@ export default function SimulatorPage() {
   const [estimateLoading, setEstimateLoading] = useState(false);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [resetVersion, setResetVersion] = useState(0);
-  // Histórico de mensagens para o Gemini (formato {role, content})
+  // Histórico de mensagens para a IA (formato {role, content})
   const [chatHistory, setChatHistory] = useState<Array<{ role: "user" | "assistant"; content: string }>>([]);
+  // A IA sinalizou que já há dados suficientes para gerar estimativa
+  const [aiCanGenerate, setAiCanGenerate] = useState(false);
 
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -233,6 +254,7 @@ export default function SimulatorPage() {
     setInput("");
     setIsTyping(false);
     setChatHistory([]);
+    setAiCanGenerate(false);
     setShowResetConfirm(false);
     setResetVersion((v) => v + 1);
 
@@ -241,12 +263,12 @@ export default function SimulatorPage() {
     });
   };
 
-  // ─── Enviar mensagem com Gemini ────────────────────────────────────────────
+  // ─── Enviar mensagem — usa /api/simulator/chat (resposta JSON estruturada) ──
   const handleSend = async (text: string, files?: UploadedFile[]) => {
     const trimmed = text.trim();
     if (!trimmed && (!files || files.length === 0)) return;
 
-    // 1. Mensagem do utilizador
+    // 1. Mensagem do utilizador no chat
     const userMsg: ChatMessage = {
       id: uid(),
       role: "user",
@@ -260,95 +282,89 @@ export default function SimulatorPage() {
     setShowUpload(false);
     setIsTyping(true);
 
-    // 2. Extracção local de campos (sem IA, instantânea)
-    const extracted = extractOrderFieldsFromText(trimmed, order);
-    const updatedOrder = { ...order, ...extracted };
+    // 2. Extracção local instantânea (sem IA) para mostrar dados no resumo imediatamente
+    const localExtract = extractOrderFieldsFromText(trimmed, order);
+    let updatedOrder = mergeOrderPatch(order, localExtract);
     if (files && files.length > 0) {
-      updatedOrder.files = [...(updatedOrder.files ?? []), ...files];
+      updatedOrder = { ...updatedOrder, files: [...(updatedOrder.files ?? []), ...files] };
     }
     setOrder(updatedOrder);
 
-    // 3. Novo histórico para o Gemini
-    const newHistory = [
+    // 3. Actualizar histórico para enviar à IA
+    type MsgPart = { text?: string; inlineData?: { mimeType: string; data: string } };
+    type ApiMsg = { role: "user" | "assistant"; content: string | MsgPart[] };
+
+    const newHistory: ApiMsg[] = [
       ...chatHistory,
       { role: "user" as const, content: trimmed },
     ];
-    setChatHistory(newHistory);
 
-    // 4. Chamar Gemini
-    try {
-      // Construir payload com fotos inline se existirem
-      type MsgPart = { text: string } | { inlineData: { mimeType: string; data: string } };
-      type ApiMsg = { role: "user" | "assistant"; content: string | MsgPart[] };
-
-      const apiMessages: ApiMsg[] = newHistory.map((m) => ({ role: m.role, content: m.content }));
-
-      // Substituir a última mensagem por uma com imagens se houver ficheiros
-      if (files && files.length > 0) {
-        const parts: MsgPart[] = [];
-        if (trimmed) parts.push({ text: trimmed });
-        for (const f of files) {
-          if (f.base64 && f.mimeType) {
-            parts.push({ inlineData: { mimeType: f.mimeType, data: f.base64 } });
-          }
-        }
-        if (parts.length > 0) {
-          apiMessages[apiMessages.length - 1] = { role: "user", content: parts };
-        }
+    // Substituir última msg por multimodal se houver fotos
+    if (files && files.length > 0) {
+      const parts: MsgPart[] = [];
+      if (trimmed) parts.push({ text: trimmed });
+      for (const f of files) {
+        if (f.base64 && f.mimeType) parts.push({ inlineData: { mimeType: f.mimeType, data: f.base64 } });
       }
+      if (parts.length > 0) newHistory[newHistory.length - 1] = { role: "user", content: parts };
+    }
 
-      const res = await fetch("/api/chat-simulador", {
+    setChatHistory(newHistory.map((m) => ({
+      role: m.role,
+      content: typeof m.content === "string" ? m.content : (m.content as MsgPart[]).filter((p) => p.text).map((p) => p.text).join(" "),
+    })));
+
+    // 4. Chamar /api/simulator/chat
+    try {
+      const res = await fetch("/api/simulator/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: apiMessages, order: updatedOrder }),
+        body: JSON.stringify({
+          messages: newHistory,
+          orderData: updatedOrder,
+          latestUserMessage: trimmed,
+          hasUploadedFiles: (files?.length ?? 0) > 0,
+        }),
       });
 
       setIsTyping(false);
 
       if (!res.ok) {
-        // Gemini não disponível — usar fallback local inteligente
-        const nextQuestion = getNextMissingFieldQuestion(updatedOrder);
-        const showForm = nextQuestion.includes("contacto e morada");
-        setMessages((prev) => [
-          ...prev,
-          makeAssistantMessage(showForm ? nextQuestion : nextQuestion, {
-            showContactForm: showForm,
-          }),
-        ]);
+        // Fallback local se a IA não responder
+        const fb = getNextMissingFieldQuestion(updatedOrder);
+        const showForm = fb.includes("contacto e morada");
+        setMessages((prev) => [...prev, makeAssistantMessage(fb, { showContactForm: showForm })]);
         return;
       }
 
       const data = await res.json();
-      const responseText: string = data.message ?? "Pode continuar a descrever o serviço.";
 
-      // 5. Verificar se o Gemini detectou [ABRIR_FORMULARIO]
-      const showForm = responseText.includes("[ABRIR_FORMULARIO]");
-      const cleanResponse = responseText.replace("[ABRIR_FORMULARIO]", "").trim();
-
-      // 6. Atualizar histórico com resposta da IA
-      setChatHistory((prev) => [...prev, { role: "assistant", content: cleanResponse }]);
-
-      // 7. Mostrar resposta da IA
-      if (showForm) {
-        setMessages((prev) => [
-          ...prev,
-          makeAssistantMessage("Para finalizar, preciso dos seus dados de contacto e morada:", {
-            showContactForm: true,
-          }),
-        ]);
-      } else if (cleanResponse) {
-        setMessages((prev) => [...prev, makeAssistantMessage(cleanResponse)]);
+      // 5. Aplicar orderPatch vindo da IA (merge seguro)
+      if (data.orderPatch && Object.keys(data.orderPatch).length > 0) {
+        setOrder((prev) => mergeOrderPatch(prev, data.orderPatch));
       }
+
+      // 6. Mostrar mensagem da IA com quickReplies e flags
+      const aiText: string = data.assistantMessage ?? "Pode continuar a descrever o serviço.";
+      const quickReplies: string[] = Array.isArray(data.quickReplies) ? data.quickReplies : [];
+      const showContactForm: boolean = data.shouldOpenContactForm === true;
+      const showUploadHint: boolean = data.shouldAskForPhotos === true;
+      if (data.canGenerateEstimate === true) setAiCanGenerate(true);
+
+      setMessages((prev) => [
+        ...prev,
+        makeAssistantMessage(aiText, {
+          quickReplies: quickReplies.length > 0 ? quickReplies : undefined,
+          showContactForm,
+          showUpload: showUploadHint,
+        }),
+      ]);
 
     } catch {
       setIsTyping(false);
-      // Fallback local inteligente em caso de erro de rede
-      const nextQuestion = getNextMissingFieldQuestion(updatedOrder);
-      const showForm = nextQuestion.includes("contacto e morada");
-      setMessages((prev) => [
-        ...prev,
-        makeAssistantMessage(nextQuestion, { showContactForm: showForm }),
-      ]);
+      const fb = getNextMissingFieldQuestion(updatedOrder);
+      const showForm = fb.includes("contacto e morada");
+      setMessages((prev) => [...prev, makeAssistantMessage(fb, { showContactForm: showForm })]);
     }
   };
 
@@ -464,11 +480,12 @@ export default function SimulatorPage() {
     !!order.city;
 
   const canGenerate =
-    !!order.serviceType &&
-    !!(order.description || (order.files && order.files.length > 0)) &&
-    addressReady &&
-    !!order.receiver?.name &&
-    !!order.receiver?.phone;
+    aiCanGenerate ||
+    (!!order.serviceType &&
+      !!(order.description || (order.files && order.files.length > 0)) &&
+      addressReady &&
+      !!order.receiver?.name &&
+      !!order.receiver?.phone);
 
   // ─── Auto-gerar estimativa quando o resumo fica completo ──────────────────
   useEffect(() => {
