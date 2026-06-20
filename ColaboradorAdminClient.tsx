@@ -402,6 +402,7 @@ export default function ColaboradorAdminClient() {
 
   const [token, setToken] = useState("");
   const [adminNome, setAdminNome] = useState("");
+  const [isAdminGeral, setIsAdminGeral] = useState(false);
   const [colaboradores, setColaboradores] = useState<Colaborador[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -556,14 +557,15 @@ export default function ColaboradorAdminClient() {
 
     setToken(storedToken);
     setAdminNome(storedNome || "Administração");
+    setIsAdminGeral(storedIsAdmin === "1");
 
-    // Admin completo carrega dados da equipa e configurações; assistente começa na aba pedidos
+    // Admin geral carrega dados da equipa e configurações; assistente começa directamente nos pedidos
     if (storedIsAdmin === "1") {
       void carregarDados(storedToken);
       void carregarSimulatorSettings(storedToken);
       void carregarImageStats(storedToken);
     } else {
-      // Assistente só tem acesso à aba pedidos
+      // Assistente: só tem acesso à aba pedidos
       setActiveSection("pedidos");
       setLoading(false);
     }
@@ -1456,26 +1458,29 @@ export default function ColaboradorAdminClient() {
             </div>
 
             <nav className="flex flex-wrap gap-2">
-              {adminNavItems.map((item) => {
-                const Icon = item.icon;
-                const active = activeSection === item.id;
+              {adminNavItems
+                // Assistentes só veem a aba Pedidos; admin geral vê tudo
+                .filter((item) => isAdminGeral || item.id === "pedidos")
+                .map((item) => {
+                  const Icon = item.icon;
+                  const active = activeSection === item.id;
 
-                return (
-                  <button
-                    key={item.id}
-                    type="button"
-                    onClick={() => setActiveSection(item.id)}
-                    className={`flex items-center gap-2 rounded-[18px] px-4 py-3 text-sm font-semibold transition ${
-                      active
-                        ? "bg-cyan-400 text-slate-950 shadow-[0_18px_40px_rgba(34,211,238,0.22)]"
-                        : "border border-white/10 bg-white/[0.04] text-slate-100 hover:bg-white/[0.08]"
-                    }`}
-                  >
-                    <Icon className="h-4 w-4" />
-                    {sectionLabels[item.id]}
-                  </button>
-                );
-              })}
+                  return (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => setActiveSection(item.id)}
+                      className={`flex items-center gap-2 rounded-[18px] px-4 py-3 text-sm font-semibold transition ${
+                        active
+                          ? "bg-cyan-400 text-slate-950 shadow-[0_18px_40px_rgba(34,211,238,0.22)]"
+                          : "border border-white/10 bg-white/[0.04] text-slate-100 hover:bg-white/[0.08]"
+                      }`}
+                    >
+                      <Icon className="h-4 w-4" />
+                      {sectionLabels[item.id]}
+                    </button>
+                  );
+                })}
             </nav>
 
             <div className="flex items-center gap-3 rounded-[22px] border border-cyan-400/15 bg-cyan-400/[0.08] px-4 py-3">
@@ -1485,7 +1490,7 @@ export default function ColaboradorAdminClient() {
               <div className="min-w-0">
                 <p className="truncate text-base font-semibold text-white">{adminNome}</p>
                 <p className="text-sm text-cyan-100/80">
-                  {adminNome.toUpperCase() === "WANDERSON" ? "Admin geral" : "Administrador"}
+                  {isAdminGeral ? "Admin geral" : "Assistente"}
                 </p>
               </div>
               <Button
@@ -1631,8 +1636,20 @@ export default function ColaboradorAdminClient() {
                 {pedidosLoading ? (
                   <div className="py-4 text-center text-sm text-slate-400">A carregar...</div>
                 ) : pedidos.length === 0 ? (
-                  <div className="rounded-2xl border border-dashed border-white/10 py-6 text-center text-sm text-slate-400">
-                    Nenhum pedido recebido ainda.
+                  <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-white/10 py-8 text-center">
+                    <FileText className="h-8 w-8 text-slate-600" />
+                    <div>
+                      <p className="text-sm font-semibold text-slate-300">Nenhum pedido do simulador ainda</p>
+                      <p className="mt-1 text-xs text-slate-500">Quando um cliente enviar um pedido pelo simulador, ele aparecerá aqui para análise.</p>
+                    </div>
+                    <a
+                      href="/simulador"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mt-1 rounded-[12px] border border-cyan-400/30 bg-cyan-400/10 px-4 py-2 text-xs font-semibold text-cyan-300 transition hover:bg-cyan-400/20"
+                    >
+                      Ver simulador
+                    </a>
                   </div>
                 ) : (
                   <div className="space-y-1.5">
@@ -1971,8 +1988,20 @@ export default function ColaboradorAdminClient() {
                 if (pedidoStatusFilter === "sem_assistente") return !p.assignedToId;
                 return p.status === pedidoStatusFilter;
               }).length === 0 ? (
-                <div className="rounded-2xl border border-dashed border-white/10 py-10 text-center text-sm text-slate-400">
-                  Nenhum pedido encontrado.
+                <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-white/10 py-12 text-center">
+                  <FileText className="h-10 w-10 text-slate-600" />
+                  <div>
+                    <p className="text-base font-semibold text-slate-300">Nenhum pedido do simulador ainda</p>
+                    <p className="mt-1 text-sm text-slate-500">Quando um cliente enviar um pedido pelo simulador, ele aparecerá aqui para análise.</p>
+                  </div>
+                  <a
+                    href="/simulador"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-1 rounded-[14px] border border-cyan-400/30 bg-cyan-400/10 px-5 py-2.5 text-sm font-semibold text-cyan-300 transition hover:bg-cyan-400/20"
+                  >
+                    Ver simulador
+                  </a>
                 </div>
               ) : (
                 <div className="overflow-x-auto">

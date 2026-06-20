@@ -3,7 +3,7 @@ import * as bcrypt from "bcryptjs";
 import * as jose from "jose";
 import { and, desc, eq, isNull } from "drizzle-orm";
 
-import { getDb, getSimulatorSettings, upsertSimulatorSetting } from "@/lib/db";
+import { getDb, getSimulatorSettings, upsertSimulatorSetting, createColaborador, updateColaborador, deleteColaborador } from "@/lib/db";
 import { defaultSimulatorSettings } from "@/lib/simulator-settings";
 import { colaboradores, registrosHoras } from "../../../../../drizzle/schema";
 
@@ -513,10 +513,11 @@ async function handleRequest(req: NextRequest, path: string[]) {
     const { nome, senha, funcao, valorHora, isAdmin } = await req.json();
     const passwordHash = await bcrypt.hash(String(senha), 10);
 
-    await db.insert(colaboradores).values({
+    // Usar createColaborador (raw SQL) para suportar 'assistente' no enum
+    await createColaborador({
       nome: String(nome).toUpperCase(),
       senha: passwordHash,
-      funcao,
+      funcao: funcao as "motorista" | "ajudante" | "admin" | "assistente",
       valorHora: String(parseFloat(String(valorHora))),
       isAdmin: isAdmin ? 1 : 0,
     });
@@ -539,7 +540,8 @@ async function handleRequest(req: NextRequest, path: string[]) {
       delete payload.senha;
     }
 
-    await db.update(colaboradores).set(payload).where(eq(colaboradores.id, id));
+    // Usar updateColaborador (raw SQL) para suportar 'assistente' no enum
+    await updateColaborador(id, payload as Parameters<typeof updateColaborador>[1]);
     return NextResponse.json({ success: true });
   }
 
@@ -549,7 +551,7 @@ async function handleRequest(req: NextRequest, path: string[]) {
     }
 
     const id = parseInt(route.split("/")[0], 10);
-    await db.delete(colaboradores).where(eq(colaboradores.id, id));
+    await deleteColaborador(id);
     return NextResponse.json({ success: true });
   }
 

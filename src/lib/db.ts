@@ -280,6 +280,59 @@ export async function getColaboradorByNome(nome: string) {
   return result[0] ?? undefined;
 }
 
+/**
+ * Garante que a coluna funcao da tabela colaboradores aceita o valor 'assistente'.
+ * Seguro para correr múltiplas vezes — falha silenciosamente se o enum já existir.
+ */
+export async function ensureColaboradoresEnum(): Promise<void> {
+  const pool = await getPool();
+  if (!pool) return;
+  try {
+    await pool.execute(
+      `ALTER TABLE colaboradores MODIFY COLUMN funcao ENUM('motorista','ajudante','admin','assistente') NOT NULL`
+    );
+  } catch {
+    // Ignora se o enum já contém os valores
+  }
+}
+
+/**
+ * Garante que WANDERSON existe e tem isAdmin=1 e funcao='admin'.
+ * Retorna o registo actualizado.
+ */
+export async function upsertWandersonAdmin(senhaHash?: string): Promise<{ id: number; nome: string; isAdmin: number; funcao: string }> {
+  const pool = await getPool();
+  if (!pool) throw new Error("Database not available");
+  await ensureColaboradoresEnum();
+
+  const [[existing]] = await pool.execute(
+    "SELECT id, nome, funcao, isAdmin FROM colaboradores WHERE nome = ? LIMIT 1",
+    ["WANDERSON"]
+  ) as any[];
+
+  if (existing) {
+    // Garantir isAdmin=1 e funcao='admin'
+    await pool.execute(
+      "UPDATE colaboradores SET isAdmin = 1, funcao = 'admin', updatedAt = NOW() WHERE id = ?",
+      [existing.id]
+    );
+    return { id: existing.id, nome: "WANDERSON", isAdmin: 1, funcao: "admin" };
+  }
+
+  // Criar WANDERSON se não existir
+  const bcrypt = await import("bcryptjs");
+  const senha = senhaHash ?? await bcrypt.hash("wanderson2026", 10);
+  await pool.execute(
+    "INSERT INTO colaboradores (nome, senha, funcao, valorHora, isAdmin) VALUES (?, ?, 'admin', '0', 1)",
+    ["WANDERSON", senha]
+  );
+  const [[created]] = await pool.execute(
+    "SELECT id, nome, funcao, isAdmin FROM colaboradores WHERE nome = ? LIMIT 1",
+    ["WANDERSON"]
+  ) as any[];
+  return created as { id: number; nome: string; isAdmin: number; funcao: string };
+}
+
 export async function getAllColaboradores() {
   const db = await getDb();
   if (!db) return [];
@@ -697,8 +750,9 @@ export async function countSimulatorOrdersByStatus(): Promise<Record<string, num
 export async function getActiveAssistants(): Promise<Array<{ id: number; nome: string; funcao: string; isAdmin: number }>> {
   const pool = await getPool();
   if (!pool) return [];
+  // Apenas colaboradores com funcao='assistente' podem receber pedidos do simulador
   const [rows] = await pool.execute(
-    "SELECT id, nome, funcao, isAdmin FROM colaboradores ORDER BY nome ASC"
+    "SELECT id, nome, funcao, isAdmin FROM colaboradores WHERE funcao = 'assistente' ORDER BY nome ASC"
   ) as any[];
   return rows as any[];
 }
@@ -844,7 +898,21 @@ export function calculateOrderPriority(order: {
   return "normal";
 }
 
-// ─── Helpers de permissão ────────────────────────────────────────────────────
+// ─── Helpers de permissão e roles ───────────────────────────────────────────
+
+export type EffectiveRole = "admin_geral" | "assistente" | "motorista" | "ajudante" | "colaborador";
+
+/**
+ * Fonte única de verdade para o role efectivo de um utilizador.
+ * Admin geral é determinado por isAdmin=1, independentemente de funcao.
+ */
+export function getEffectiveRole(user: { isAdmin: number; funcao: string }): EffectiveRole {
+  if (user.isAdmin) return "admin_geral";
+  if (user.funcao === "assistente") return "assistente";
+  if (user.funcao === "motorista") return "motorista";
+  if (user.funcao === "ajudante") return "ajudante";
+  return "colaborador";
+}
 
 export function canViewRequest(
   user: { isAdmin: number; id: number },
