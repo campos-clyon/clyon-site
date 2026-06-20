@@ -163,7 +163,7 @@ export function calculateLocalEstimate(order: OrderData): EstimateResult {
 
   // Para entulho não é obrigatório ter morada — podemos dar preço só com sacos
   const isEntulho =
-    order.serviceType === "entulho" ||
+    order.serviceType === "recolha_entulho" ||
     order.description?.toLowerCase().includes("entulho") ||
     order.description?.toLowerCase().includes("saco");
 
