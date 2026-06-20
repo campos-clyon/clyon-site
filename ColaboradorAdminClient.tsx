@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import type { ComponentType, ReactNode } from "react";
 import { useEffect, useMemo, useState } from "react";
@@ -343,19 +343,38 @@ export default function ColaboradorAdminClient() {
   const carregarDados = async (authToken: string) => {
     try {
       setLoading(true);
-      const response = await fetch("/api/colaboradores/admin/todos", {
-        headers: { Authorization: `Bearer ${authToken}` },
-      });
+      const endpoint = "/api/colaboradores/admin/todos";
+      
+      try {
+        const response = await fetch(endpoint, {
+          headers: { Authorization: `Bearer ${authToken}` },
+        });
 
-      if (!response.ok) {
-        throw new Error("Não foi possível carregar os dados do painel.");
+        if (!response.ok) {
+          const responseText = await response.text();
+          if (process.env.NODE_ENV === "development") {
+            console.error("[Admin load error]", {
+              endpoint,
+              status: response.status,
+              responseText,
+            });
+          }
+          throw new Error(`Não foi possível carregar colaboradores (HTTP ${response.status}).`);
+        }
+
+        const data = await response.json();
+        setColaboradores(Array.isArray(data) ? data : data.colaboradores || []);
+        setError("");
+      } catch (apiErr) {
+        const errorMsg = apiErr instanceof Error ? apiErr.message : "Erro desconhecido ao carregar colaboradores";
+        throw new Error(errorMsg);
       }
-
-      const data = await response.json();
-      setColaboradores(Array.isArray(data) ? data : data.colaboradores || []);
-      setError("");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Não foi possível carregar os dados do painel.");
+      const errorMessage = err instanceof Error ? err.message : "Não foi possível carregar os dados do painel.";
+      setError(errorMessage);
+      if (process.env.NODE_ENV === "development") {
+        console.error("[Admin load error - final]", errorMessage);
+      }
     } finally {
       setLoading(false);
     }
@@ -364,24 +383,39 @@ export default function ColaboradorAdminClient() {
   const carregarSimulatorSettings = async (authToken: string) => {
     try {
       setLoadingSimulatorSettings(true);
-      const response = await fetch("/api/colaboradores/admin/settings/simulador", {
-        headers: { Authorization: `Bearer ${authToken}` },
-      });
+      const endpoint = "/api/colaboradores/admin/settings/simulador";
+      
+      try {
+        const response = await fetch(endpoint, {
+          headers: { Authorization: `Bearer ${authToken}` },
+        });
 
-      if (!response.ok) {
-        throw new Error("Não foi possível carregar os valores do simulador.");
+        if (!response.ok) {
+          const responseText = await response.text();
+          if (process.env.NODE_ENV === "development") {
+            console.error("[Simulator settings load error]", {
+              endpoint,
+              status: response.status,
+              responseText,
+            });
+          }
+          throw new Error(`Não foi possível carregar os valores do simulador (HTTP ${response.status}).`);
+        }
+
+        const data = await response.json();
+        const settings = data.settings || [];
+        setSimulatorSettings(settings);
+        setSimulatorDrafts(
+          Object.fromEntries(
+            settings.map((item: SimulatorSetting) => [item.key, String(item.value ?? "")]),
+          ),
+        );
+      } catch (apiErr) {
+        // Não bloqueia o painel inteiro se falhar
+        if (process.env.NODE_ENV === "development") {
+          console.warn("[Simulator settings load error - non-blocking]", apiErr);
+        }
       }
-
-      const data = await response.json();
-      const settings = data.settings || [];
-      setSimulatorSettings(settings);
-      setSimulatorDrafts(
-        Object.fromEntries(
-          settings.map((item: SimulatorSetting) => [item.key, String(item.value ?? "")]),
-        ),
-      );
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Não foi possível carregar os valores do simulador.");
     } finally {
       setLoadingSimulatorSettings(false);
     }

@@ -10,18 +10,26 @@ import { colaboradores, registrosHoras } from "../../../../../drizzle/schema";
 const JWT_SECRET = process.env.JWT_SECRET || "clyon-secret-2026";
 const LISBON_TIMEZONE = "Europe/Lisbon";
 
-type JwtPayload = { id: number; nome: string; isAdmin: number };
+type JwtPayload = { id: number; nome: string; isAdmin: number; funcao?: string };
 type RouteContext = { params: Promise<{ path: string[] }> };
 
 async function verifyToken(req: NextRequest) {
   const token = req.headers.get("authorization")?.replace("Bearer ", "");
-  if (!token) return null;
+  if (!token) {
+    if (process.env.NODE_ENV === "development") {
+      console.warn("[verifyToken] No token provided in Authorization header");
+    }
+    return null;
+  }
 
   try {
     const secretKey = new TextEncoder().encode(JWT_SECRET);
     const { payload } = await jose.jwtVerify(token, secretKey);
     return payload as unknown as JwtPayload;
-  } catch {
+  } catch (err) {
+    if (process.env.NODE_ENV === "development") {
+      console.error("[verifyToken] Token verification failed:", err instanceof Error ? err.message : "Unknown error");
+    }
     return null;
   }
 }
@@ -125,61 +133,79 @@ function getLisbonPeriodAnchors() {
 }
 
 async function loadAdminDataset(db: Awaited<ReturnType<typeof getDb>>) {
-  if (!db) return { colaboradores: [] };
+  if (!db) {
+    if (process.env.NODE_ENV === "development") {
+      console.error("[loadAdminDataset] DB is not available");
+    }
+    return { colaboradores: [] };
+  }
 
-  const team = await db.select().from(colaboradores);
-  const allRecords = await db.select().from(registrosHoras).orderBy(desc(registrosHoras.data));
+  try {
+    const team = await db.select().from(colaboradores);
+    const allRecords = await db.select().from(registrosHoras).orderBy(desc(registrosHoras.data));
 
-  const { weekStart, monthStart, fifteenDaysStart } = getLisbonPeriodAnchors();
+    const { weekStart, monthStart, fifteenDaysStart } = getLisbonPeriodAnchors();
 
-  const calcPeriod = (records: typeof allRecords) => {
-    const hours = records.reduce((sum, item) => sum + parseFloat(item.horasTrabalhadas || "0"), 0);
-    const value = records.reduce((sum, item) => sum + parseFloat(item.valorTotal || "0"), 0);
-    const jobs = records.reduce((sum, item) => sum + (item.numeroTrabalhos || 0), 0);
+    const calcPeriod = (records: typeof allRecords) => {
+      const hours = records.reduce((sum, item) => sum + parseFloat(item.horasTrabalhadas || "0"), 0);
+      const value = records.reduce((sum, item) => sum + parseFloat(item.valorTotal || "0"), 0);
+      const jobs = records.reduce((sum, item) => sum + (item.numeroTrabalhos || 0), 0);
+
+      return {
+        horas: hours.toFixed(2),
+        valor: value.toFixed(2),
+        trabalhos: jobs,
+      };
+    };
 
     return {
-      horas: hours.toFixed(2),
-      valor: value.toFixed(2),
-      trabalhos: jobs,
+      colaboradores: team.map((member) => {
+        const memberRecords = allRecords.filter((record) => record.colaboradorId === member.id);
+        return {
+          id: member.id,
+          nome: member.nome,
+          funcao: member.funcao,
+          valorHora: member.valorHora,
+          isAdmin: member.isAdmin,
+          createdAt: member.createdAt,
+          updatedAt: member.updatedAt,
+          registros: memberRecords.map((record) => ({
+            id: record.id,
+            colaboradorId: record.colaboradorId,
+            data: record.data?.toISOString() || "",
+            horaEntrada: record.horaEntrada,
+            horaPausa: record.horaPausa,
+            horaSaida: record.horaSaida,
+            numeroTrabalhos: record.numeroTrabalhos || 0,
+            horasTrabalhadas: record.horasTrabalhadas || "0",
+            valorTotal: record.valorTotal || "0",
+          })),
+          estatisticas: {
+            semana: calcPeriod(memberRecords.filter((record) => record.data && record.data >= weekStart)),
+            ultimos15Dias: calcPeriod(memberRecords.filter((record) => record.data && record.data >= fifteenDaysStart)),
+            mes: calcPeriod(memberRecords.filter((record) => record.data && record.data >= monthStart)),
+          },
+        };
+      }),
     };
-  };
-
-  return {
-    colaboradores: team.map((member) => {
-      const memberRecords = allRecords.filter((record) => record.colaboradorId === member.id);
-      return {
-        id: member.id,
-        nome: member.nome,
-        funcao: member.funcao,
-        valorHora: member.valorHora,
-        isAdmin: member.isAdmin,
-        createdAt: member.createdAt,
-        updatedAt: member.updatedAt,
-        registros: memberRecords.map((record) => ({
-          id: record.id,
-          colaboradorId: record.colaboradorId,
-          data: record.data?.toISOString() || "",
-          horaEntrada: record.horaEntrada,
-          horaPausa: record.horaPausa,
-          horaSaida: record.horaSaida,
-          numeroTrabalhos: record.numeroTrabalhos || 0,
-          horasTrabalhadas: record.horasTrabalhadas || "0",
-          valorTotal: record.valorTotal || "0",
-        })),
-        estatisticas: {
-          semana: calcPeriod(memberRecords.filter((record) => record.data && record.data >= weekStart)),
-          ultimos15Dias: calcPeriod(memberRecords.filter((record) => record.data && record.data >= fifteenDaysStart)),
-          mes: calcPeriod(memberRecords.filter((record) => record.data && record.data >= monthStart)),
-        },
-      };
-    }),
-  };
+  } catch (err) {
+    if (process.env.NODE_ENV === "development") {
+      console.error("[loadAdminDataset] Error loading dataset:", err);
+    }
+    throw err;
+  }
 }
 
 async function handleRequest(req: NextRequest, path: string[]) {
   const route = path.join("/");
+  if (process.env.NODE_ENV === "development" && route.includes("admin")) {
+    console.log("[handleRequest] Route:", route, "Method:", req.method);
+  }
   const db = await getDb();
   if (!db) {
+    if (process.env.NODE_ENV === "development") {
+      console.error("[handleRequest] DB is not available");
+    }
     return NextResponse.json({ error: "Base de dados indisponivel." }, { status: 500 });
   }
 
@@ -455,9 +481,20 @@ async function handleRequest(req: NextRequest, path: string[]) {
 
   if (route === "admin/todos" && req.method === "GET") {
     if (!auth.isAdmin) {
+      if (process.env.NODE_ENV === "development") {
+        console.error("[Admin/todos] Acesso negado. auth.isAdmin:", auth.isAdmin, "auth:", auth);
+      }
       return NextResponse.json({ error: "Acesso negado." }, { status: 403 });
     }
-    return NextResponse.json(await loadAdminDataset(db));
+    try {
+      const dataset = await loadAdminDataset(db);
+      return NextResponse.json(dataset);
+    } catch (err) {
+      if (process.env.NODE_ENV === "development") {
+        console.error("[Admin/todos] Erro ao carregar dataset:", err);
+      }
+      return NextResponse.json({ error: "Erro ao carregar dados do painel.", details: err instanceof Error ? err.message : "Desconhecido" }, { status: 500 });
+    }
   }
 
   if (route === "admin/settings/simulador" && req.method === "GET") {
