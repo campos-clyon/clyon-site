@@ -21,6 +21,7 @@ import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import SimulatorChat from "@/components/SimulatorChat";
 import {
   trackSimulatorStart,
   trackSimulatorComplete,
@@ -110,6 +111,8 @@ export default function SimuladorClient({ initialCategoriaId = null }: Simulador
   const [highlightBudget, setHighlightBudget] = useState(false);
   const [telemovel, setTelemovel] = useState("");
   const [telemovelError, setTelemovelError] = useState("");
+  const [showChat, setShowChat] = useState(false);
+  const [orderData, setOrderData] = useState<Record<string, any>>({});
 
   const categoria = categorias.find((item) => item.id === categoriaId) ?? null;
   const origemValida = categoria?.trajeto === "base" || origem.trim().length >= 3;
@@ -808,10 +811,43 @@ export default function SimuladorClient({ initialCategoriaId = null }: Simulador
                     <Calculator className="mr-2 h-5 w-5" />
                     Calcular orçamento
                   </Button>
+
+                  <Button
+                    type="button"
+                    onClick={() => setShowChat(!showChat)}
+                    className="w-full rounded-xl bg-cyan-50 py-4 text-base font-semibold text-cyan-600 hover:bg-cyan-100 border border-cyan-200"
+                  >
+                    💬 {showChat ? "Fechar chat" : "Abrir assistente de IA"}
+                  </Button>
                 </div>
               </Card>
             ) : <div className="hidden lg:block" />}
           </div>
+
+          {showChat && (
+            <div className="mt-6">
+              <SimulatorChat
+                currentOrder={orderData}
+                onOrderUpdate={(patch) => {
+                  setOrderData((prev) => ({
+                    ...prev,
+                    ...(patch.receiver && { receiver: { ...prev.receiver, ...patch.receiver } }),
+                    ...(patch.address && { address: { ...prev.address, ...patch.address } }),
+                    ...(patch.service && { service: { ...prev.service, ...patch.service } }),
+                  }));
+                }}
+                onShouldOpenForm={(shouldOpen) => {
+                  if (shouldOpen) {
+                    // Pré-preencher campos do formulário com dados extraídos do chat
+                    if (orderData.receiver?.name) setDestino(orderData.receiver.name);
+                    if (orderData.receiver?.phone) setTelemovel(orderData.receiver.phone);
+                    // Fechar o chat após extrair dados
+                    setShowChat(false);
+                  }
+                }}
+              />
+            </div>
+          )}
 
           <Card className="mt-6 rounded-[28px] border border-slate-900 bg-[linear-gradient(160deg,#082f49_0%,#041c2d_100%)] p-5 text-white shadow-[0_28px_70px_-34px_rgba(2,132,199,0.4)]">
             <p className="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-200">Resumo</p>
