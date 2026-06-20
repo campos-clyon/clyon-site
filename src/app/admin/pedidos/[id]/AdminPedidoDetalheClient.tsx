@@ -189,9 +189,14 @@ function ApproveModal({
     }
   }
 
-  const waNumber = BUSINESS_PHONE.replace(/\D/g, "");
+  const waNumber = order.contactPhone ? order.contactPhone.replace(/\D/g, "") : BUSINESS_PHONE.replace(/\D/g, "");
+  const valorAprovado = precoFinal ? `${parseFloat(precoFinal).toFixed(2)}€ + IVA` : null;
   const waMsg = encodeURIComponent(
-    `Olá ${order.contactName ?? "cliente"}, o seu pedido CLYON #${order.id} foi aprovado!\n\nServiço: ${order.serviceType ?? "a definir"}\n${msg ? `\n${msg}` : ""}\n\nValor: ${precoFinalIva || precoFinal}€ (com IVA)\n\nEntraremos em contacto em breve para confirmar data.`
+    `Olá ${order.contactName ?? "cliente"}, aqui é a CLYON. ` +
+    `Analisámos o seu pedido de ${order.serviceType ?? "serviço"}.` +
+    (valorAprovado ? ` O valor aprovado é de ${valorAprovado}, considerando os dados enviados.` : "") +
+    (msg ? ` ${msg}` : "") +
+    ` Caso confirme, podemos avançar com o agendamento.`
   );
 
   return (

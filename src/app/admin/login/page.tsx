@@ -26,10 +26,8 @@ export default function AdminLoginPage() {
         setError(data.error || "Credenciais inválidas.");
         return;
       }
-      if (!data.colaborador?.isAdmin) {
-        setError("Acesso reservado a administradores e assistentes.");
-        return;
-      }
+      // Qualquer colaborador pode aceder ao painel (admin ou assistente)
+      // A distinção de permissões é feita dentro do painel e nas APIs
       localStorage.setItem("admin_token", data.token);
       localStorage.setItem("admin_user", JSON.stringify(data.colaborador));
       router.push("/admin");

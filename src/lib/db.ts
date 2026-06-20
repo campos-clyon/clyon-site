@@ -690,13 +690,38 @@ export async function countActiveOrdersByAssistant(): Promise<Record<number, num
 }
 
 export async function pickLeastLoadedAssistant(): Promise<{ id: number; nome: string } | null> {
-  const [assistants, counts] = await Promise.all([getActiveAssistants(), countActiveOrdersByAssistant()]);
+  await ensureSimulatorOrdersTable();
+  const pool = await getPool();
+  const [assistants, counts] = await Promise.all([
+    getActiveAssistants(),
+    countActiveOrdersByAssistant(),
+  ]);
   if (!assistants.length) return null;
+
+  // Desempate: assistente que recebeu pedido há mais tempo tem prioridade
+  const lastAssigned: Record<number, string> = {};
+  if (pool) {
+    try {
+      const [rows] = await pool.execute(
+        `SELECT assignedToId, MAX(assignedAt) AS lastAt FROM simulatorOrders
+         WHERE assignedToId IS NOT NULL GROUP BY assignedToId`
+      ) as any[];
+      for (const row of rows as any[]) lastAssigned[Number(row.assignedToId)] = String(row.lastAt ?? "");
+    } catch {}
+  }
+
   let best: { id: number; nome: string } | null = null;
   let bestCount = Infinity;
+  let bestLastAt = "9999-12-31";
+
   for (const a of assistants) {
     const c = counts[a.id] ?? 0;
-    if (c < bestCount) { bestCount = c; best = { id: a.id, nome: a.nome }; }
+    const lastAt = lastAssigned[a.id] ?? "0000-01-01";
+    if (c < bestCount || (c === bestCount && lastAt < bestLastAt)) {
+      bestCount = c;
+      bestLastAt = lastAt;
+      best = { id: a.id, nome: a.nome };
+    }
   }
   return best;
 }
@@ -725,9 +750,14 @@ export async function assignSimulatorOrder(
   const pool = await getPool();
   if (!pool) return;
   const newStatus = assignee ? "atribuido" : "pendente";
+  const isAuto = actor === null;
   const message = assignee
-    ? `Pedido atribuído automaticamente a ${assignee.nome}.`
-    : "Pedido sem assistente atribuído.";
+    ? isAuto
+      ? `Pedido atribuído automaticamente a ${assignee.nome}.`
+      : `Pedido reatribuído a ${assignee.nome} por ${actor?.nome ?? "—"}.`
+    : actor
+      ? `Atribuição removida por ${actor.nome}.`
+      : "Pedido sem assistente atribuído.";
   const [rows] = await pool.execute("SELECT historyJson FROM simulatorOrders WHERE id = ? LIMIT 1", [orderId]) as any[];
   const existing: any[] = [];
   try { if ((rows as any[])[0]?.historyJson) existing.push(...JSON.parse((rows as any[])[0].historyJson)); } catch {}
@@ -761,8 +791,9 @@ export async function getSimulatorOrdersByAssistant(assignedToId: number): Promi
   await ensureSimulatorOrdersTable();
   const pool = await getPool();
   if (!pool) return [];
+  // Assistente vê apenas os pedidos atribuídos a si — nunca pedidos de outros
   const [rows] = await pool.execute(
-    "SELECT * FROM simulatorOrders WHERE assignedToId = ? OR assignedToId IS NULL ORDER BY createdAt DESC LIMIT 200",
+    "SELECT * FROM simulatorOrders WHERE assignedToId = ? ORDER BY createdAt DESC LIMIT 200",
     [assignedToId]
   ) as any[];
   return rows as SimulatorOrder[];

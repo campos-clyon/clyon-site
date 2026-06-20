@@ -121,10 +121,11 @@ function MetricCard({ label, value, sub, accent }: { label: string; value: strin
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export default function AdminPedidosClient() {
-  const { token, ready, authHeader } = useAdminAuth();
+  const { token, ready, authHeader, user } = useAdminAuth();
 
   const [orders, setOrders] = useState<Order[]>([]);
   const [counts, setCounts] = useState<Record<string, number>>({});
+  const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [activeTab, setActiveTab] = useState<OrderStatus | "todos">("todos");
@@ -152,6 +153,7 @@ export default function AdminPedidosClient() {
       if (!res.ok) throw new Error(data.error || "Erro ao carregar");
       setOrders(data.orders ?? []);
       setCounts(data.counts ?? {});
+      setIsAdmin(!!data.isAdmin);
     } catch (e: any) {
       setError(e.message);
     } finally {
@@ -180,7 +182,9 @@ export default function AdminPedidosClient() {
       <div className="mb-7 flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-white">Pedidos</h1>
-          <p className="mt-0.5 text-sm text-slate-500">Gestão de todos os pedidos do simulador</p>
+          <p className="mt-0.5 text-sm text-slate-500">
+            {isAdmin ? "Gestão de todos os pedidos do simulador" : `Os meus pedidos · ${user?.nome ?? ""}`}
+          </p>
         </div>
         <button
           onClick={fetchOrders}
