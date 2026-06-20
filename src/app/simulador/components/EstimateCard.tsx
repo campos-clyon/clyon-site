@@ -104,6 +104,75 @@ export default function EstimateCard({ estimate, loading, canGenerate, onGenerat
               <p className="text-sm font-semibold text-[#0369A1]">Orçamento presencial recomendado</p>
               <p className="text-xs text-[#0284C7] mt-1 leading-relaxed">{estimate.customerMessage}</p>
             </div>
+
+            {/* Botões de ação */}
+            {!orderSaved ? (
+              <div className="space-y-2 pt-1">
+                {/* Guardar pedido — envia para a equipa CLYON */}
+                {onSaveOrder && (
+                  <button
+                    type="button"
+                    onClick={onSaveOrder}
+                    disabled={savingOrder}
+                    className="flex items-center justify-center gap-2 w-full py-3 px-4 rounded-xl bg-[#0487D9] hover:bg-[#036BB0] text-white text-sm font-semibold transition-colors shadow-sm disabled:opacity-60 disabled:cursor-not-allowed"
+                  >
+                    {savingOrder ? (
+                      <>
+                        <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                        </svg>
+                        A enviar pedido...
+                      </>
+                    ) : (
+                      <>
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        Enviar pedido para análise
+                      </>
+                    )}
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={onReset}
+                  className="w-full flex items-center justify-center gap-1.5 py-2 px-4 rounded-xl border border-[#E2E8F0] text-[#94A3B8] hover:text-[#64748B] hover:border-[#CBD5E1] text-xs font-medium transition-colors"
+                >
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                  Começar novo pedido
+                </button>
+              </div>
+            ) : (
+              /* Card de sucesso após pedido enviado */
+              <div className="space-y-3 pt-2">
+                <div className="p-4 rounded-xl bg-[#F0FDF4] border border-[#BBF7D0]">
+                  <div className="flex items-start gap-3">
+                    <svg className="w-6 h-6 text-[#22C55E] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m7 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <div className="flex-1">
+                      <p className="font-semibold text-[#166534]">Pedido enviado com sucesso</p>
+                      <p className="text-sm text-[#15803D] mt-1 leading-relaxed">
+                        A equipa CLYON recebeu os seus dados e irá analisar o pedido. Entraremos em contacto em breve para confirmar o orçamento e o agendamento.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={onReset}
+                  className="w-full flex items-center justify-center gap-1.5 py-2 px-4 rounded-xl border border-[#E2E8F0] text-[#94A3B8] hover:text-[#64748B] hover:border-[#CBD5E1] text-xs font-medium transition-colors"
+                >
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                  Criar novo pedido
+                </button>
+              </div>
+            )}
           </div>
         )}
 
