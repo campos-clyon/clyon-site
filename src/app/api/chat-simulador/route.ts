@@ -1,4 +1,4 @@
-import { generateText } from "ai";
+import { generateText, type ModelMessage } from "ai";
 import { NextRequest, NextResponse } from "next/server";
 
 // Modelo via Vercel AI Gateway — sem quota do tier gratuito
@@ -80,27 +80,26 @@ export async function POST(request: NextRequest) {
       ? `${SYSTEM_INSTRUCTION}\n\nDADOS JÁ RECOLHIDOS (não voltes a perguntar sobre estes campos):\n${knownFields.join("\n")}`
       : SYSTEM_INSTRUCTION;
 
-    // Converter para formato ModelMessage do AI SDK
-    // AI SDK espera { role, content } onde content é string ou array de parts
-    const modelMessages = messages.map((msg) => {
-      const role = msg.role === "assistant" ? "assistant" : "user";
+    // Converter para ModelMessage[] do AI SDK
+    const modelMessages: ModelMessage[] = messages.map((msg) => {
+      const role = (msg.role === "assistant" ? "assistant" : "user") as "user" | "assistant";
       if (typeof msg.content === "string") {
-        return { role, content: msg.content } as { role: "user" | "assistant"; content: string };
+        return { role, content: msg.content };
       }
-      // Conteúdo multimodal (texto + imagens)
-      const parts = (msg.content as MsgPart[]).map((part) => {
+      // Conteúdo multimodal (texto + imagens base64)
+      const content = (msg.content as MsgPart[]).map((part) => {
         if ("inlineData" in part) {
           return {
             type: "image" as const,
             image: `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`,
           };
         }
-        return { type: "text" as const, text: part.text };
+        return { type: "text" as const, text: (part as { text: string }).text };
       });
-      return { role, content: parts } as { role: "user" | "assistant"; content: typeof parts };
+      return { role, content };
     });
 
-    // Garantir que o histórico começa com 'user' (exigência da API)
+    // A API exige que o histórico comece com 'user'
     const firstUserIdx = modelMessages.findIndex((m) => m.role === "user");
     const safeMessages = firstUserIdx >= 0 ? modelMessages.slice(firstUserIdx) : modelMessages;
 
