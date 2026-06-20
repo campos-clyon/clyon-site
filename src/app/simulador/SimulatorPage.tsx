@@ -163,6 +163,9 @@ export default function SimulatorPage() {
   const [chatHistory, setChatHistory] = useState<Array<{ role: "user" | "assistant"; content: string }>>([]);
   // A IA sinalizou que já há dados suficientes para gerar estimativa
   const [aiCanGenerate, setAiCanGenerate] = useState(false);
+  // Guardar pedido na base de dados
+  const [savingOrder, setSavingOrder] = useState(false);
+  const [orderSaved, setOrderSaved] = useState(false);
 
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -255,6 +258,8 @@ export default function SimulatorPage() {
     setIsTyping(false);
     setChatHistory([]);
     setAiCanGenerate(false);
+    setSavingOrder(false);
+    setOrderSaved(false);
     setShowResetConfirm(false);
     setResetVersion((v) => v + 1);
 
@@ -486,6 +491,32 @@ export default function SimulatorPage() {
       addressReady &&
       !!order.receiver?.name &&
       !!order.receiver?.phone);
+
+  // ─── Guardar pedido na base de dados ────────────────────────────────────────
+  const handleSaveOrder = async () => {
+    if (savingOrder || orderSaved) return;
+    setSavingOrder(true);
+    try {
+      const res = await fetch("/api/simulador/pedido", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ order, estimate, chatHistory }),
+      });
+      if (res.ok) {
+        setOrderSaved(true);
+        setMessages((prev) => [
+          ...prev,
+          makeAssistantMessage(
+            "Pedido enviado com sucesso para a equipa CLYON. Entraremos em contacto em breve para confirmar os detalhes."
+          ),
+        ]);
+      }
+    } catch {
+      // silencioso — não interrompe o fluxo
+    } finally {
+      setSavingOrder(false);
+    }
+  };
 
   // ─── Auto-gerar estimativa quando o resumo fica completo ──────────────────
   useEffect(() => {
@@ -761,6 +792,9 @@ export default function SimulatorPage() {
                 canGenerate={canGenerate}
                 onGenerate={handleGenerateEstimate}
                 onReset={() => setShowResetConfirm(true)}
+                onSaveOrder={handleSaveOrder}
+                savingOrder={savingOrder}
+                orderSaved={orderSaved}
                 order={order}
               />
             </div>
@@ -791,6 +825,9 @@ export default function SimulatorPage() {
                     canGenerate={canGenerate}
                     onGenerate={handleGenerateEstimate}
                     onReset={() => setShowResetConfirm(true)}
+                    onSaveOrder={handleSaveOrder}
+                    savingOrder={savingOrder}
+                    orderSaved={orderSaved}
                     order={order}
                   />
                 </div>

@@ -43,7 +43,7 @@ export function useAdminAuth() {
     router.push("/admin/login");
   }, [router]);
 
-  const authHeader = token ? { Authorization: `Bearer ${token}` } : {};
+  const authHeader: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
 
   return { token, user, ready, logout, authHeader };
 }
