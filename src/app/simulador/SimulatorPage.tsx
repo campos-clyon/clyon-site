@@ -1,7 +1,7 @@
 "use client";
 
-import SimulatorMultiStepForm from "./SimulatorMultiStepForm";
+import SimulatorThreePhaseForm from "./SimulatorThreePhaseForm";
 
 export default function SimulatorPage() {
-  return <SimulatorMultiStepForm />;
+  return <SimulatorThreePhaseForm />;
 }
