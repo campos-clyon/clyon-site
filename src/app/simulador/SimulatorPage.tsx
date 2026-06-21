@@ -1,7 +1,7 @@
 "use client";
 
-import SimulatorFormClient from "./SimulatorFormClient";
+import SimuladorClient from "./SimuladorClient";
 
 export default function SimulatorPage() {
-  return <SimulatorFormClient />;
+  return <SimuladorClient />;
 }

@@ -343,7 +343,7 @@ export default function SimuladorClient({ initialCategoriaId = null }: Simulador
   };
 
   /* ── confirmar pedido ── */
-  const confirmarPedido = () => {
+  const confirmarPedido = async () => {
     if (!categoria || km === null || orcamento === null) return;
     const cleanedDial = activeDial.replace(/[^\d+]/g, "");
     if (!cleanedDial || !/^\+?\d{1,4}$/.test(cleanedDial)) {
@@ -357,6 +357,62 @@ export default function SimuladorClient({ initialCategoriaId = null }: Simulador
     const telCompleto = `${dialN} ${telemovel}`.trim();
 
     trackSimulatorWhatsApp(categoria.id, orcamento, true);
+
+    // NOVO: Guardar pedido em BD ANTES de ir para WhatsApp
+    try {
+      console.log("[v0] SimuladorClient: Guardando pedido em BD...");
+      const orderData = {
+        serviceType: categoria.nome,
+        description: `Origem: ${origem || "Base CLYON"}, Destino: ${destino}, Distância: ${km.toFixed(1)}km, Pessoas: ${quantidadePessoas}, Tempo: ${tempoEstimado}h${acessoDificil ? ", Acesso difícil" : ""}`,
+        receiver: {
+          name: telemovel, // Não temos nome, usar telefone como placeholder
+          phone: telCompleto,
+          email: "",
+        },
+        address: {
+          formattedAddress: `${origem || "Base CLYON"} → ${destino}`,
+          city: destino,
+        },
+        floor: tipoAcesso === "apartamento" ? `${numeroAndares}º` : "Rés-do-chão",
+        hasElevator: tipoAcesso === "apartamento" ? temElevador : "N/A",
+        parkingDistance: acessoDificil ? "Acesso difícil" : "Normal",
+        urgency: "normal",
+        distanceFromBase: {
+          distanceKm: km,
+          durationText: `${tempoEstimado}h`,
+        },
+        files: fotosUrls,
+      };
+
+      const res = await fetch("/api/simulador/pedido", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          order: orderData,
+          estimate: {
+            status: "estimated",
+            estimatedPriceWithoutVat: orcamento / 1.23,
+            vatAmount: orcamento - (orcamento / 1.23),
+            estimatedPriceWithVat: orcamento,
+            difficultyLevel: acessoDificil ? 3 : 2,
+            summary: `${categoria.nome} de ${origem || "Base CLYON"} para ${destino}`,
+            customerMessage: `Orçamento estimado em €${orcamento.toFixed(2)}`,
+          },
+          chatHistory: [],
+        }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        console.log("[v0] SimuladorClient: ✓ Pedido guardado com ID", data.id);
+      } else {
+        const err = await res.json();
+        console.error("[v0] SimuladorClient: ❌ Erro ao guardar pedido:", err);
+      }
+    } catch (err) {
+      console.error("[v0] SimuladorClient: ❌ Erro ao guardar:", err);
+      // Continuar com WhatsApp mesmo se BD falhar
+    }
 
     const linhas = [
       "Olá! Simulei um orçamento no site CLYON:",
