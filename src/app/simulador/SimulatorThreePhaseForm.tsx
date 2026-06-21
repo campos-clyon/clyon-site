@@ -37,27 +37,15 @@ export default function SimulatorThreePhaseForm() {
   const [addressValue, setAddressValue] = useState("");
   const [error, setError] = useState<string | null>(null);
 
-  // Carregar draft do localStorage APENAS NA INICIALIZAÇÃO
-  // Limpar também dados antigos do componente antigo
+  // Limpar localStorage ao inicializar (F5 sempre reseta)
   useEffect(() => {
     try {
-      // Limpar localStorage antigo do componente antigo
-      localStorage.removeItem("clyon_simulator_form_draft");
-      console.log("[v0] SimulatorThreePhaseForm: ✓ Limpado localStorage antigo");
-      
-      // Carregar novo draft
-      const saved = localStorage.getItem(DRAFT_KEY);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        console.log("[v0] SimulatorThreePhaseForm: ✓ Draft carregado de localStorage", { name: parsed.receiver?.name });
-        setFormData(parsed);
-      }
-    } catch (e) {
-      console.error("[v0] SimulatorThreePhaseForm: ❌ Erro ao carregar draft", e);
-      // Se erro, limpar tudo e começar novo
-      setFormData({});
+      // Sempre limpar localStorage ao montar (F5 reseta o formulário)
       localStorage.removeItem(DRAFT_KEY);
       localStorage.removeItem("clyon_simulator_form_draft");
+      console.log("[v0] SimulatorThreePhaseForm: ✓ Formulário zerado (F5 = reset)");
+    } catch (e) {
+      console.error("[v0] SimulatorThreePhaseForm: ❌ Erro ao limpar localStorage", e);
     }
   }, []);
 
