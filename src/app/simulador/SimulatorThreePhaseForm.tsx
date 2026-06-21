@@ -33,20 +33,31 @@ export default function SimulatorThreePhaseForm() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successOrderId, setSuccessOrderId] = useState<number | null>(null);
+  const [successAssignedTo, setSuccessAssignedTo] = useState<{ id: number; name: string } | null>(null);
   const [addressValue, setAddressValue] = useState("");
   const [error, setError] = useState<string | null>(null);
 
-  // Carregar draft do localStorage
+  // Carregar draft do localStorage APENAS NA INICIALIZAÇÃO
+  // Limpar também dados antigos do componente antigo
   useEffect(() => {
     try {
+      // Limpar localStorage antigo do componente antigo
+      localStorage.removeItem("clyon_simulator_form_draft");
+      console.log("[v0] SimulatorThreePhaseForm: ✓ Limpado localStorage antigo");
+      
+      // Carregar novo draft
       const saved = localStorage.getItem(DRAFT_KEY);
       if (saved) {
         const parsed = JSON.parse(saved);
+        console.log("[v0] SimulatorThreePhaseForm: ✓ Draft carregado de localStorage", { name: parsed.receiver?.name });
         setFormData(parsed);
-        console.log("[v0] SimulatorThreePhaseForm: ✓ Draft carregado");
       }
     } catch (e) {
       console.error("[v0] SimulatorThreePhaseForm: ❌ Erro ao carregar draft", e);
+      // Se erro, limpar tudo e começar novo
+      setFormData({});
+      localStorage.removeItem(DRAFT_KEY);
+      localStorage.removeItem("clyon_simulator_form_draft");
     }
   }, []);
 
@@ -99,7 +110,12 @@ export default function SimulatorThreePhaseForm() {
     setError(null);
 
     try {
-      console.log("[v0] SimulatorThreePhaseForm: Enviando para análise Gemini...");
+      console.log("[v0] SimulatorThreePhaseForm: Enviando para análise Gemini...", {
+        serviceType: formData.serviceType,
+        contactName: formData.receiver?.name,
+        contactPhone: formData.receiver?.phone,
+        description: formData.description?.substring(0, 50),
+      });
 
       const res = await fetch("/api/simulator/analyze", {
         method: "POST",
@@ -138,30 +154,44 @@ export default function SimulatorThreePhaseForm() {
     setError(null);
 
     try {
-      console.log("[v0] SimulatorThreePhaseForm: Enviando pedido para criação...");
+      console.log("[v0] SimulatorThreePhaseForm: Enviando pedido para criação...", {
+        contactName: formData.receiver?.name,
+        contactPhone: formData.receiver?.phone,
+        serviceType: formData.serviceType,
+        analysisStatus: analysis?.status,
+      });
+
+      const payload = {
+        order: formData,
+        estimate: analysis,
+        chatHistory: [],
+      };
+      console.log("[v0] SimulatorThreePhaseForm: Payload -", JSON.stringify(payload, null, 2).substring(0, 200));
 
       const res = await fetch("/api/simulador/pedido", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          order: formData,
-          estimate: analysis,
-          chatHistory: [],
-        }),
+        body: JSON.stringify(payload),
       });
 
       if (!res.ok) {
         const err = await res.json();
+        console.error("[v0] SimulatorThreePhaseForm: API Error -", err);
         throw new Error(err.error || "Erro ao enviar pedido");
       }
 
       const result = await res.json();
       console.log("[v0] SimulatorThreePhaseForm: ✓ Pedido criado -", {
         id: result.id,
-        assignedTo: result.assignedToName,
+        status: result.status,
+        assignedTo: result.assignedTo,
+        assignedToId: result.assignedToId,
       });
 
       setSuccessOrderId(result.id);
+      if (result.assignedToId && result.assignedTo) {
+        setSuccessAssignedTo({ id: result.assignedToId, name: result.assignedTo });
+      }
       localStorage.removeItem(DRAFT_KEY);
     } catch (err) {
       const message = err instanceof Error ? err.message : "Erro ao enviar pedido";
@@ -173,12 +203,27 @@ export default function SimulatorThreePhaseForm() {
   };
 
   const handleReset = () => {
+    console.log("[v0] SimulatorThreePhaseForm: Reset - limpando tudo");
     setFormData({});
     setAnalysis(null);
     setSuccessOrderId(null);
+    setSuccessAssignedTo(null);
     setPhase(1);
     setAddressValue("");
+    setError(null);
+    
+    // Limpar TODOS os localStorage keys (novos e antigos)
     localStorage.removeItem(DRAFT_KEY);
+    localStorage.removeItem("clyon_simulator_form_draft");
+    localStorage.removeItem("clyon_simulator_draft");
+    
+    // Limpar também qualquer outra chave do simulador antigo
+    Object.keys(localStorage).forEach(key => {
+      if (key.includes("simulador") || key.includes("simulator")) {
+        localStorage.removeItem(key);
+        console.log("[v0] SimulatorThreePhaseForm: Limpado localStorage key -", key);
+      }
+    });
   };
 
   // Success Screen
@@ -207,6 +252,11 @@ export default function SimulatorThreePhaseForm() {
                 <p className="text-sm text-blue-900">
                   <strong>Número de pedido:</strong> #{successOrderId}
                 </p>
+                {successAssignedTo && (
+                  <p className="text-sm text-blue-800 mt-2">
+                    <strong>Assistente responsável:</strong> {successAssignedTo.name}
+                  </p>
+                )}
                 <p className="text-sm text-blue-800 mt-2">
                   Guarde este número para referência futura. Será contactado pelo telefone ou email fornecido.
                 </p>
