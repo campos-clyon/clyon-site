@@ -103,58 +103,81 @@ Sua tarefa é analisar o pedido abaixo e retornar APENAS um JSON válido com os 
 
 REGRAS DE PREÇO - PRECÁRIO CLYON ATUALIZADO (Junho 2026):
 
-ZONAS BASE (sem IVA):
-- Zona A (Amora/Fernão Ferro e proximidades): 220€
-- Zona B (Lisboa com acesso razoável): 250€
-- Zona C (Lisboa difícil ou regiões longe): 270€
+CARGA BASE (sem IVA):
+- Margem Sul (Caparica, Almada, Barreiro, Seixal, Moita, Montijo): 250€
+- Lisboa (Lisboa, Amora, Fernão Ferro, Oeiras): 300€
+- Cascais/Loures/Mafra: 300€
 
-ENTULHO (IMPORTANTE):
-- Até 20 sacos: 3€ por saco + minimo da zona se deslocacao dedicada
-- 20 a 50 sacos: minimo da zona + (3€ x número de sacos)
-- Sem elevador: +25€ a +50€ por andar
-- Com elevador: aplicar minimo da zona + valor de sacos
+SACOS DE ENTULHO (preço por saco - SEM IVA):
+- Margem Sul: 3€ por saco
+- Lisboa: 3.20€ por saco
+- Cascais/Loures: 3.20€ por saco
 
-EXEMPLOS CORRETOS:
-- 20 sacos em Lisboa (zona B): 250€ + (20 x 3€) = 310€ sem IVA
-- 20 sacos Lisboa sem elevador rés-do-chão: 250€ + (20 x 3€) + 15€ = 325€ sem IVA
-- 40 sacos em Lisboa: 250€ + (40 x 3€) = 370€ sem IVA
+ITENS UNITÁRIOS (não sacos):
+- Pequeno (<1m): 10€ por item
+- Médio (1-2m): 15€ por item
+- Grande (>2m): 20€ por item
+
+CÁLCULO CORRETO PARA ENTULHO:
+- Base = Preço da zona (250€ Margem Sul OU 300€ Lisboa)
+- Sacos = Número de sacos × Preço por saco da zona
+- Acrescimos por acesso difícil (elevador, estacionamento, etc)
+- Total sem IVA = Base + (Sacos × Preço/saco) + Acrescimos
+- EXEMPLO 50 SACOS LISBOA: 300€ + (50 × 3.20€) = 300€ + 160€ = 460€ sem IVA = 565,80€ com IVA
+- EXEMPLO 50 SACOS MARGEM SUL: 250€ + (50 × 3€) = 250€ + 150€ = 400€ sem IVA = 492€ com IVA
 
 OUTROS SERVIÇOS:
-- Recolha de móveis: 220/250/270€ base + acrescimos por peso/escadas
-- Recolha de monos: 220/250/270€ base
-- Esvaziamento de T1: 450€-1.100€ dependendo conteúdo
+- Recolha de móveis: base da zona + (items × preço unitário) + acrescimos
+- Recolha de monos: base da zona + acrescimos
+- Esvaziamento de T1: sob orçamento
 - Esvaziamento de T2: sob orçamento
-- Mudança completa: 400€-1.200€ base
+- Mudança completa: sob orçamento
 
 ACRESCIMOS (ao base):
-- Sem elevador carga pesada: +25€ a +50€ por andar
-- Distância longa até carrinha (>20m): +20€ a +80€
-- Desmontagem simples: +30€ a +50€
-- Desmontagem média: +60€ a +120€
-- Triagem/separação de lixo: +40€ a +150€
-- Urgência (mesmo dia): +30€ a +60€
-- IVA (23%): sempre separado e destacado
+- Sem elevador (por andar): +20€ a +40€
+- Sem estacionamento próximo (>20m): +30€ a +50€
+- Triagem/separação obrigatória: +50€ a +100€
+- Desmontagem: +30€ a +80€
+- Urgência (mesmo dia): +50€ a +100€
 
 REGRAS DE DIFICULDADE:
-- Nível 1: Acesso fácil (porta, elevador, estacionamento próximo) - usar base
-- Nível 2: Normal (acesso razoável, alguns acrescimos) - base + até 50€
-- Nível 3: Médio (escadas, alguma distância, peso moderado) - base + 50€ a 150€
-- Nível 4: Difícil (sem elevador, muito peso, triagem, estacionamento longe) - base + 150€ a 300€
-- Nível 5: Muito difícil (mais de 1 carrinha, acesso muito ruim) - sob orçamento
+- Nível 1: Fácil (elevador, estacionamento porta, sem desmontagem)
+- Nível 2: Normal (sem elevador rés-do-chão OU estacionamento longe)
+- Nível 3: Médio (sem elevador 1-2 andares + acrescimos moderados)
+- Nível 4: Difícil (sem elevador >2 andares OU múltiplos acrescimos)
+- Nível 5: Muito difícil (necessário orçamento in loco)
 
 CRITÉRIOS PARA "onsite_required":
-- Se faltarem informações críticas (andar não especificado, acesso desconhecido)
-- Apenas para situações realmente complexas (>1 carrinha, obra muito pesada)
+- Se faltarem informações críticas (localidade não identificada, acesso muito incerto)
+- Apenas para situações realmente complexas
 
 CRITÉRIOS PARA "needs_more_info":
-- Se a descrição for muito vaga (não mencionar número de sacos, tipo de objetos, etc)
+- Se a descrição for muito vaga (não mencionar quantidade de sacos ou objetos)
 
-INSTRUÇÕES CRÍTICAS:
-1. SEMPRE usar base de zona (220€, 250€ ou 270€) como ponto de partida
-2. Para ENTULHO em sacos: base + (número de sacos × 3€) + acrescimos por acesso
-3. Não calcular valores fixos altos sem justificativa clara
-4. Se há informações completas: status = "estimated" (não "onsite_required")
-5. Validar que o preço faz sentido comparado com exemplos do precário
+INSTRUÇÕES CRÍTICAS PARA CÁLCULO CORRETO:
+1. IDENTIFICAR LOCALIDADE: é Margem Sul, Lisboa ou Cascais/Loures?
+   - Se Lisboa/Amora/Fernão Ferro/Oeiras → Base 300€, Saco 3.20€
+   - Se Margem Sul → Base 250€, Saco 3€
+   - Se Cascais/Loures/Mafra → Base 300€, Saco 3.20€
+
+2. PARA ENTULHO EM SACOS:
+   - Cálculo = Base_da_zona + (Número_sacos × Preço_saco_da_zona) + Acrescimos
+   - Exemplo: 50 sacos Lisboa = 300€ + (50 × 3.20€) + acrescimos = resultado
+
+3. ACRESCIMOS SÓ SE:
+   - Sem elevador? +20€ a +40€ por andar
+   - Estacionamento longe? +30€ a +50€
+   - Outras dificuldades? calcular conforme
+
+4. VALIDAR RESULTADO:
+   - 50 sacos Lisboa deve dar ~565€ com IVA
+   - 50 sacos Margem Sul deve dar ~492€ com IVA
+   - Se diferente: revisar zona e preço por saco
+
+5. SEMPRE RETORNAR:
+   - estimatedPriceWithoutVat (sem IVA)
+   - vatAmount (IVA 23%)
+   - estimatedPriceWithVat (com IVA)
 
 Analise o pedido abaixo e retorne APENAS o JSON sem qualquer texto adicional:
 
