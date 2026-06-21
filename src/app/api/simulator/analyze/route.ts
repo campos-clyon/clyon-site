@@ -101,26 +101,60 @@ Sua tarefa é analisar o pedido abaixo e retornar APENAS um JSON válido com os 
   "missingFields": ["array", "de", "campos faltantes"]
 }
 
-REGRAS DE PREÇO:
-- Recolha de móveis: €80-150 base + €20-40 por item pesado + €10/km
-- Recolha de monos: €60-100 base + €15/km
-- Recolha de entulho: €100-200 base + €20/km
-- Esvaziamento: €300-800 dependendo do volume + €20/km
-- Mudança: €400-1200 base + €30/km
-- IVA (23%): sempre incluído no cálculo final
+REGRAS DE PREÇO - PRECÁRIO CLYON ATUALIZADO (Junho 2026):
+
+ZONAS BASE (sem IVA):
+- Zona A (Amora/Fernão Ferro e proximidades): 220€
+- Zona B (Lisboa com acesso razoável): 250€
+- Zona C (Lisboa difícil ou regiões longe): 270€
+
+ENTULHO (IMPORTANTE):
+- Até 20 sacos: 3€ por saco + minimo da zona se deslocacao dedicada
+- 20 a 50 sacos: minimo da zona + (3€ x número de sacos)
+- Sem elevador: +25€ a +50€ por andar
+- Com elevador: aplicar minimo da zona + valor de sacos
+
+EXEMPLOS CORRETOS:
+- 20 sacos em Lisboa (zona B): 250€ + (20 x 3€) = 310€ sem IVA
+- 20 sacos Lisboa sem elevador rés-do-chão: 250€ + (20 x 3€) + 15€ = 325€ sem IVA
+- 40 sacos em Lisboa: 250€ + (40 x 3€) = 370€ sem IVA
+
+OUTROS SERVIÇOS:
+- Recolha de móveis: 220/250/270€ base + acrescimos por peso/escadas
+- Recolha de monos: 220/250/270€ base
+- Esvaziamento de T1: 450€-1.100€ dependendo conteúdo
+- Esvaziamento de T2: sob orçamento
+- Mudança completa: 400€-1.200€ base
+
+ACRESCIMOS (ao base):
+- Sem elevador carga pesada: +25€ a +50€ por andar
+- Distância longa até carrinha (>20m): +20€ a +80€
+- Desmontagem simples: +30€ a +50€
+- Desmontagem média: +60€ a +120€
+- Triagem/separação de lixo: +40€ a +150€
+- Urgência (mesmo dia): +30€ a +60€
+- IVA (23%): sempre separado e destacado
 
 REGRAS DE DIFICULDADE:
-- Nível 1-2: Sem complicações (porta, elevador disponível, estacionamento próximo)
-- Nível 3: Acesso moderado (andares, sem elevador, estacionamento longe)
-- Nível 4: Acesso difícil (escadas, muitos andares, sem elevador)
-- Nível 5: Muito difícil (acesso muito complicado, múltiplas limitações)
+- Nível 1: Acesso fácil (porta, elevador, estacionamento próximo) - usar base
+- Nível 2: Normal (acesso razoável, alguns acrescimos) - base + até 50€
+- Nível 3: Médio (escadas, alguma distância, peso moderado) - base + 50€ a 150€
+- Nível 4: Difícil (sem elevador, muito peso, triagem, estacionamento longe) - base + 150€ a 300€
+- Nível 5: Muito difícil (mais de 1 carrinha, acesso muito ruim) - sob orçamento
 
 CRITÉRIOS PARA "onsite_required":
-- Se faltarem informações críticas (andar não especificado, acesso desconhecido, volume indefinido)
-- Se o volume for muito grande ou indefinido
+- Se faltarem informações críticas (andar não especificado, acesso desconhecido)
+- Apenas para situações realmente complexas (>1 carrinha, obra muito pesada)
 
 CRITÉRIOS PARA "needs_more_info":
-- Se a descrição for muito vaga ou incompleta
+- Se a descrição for muito vaga (não mencionar número de sacos, tipo de objetos, etc)
+
+INSTRUÇÕES CRÍTICAS:
+1. SEMPRE usar base de zona (220€, 250€ ou 270€) como ponto de partida
+2. Para ENTULHO em sacos: base + (número de sacos × 3€) + acrescimos por acesso
+3. Não calcular valores fixos altos sem justificativa clara
+4. Se há informações completas: status = "estimated" (não "onsite_required")
+5. Validar que o preço faz sentido comparado com exemplos do precário
 
 Analise o pedido abaixo e retorne APENAS o JSON sem qualquer texto adicional:
 
