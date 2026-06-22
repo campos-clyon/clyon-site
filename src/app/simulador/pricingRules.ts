@@ -67,11 +67,20 @@ export function extractQuantityFromDescription(description: string | undefined):
 
 // ─── Cálculo por tipo de serviço ──────────────────────────────────────────────
 
-// Entulho: 3 € por saco de ~50 L, mínimo 90 €
-function calcEntulhoBase(qty: number | null): { price: number; note: string } {
-  const sacos = qty ?? 10;
-  const price = Math.max(90, sacos * 3);
-  return { price, note: `${sacos} sacos × 3 €/saco` };
+// Entulho: NOVA REGRA - 1,90€ ensacado OU 2,20€ por ensacar + distância
+// Esta função é um fallback; Gemini tem a versão correta no prompt
+function calcEntulhoBase(qty: number | null, isBagged: boolean = true): { price: number; note: string } {
+  const sacos = qty ?? 20;
+  
+  // Preços corretos do precário CLYON atualizado
+  const pricePerBag = isBagged ? 1.90 : 2.20;
+  const price = sacos * pricePerBag;
+  
+  const state = isBagged ? "ensacados" : "por ensacar";
+  return { 
+    price, 
+    note: `${sacos} sacos ${state} × ${pricePerBag}€/saco = ${price}€` 
+  };
 }
 
 // Preço unitário por tipo de item (móveis/monos)
@@ -307,12 +316,19 @@ export function calculateLocalEstimate(order: OrderData): EstimateResult {
           "A distância até à morada indicada é elevada. Iremos apresentar um orçamento personalizado.",
         internalNotes: [`Distância: ${distKm} km — orçamento personalizado.`],
       };
-    } else if (distKm > 35) {
-      base += 40;
-      assumptions.push(`Distância de ${distKm} km (+40 €)`);
-    } else if (distKm > 20) {
-      base += 20;
-      assumptions.push(`Distância de ${distKm} km (+20 €)`);
+    } else {
+      // Para entulho: 2€/km. Para outros: usar escala progressiva
+      if (isEntulho) {
+        const distCost = distKm * 2; // 2€ por km para entulho
+        base += distCost;
+        assumptions.push(`Distância de ${distKm} km × 2€ = +${distCost}€`);
+      } else if (distKm > 35) {
+        base += 40;
+        assumptions.push(`Distância de ${distKm} km (+40 €)`);
+      } else if (distKm > 20) {
+        base += 20;
+        assumptions.push(`Distância de ${distKm} km (+20 €)`);
+      }
     }
     internalNotes.push(`Distância: ${distKm} km`);
   }
