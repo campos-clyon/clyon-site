@@ -1,6 +1,7 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import type { NextRequest } from "next/server";
 import type { OrderData, EstimateResult } from "../../../simulador/types";
+import { getActivePricingRulesForGemini, createPricingSnapshot } from "@/lib/pricing-helper";
 
 export async function POST(req: NextRequest) {
   try {
@@ -19,9 +20,15 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Construir prompt para Gemini
+    // Carregar preçário dinâmico do backoffice
+    const pricingRules = await getActivePricingRulesForGemini();
+    const pricingSnapshot = await createPricingSnapshot();
+    
+    console.log("[v0] POST /api/simulator/analyze: ✓ Preçário carregado do backoffice");
+
+    // Construir prompt para Gemini com preçário dinâmico
     const formattedData = formatOrderDataForPrompt(order);
-    const prompt = buildAnalysisPrompt(formattedData);
+    const prompt = buildAnalysisPrompt(formattedData, pricingRules);
 
     console.log("[v0] POST /api/simulator/analyze: Chamando Gemini com modelo:", modelName);
 
@@ -35,14 +42,25 @@ export async function POST(req: NextRequest) {
 
     // Parse resposta JSON do Gemini
     const analysis = parseGeminiResponse(responseText);
+    
+    // Adicionar snapshot do preçário usado
+    const responseWithMetadata = {
+      ...analysis,
+      internalNotes: [
+        ...(analysis.internalNotes || []),
+        `Preçário usado: ${pricingSnapshot?.timestamp || "default"}`,
+      ],
+      _pricingSnapshot: pricingSnapshot, // Para debug/admin
+    };
 
     console.log("[v0] POST /api/simulator/analyze: ✓ Análise completa -", {
       status: analysis.status,
       price: analysis.estimatedPriceWithVat,
       difficulty: analysis.difficultyLevel,
+      pricingSnapshot: pricingSnapshot?.timestamp,
     });
 
-    return Response.json(analysis);
+    return Response.json(responseWithMetadata);
   } catch (error) {
     console.error("[v0] POST /api/simulator/analyze: ❌ Erro", error);
     return Response.json(
@@ -85,7 +103,7 @@ function formatOrderDataForPrompt(order: OrderData): string {
   return lines.join("\n");
 }
 
-function buildAnalysisPrompt(formattedData: string): string {
+function buildAnalysisPrompt(formattedData: string, pricingRules: string): string {
   return `Você é um analista de preços para uma empresa de serviços de transporte e limpeza chamada CLYON, com base em Fernão Ferro, Portugal.
 
 Sua tarefa é analisar o pedido abaixo e retornar APENAS um JSON válido com os seguintes campos:
@@ -98,86 +116,28 @@ Sua tarefa é analisar o pedido abaixo e retornar APENAS um JSON válido com os 
   "difficultyLevel": 1-5,
   "summary": "string com resumo da análise",
   "assumptions": ["array", "de", "pressupostos"],
-  "missingFields": ["array", "de", "campos faltantes"]
+  "missingFields": ["array", "de", "campos faltantes"],
+  "customerMessage": "mensagem para o cliente",
+  "internalNotes": ["notas internas"]
 }
 
-REGRAS DE PREÇO - PRECÁRIO CLYON ATUALIZADO (Junho 2026):
+═══════════════════════════════════════════════════════════
+PREÇÁRIO ATIVO CLYON (SEMPRE USE ESTES VALORES)
+═══════════════════════════════════════════════════════════
 
-CARGA BASE (sem IVA):
-- Margem Sul (Caparica, Almada, Barreiro, Seixal, Moita, Montijo): 250€
-- Lisboa (Lisboa, Amora, Fernão Ferro, Oeiras): 300€
-- Cascais/Loures/Mafra: 300€
+${pricingRules}
 
-SACOS DE ENTULHO (preço por saco - SEM IVA):
-- Margem Sul: 3€ por saco
-- Lisboa: 3.20€ por saco
-- Cascais/Loures: 3.20€ por saco
+═══════════════════════════════════════════════════════════
+INSTRUÇÕES CRÍTICAS
+═══════════════════════════════════════════════════════════
 
-ITENS UNITÁRIOS (não sacos):
-- Pequeno (<1m): 10€ por item
-- Médio (1-2m): 15€ por item
-- Grande (>2m): 20€ por item
-
-CÁLCULO CORRETO PARA ENTULHO:
-- Base = Preço da zona (250€ Margem Sul OU 300€ Lisboa)
-- Sacos = Número de sacos × Preço por saco da zona
-- Acrescimos por acesso difícil (elevador, estacionamento, etc)
-- Total sem IVA = Base + (Sacos × Preço/saco) + Acrescimos
-- EXEMPLO 50 SACOS LISBOA: 300€ + (50 × 3.20€) = 300€ + 160€ = 460€ sem IVA = 565,80€ com IVA
-- EXEMPLO 50 SACOS MARGEM SUL: 250€ + (50 × 3€) = 250€ + 150€ = 400€ sem IVA = 492€ com IVA
-
-OUTROS SERVIÇOS:
-- Recolha de móveis: base da zona + (items × preço unitário) + acrescimos
-- Recolha de monos: base da zona + acrescimos
-- Esvaziamento de T1: sob orçamento
-- Esvaziamento de T2: sob orçamento
-- Mudança completa: sob orçamento
-
-ACRESCIMOS (ao base):
-- Sem elevador (por andar): +20€ a +40€
-- Sem estacionamento próximo (>20m): +30€ a +50€
-- Triagem/separação obrigatória: +50€ a +100€
-- Desmontagem: +30€ a +80€
-- Urgência (mesmo dia): +50€ a +100€
-
-REGRAS DE DIFICULDADE:
-- Nível 1: Fácil (elevador, estacionamento porta, sem desmontagem)
-- Nível 2: Normal (sem elevador rés-do-chão OU estacionamento longe)
-- Nível 3: Médio (sem elevador 1-2 andares + acrescimos moderados)
-- Nível 4: Difícil (sem elevador >2 andares OU múltiplos acrescimos)
-- Nível 5: Muito difícil (necessário orçamento in loco)
-
-CRITÉRIOS PARA "onsite_required":
-- Se faltarem informações críticas (localidade não identificada, acesso muito incerto)
-- Apenas para situações realmente complexas
-
-CRITÉRIOS PARA "needs_more_info":
-- Se a descrição for muito vaga (não mencionar quantidade de sacos ou objetos)
-
-INSTRUÇÕES CRÍTICAS PARA CÁLCULO CORRETO:
-1. IDENTIFICAR LOCALIDADE: é Margem Sul, Lisboa ou Cascais/Loures?
-   - Se Lisboa/Amora/Fernão Ferro/Oeiras → Base 300€, Saco 3.20€
-   - Se Margem Sul → Base 250€, Saco 3€
-   - Se Cascais/Loures/Mafra → Base 300€, Saco 3.20€
-
-2. PARA ENTULHO EM SACOS:
-   - Cálculo = Base_da_zona + (Número_sacos × Preço_saco_da_zona) + Acrescimos
-   - Exemplo: 50 sacos Lisboa = 300€ + (50 × 3.20€) + acrescimos = resultado
-
-3. ACRESCIMOS SÓ SE:
-   - Sem elevador? +20€ a +40€ por andar
-   - Estacionamento longe? +30€ a +50€
-   - Outras dificuldades? calcular conforme
-
-4. VALIDAR RESULTADO:
-   - 50 sacos Lisboa deve dar ~565€ com IVA
-   - 50 sacos Margem Sul deve dar ~492€ com IVA
-   - Se diferente: revisar zona e preço por saco
-
-5. SEMPRE RETORNAR:
-   - estimatedPriceWithoutVat (sem IVA)
-   - vatAmount (IVA 23%)
-   - estimatedPriceWithVat (com IVA)
+1. USA APENAS OS VALORES ACIMA — Não inventes preços
+2. Se falta quantidade de sacos ou estado do entulho → "needs_more_info"
+3. Se falta zona/localidade → "needs_more_info"
+4. ENTULHO: usar exatamente a fórmula fornecida acima
+5. Se não conseguir calcular com segurança → "onsite_required"
+6. IVA sempre é 23% (0.23x)
+7. Validar que os valores fazem sentido
 
 Analise o pedido abaixo e retorne APENAS o JSON sem qualquer texto adicional:
 

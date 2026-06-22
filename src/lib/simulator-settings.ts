@@ -5,7 +5,8 @@ export type SimulatorSettingKey =
   | "moveis_distancia_km"
   | "moveis_carga_base"
   | "moveis_carga_multiplicador"
-  | "entulho_saco_chao_extra"
+  | "entulho_saco_ensacado"
+  | "entulho_saco_chao"
   | "entulho_distancia_km"
   | "mudancas_distancia_km"
   | "apartamento_com_elevador_por_andar"
@@ -74,20 +75,28 @@ export const defaultSimulatorSettings: SimulatorSettingDefinition[] = [
     value: 0.35,
   },
   {
-    key: "entulho_saco_chao_extra",
-    label: "Extra por saco no chao",
-    description: "Acrescimo quando o entulho nao esta ensacado.",
+    key: "entulho_saco_ensacado",
+    label: "Preço por saco já ensacado",
+    description: "Valor por saco quando o entulho já está em sacos.",
     category: "entulho",
     unit: "eur",
-    value: 1.5,
+    value: 1.9,
+  },
+  {
+    key: "entulho_saco_chao",
+    label: "Preço por saco no chão/por ensacar",
+    description: "Valor por saco quando o entulho está no chão ou precisa ser ensacado.",
+    category: "entulho",
+    unit: "eur",
+    value: 2.2,
   },
   {
     key: "entulho_distancia_km",
     label: "Custo por km em entulho",
-    description: "Peso da distância para entulho e limpeza pós-obra.",
+    description: "Peso da distância para entulho (€/km).",
     category: "entulho",
     unit: "eur",
-    value: 2.2,
+    value: 2,
   },
   {
     key: "mudancas_distancia_km",

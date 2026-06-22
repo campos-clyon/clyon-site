@@ -278,7 +278,7 @@ export default function SimuladorClient({ initialCategoriaId = null }: Simulador
       }
     }
     if (categoria.calculo === "entulho") {
-      const material = entulhoModo === "chao" ? sacos * pricingMap.entulho_saco_chao_extra : sacos;
+      const material = entulhoModo === "chao" ? sacos * pricingMap.entulho_saco_chao : sacos * pricingMap.entulho_saco_ensacado;
       total = (horas * pessoas * pricingMap.hora_base + material + km * pricingMap.entulho_distancia_km + adicionalAcesso + adicionalDificil) * pricingMap.entulho_multiplicador;
     }
     if (categoria.calculo === "mudancas") {
@@ -985,7 +985,7 @@ export default function SimuladorClient({ initialCategoriaId = null }: Simulador
 
 /* ═══════════════════════════════════════════════════════════
    SUB-COMPONENTES
-═══════════════════════════════════════════════════════════ */
+══════════════════════════════════════════���════════════════ */
 
 function StepperBar({ current }: { current: number }) {
   const steps = [
