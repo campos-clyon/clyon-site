@@ -1,6 +1,14 @@
 import type { OrderData, EstimateResult, DifficultyLevel, LocationZone } from "./types";
+import { getActivePricingMap } from "@/lib/pricing-helper";
+import type { SimulatorSettingsMap } from "@/lib/simulator-settings";
+import { createSimulatorSettingsMap } from "@/lib/simulator-settings";
 
 export const TAX_RATE = 0.23;
+
+// Será carregado dinamicamente se disponível
+let cachedSettings: SimulatorSettingsMap | null = null;
+let settingsLoadTime = 0;
+const SETTINGS_CACHE_MS = 60000; // Recarregar a cada minuto
 
 // ─── Preçário CLYON (valores sem IVA) ────────────────────────────────────────
 //
@@ -161,9 +169,31 @@ function needsOnsiteVisit(order: OrderData): boolean {
   return false;
 }
 
-// ─── Função principal ─────────────────────────────────────────────────────────
+// ─── Helper: Carregar settings com cache ──────────────────────────────────
 
-export function calculateLocalEstimate(order: OrderData): EstimateResult {
+async function getSettings(): Promise<SimulatorSettingsMap> {
+  const now = Date.now();
+  if (cachedSettings && (now - settingsLoadTime) < SETTINGS_CACHE_MS) {
+    return cachedSettings; // Cache hit
+  }
+  
+  try {
+    cachedSettings = await getActivePricingMap();
+    settingsLoadTime = now;
+    console.log("[pricingRules] ✓ Settings carregados do backoffice");
+  } catch (error) {
+    console.warn("[pricingRules] Erro ao carregar settings, usando defaults", error);
+    cachedSettings = createSimulatorSettingsMap(); // Defaults
+  }
+  
+  return cachedSettings;
+}
+
+// ─── Função principal (agora async) ───────────────────────────────────────────
+
+export async function calculateLocalEstimate(order: OrderData): Promise<EstimateResult> {
+  // Carregar settings dinâmicos
+  const settings = await getSettings();
   const missingFields: string[] = [];
 
   if (!order.serviceType) missingFields.push("Tipo de serviço");

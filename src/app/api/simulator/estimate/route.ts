@@ -78,7 +78,7 @@ export async function POST(req: NextRequest) {
     }
 
     const aiResult = await generateEstimateWithAI(order);
-    const result = aiResult ?? calculateLocalEstimate(order);
+    const result = aiResult ?? (await calculateLocalEstimate(order));
 
     return NextResponse.json(result);
   } catch (err) {
