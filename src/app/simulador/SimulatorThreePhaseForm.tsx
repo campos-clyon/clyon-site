@@ -12,9 +12,11 @@ import type {
 } from "./types";
 import AddressAutocomplete from "./components/AddressAutocomplete";
 import OrderSummaryCard from "./components/OrderSummaryCard";
-import UploadDropzone from "./components/UploadDropzone";
 import ContactAccessForm from "./components/ContactAccessForm";
 import AnalysisResultCard from "./components/AnalysisResultCard";
+import ServiceTypeCards from "./components/ServiceTypeCards";
+import EntulhoDetails from "./components/EntulhoDetails";
+import CompactOrderDetails from "./components/CompactOrderDetails";
 import { ChevronRight, ChevronLeft, CheckCircle } from "lucide-react";
 
 const DRAFT_KEY = "clyon_simulator_draft";
@@ -73,14 +75,24 @@ export default function SimulatorThreePhaseForm() {
   };
 
   const isPhase1Valid = () => {
-    const basic = formData.serviceType && formData.description;
-    
-    // Se for entulho, também precisa de estado e quantidade
+    // Deve ter serviço selecionado
+    if (!formData.serviceType) return false;
+
+    // Para entulho: precisa de estado + quantidade
     if (formData.serviceType === "recolha_entulho") {
-      return basic && formData.entulhoState && formData.entulhoQuantidade;
+      const hasEntulhoData = formData.entulhoState && formData.entulhoQuantidade;
+      if (!hasEntulhoData) return false;
+      // Para entulho: tem dados suficientes (campo de descrição agora é opcional)
+      return true;
     }
-    
-    return basic;
+
+    // Para outros serviços: precisa de PELO MENOS UMA DAS:
+    // 1. Descrição preenchida
+    // 2. Fotos/vídeos adicionados
+    const hasDescription = !!formData.description?.trim();
+    const hasFiles = (formData.files || []).length > 0;
+
+    return hasDescription || hasFiles;
   };
 
   const isPhase2Valid = () => {
@@ -422,106 +434,54 @@ function Phase1Service({
   updateField: (field: string, value: unknown) => void;
 }) {
   const services = [
-    { id: "recolha_moveis", label: "Recolha de móveis", icon: "🛋️" },
-    { id: "recolha_monos", label: "Recolha de monos", icon: "📦" },
-    { id: "recolha_entulho", label: "Recolha de entulho", icon: "🏗️" },
-    { id: "esvaziamento_casa", label: "Esvaziamento de casa", icon: "🏠" },
-    { id: "esvaziamento_apartamento", label: "Esvaziamento de apartamento", icon: "🏢" },
-    { id: "mudanca", label: "Mudança", icon: "🚚" },
-    { id: "outro", label: "Outro serviço", icon: "⭐" },
+    { id: "recolha_moveis" as const, label: "Recolha de móveis", icon: "🛋️" },
+    { id: "recolha_monos" as const, label: "Recolha de monos", icon: "📦" },
+    { id: "recolha_entulho" as const, label: "Recolha de entulho", icon: "🏗️" },
+    { id: "esvaziamento_casa" as const, label: "Esvaziamento de casa", icon: "🏠" },
+    { id: "esvaziamento_apartamento" as const, label: "Esvaziamento de apartamento", icon: "🏢" },
+    { id: "mudanca" as const, label: "Mudança", icon: "🚚" },
+    { id: "outro" as const, label: "Outro serviço", icon: "⭐" },
   ];
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-gray-900">Que serviço precisa?</h2>
-
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-        {services.map((svc) => (
-          <button
-            key={svc.id}
-            onClick={() => updateField("serviceType", svc.id)}
-            className={`p-3.6 rounded-xl border-2 transition-all text-center ${
-              formData.serviceType === svc.id
-                ? "border-cyan-600 bg-cyan-50"
-                : "border-gray-300 bg-white hover:border-cyan-300"
-            }`}
-          >
-            <div className="text-xl mb-2">{svc.icon}</div>
-            <p className="text-xs font-medium text-gray-900">{svc.label}</p>
-          </button>
-        ))}
+      {/* Header */}
+      <div>
+        <h2 className="text-2xl md:text-3xl font-bold text-slate-900">
+          Que serviço precisa?
+        </h2>
+        <p className="text-sm text-slate-600 mt-2">
+          Escolha o tipo de serviço e adicione fotos ou detalhes para ajudar a CLYON a analisar o pedido.
+        </p>
       </div>
 
-      <div className="space-y-2">
-        <label className="block text-sm font-medium text-gray-900">
-          Descrição do que precisa recolher ou transportar *
-        </label>
-        <textarea
-          value={formData.description || ""}
-          onChange={(e) => updateField("description", e.target.value)}
-          placeholder="Ex: 4 móveis velhos, 5 sacos de lixo, 1 mesa redonda..."
-          className="w-full px-4 py-2 border-2 border-gray-400 bg-white rounded-xl focus:ring-2 focus:ring-cyan-600 focus:border-cyan-600 shadow-sm"
-          rows={4}
-        />
-      </div>
+      {/* Service Cards */}
+      <ServiceTypeCards
+        services={services}
+        selected={formData.serviceType}
+        onSelect={(serviceType) => updateField("serviceType", serviceType)}
+      />
 
-      {/* Campos específicos para entulho */}
+      {/* Entulho Details (conditional) */}
       {formData.serviceType === "recolha_entulho" && (
-        <>
-          <div className="space-y-2">
-            <label className="block text-sm font-medium text-gray-900">Estado do entulho *</label>
-            <p className="text-xs text-gray-600 mb-2">Confirme o estado para cálculo preciso de preço</p>
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                onClick={() => updateField("entulhoState", "ensacado")}
-                className={`p-3 rounded-xl border-2 transition-all text-center ${
-                  formData.entulhoState === "ensacado"
-                    ? "border-cyan-600 bg-cyan-50"
-                    : "border-gray-300 bg-white hover:border-cyan-300"
-                }`}
-              >
-                <p className="text-sm font-medium text-gray-900">Já ensacado</p>
-                <p className="text-xs text-gray-600">2.50€/saco</p>
-              </button>
-              <button
-                type="button"
-                onClick={() => updateField("entulhoState", "chao")}
-                className={`p-3 rounded-xl border-2 transition-all text-center ${
-                  formData.entulhoState === "chao"
-                    ? "border-cyan-600 bg-cyan-50"
-                    : "border-gray-300 bg-white hover:border-cyan-300"
-                }`}
-              >
-                <p className="text-sm font-medium text-gray-900">No chão/Por ensacar</p>
-                <p className="text-xs text-gray-600">3.00€/saco</p>
-              </button>
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <label className="block text-sm font-medium text-gray-900">Quantidade de sacos *</label>
-            <input
-              type="text"
-              value={formData.entulhoQuantidade || ""}
-              onChange={(e) => updateField("entulhoQuantidade", e.target.value)}
-              placeholder="Ex: 50 sacos, 100 sacos..."
-              className="w-full px-4 py-2 border-2 border-gray-400 bg-white rounded-xl focus:ring-2 focus:ring-cyan-600 focus:border-cyan-600 shadow-sm"
-            />
-          </div>
-        </>
+        <EntulhoDetails
+          state={formData.entulhoState}
+          quantity={formData.entulhoQuantidade}
+          onStateChange={(state) => updateField("entulhoState", state)}
+          onQuantityChange={(quantity) => updateField("entulhoQuantidade", quantity)}
+        />
       )}
 
-      <div className="space-y-2">
-        <label className="block text-sm font-medium text-gray-900">Fotos ou vídeos (opcional)</label>
-        <UploadDropzone
-          files={formData.files || []}
-          onAdd={(files: UploadedFile[]) => updateField("files", [...(formData.files || []), ...files])}
-          onRemove={(id: string) => updateField("files", (formData.files || []).filter(f => f.id !== id))}
-          maxFiles={10}
-          maxSizeMB={50}
-        />
-      </div>
+      {/* Order Details with integrated upload */}
+      <CompactOrderDetails
+        description={formData.description}
+        files={formData.files || []}
+        onDescriptionChange={(description) => updateField("description", description)}
+        onFilesAdd={(files) => updateField("files", [...(formData.files || []), ...files])}
+        onFileRemove={(id) => updateField("files", (formData.files || []).filter(f => f.id !== id))}
+        maxFiles={10}
+        maxSizeMB={50}
+      />
     </div>
   );
 }
