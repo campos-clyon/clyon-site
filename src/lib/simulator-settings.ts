@@ -80,7 +80,7 @@ export const defaultSimulatorSettings: SimulatorSettingDefinition[] = [
     description: "Valor por saco quando o entulho já está em sacos.",
     category: "entulho",
     unit: "eur",
-    value: 1.9,
+    value: 2.5,
   },
   {
     key: "entulho_saco_chao",
@@ -88,7 +88,7 @@ export const defaultSimulatorSettings: SimulatorSettingDefinition[] = [
     description: "Valor por saco quando o entulho está no chão ou precisa ser ensacado.",
     category: "entulho",
     unit: "eur",
-    value: 2.2,
+    value: 3.0,
   },
   {
     key: "entulho_distancia_km",

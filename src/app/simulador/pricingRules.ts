@@ -75,13 +75,13 @@ export function extractQuantityFromDescription(description: string | undefined):
 
 // ─── Cálculo por tipo de serviço ──────────────────────────────────────────────
 
-// Entulho: NOVA REGRA - 1,90€ ensacado OU 2,20€ por ensacar + distância
+// Entulho: NOVA REGRA - 2,50€ ensacado OU 3,00€ por ensacar + distância
 // Esta função é um fallback; Gemini tem a versão correta no prompt
 function calcEntulhoBase(qty: number | null, isBagged: boolean = true): { price: number; note: string } {
   const sacos = qty ?? 20;
   
   // Preços corretos do precário CLYON atualizado
-  const pricePerBag = isBagged ? 1.90 : 2.20;
+  const pricePerBag = isBagged ? 2.50 : 3.00;
   const price = sacos * pricePerBag;
   
   const state = isBagged ? "ensacados" : "por ensacar";
