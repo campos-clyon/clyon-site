@@ -67,10 +67,10 @@ export default function UploadDropzone({
         onDragLeave={() => setDragging(false)}
         onDrop={(e) => { e.preventDefault(); setDragging(false); processFiles(e.dataTransfer.files); }}
         onClick={() => inputRef.current?.click()}
-        className={`border-2 border-dashed rounded-xl p-4 cursor-pointer text-center transition-colors ${
+        className={`border-2 border-dashed rounded-xl p-4 cursor-pointer text-center transition-colors shadow-sm ${
           dragging
             ? "border-[#0487D9] bg-[#EFF8FF]"
-            : "border-[#CBD5E1] bg-[#F8FAFC] hover:border-[#0487D9] hover:bg-[#EFF8FF]"
+            : "border-[#94A3B8] bg-white hover:border-[#0487D9] hover:bg-[#EFF8FF]"
         }`}
       >
         <input

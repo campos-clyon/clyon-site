@@ -253,7 +253,7 @@ export default function SimulatorThreePhaseForm() {
 
             <button
               onClick={handleReset}
-              className="bg-cyan-600 hover:bg-cyan-700 text-white font-semibold py-3 px-8 rounded-xl transition-colors inline-block"
+              className="bg-cyan-600 hover:bg-cyan-700 text-white font-semibold py-2.7 px-7.2 rounded-xl transition-colors inline-block text-sm"
             >
               Novo Pedido
             </button>
@@ -359,7 +359,7 @@ export default function SimulatorThreePhaseForm() {
                   {phase > 1 && (
                     <button
                       onClick={() => setPhase(phase - 1)}
-                      className="flex items-center gap-2 px-6 py-2 text-gray-700 hover:bg-gray-100 rounded-xl transition-colors"
+                      className="flex items-center gap-2 px-5.4 py-1.8 text-sm text-gray-700 hover:bg-gray-100 rounded-xl transition-colors"
                     >
                       <ChevronLeft className="w-4 h-4" />
                       Anterior
@@ -370,7 +370,7 @@ export default function SimulatorThreePhaseForm() {
                     <button
                       onClick={() => setPhase(phase + 1)}
                       disabled={!canProceedToPhase2 || (phase === 2 && !canProceedToPhase3)}
-                      className="ml-auto flex items-center gap-2 px-6 py-2 bg-cyan-600 hover:bg-cyan-700 disabled:bg-gray-400 text-white rounded-xl transition-colors"
+                      className="ml-auto flex items-center gap-2 px-5.4 py-1.8 text-sm bg-cyan-600 hover:bg-cyan-700 disabled:bg-gray-400 text-white rounded-xl transition-colors"
                     >
                       Seguinte
                       <ChevronRight className="w-4 h-4" />
@@ -433,14 +433,14 @@ function Phase1Service({
           <button
             key={svc.id}
             onClick={() => updateField("serviceType", svc.id)}
-            className={`p-4 rounded-xl border-2 transition-all text-center ${
+            className={`p-3.6 rounded-xl border-2 transition-all text-center ${
               formData.serviceType === svc.id
                 ? "border-cyan-600 bg-cyan-50"
-                : "border-gray-200 bg-white hover:border-cyan-300"
+                : "border-gray-300 bg-white hover:border-cyan-300"
             }`}
           >
-            <div className="text-2xl mb-2">{svc.icon}</div>
-            <p className="text-sm font-medium text-gray-900">{svc.label}</p>
+            <div className="text-xl mb-2">{svc.icon}</div>
+            <p className="text-xs font-medium text-gray-900">{svc.label}</p>
           </button>
         ))}
       </div>
@@ -453,7 +453,7 @@ function Phase1Service({
           value={formData.description || ""}
           onChange={(e) => updateField("description", e.target.value)}
           placeholder="Ex: 4 móveis velhos, 5 sacos de lixo, 1 mesa redonda..."
-          className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-cyan-600 focus:border-transparent"
+          className="w-full px-4 py-2 border-2 border-gray-400 bg-white rounded-xl focus:ring-2 focus:ring-cyan-600 focus:border-cyan-600 shadow-sm"
           rows={4}
         />
       </div>
@@ -506,7 +506,7 @@ function Phase2Location({
           <select
             value={formData.floor || ""}
             onChange={(e) => updateField("floor", e.target.value)}
-            className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-cyan-600 focus:border-transparent"
+            className="w-full px-4 py-2 border-2 border-gray-400 bg-white rounded-xl focus:ring-2 focus:ring-cyan-600 focus:border-cyan-600 shadow-sm"
           >
             <option value="">Seleccione...</option>
             <option value="rés-do-chão">Rés-do-chão</option>
@@ -522,7 +522,7 @@ function Phase2Location({
           <select
             value={formData.hasElevator || ""}
             onChange={(e) => updateField("hasElevator", e.target.value)}
-            className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-cyan-600 focus:border-transparent"
+            className="w-full px-4 py-2 border-2 border-gray-400 bg-white rounded-xl focus:ring-2 focus:ring-cyan-600 focus:border-cyan-600 shadow-sm"
           >
             <option value="">Seleccione...</option>
             <option value="yes">Sim, funciona</option>
@@ -538,7 +538,7 @@ function Phase2Location({
         <select
           value={formData.parkingDistance || ""}
           onChange={(e) => updateField("parkingDistance", e.target.value)}
-          className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-cyan-600 focus:border-transparent"
+          className="w-full px-4 py-2 border-2 border-gray-400 bg-white rounded-xl focus:ring-2 focus:ring-cyan-600 focus:border-cyan-600 shadow-sm"
         >
           <option value="">Seleccione...</option>
           <option value="door">Sim, mesmo à porta</option>
@@ -554,7 +554,7 @@ function Phase2Location({
             type="checkbox"
             checked={!!formData.needsDismantling && formData.needsDismantling !== "no"}
             onChange={(e) => updateField("needsDismantling", e.target.checked ? "simple" : "no")}
-            className="rounded border-gray-300"
+            className="rounded border-gray-400"
           />
           <span className="text-sm text-gray-700">Acesso difícil ou desmontagem necessária</span>
         </label>
@@ -583,7 +583,7 @@ function Phase3Contact({
             value={formData.receiver?.name || ""}
             onChange={(e) => updateField("receiver", { ...formData.receiver, name: e.target.value })}
             placeholder="Ex: Eugênia Almeida"
-            className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-cyan-600 focus:border-transparent"
+            className="w-full px-4 py-2 border-2 border-gray-400 bg-white rounded-xl focus:ring-2 focus:ring-cyan-600 focus:border-cyan-600 shadow-sm"
           />
         </div>
 
@@ -594,7 +594,7 @@ function Phase3Contact({
             value={formData.receiver?.phone || ""}
             onChange={(e) => updateField("receiver", { ...formData.receiver, phone: e.target.value })}
             placeholder="Ex: 911 128 863"
-            className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-cyan-600 focus:border-transparent"
+            className="w-full px-4 py-2 border-2 border-gray-400 bg-white rounded-xl focus:ring-2 focus:ring-cyan-600 focus:border-cyan-600 shadow-sm"
           />
         </div>
       </div>
@@ -606,7 +606,7 @@ function Phase3Contact({
           value={formData.receiver?.email || ""}
           onChange={(e) => updateField("receiver", { ...formData.receiver, email: e.target.value })}
           placeholder="Ex: exemplo@email.com"
-          className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-cyan-600 focus:border-transparent"
+          className="w-full px-4 py-2 border-2 border-gray-400 bg-white rounded-xl focus:ring-2 focus:ring-cyan-600 focus:border-cyan-600 shadow-sm"
         />
       </div>
 
