@@ -9,6 +9,7 @@ import { createSimulatorSettingsMap } from "./simulator-settings";
 export async function getActivePricingRulesForGemini() {
   try {
     const settings = await getSimulatorSettings();
+    console.log("[pricing-helper] Configurações carregadas:", settings?.length ?? 0, "itens");
     
     if (!settings || settings.length === 0) {
       console.warn("[pricing-helper] Nenhuma configuração de preços encontrada, usando defaults");
@@ -19,9 +20,12 @@ export async function getActivePricingRulesForGemini() {
     const settingsMap = createSimulatorSettingsMap(settings);
     
     // Formatar para Gemini (texto legível)
-    return formatPricingRulesForGemini(settingsMap);
+    const result = formatPricingRulesForGemini(settingsMap);
+    console.log("[pricing-helper] ✓ Preçário formatado para Gemini (" + result.length + " chars)");
+    return result;
   } catch (error) {
-    console.error("[pricing-helper] Erro ao carregar configurações:", error);
+    console.error("[pricing-helper] ❌ Erro ao carregar configurações:", error);
+    console.log("[pricing-helper] Usando defaults como fallback");
     return getDefaultPricingRules();
   }
 }
@@ -32,10 +36,15 @@ export async function getActivePricingRulesForGemini() {
 export async function getActivePricingMap(): Promise<SimulatorSettingsMap> {
   try {
     const settings = await getSimulatorSettings();
-    return createSimulatorSettingsMap(settings);
+    console.log("[pricing-helper] getActivePricingMap: Carregados", settings?.length ?? 0, "itens");
+    const map = createSimulatorSettingsMap(settings);
+    console.log("[pricing-helper] ✓ Mapa de preços criado");
+    return map;
   } catch (error) {
-    console.error("[pricing-helper] Erro ao carregar mapa de preços:", error);
-    return createSimulatorSettingsMap([]);
+    console.error("[pricing-helper] ❌ Erro ao carregar mapa de preços:", error);
+    const fallback = createSimulatorSettingsMap([]);
+    console.log("[pricing-helper] Usando fallback com defaults");
+    return fallback;
   }
 }
 

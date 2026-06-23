@@ -105,11 +105,17 @@ export async function ensureSimulatorSettingsTable() {
   }
 }
 
-export async function getSimulatorSettings() {
+export async function getSimulatorSettings(): Promise<typeof simulatorSettings.$inferSelect[]> {
   await ensureSimulatorSettingsTable();
   const db = await getDb();
   if (!db) return [];
-  return db.select().from(simulatorSettings);
+  try {
+    const result = await db.select().from(simulatorSettings);
+    return result || [];
+  } catch (error) {
+    console.error("[Database] Error fetching simulator settings:", error);
+    return [];
+  }
 }
 
 export async function upsertSimulatorSetting(data: {
