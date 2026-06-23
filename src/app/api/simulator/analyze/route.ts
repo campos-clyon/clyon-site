@@ -79,6 +79,27 @@ function formatOrderDataForPrompt(order: OrderData): string {
     "",
     `Tipo de Serviço: ${getServiceName(order.serviceType)}`,
     `Descrição: ${order.description || "(não fornecida)"}`,
+  ];
+
+  // Adicionar campos específicos de entulho se aplicável
+  if (order.serviceType === "recolha_entulho") {
+    lines.push(
+      "",
+      "=== DETALHES DO ENTULHO ===",
+      `Estado do Entulho: ${
+        order.entulhoState === "ensacado"
+          ? "Já ensacado (2.50€/saco)"
+          : order.entulhoState === "chao"
+          ? "No chão/Por ensacar (3.00€/saco)"
+          : order.entulhoState === "misto"
+          ? "Misto (alguns ensacados, alguns não)"
+          : "(não especificado)"
+      }`,
+      `Quantidade de Sacos: ${order.entulhoQuantidade || "(não fornecida)"}`,
+    );
+  }
+
+  lines.push(
     "",
     "=== LOCALIZAÇÃO ===",
     `Morada: ${order.address?.formattedAddress || "(não fornecida)"}`,
@@ -98,7 +119,7 @@ function formatOrderDataForPrompt(order: OrderData): string {
     "=== ITENS ===",
     `Objetos Pesados: ${order.heavyItems?.length ? order.heavyItems.join(", ") : "Nenhum especificado"}`,
     `Fotos/Vídeos Enviados: ${order.files?.length || 0}`,
-  ];
+  );
 
   return lines.join("\n");
 }
@@ -132,12 +153,16 @@ INSTRUÇÕES CRÍTICAS
 ═══════════════════════════════════════════════════════════
 
 1. USA APENAS OS VALORES ACIMA — Não inventes preços
-2. Se falta quantidade de sacos ou estado do entulho → "needs_more_info"
-3. Se falta zona/localidade → "needs_more_info"
-4. ENTULHO: usar exatamente a fórmula fornecida acima
+2. ENTULHO ESPECÍFICO:
+   - Se estado="Já ensacado" → usar 2.50€/saco
+   - Se estado="No chão/Por ensacar" → usar 3.00€/saco
+   - Se estado="Misto" → aproximar 2.75€/saco (média)
+   - Fórmula: preço_por_saco × quantidade × (1 + distância_factor + acesso_factor)
+3. Se falta quantidade de sacos ou estado do entulho → "needs_more_info"
+4. Se falta zona/localidade → "needs_more_info"
 5. Se não conseguir calcular com segurança → "onsite_required"
 6. IVA sempre é 23% (0.23x)
-7. Validar que os valores fazem sentido
+7. Validar que os valores fazem sentido no contexto (ex: 100 sacos de entulho)
 
 Analise o pedido abaixo e retorne APENAS o JSON sem qualquer texto adicional:
 
