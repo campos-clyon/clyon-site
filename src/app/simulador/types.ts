@@ -64,6 +64,9 @@ export interface OrderData {
   heavyItems?: string[];
   urgency?: "no" | "today" | "tomorrow" | "this_week" | "flexible";
   receiver?: ReceiverData;
+  // Campos específicos para entulho
+  entulhoState?: "ensacado" | "chao" | "misto" | "unknown"; // ensacado vs no chão/por ensacar
+  entulhoQuantidade?: string; // confirmação/clarificação da quantidade
 }
 
 export type EstimateStatus = "estimated" | "needs_more_info" | "onsite_required";

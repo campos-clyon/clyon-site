@@ -73,7 +73,14 @@ export default function SimulatorThreePhaseForm() {
   };
 
   const isPhase1Valid = () => {
-    return formData.serviceType && formData.description;
+    const basic = formData.serviceType && formData.description;
+    
+    // Se for entulho, também precisa de estado e quantidade
+    if (formData.serviceType === "recolha_entulho") {
+      return basic && formData.entulhoState && formData.entulhoQuantidade;
+    }
+    
+    return basic;
   };
 
   const isPhase2Valid = () => {
@@ -457,6 +464,53 @@ function Phase1Service({
           rows={4}
         />
       </div>
+
+      {/* Campos específicos para entulho */}
+      {formData.serviceType === "recolha_entulho" && (
+        <>
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-900">Estado do entulho *</label>
+            <p className="text-xs text-gray-600 mb-2">Confirme o estado para cálculo preciso de preço</p>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => updateField("entulhoState", "ensacado")}
+                className={`p-3 rounded-xl border-2 transition-all text-center ${
+                  formData.entulhoState === "ensacado"
+                    ? "border-cyan-600 bg-cyan-50"
+                    : "border-gray-300 bg-white hover:border-cyan-300"
+                }`}
+              >
+                <p className="text-sm font-medium text-gray-900">Já ensacado</p>
+                <p className="text-xs text-gray-600">2.50€/saco</p>
+              </button>
+              <button
+                type="button"
+                onClick={() => updateField("entulhoState", "chao")}
+                className={`p-3 rounded-xl border-2 transition-all text-center ${
+                  formData.entulhoState === "chao"
+                    ? "border-cyan-600 bg-cyan-50"
+                    : "border-gray-300 bg-white hover:border-cyan-300"
+                }`}
+              >
+                <p className="text-sm font-medium text-gray-900">No chão/Por ensacar</p>
+                <p className="text-xs text-gray-600">3.00€/saco</p>
+              </button>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-900">Quantidade de sacos *</label>
+            <input
+              type="text"
+              value={formData.entulhoQuantidade || ""}
+              onChange={(e) => updateField("entulhoQuantidade", e.target.value)}
+              placeholder="Ex: 50 sacos, 100 sacos..."
+              className="w-full px-4 py-2 border-2 border-gray-400 bg-white rounded-xl focus:ring-2 focus:ring-cyan-600 focus:border-cyan-600 shadow-sm"
+            />
+          </div>
+        </>
+      )}
 
       <div className="space-y-2">
         <label className="block text-sm font-medium text-gray-900">Fotos ou vídeos (opcional)</label>
