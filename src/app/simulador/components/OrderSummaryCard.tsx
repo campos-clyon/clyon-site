@@ -105,6 +105,33 @@ export default function OrderSummaryCard({ order, onEdit }: OrderSummaryCardProp
           value={order.serviceType ? SERVICE_LABELS[order.serviceType] : undefined}
           status={order.serviceType ? "filled" : "pending"}
         />
+        
+        {/* Entulho fields - conditional */}
+        {order.serviceType === "recolha_entulho" && (
+          <>
+            <SummaryRow
+              icon={<svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 7l-8-4-8 4m0 0l8 4m-8-4v10l8 4m0-10l8 4m-8-4v10" /></svg>}
+              label="Estado do entulho"
+              value={
+                order.entulhoState === "ensacado"
+                  ? "Já ensacado"
+                  : order.entulhoState === "chao"
+                  ? "No chão/Por ensacar"
+                  : order.entulhoState === "misto"
+                  ? "Misto"
+                  : undefined
+              }
+              status={order.entulhoState ? "filled" : "pending"}
+            />
+            <SummaryRow
+              icon={<svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" /></svg>}
+              label="Quantidade de sacos"
+              value={order.entulhoQuantidade}
+              status={order.entulhoQuantidade ? "filled" : "pending"}
+            />
+          </>
+        )}
+
         <SummaryRow
           icon={<svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 6h16M4 12h16M4 18h7" /></svg>}
           label="Descrição"
@@ -113,14 +140,16 @@ export default function OrderSummaryCard({ order, onEdit }: OrderSummaryCardProp
               ? order.description.slice(0, 40) + (order.description.length > 40 ? "..." : "")
               : fileCount > 0
               ? `${fileCount} ${fileCount === 1 ? "ficheiro enviado" : "ficheiros enviados"}`
+              : order.serviceType === "recolha_entulho" && order.entulhoQuantidade
+              ? "Dados do serviço preenchidos"
               : undefined
           }
-          status={order.description || fileCount > 0 ? "filled" : "pending"}
+          status={order.description || fileCount > 0 || (order.serviceType === "recolha_entulho" && order.entulhoQuantidade) ? "filled" : "pending"}
         />
         <SummaryRow
           icon={<svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>}
           label="Fotos / Vídeos"
-          value={fileCount > 0 ? `${fileCount} ${fileCount === 1 ? "ficheiro" : "ficheiros"} enviados` : undefined}
+          value={fileCount > 0 ? `${fileCount} ${fileCount === 1 ? "ficheiro" : "ficheiros"}` : `${fileCount} ficheiros`}
           status={fileCount > 0 ? "filled" : "pending"}
         />
         <SummaryRow
