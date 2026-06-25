@@ -949,37 +949,50 @@ export async function deleteSimulatorOrder(id: number) {
 }
 
 export async function countSimulatorOrdersByStatus(): Promise<Record<string, number>> {
-  await ensureSimulatorOrdersTable();
-  const pool = await getPool();
-  if (!pool) return {};
-  console.log("[v0] countSimulatorOrdersByStatus: Iniciando contagem");
-  
-  // Contar por status
-  const [rows] = await pool.execute(
-    "SELECT status, COUNT(*) AS total FROM simulatorOrders GROUP BY status"
-  ) as any[];
-  const result: Record<string, number> = {};
-  let grand = 0;
-  for (const row of (rows as { status: string; total: string | number }[])) {
-    result[row.status] = Number(row.total);
-    grand += Number(row.total);
+  try {
+    await ensureSimulatorOrdersTable();
+    const pool = await getPool();
+    if (!pool) {
+      console.error("[v0] countSimulatorOrdersByStatus: ❌ Pool indisponível");
+      return { total: 0 };
+    }
+    
+    console.log("[v0] countSimulatorOrdersByStatus: Iniciando contagem");
+    
+    // Usar uma única query otimizada para contar tudo
+    const [countRows] = await pool.execute(
+      `SELECT 
+        COUNT(*) as total,
+        SUM(CASE WHEN status = 'pendente' THEN 1 ELSE 0 END) as pendente_status,
+        SUM(CASE WHEN viewedAt IS NULL THEN 1 ELSE 0 END) as pendente_viewed,
+        SUM(CASE WHEN status = 'atribuido' THEN 1 ELSE 0 END) as atribuido,
+        SUM(CASE WHEN status = 'em_analise' THEN 1 ELSE 0 END) as em_analise,
+        SUM(CASE WHEN status = 'aprovado' THEN 1 ELSE 0 END) as aprovado,
+        SUM(CASE WHEN status = 'confirmado' THEN 1 ELSE 0 END) as confirmado,
+        SUM(CASE WHEN status = 'presencial_recomendado' THEN 1 ELSE 0 END) as presencial,
+        SUM(CASE WHEN (assignedToId IS NULL OR assignedToId = 0) AND status NOT IN ('cancelado','confirmado','concluido','arquivado') THEN 1 ELSE 0 END) as sem_assistente
+       FROM simulatorOrders`
+    ) as any[];
+    
+    const row = (countRows as any[])[0];
+    const result: Record<string, number> = {};
+    
+    // Mapear resultados
+    result["total"] = Number(row?.total ?? 0);
+    result["pendente"] = Number(row?.pendente_viewed ?? 0); // Novos = viewedAt IS NULL
+    result["atribuido"] = Number(row?.atribuido ?? 0);
+    result["em_analise"] = Number(row?.em_analise ?? 0);
+    result["aprovado"] = Number(row?.aprovado ?? 0);
+    result["confirmado"] = Number(row?.confirmado ?? 0);
+    result["presencial_recomendado"] = Number(row?.presencial ?? 0);
+    result["sem_assistente"] = Number(row?.sem_assistente ?? 0);
+    
+    console.log("[v0] countSimulatorOrdersByStatus: ✓ Contagens =", result);
+    return result;
+  } catch (err: any) {
+    console.error("[v0] countSimulatorOrdersByStatus: ❌ Erro =", err.message);
+    return { total: 0 };
   }
-  result["total"] = grand;
-  
-  // Contar pedidos não visualizados ("Novos")
-  const [[novoRow]] = await pool.execute(
-    "SELECT COUNT(*) AS total FROM simulatorOrders WHERE viewedAt IS NULL"
-  ) as any[];
-  result["pendente"] = Number(novoRow?.total ?? 0);
-  
-  // Contar pedidos sem assistente
-  const [[semRow]] = await pool.execute(
-    "SELECT COUNT(*) AS total FROM simulatorOrders WHERE (assignedToId IS NULL OR assignedToId = 0) AND status NOT IN ('cancelado','confirmado','concluido','arquivado')"
-  ) as any[];
-  result["sem_assistente"] = Number(semRow?.total ?? 0);
-  
-  console.log("[v0] countSimulatorOrdersByStatus: ✓ Contagens =", result);
-  return result;
 }
 
 // ─── Assistentes (colaboradores que gerem pedidos) ───────────────────────────
