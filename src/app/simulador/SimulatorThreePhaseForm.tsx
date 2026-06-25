@@ -372,7 +372,7 @@ export default function SimulatorThreePhaseForm() {
                   {phase > 1 && (
                     <button
                       onClick={() => setPhase(phase - 1)}
-                      className="flex items-center gap-2 px-5.4 py-1.8 text-sm text-gray-700 hover:bg-gray-100 rounded-xl transition-colors"
+                      className="flex items-center gap-2 px-6 py-2.5 text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 border border-gray-300 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 active:scale-95"
                     >
                       <ChevronLeft className="w-4 h-4" />
                       Anterior
@@ -383,7 +383,7 @@ export default function SimulatorThreePhaseForm() {
                     <button
                       onClick={() => setPhase(phase + 1)}
                       disabled={!canProceedToPhase2 || (phase === 2 && !canProceedToPhase3)}
-                      className="ml-auto flex items-center gap-2 px-5.4 py-1.8 text-sm bg-cyan-600 hover:bg-cyan-700 disabled:bg-gray-400 text-white rounded-xl transition-colors"
+                      className="ml-auto flex items-center gap-2 px-6 py-2.5 text-sm font-semibold bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 disabled:bg-gray-300 text-white rounded-lg shadow-md hover:shadow-lg hover:scale-105 transition-all duration-200 active:scale-95"
                     >
                       Seguinte
                       <ChevronRight className="w-4 h-4" />
