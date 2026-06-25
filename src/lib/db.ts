@@ -860,10 +860,15 @@ export async function getAllSimulatorOrders(filters?: {
   }
   const conditions: string[] = [];
   const params: unknown[] = [];
-  if (filters?.status) {
+  
+  // Handle special filter "sem_assistente"
+  if (filters?.status === "sem_assistente") {
+    conditions.push("(assignedToId IS NULL OR assignedToId = 0) AND status NOT IN ('cancelado','confirmado','concluido','arquivado')");
+  } else if (filters?.status) {
     conditions.push("status = ?");
     params.push(filters.status);
   }
+  
   if (filters?.search) {
     conditions.push("(contactName LIKE ? OR contactPhone LIKE ? OR address LIKE ? OR description LIKE ?)");
     const s = `%${filters.search}%`;

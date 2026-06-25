@@ -63,16 +63,15 @@ const PRIORITY_CFG: Record<OrderPriority, { label: string; color: string }> = {
   urgente: { label: "Urgente", color: "text-red-400" },
 };
 
-const FILTER_TABS: { key: OrderStatus | "todos"; label: string }[] = [
-  { key: "todos",               label: "Todos" },
-  { key: "pendente",            label: "Pendente" },
+const FILTER_TABS: { key: OrderStatus | "todos" | "sem_assistente"; label: string }[] = [
+  { key: "todos",               label: "Total" },
+  { key: "pendente",            label: "Novos" },
   { key: "atribuido",           label: "Atribuídos" },
   { key: "em_analise",          label: "Em análise" },
+  { key: "sem_assistente",      label: "Sem assistente" },
   { key: "aprovado",            label: "Aprovados" },
   { key: "confirmado",          label: "Confirmados" },
-  { key: "em_execucao",         label: "Execução" },
-  { key: "concluido",           label: "Concluídos" },
-  { key: "cancelado",           label: "Cancelados" },
+  { key: "presencial_recomendado", label: "Presencial" },
 ];
 
 function fmt(iso: string) {
@@ -128,7 +127,7 @@ export default function AdminPedidosClient() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [activeTab, setActiveTab] = useState<OrderStatus | "todos">("todos");
+  const [activeTab, setActiveTab] = useState<OrderStatus | "todos" | "sem_assistente">("todos");
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
