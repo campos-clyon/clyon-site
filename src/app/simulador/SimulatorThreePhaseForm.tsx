@@ -238,43 +238,81 @@ export default function SimulatorThreePhaseForm() {
   // Success Screen
   if (successOrderId) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-[#F7FBFF] to-white py-8 px-4">
-        <div className="max-w-2xl mx-auto">
-          <div className="text-center py-12">
-            <div className="flex justify-center mb-6">
-              <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center">
-                <CheckCircle className="w-10 h-10 text-green-600" />
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 py-16 px-4 flex items-center">
+        <div className="max-w-2xl mx-auto w-full">
+          {/* Success Icon - Animated */}
+          <div className="flex justify-center mb-8">
+            <div className="relative">
+              <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-cyan-400 rounded-full blur-lg opacity-40 animate-pulse"></div>
+              <div className="relative w-24 h-24 bg-gradient-to-br from-green-400 to-green-500 rounded-full flex items-center justify-center shadow-xl">
+                <CheckCircle className="w-12 h-12 text-white drop-shadow-lg" />
               </div>
             </div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Pedido Enviado com Sucesso!</h1>
-            <p className="text-xl text-gray-600 mb-8">Pedido #{successOrderId}</p>
+          </div>
 
-            <div className="bg-white rounded-2xl border border-gray-200 p-8 space-y-6 mb-8">
-              <div>
-                <h2 className="font-semibold text-gray-900 mb-2">Próximos Passos</h2>
-                <p className="text-gray-600">
-                  A equipa CLYON irá analisar o pedido e entrar em contacto em breve para confirmar os detalhes e disponibilidade.
-                </p>
-              </div>
+          {/* Main Title */}
+          <div className="text-center mb-10">
+            <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent mb-3">
+              Pedido Enviado com Sucesso!
+            </h1>
+            <div className="flex items-center justify-center gap-2 mb-6">
+              <span className="text-lg font-semibold text-gray-600">Pedido</span>
+              <span className="inline-block bg-gradient-to-r from-blue-600 to-cyan-600 text-white font-bold text-lg px-4 py-1.5 rounded-full">
+                #{successOrderId}
+              </span>
+            </div>
+            <p className="text-gray-600 text-base">Seu pedido foi recebido e está pronto para análise</p>
+          </div>
 
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <p className="text-sm text-blue-900">
-                  <strong>Número de pedido:</strong> #{successOrderId}
-                </p>
-                <p className="text-sm text-blue-800 mt-2">
-                  O seu pedido foi enviado para a fila geral. Os assistentes CLYON podem aceitar ou rejeitar este pedido conforme a disponibilidade.
-                </p>
-                <p className="text-sm text-blue-800 mt-2">
-                  Guarde este número para referência futura. Será contactado pelo telefone ou email fornecido.
-                </p>
+          {/* Info Cards Grid */}
+          <div className="space-y-4 mb-10">
+            {/* Status Card */}
+            <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-lg hover:shadow-xl transition-shadow">
+              <div className="flex items-start gap-4">
+                <div className="w-12 h-12 bg-gradient-to-br from-blue-100 to-cyan-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <CheckCircle className="w-6 h-6 text-blue-600" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-semibold text-gray-900 mb-1">Próximos Passos</h3>
+                  <p className="text-sm text-gray-600 leading-relaxed">
+                    A equipa CLYON irá analisar o pedido e entrar em contacto em breve para confirmar os detalhes e disponibilidade.
+                  </p>
+                </div>
               </div>
             </div>
 
+            {/* Details Card */}
+            <div className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-2xl border border-blue-200 p-6 shadow-md">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium text-gray-700">Número de pedido</span>
+                  <span className="font-mono font-bold text-blue-600 text-lg">#{successOrderId}</span>
+                </div>
+                <div className="h-px bg-gradient-to-r from-blue-200 to-cyan-200"></div>
+                <div className="text-sm text-gray-700 space-y-3">
+                  <p>
+                    ✓ Pedido enviado para a fila geral<br/>
+                    ✓ Os assistentes podem aceitar ou rejeitar<br/>
+                    ✓ Serão contactados pelo telefone ou email
+                  </p>
+                  <p className="font-semibold text-gray-900 pt-2">
+                    Guarde este número para referência futura.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* CTA Button */}
+          <div className="flex justify-center">
             <button
               onClick={handleReset}
-              className="bg-cyan-600 hover:bg-cyan-700 text-white font-semibold py-2.7 px-7.2 rounded-xl transition-colors inline-block text-sm"
+              className="group relative inline-block"
             >
-              Novo Pedido
+              <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-600 to-cyan-600 rounded-xl blur opacity-75 group-hover:opacity-100 transition duration-300"></div>
+              <div className="relative bg-white text-blue-600 font-semibold py-3 px-8 rounded-xl hover:bg-gray-50 transition-colors text-base">
+                Novo Pedido
+              </div>
             </button>
           </div>
         </div>
