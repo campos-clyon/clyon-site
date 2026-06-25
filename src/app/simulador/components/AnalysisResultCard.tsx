@@ -146,20 +146,27 @@ export default function AnalysisResultCard({
         <button
           onClick={onConfirm}
           disabled={isSubmitting || isLoading}
-          className="w-full bg-cyan-600 hover:bg-cyan-700 disabled:bg-gray-400 text-white font-semibold py-3 px-4 rounded-xl transition-colors"
+          className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white font-semibold py-3 px-4 rounded-xl transition-colors"
         >
-          {isSubmitting ? "A enviar pedido..." : "Enviar pedido para análise"}
+          {isSubmitting ? "A enviar pedido..." : "Enviar Pedido"}
         </button>
       )}
 
       {analysis.status === "onsite_required" && (
-        <button
-          onClick={onConfirm}
-          disabled={isSubmitting || isLoading}
-          className="w-full bg-cyan-600 hover:bg-cyan-700 disabled:bg-gray-400 text-white font-semibold py-3 px-4 rounded-xl transition-colors"
-        >
-          {isSubmitting ? "A agendar análise..." : "Agendar análise no local"}
-        </button>
+        <div className="space-y-3">
+          <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+            <p className="text-sm text-amber-900">
+              <strong>Não foi possível identificar a quantidade exata.</strong> Este pedido será encaminhado a um assistente CLYON para análise detalhada e confirmação final de valores.
+            </p>
+          </div>
+          <button
+            onClick={onConfirm}
+            disabled={isSubmitting || isLoading}
+            className="w-full bg-cyan-600 hover:bg-cyan-700 disabled:bg-gray-400 text-white font-semibold py-3 px-4 rounded-xl transition-colors"
+          >
+            {isSubmitting ? "A encaminhar..." : "Encaminhar ao Assistente"}
+          </button>
+        </div>
       )}
 
       {analysis.status === "needs_more_info" && (

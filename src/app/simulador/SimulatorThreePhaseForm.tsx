@@ -144,6 +144,33 @@ export default function SimulatorThreePhaseForm() {
       });
 
       setAnalysis(result);
+
+      // Auto-save: Registar pedido automaticamente após análise
+      console.log("[v0] SimulatorThreePhaseForm: Auto-saving pedido após análise...");
+      try {
+        const saveRes = await fetch("/api/simulador/pedido", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            order: formData,
+            estimate: result,
+          }),
+        });
+
+        if (!saveRes.ok) {
+          const err = await saveRes.json();
+          throw new Error(err.error || "Erro ao salvar pedido");
+        }
+
+        const saved = await saveRes.json();
+        console.log("[v0] SimulatorThreePhaseForm: ✓ Pedido auto-saved -", saved.id);
+        setSuccessOrderId(saved.id);
+        // Pedido foi guardado com sucesso
+      } catch (autoSaveErr) {
+        console.error("[v0] SimulatorThreePhaseForm: ⚠ Auto-save falhou -", autoSaveErr);
+        // Não falhar o fluxo se auto-save falhar, mas avisar
+        setError("Nota: Pedido foi analisado mas houve erro ao registar. Por favor tente novamente.");
+      }
     } catch (err) {
       const message = err instanceof Error ? err.message : "Erro ao analisar pedido";
       console.error("[v0] SimulatorThreePhaseForm: ❌", message);
@@ -154,6 +181,14 @@ export default function SimulatorThreePhaseForm() {
   };
 
   const handleSubmitOrder = async () => {
+    // Pedido já foi auto-guardado durante análise
+    // Esta é apenas tela ilustrativa de confirmação
+    console.log("[v0] SimulatorThreePhaseForm: Tela ilustrativa - pedido já foi registado durante análise");
+    // Nada a fazer - o pedido já foi salvo no handleAnalyzeOrder
+    return;
+
+    // Código antigo (comentado para referência, será removido)
+    /*
     if (!analysis || !isPhase3Valid()) {
       setError("Dados incompletos para enviar pedido");
       return;
@@ -209,6 +244,7 @@ export default function SimulatorThreePhaseForm() {
     } finally {
       setIsSubmitting(false);
     }
+    */
   };
 
   const handleReset = () => {
