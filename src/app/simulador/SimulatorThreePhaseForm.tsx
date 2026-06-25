@@ -283,16 +283,10 @@ export default function SimulatorThreePhaseForm() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#F7FBFF] to-white py-8 px-4">
+    <div className="min-h-screen bg-gradient-to-br from-[#F7FBFF] to-white py-6 px-4">
       <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">Simulador de Preços CLYON</h1>
-          <p className="text-gray-600">Preencha os dados do seu serviço para obter um orçamento estimado</p>
-        </div>
-
         {/* Progress Indicator */}
-        <div className="flex items-center justify-center gap-4 mb-12">
+        <div className="flex items-center justify-center gap-3 mb-10">
           {PHASES.map((phaseName, idx) => {
             const phaseNum = idx + 1;
             const isActive = phaseNum === phase;
@@ -323,10 +317,10 @@ export default function SimulatorThreePhaseForm() {
         </div>
 
         {/* Main Content - 2 Columns on Desktop, 1 on Mobile */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Form Section - 2 columns on desktop */}
           <div className="lg:col-span-2">
-            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-8 space-y-8">
+            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 space-y-6">
               {/* Phase 1: Service */}
               {phase === 1 && (
                 <Phase1Service
