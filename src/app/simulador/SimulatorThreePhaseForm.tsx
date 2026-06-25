@@ -96,7 +96,9 @@ export default function SimulatorThreePhaseForm() {
   };
 
   const isPhase2Valid = () => {
-    return formData.address?.formattedAddress && formData.floor && formData.hasElevator !== undefined && formData.parkingDistance;
+    // Se rés-do-chão, não precisa de elevador; caso contrário, é obrigatório
+    const elevatorValid = formData.floor === "rés-do-chão" ? true : !!formData.hasElevator;
+    return formData.address?.formattedAddress && formData.floor && elevatorValid && formData.parkingDistance;
   };
 
   const isPhase3Valid = () => {
@@ -513,7 +515,14 @@ function Phase2Location({
           <label className="block text-sm font-medium text-gray-900">Andar *</label>
           <select
             value={formData.floor || ""}
-            onChange={(e) => updateField("floor", e.target.value)}
+            onChange={(e) => {
+              const newFloor = e.target.value;
+              updateField("floor", newFloor);
+              // Se rés-do-chão, resetar elevador (não é relevante)
+              if (newFloor === "rés-do-chão") {
+                updateField("hasElevator", "");
+              }
+            }}
             className="w-full px-4 py-2 border-2 border-gray-400 bg-white rounded-xl focus:ring-2 focus:ring-cyan-600 focus:border-cyan-600 shadow-sm"
           >
             <option value="">Seleccione...</option>
@@ -525,20 +534,22 @@ function Phase2Location({
           </select>
         </div>
 
-        <div className="space-y-2">
-          <label className="block text-sm font-medium text-gray-900">Elevador *</label>
-          <select
-            value={formData.hasElevator || ""}
-            onChange={(e) => updateField("hasElevator", e.target.value)}
-            className="w-full px-4 py-2 border-2 border-gray-400 bg-white rounded-xl focus:ring-2 focus:ring-cyan-600 focus:border-cyan-600 shadow-sm"
-          >
-            <option value="">Seleccione...</option>
-            <option value="yes">Sim, funciona</option>
-            <option value="small">Sim, mas é pequeno</option>
-            <option value="no">Não tem</option>
-            <option value="unknown">Não sei</option>
-          </select>
-        </div>
+        {formData.floor !== "rés-do-chão" && formData.floor && (
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-900">Elevador *</label>
+            <select
+              value={formData.hasElevator || ""}
+              onChange={(e) => updateField("hasElevator", e.target.value)}
+              className="w-full px-4 py-2 border-2 border-gray-400 bg-white rounded-xl focus:ring-2 focus:ring-cyan-600 focus:border-cyan-600 shadow-sm"
+            >
+              <option value="">Seleccione...</option>
+              <option value="yes">Sim, funciona</option>
+              <option value="small">Sim, mas é pequeno</option>
+              <option value="no">Não tem</option>
+              <option value="unknown">Não sei</option>
+            </select>
+          </div>
+        )}
       </div>
 
       <div className="space-y-2">
