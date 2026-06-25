@@ -58,6 +58,30 @@ type Order = {
   updatedAt: string;
 };
 
+type GeminiEstimate = {
+  status?: string;
+  estimatedPriceWithoutVat?: number | null;
+  vatAmount?: number | null;
+  estimatedPriceWithVat?: number | null;
+  difficultyLevel?: number;
+  summary?: string;
+  assumptions?: string[];
+  missingFields?: string[];
+  customerMessage?: string;
+  internalNotes?: string[];
+};
+
+function parseEstimate(json?: string | null): GeminiEstimate | null {
+  try { return json ? JSON.parse(json) : null; } catch { return null; }
+}
+
+const DIFFICULTY_LABEL: Record<number, string> = {
+  1: "Muito fácil", 2: "Fácil", 3: "Moderado", 4: "Difícil", 5: "Muito difícil",
+};
+const DIFFICULTY_COLOR: Record<number, string> = {
+  1: "text-emerald-400", 2: "text-green-400", 3: "text-amber-400", 4: "text-orange-400", 5: "text-red-400",
+};
+
 type Assistant = { id: number; nome: string; funcao: string; isAdmin: number };
 
 // ─── Config ───────────────────────────────────────────────────────────────────
@@ -620,6 +644,138 @@ export default function AdminPedidoDetalheClient({ id }: { id: number }) {
                 <InfoTile label="Preço final c/IVA" value={fmtEur(order.precoFinalIva)} />
               </div>
             </div>
+
+            {/* Análise Gemini */}
+            {(() => {
+              const est = parseEstimate(order.estimateJson);
+              if (!est) return null;
+              const diff = est.difficultyLevel ?? 0;
+              return (
+                <div className="rounded-[24px] border border-violet-400/20 bg-violet-400/[0.03] p-5">
+                  <div className="flex items-center gap-2 mb-4">
+                    <div className="h-6 w-6 rounded-xl bg-violet-400/10 flex items-center justify-center flex-shrink-0">
+                      <svg className="w-3.5 h-3.5 text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                      </svg>
+                    </div>
+                    <h2 className="text-sm font-bold text-white">Análise do Gemini</h2>
+                    <span className="ml-auto text-[10px] font-semibold uppercase tracking-wider text-violet-400 border border-violet-400/30 rounded-full px-2 py-0.5">IA</span>
+                  </div>
+
+                  <div className="space-y-4">
+                    {/* Status + Dificuldade */}
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] px-4 py-3">
+                        <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-600">Status da análise</p>
+                        <p className="mt-1 text-sm font-semibold text-slate-200 capitalize">
+                          {est.status === "estimated" ? "Estimativa pronta" : est.status === "onsite_required" ? "Visita necessária" : est.status === "needs_more_info" ? "Mais informação" : est.status ?? "—"}
+                        </p>
+                      </div>
+                      {diff > 0 && (
+                        <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] px-4 py-3">
+                          <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-600">Nível de dificuldade</p>
+                          <div className="mt-1.5 flex items-center gap-2">
+                            <div className="flex gap-0.5">
+                              {[1,2,3,4,5].map((n) => (
+                                <div key={n} className={`h-1.5 w-4 rounded-full ${n <= diff ? "bg-violet-400" : "bg-white/10"}`} />
+                              ))}
+                            </div>
+                            <span className={`text-xs font-semibold ${DIFFICULTY_COLOR[diff] ?? "text-slate-300"}`}>
+                              {DIFFICULTY_LABEL[diff] ?? diff}
+                            </span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Preços IA */}
+                    {(est.estimatedPriceWithoutVat || est.estimatedPriceWithVat) && (
+                      <div className="grid grid-cols-3 gap-3">
+                        {est.estimatedPriceWithoutVat != null && (
+                          <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] px-4 py-3">
+                            <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-600">Sem IVA</p>
+                            <p className="mt-1 text-sm font-bold text-cyan-400">{est.estimatedPriceWithoutVat.toFixed(2)}€</p>
+                          </div>
+                        )}
+                        {est.vatAmount != null && (
+                          <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] px-4 py-3">
+                            <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-600">IVA 23%</p>
+                            <p className="mt-1 text-sm font-bold text-slate-300">{est.vatAmount.toFixed(2)}€</p>
+                          </div>
+                        )}
+                        {est.estimatedPriceWithVat != null && (
+                          <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] px-4 py-3">
+                            <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-600">Com IVA</p>
+                            <p className="mt-1 text-sm font-bold text-emerald-400">{est.estimatedPriceWithVat.toFixed(2)}€</p>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Resumo */}
+                    {est.summary && (
+                      <div className="rounded-2xl border border-violet-400/10 bg-violet-400/5 px-4 py-3">
+                        <p className="text-[10px] font-semibold uppercase tracking-wider text-violet-400 mb-1.5">Resumo da análise</p>
+                        <p className="text-sm leading-relaxed text-slate-300">{est.summary}</p>
+                      </div>
+                    )}
+
+                    {/* Mensagem ao cliente sugerida */}
+                    {est.customerMessage && (
+                      <div className="rounded-2xl border border-cyan-400/10 bg-cyan-400/5 px-4 py-3">
+                        <p className="text-[10px] font-semibold uppercase tracking-wider text-cyan-400 mb-1.5">Mensagem sugerida ao cliente</p>
+                        <p className="text-sm leading-relaxed text-slate-300">{est.customerMessage}</p>
+                      </div>
+                    )}
+
+                    {/* Pressupostos */}
+                    {est.assumptions && est.assumptions.length > 0 && (
+                      <div>
+                        <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 mb-2">Pressupostos considerados</p>
+                        <ul className="space-y-1">
+                          {est.assumptions.map((a, i) => (
+                            <li key={i} className="flex items-start gap-2 text-xs text-slate-400">
+                              <span className="mt-0.5 h-1.5 w-1.5 rounded-full bg-emerald-400 flex-shrink-0" />
+                              {a}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    {/* Campos em falta */}
+                    {est.missingFields && est.missingFields.length > 0 && (
+                      <div>
+                        <p className="text-[10px] font-semibold uppercase tracking-wider text-amber-500 mb-2">Campos em falta</p>
+                        <ul className="space-y-1">
+                          {est.missingFields.map((f, i) => (
+                            <li key={i} className="flex items-start gap-2 text-xs text-amber-400">
+                              <span className="mt-0.5 h-1.5 w-1.5 rounded-full bg-amber-400 flex-shrink-0" />
+                              {f.replace(/_/g, " ")}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    {/* Notas internas */}
+                    {est.internalNotes && est.internalNotes.length > 0 && (
+                      <div>
+                        <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 mb-2">Notas internas da IA</p>
+                        <ul className="space-y-1">
+                          {est.internalNotes.map((n, i) => (
+                            <li key={i} className="flex items-start gap-2 text-xs text-slate-500">
+                              <span className="mt-0.5 h-1.5 w-1.5 rounded-full bg-slate-600 flex-shrink-0" />
+                              {n}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })()}
 
             {/* Edição */}
             <div className="rounded-[24px] border border-white/[0.06] bg-white/[0.02] p-5">
