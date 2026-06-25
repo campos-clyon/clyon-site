@@ -162,8 +162,8 @@ export default function AdminPedidosClient() {
 
   useEffect(() => { if (ready) fetchOrders(); }, [ready, fetchOrders]);
 
-  // Métricas
-  const total = Object.values(counts).reduce((a, b) => a + b, 0);
+  // Métricas — counts["total"] já vem calculado pela API (não usar reduce para evitar duplicar)
+  const total = counts["total"] ?? 0;
   const pendentes = (counts["pendente"] ?? 0) + (counts["atribuido"] ?? 0) + (counts["em_analise"] ?? 0);
   const confirmados = counts["confirmado"] ?? 0;
   const concluidos = counts["concluido"] ?? 0;

@@ -79,8 +79,14 @@ export async function GET(req: NextRequest) {
     console.log("[v0] GET /api/admin/pedidos: Assistente - após filtro:", filtered.length);
     
     // Contagens apenas dos pedidos do assistente
-    const counts: Record<string, number> = { total: filtered.length };
+    const counts: Record<string, number> = {};
     for (const o of filtered) counts[o.status] = (counts[o.status] ?? 0) + 1;
+    // "total" explícito para compatibilidade com o frontend
+    counts["total"] = filtered.length;
+    // "pendente" = não visualizados (viewedAt IS NULL) no subset do assistente
+    counts["pendente"] = filtered.filter((o) => !o.viewedAt).length;
+    // "sem_assistente" = sem assignedToId no subset
+    counts["sem_assistente"] = filtered.filter((o) => !o.assignedToId).length;
     console.log("[v0] GET /api/admin/pedidos: Assistente - contadores:", counts);
     return NextResponse.json({ orders: filtered, counts, role: "assistente" });
   }
