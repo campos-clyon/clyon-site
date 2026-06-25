@@ -261,11 +261,9 @@ export default function SimulatorThreePhaseForm() {
                 <p className="text-sm text-blue-900">
                   <strong>Número de pedido:</strong> #{successOrderId}
                 </p>
-                {successAssignedTo && (
-                  <p className="text-sm text-blue-800 mt-2">
-                    <strong>Assistente responsável:</strong> {successAssignedTo.name}
-                  </p>
-                )}
+                <p className="text-sm text-blue-800 mt-2">
+                  O seu pedido foi enviado para a fila geral. Os assistentes CLYON podem aceitar ou rejeitar este pedido conforme a disponibilidade.
+                </p>
                 <p className="text-sm text-blue-800 mt-2">
                   Guarde este número para referência futura. Será contactado pelo telefone ou email fornecido.
                 </p>

@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
   createSimulatorOrder,
-  assignSimulatorOrder,
-  pickLeastLoadedAssistant,
   appendOrderHistory,
   calculateOrderPriority,
 } from "@/lib/db";
@@ -62,35 +60,18 @@ export async function POST(req: NextRequest) {
     });
     console.log("[v0] POST /api/simulador/pedido: ✓ Histórico registado para pedido #", id);
 
-    // Atribuição automática ao assistente com menos carga
-    const assignee = await pickLeastLoadedAssistant();
-    console.log("[v0] POST /api/simulador/pedido: pickLeastLoadedAssistant() retornou=", assignee ? `{ id: ${assignee.id}, nome: ${assignee.nome} }` : "null");
-
-    if (assignee) {
-      console.log("[v0] POST /api/simulador/pedido: Atribuindo pedido #", id, " a ", assignee.nome, " (id=", assignee.id, ")");
-      await assignSimulatorOrder(id, assignee, null);
-      console.log("[v0] POST /api/simulador/pedido: ✓ Pedido #", id, " atribuído a ", assignee.nome);
-      return NextResponse.json({
-        ok: true,
-        id,
-        priority,
-        status: "atribuido",
-        assignedTo: assignee.nome,
-        assignedToId: assignee.id,
-        message: `Pedido #${id} enviado para análise. Assistente atribuída: ${assignee.nome}.`,
-      });
-    } else {
-      console.log("[v0] POST /api/simulador/pedido: ⚠ Sem assistente disponível para pedido #", id);
-      return NextResponse.json({
-        ok: true,
-        id,
-        priority,
-        status: "pendente",
-        assignedTo: null,
-        assignedToId: null,
-        message: `Pedido #${id} enviado para análise. Será atribuído a um assistente em breve.`,
-      });
-    }
+    // Pedidos enviados para fila geral (não atribuídos automaticamente)
+    // Os assistentes podem aceitar/rejeitar pedidos da fila geral
+    console.log("[v0] POST /api/simulador/pedido: ✓ Pedido #", id, " enviado para fila geral - assistentes podem aceitar/rejeitar");
+    return NextResponse.json({
+      ok: true,
+      id,
+      priority,
+      status: "pendente",
+      assignedTo: null,
+      assignedToId: null,
+      message: `Pedido #${id} enviado para análise geral. Os assistentes podem aceitar ou rejeitar este pedido.`,
+    });
   } catch (err: any) {
     console.error("[v0] POST /api/simulador/pedido: ❌ Erro:", err.message, err.stack);
     return NextResponse.json({ ok: false, error: err.message }, { status: 500 });
