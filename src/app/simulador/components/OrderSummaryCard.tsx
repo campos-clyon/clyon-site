@@ -44,29 +44,29 @@ interface SummaryRowProps {
 
 function SummaryRow({ icon, label, value, status }: SummaryRowProps) {
   return (
-    <div className="flex items-center gap-3 py-2.5 border-b border-[#F1F5F9] last:border-0">
-      <div className="flex-shrink-0 w-7 h-7 rounded-lg bg-[#F8FAFC] border border-[#E2E8F0] flex items-center justify-center text-[#64748B]">
+    <div className="flex items-center gap-2.5 py-2 border-b border-[#F1F5F9] last:border-0">
+      <div className="flex-shrink-0 w-6 h-6 rounded-lg bg-[#F8FAFC] border border-[#E2E8F0] flex items-center justify-center text-[#64748B] text-xs">
         {icon}
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-xs text-[#94A3B8]">{label}</p>
-        {value && <p className="text-sm font-medium text-[#102033] truncate">{value}</p>}
+        <p className="text-xs text-[#94A3B8] leading-none">{label}</p>
+        {value && <p className="text-xs font-medium text-[#102033] truncate leading-tight">{value}</p>}
       </div>
       <div className="flex-shrink-0">
         {status === "filled" && (
-          <div className="w-5 h-5 rounded-full bg-[#22C55E] flex items-center justify-center">
-            <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+          <div className="w-4.5 h-4.5 rounded-full bg-[#22C55E] flex items-center justify-center flex-shrink-0">
+            <svg className="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
             </svg>
           </div>
         )}
         {status === "in_progress" && (
-          <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-[#FEF3C7] text-[#D97706]">
+          <span className="text-[9px] font-medium px-1.5 py-0.5 rounded-full bg-[#FEF3C7] text-[#D97706] whitespace-nowrap">
             Em curso
           </span>
         )}
         {status === "pending" && (
-          <div className="w-4 h-4 rounded-full bg-[#E2E8F0]" />
+          <div className="w-3 h-3 rounded-full bg-[#E2E8F0] flex-shrink-0" />
         )}
       </div>
     </div>
@@ -82,23 +82,22 @@ export default function OrderSummaryCard({ order, onEdit }: OrderSummaryCardProp
   const fileCount = order.files?.length ?? 0;
 
   return (
-    <div className="bg-white rounded-2xl border border-[#E2E8F0] shadow-sm overflow-hidden">
-      <div className="px-5 py-4 border-b border-[#F1F5F9] flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-[#102033]">Resumo do pedido</h3>
+    <div className="bg-white rounded-xl border border-[#E2E8F0] shadow-sm overflow-hidden">
+      <div className="px-4 py-3 border-b border-[#F1F5F9] flex items-center justify-between">
+        <h3 className="text-xs font-semibold text-[#102033]">Resumo do pedido</h3>
         {onEdit && (
           <button
             onClick={onEdit}
-            className="flex items-center gap-1 text-xs text-[#0487D9] hover:text-[#036BB0] transition-colors"
+            className="flex items-center gap-0.5 text-xs text-[#0487D9] hover:text-[#036BB0] transition-colors"
           >
-            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
             </svg>
             Editar
           </button>
         )}
       </div>
-
-      <div className="px-5 py-1">
+      <div className="px-4 py-1">
         <SummaryRow
           icon={<svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>}
           label="Serviço"

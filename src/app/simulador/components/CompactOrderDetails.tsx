@@ -63,34 +63,29 @@ export default function CompactOrderDetails({
   const videoCount = files.filter((f) => f.type === "video").length;
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200 p-6 space-y-4">
+    <div className="bg-white rounded-xl border border-slate-200 p-5 space-y-3">
       {/* Header */}
-      <h3 className="text-base font-semibold text-slate-900">Detalhes do pedido</h3>
+      <h3 className="text-sm font-semibold text-slate-900">Detalhes do pedido</h3>
 
       {/* Description textarea */}
-      <div className="space-y-2">
-        <label className="block text-sm font-medium text-slate-900">
+      <div className="space-y-1.5">
+        <label className="block text-xs font-medium text-slate-900">
           Descrição adicional
         </label>
         <p className="text-xs text-slate-600">
-          Opcional — descreva detalhes que ajudem a equipa CLYON
+          Opcional — ajude a equipa CLYON com detalhes
         </p>
         <textarea
           value={description || ""}
           onChange={(e) => onDescriptionChange(e.target.value)}
-          placeholder="Exemplo: os móveis estão desmontados, há alguns sacos pequenos, o acesso é por garagem..."
-          className="w-full px-4 py-3 border border-slate-300 rounded-xl text-sm bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-colors resize-none"
-          rows={4}
+          placeholder="Ex: móveis desmontados, alguns sacos, acesso por garagem..."
+          className="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-colors resize-none"
+          rows={3}
         />
-        {description && (
-          <p className="text-xs text-slate-500">
-            {description.length} caracteres
-          </p>
-        )}
       </div>
 
       {/* Upload section */}
-      <div className="space-y-3 pt-2 border-t border-slate-200">
+      <div className="space-y-2 pt-1.5 border-t border-slate-200">
         {/* Upload button */}
         <input
           ref={inputRef}
@@ -104,30 +99,22 @@ export default function CompactOrderDetails({
         <button
           type="button"
           onClick={() => inputRef.current?.click()}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-blue-200 bg-blue-50 text-blue-600 text-sm font-medium hover:bg-blue-100 hover:border-blue-300 transition-colors"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-blue-200 bg-blue-50 text-blue-600 text-xs font-medium hover:bg-blue-100 hover:border-blue-300 transition-colors"
         >
-          <Plus className="w-4 h-4" />
-          Adicionar fotos ou vídeos
+          <Plus className="w-3.5 h-3.5" />
+          Adicionar fotos
         </button>
 
         {/* Error message */}
         {error && (
-          <p className="text-xs text-red-600 bg-red-50 px-3 py-2 rounded-lg">
+          <p className="text-xs text-red-600 bg-red-50 px-2.5 py-1.5 rounded-lg">
             {error}
-          </p>
-        )}
-
-        {/* File counter */}
-        {files.length > 0 && (
-          <p className="text-xs text-slate-600">
-            {files.length} ficheiro{files.length !== 1 ? "s" : ""} adicionado
-            {files.length !== 1 ? "s" : ""}
           </p>
         )}
 
         {/* File previews grid */}
         {files.length > 0 && (
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-3 pt-2">
+          <div className="grid grid-cols-4 md:grid-cols-5 gap-2 pt-1.5">
             {files.map((file) => (
               <div key={file.id} className="relative group">
                 {/* Thumbnail */}
@@ -169,17 +156,10 @@ export default function CompactOrderDetails({
                 <button
                   type="button"
                   onClick={() => onFileRemove(file.id)}
-                  className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                  className="absolute -top-1.5 -right-1.5 bg-red-600 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-700 shadow-sm"
                 >
-                  <div className="bg-red-600 text-white rounded-full p-1 hover:bg-red-700">
-                    <X className="w-3 h-3" />
-                  </div>
+                  <X className="w-2.5 h-2.5" />
                 </button>
-
-                {/* File name tooltip */}
-                <p className="text-xs text-slate-600 truncate mt-1">
-                  {file.name}
-                </p>
               </div>
             ))}
           </div>

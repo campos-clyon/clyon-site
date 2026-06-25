@@ -438,14 +438,14 @@ function Phase1Service({
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Header */}
       <div>
-        <h2 className="text-2xl md:text-3xl font-bold text-slate-900">
+        <h2 className="text-xl font-bold text-slate-900">
           Que serviço precisa?
         </h2>
-        <p className="text-sm text-slate-600 mt-2">
-          Escolha o tipo de serviço e adicione fotos ou detalhes para ajudar a CLYON a analisar o pedido.
+        <p className="text-xs text-slate-600 mt-1">
+          Escolha o tipo de serviço e adicione detalhes para análise.
         </p>
       </div>
 

@@ -24,119 +24,109 @@ export default function EntulhoDetails({
   onQuantidadePorEnsacarChange,
 }: EntulhoDetailsProps) {
   return (
-    <div className="bg-slate-50 rounded-2xl border border-slate-200 p-6 space-y-5">
+    <div className="bg-slate-50 rounded-xl border border-slate-200 p-5 space-y-3">
       {/* Header */}
       <div>
-        <h3 className="text-base font-semibold text-slate-900 flex items-center gap-2">
+        <h3 className="text-sm font-semibold text-slate-900 flex items-center gap-2">
           <Info className="w-4 h-4 text-slate-500" />
-          Detalhes do entulho
+          Estado do entulho
         </h3>
-        <p className="text-xs text-slate-600 mt-1">
-          Ajude-nos a calcular o preço com precisão
+        <p className="text-xs text-slate-600 mt-0.5">
+          Confirme para preço correto
         </p>
       </div>
 
       {/* Estado do entulho */}
-      <div className="space-y-3">
-        <label className="block text-sm font-medium text-slate-900">
-          Estado do entulho *
-        </label>
-        <div className="grid grid-cols-2 gap-3">
+      <div className="space-y-2.5">
+        <div className="grid grid-cols-2 gap-2.5">
           <button
             type="button"
             onClick={() => onStateChange("ensacado")}
-            className={`p-3 rounded-xl border-2 transition-all text-center ${
+            className={`p-2.5 rounded-lg border-2 transition-all text-center ${
               state === "ensacado"
                 ? "border-blue-500 bg-white"
                 : "border-slate-200 bg-white hover:border-blue-300"
             }`}
           >
-            <p className="text-sm font-semibold text-slate-900">
-              Já ensacado
+            <p className="text-xs font-semibold text-slate-900">
+              Ensacado
             </p>
-            <p className="text-xs text-blue-600 font-medium mt-1">2.50€/saco</p>
+            <p className="text-xs text-blue-600 font-medium mt-0.5">2.50€</p>
           </button>
           <button
             type="button"
             onClick={() => onStateChange("chao")}
-            className={`p-3 rounded-xl border-2 transition-all text-center ${
+            className={`p-2.5 rounded-lg border-2 transition-all text-center ${
               state === "chao"
                 ? "border-blue-500 bg-white"
                 : "border-slate-200 bg-white hover:border-blue-300"
             }`}
           >
-            <p className="text-sm font-semibold text-slate-900">
-              No chão/Por ensacar
+            <p className="text-xs font-semibold text-slate-900">
+              No chão
             </p>
-            <p className="text-xs text-blue-600 font-medium mt-1">3.00€/saco</p>
+            <p className="text-xs text-blue-600 font-medium mt-0.5">3.00€</p>
           </button>
           <button
             type="button"
             onClick={() => onStateChange("misto")}
-            className={`p-3 rounded-xl border-2 transition-all text-center col-span-2 ${
+            className={`p-2.5 rounded-lg border-2 transition-all text-center col-span-2 ${
               state === "misto"
                 ? "border-blue-500 bg-white"
                 : "border-slate-200 bg-white hover:border-blue-300"
             }`}
           >
-            <p className="text-sm font-semibold text-slate-900">
-              Parte ensacado e parte por ensacar
+            <p className="text-xs font-semibold text-slate-900">
+              Misto
             </p>
+            <p className="text-xs text-blue-600 font-medium mt-0.5">2.75€ (média)</p>
           </button>
         </div>
       </div>
 
       {/* Quantidade - varia conforme o estado */}
-      <div className="space-y-3">
+      <div className="space-y-2">
         {state === "misto" ? (
           <>
-            <div className="space-y-2">
-              <label className="block text-sm font-medium text-slate-900">
-                Sacos já ensacados *
+            <div className="space-y-1.5">
+              <label className="block text-xs font-medium text-slate-900">
+                Já ensacados
               </label>
               <input
                 type="text"
                 value={quantidadeEnsacados || ""}
                 onChange={(e) => onQuantidadeEnsacadosChange?.(e.target.value)}
                 placeholder="Ex: 50"
-                className="w-full px-4 py-2.5 border border-slate-300 rounded-xl text-sm bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-colors"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-colors"
               />
             </div>
-            <div className="space-y-2">
-              <label className="block text-sm font-medium text-slate-900">
-                Sacos por ensacar *
+            <div className="space-y-1.5">
+              <label className="block text-xs font-medium text-slate-900">
+                Por ensacar
               </label>
               <input
                 type="text"
                 value={quantidadePorEnsacar || ""}
                 onChange={(e) => onQuantidadePorEnsacarChange?.(e.target.value)}
                 placeholder="Ex: 30"
-                className="w-full px-4 py-2.5 border border-slate-300 rounded-xl text-sm bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-colors"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-colors"
               />
             </div>
           </>
         ) : (
-          <div className="space-y-2">
-            <label className="block text-sm font-medium text-slate-900">
-              Quantidade de sacos *
+          <div className="space-y-1.5">
+            <label className="block text-xs font-medium text-slate-900">
+              Quantidade de sacos
             </label>
             <input
               type="text"
               value={quantity || ""}
               onChange={(e) => onQuantityChange(e.target.value)}
               placeholder="Ex: 100"
-              className="w-full px-4 py-2.5 border border-slate-300 rounded-xl text-sm bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-colors"
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-colors"
             />
           </div>
         )}
-      </div>
-
-      {/* Info box */}
-      <div className="bg-white border border-slate-200 rounded-lg p-3 flex gap-2">
-        <Info className="w-4 h-4 text-slate-500 flex-shrink-0 mt-0.5" />
-        <p className="text-xs text-slate-600">
-          As fotos ajudam a evitar alterações no valor do orçamento
-        </p>
       </div>
     </div>
   );
