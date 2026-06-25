@@ -51,7 +51,6 @@ export default function EntulhoDetails({
             <p className="text-xs font-semibold text-slate-900">
               Ensacado
             </p>
-            <p className="text-xs text-blue-600 font-medium mt-0.5">2.50€</p>
           </button>
           <button
             type="button"
@@ -65,7 +64,6 @@ export default function EntulhoDetails({
             <p className="text-xs font-semibold text-slate-900">
               No chão
             </p>
-            <p className="text-xs text-blue-600 font-medium mt-0.5">3.00€</p>
           </button>
           <button
             type="button"
@@ -79,7 +77,6 @@ export default function EntulhoDetails({
             <p className="text-xs font-semibold text-slate-900">
               Misto
             </p>
-            <p className="text-xs text-blue-600 font-medium mt-0.5">2.75€ (média)</p>
           </button>
         </div>
       </div>
