@@ -808,6 +808,7 @@ async function ensureSimulatorOrdersTable() {
       reviewJson TEXT,
       colaboradorId INT,
       dataAgendada TIMESTAMP NULL DEFAULT NULL,
+      viewedAt TIMESTAMP NULL DEFAULT NULL,
       createdAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
       updatedAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
     )
@@ -824,6 +825,7 @@ async function ensureSimulatorOrdersTable() {
     `ALTER TABLE simulatorOrders ADD COLUMN IF NOT EXISTS chatJson LONGTEXT`,
     `ALTER TABLE simulatorOrders ADD COLUMN IF NOT EXISTS historyJson LONGTEXT`,
     `ALTER TABLE simulatorOrders ADD COLUMN IF NOT EXISTS reviewJson TEXT`,
+    `ALTER TABLE simulatorOrders ADD COLUMN IF NOT EXISTS viewedAt TIMESTAMP NULL DEFAULT NULL`,
   ];
   for (const sql of migrations) {
     try { await pool.execute(sql); } catch {}
@@ -861,9 +863,13 @@ export async function getAllSimulatorOrders(filters?: {
   const conditions: string[] = [];
   const params: unknown[] = [];
   
-  // Handle special filter "sem_assistente"
+  // Handle special filters
   if (filters?.status === "sem_assistente") {
     conditions.push("(assignedToId IS NULL OR assignedToId = 0) AND status NOT IN ('cancelado','confirmado','concluido','arquivado')");
+  } else if (filters?.status === "pendente") {
+    // "Novos" = pendente E não visualizado ainda
+    conditions.push("status = ? AND (viewedAt IS NULL)");
+    params.push("pendente");
   } else if (filters?.status) {
     conditions.push("status = ?");
     params.push(filters.status);
@@ -894,6 +900,18 @@ export async function getSimulatorOrderById(id: number): Promise<SimulatorOrder 
   if (!pool) return undefined;
   const [rows] = await pool.execute("SELECT * FROM simulatorOrders WHERE id = ? LIMIT 1", [id]) as any[];
   return (rows as SimulatorOrder[])[0];
+}
+
+export async function markOrderAsViewed(id: number): Promise<void> {
+  console.log("[v0] markOrderAsViewed: Marcando pedido #", id, "como visualizado");
+  await ensureSimulatorOrdersTable();
+  const pool = await getPool();
+  if (!pool) throw new Error("DB not available");
+  await pool.execute(
+    "UPDATE simulatorOrders SET viewedAt = CURRENT_TIMESTAMP WHERE id = ? AND viewedAt IS NULL",
+    [id]
+  );
+  console.log("[v0] markOrderAsViewed: ✓ Pedido #", id, "marcado como visualizado");
 }
 
 export async function updateSimulatorOrder(

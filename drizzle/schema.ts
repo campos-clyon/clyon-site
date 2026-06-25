@@ -161,6 +161,7 @@ export interface SimulatorOrder {
   reviewJson?: string | null;
   colaboradorId?: number | null;
   dataAgendada?: Date | null;
+  viewedAt?: Date | null;
   createdAt: Date;
   updatedAt: Date;
 }

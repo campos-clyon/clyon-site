@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSimulatorOrderById, updateSimulatorOrder } from "@/lib/db";
+import { getSimulatorOrderById, updateSimulatorOrder, markOrderAsViewed } from "@/lib/db";
 import { verifyColaboradorAuthHeader } from "@/lib/colaborador-auth";
 
 export const runtime = "nodejs";
@@ -31,6 +31,11 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 
   if (!colab!.isAdmin && order.assignedToId !== colab!.id) {
     return NextResponse.json({ error: "Sem permissão para ver este pedido" }, { status: 403 });
+  }
+
+  // Mark as viewed when opened (if not already viewed)
+  if (order.viewedAt === null || order.viewedAt === undefined) {
+    await markOrderAsViewed(Number(id)).catch(() => {});
   }
 
   return NextResponse.json({ order });
