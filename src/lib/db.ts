@@ -870,12 +870,16 @@ export async function getAllSimulatorOrders(filters?: {
     params.push(s, s, s, s);
   }
   const where = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";
+  // OPTIMIZATION: Select only essential fields (exclude large JSON fields like chatHistory, estimate)
+  // This dramatically reduces payload size and improves dashboard load time
   const [rows] = await pool.execute(
-    `SELECT * FROM simulatorOrders ${where} ORDER BY createdAt DESC LIMIT 500`,
+    `SELECT id, contactName, contactPhone, address, serviceType, status, precoFinal, estimateTotal, 
+            createdAt, dataAgendada, assignedToId, assignedToName, priority 
+     FROM simulatorOrders ${where} ORDER BY createdAt DESC LIMIT 100`,
     params,
   ) as any[];
   const result = rows as SimulatorOrder[];
-  console.log("[v0] getAllSimulatorOrders: ✓ Retornando", result.length, "pedidos");
+  console.log("[v0] getAllSimulatorOrders: ✓ Retornando", result.length, "pedidos (campos otimizados)");
   return result;
 }
 
@@ -1114,8 +1118,11 @@ export async function getSimulatorOrdersByAssistant(assignedToId: number): Promi
     return [];
   }
   // Assistente vê apenas os pedidos atribuídos a si — nunca pedidos de outros
+  // OPTIMIZATION: Select only essential fields (exclude large JSON fields)
   const [rows] = await pool.execute(
-    "SELECT * FROM simulatorOrders WHERE assignedToId = ? ORDER BY createdAt DESC LIMIT 200",
+    `SELECT id, contactName, contactPhone, address, serviceType, status, precoFinal, estimateTotal,
+            createdAt, dataAgendada, assignedToId, assignedToName, priority
+     FROM simulatorOrders WHERE assignedToId = ? ORDER BY createdAt DESC LIMIT 100`,
     [assignedToId]
   ) as any[];
   const result = rows as SimulatorOrder[];
