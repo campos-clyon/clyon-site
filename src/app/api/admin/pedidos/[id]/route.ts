@@ -91,15 +91,11 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 }
 
 // DELETE /api/admin/pedidos/[id]
-// Apenas admin geral pode excluir pedidos definitivamente.
+// Qualquer colaborador autenticado pode excluir pedidos.
 export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const { err, colab } = await authenticate(req);
+  const { err } = await authenticate(req);
   if (err) return err;
   const { id } = await params;
-
-  if (!colab!.isAdmin) {
-    return NextResponse.json({ error: "Apenas o admin pode excluir pedidos." }, { status: 403 });
-  }
 
   const order = await getSimulatorOrderById(Number(id));
   if (!order) return NextResponse.json({ error: "Pedido não encontrado" }, { status: 404 });
