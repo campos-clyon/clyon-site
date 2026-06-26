@@ -121,6 +121,12 @@ const DIFFICULTY_COLOR: Record<number, string> = {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
+async function safeJson(res: Response): Promise<any> {
+  const text = await res.text();
+  if (!text) return null;
+  try { return JSON.parse(text); } catch { return null; }
+}
+
 function fmt(iso: string) {
   return new Date(iso).toLocaleDateString("pt-PT", {
     day: "2-digit", month: "2-digit", year: "numeric",
@@ -260,8 +266,9 @@ export default function PedidoDetailModal({ id, token, isAdmin, onClose, onDelet
     setError("");
     try {
       const res = await fetch(`/api/admin/pedidos/${id}`, { headers: authHeader });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Pedido não encontrado");
+      const data = await safeJson(res);
+      if (!res.ok) throw new Error(data?.error || "Pedido não encontrado");
+      if (!data?.order) throw new Error("Resposta inválida do servidor");
       setOrder(data.order);
       populateEdit(data.order);
     } catch (e: any) {
@@ -317,15 +324,19 @@ export default function PedidoDetailModal({ id, token, isAdmin, onClose, onDelet
         headers: { ...authHeader, "Content-Type": "application/json" },
         body: JSON.stringify(body),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Erro ao guardar");
-      setOrder(data.order);
-      populateEdit(data.order);
+      const data = await safeJson(res);
+      if (!res.ok || data?.ok === false) {
+        throw new Error(data?.message || "Não foi possível guardar as alterações.");
+      }
+      const updated = data?.order ?? order;
+      setOrder(updated);
+      populateEdit(updated);
       setSaveMsg("Guardado com sucesso!");
       setTimeout(() => setSaveMsg(""), 3000);
-      onUpdated?.(data.order);
+      onUpdated?.(updated);
     } catch (e: any) {
-      setError(e.message);
+      console.error("[Pedido save error]", e);
+      setError(e.message || "Não foi possível guardar as alterações. Tente novamente.");
     } finally {
       setSaving(false);
     }
@@ -339,8 +350,8 @@ export default function PedidoDetailModal({ id, token, isAdmin, onClose, onDelet
         method: "DELETE",
         headers: authHeader,
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Erro ao excluir");
+      const data = await safeJson(res);
+      if (!res.ok) throw new Error(data?.error || "Erro ao excluir");
       onDeleted?.(order.id);
       onClose();
     } catch (e: any) {
@@ -358,13 +369,14 @@ export default function PedidoDetailModal({ id, token, isAdmin, onClose, onDelet
         headers: { ...authHeader, "Content-Type": "application/json" },
         body: JSON.stringify({ status: newStatus }),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Erro");
-      setOrder(data.order);
+      const data = await safeJson(res);
+      if (!res.ok) throw new Error(data?.error || "Erro ao atualizar status");
+      const updated = data?.order ?? { ...order, status: newStatus };
+      setOrder(updated);
       setEditStatus(newStatus);
       setSaveMsg("Status atualizado!");
       setTimeout(() => setSaveMsg(""), 3000);
-      onUpdated?.(data.order);
+      onUpdated?.(updated);
     } catch (e: any) {
       setError(e.message);
     } finally {

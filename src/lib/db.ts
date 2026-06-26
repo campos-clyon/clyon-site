@@ -826,6 +826,9 @@ async function ensureSimulatorOrdersTable() {
     `ALTER TABLE simulatorOrders ADD COLUMN IF NOT EXISTS historyJson LONGTEXT`,
     `ALTER TABLE simulatorOrders ADD COLUMN IF NOT EXISTS reviewJson TEXT`,
     `ALTER TABLE simulatorOrders ADD COLUMN IF NOT EXISTS viewedAt TIMESTAMP NULL DEFAULT NULL`,
+    `ALTER TABLE simulatorOrders ADD COLUMN IF NOT EXISTS postalCode VARCHAR(20)`,
+    `ALTER TABLE simulatorOrders ADD COLUMN IF NOT EXISTS parkingDistance VARCHAR(60)`,
+    `ALTER TABLE simulatorOrders ADD COLUMN IF NOT EXISTS city VARCHAR(120)`,
   ];
   for (const sql of migrations) {
     try { await pool.execute(sql); } catch {}
@@ -916,19 +919,29 @@ export async function markOrderAsViewed(id: number): Promise<void> {
 export async function updateSimulatorOrder(
   id: number,
   data: Partial<{
-    status: "pendente" | "aprovado" | "rejeitado" | "em_execucao" | "concluido" | "cancelado";
-    notasInternas: string;
-    precoFinal: string;
+    status: string;
+    priority: string;
+    notasInternas: string | null;
+    precoFinal: string | null;
+    precoFinalIva: string | null;
+    mensagemCliente: string | null;
     colaboradorId: number;
-    dataAgendada: Date;
-    serviceType: string;
-    description: string;
-    contactName: string;
-    contactPhone: string;
-    contactEmail: string;
-    address: string;
-    floor: string;
-    urgency: string;
+    dataAgendada: string | null;
+    assignedToId: number | null;
+    assignedToName: string | null;
+    assignedAt: string | null;
+    serviceType: string | null;
+    description: string | null;
+    contactName: string | null;
+    contactPhone: string | null;
+    contactEmail: string | null;
+    address: string | null;
+    city: string | null;
+    postalCode: string | null;
+    floor: string | null;
+    hasElevator: string | null;
+    parkingDistance: string | null;
+    urgency: string | null;
   }>
 ) {
   await ensureSimulatorOrdersTable();

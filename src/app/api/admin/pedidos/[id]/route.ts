@@ -55,7 +55,12 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     return NextResponse.json({ error: "Sem permissão para editar este pedido" }, { status: 403 });
   }
 
-  const body = await req.json();
+  let body: Record<string, unknown>;
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ ok: false, message: "Body JSON inválido." }, { status: 400 });
+  }
 
   // Assistente não pode alterar atribuição nem aprovar
   if (!colab!.isAdmin) {
@@ -66,12 +71,21 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     delete body.precoFinalIva;
     // Assistente pode marcar como em_analise ou precisa_info
     const allowedStatuses = ["em_analise", "precisa_info"];
-    if (body.status && !allowedStatuses.includes(body.status)) {
+    if (body.status && !allowedStatuses.includes(body.status as string)) {
       delete body.status;
     }
   }
 
-  await updateSimulatorOrder(Number(id), body as Parameters<typeof updateSimulatorOrder>[1]);
+  try {
+    await updateSimulatorOrder(Number(id), body as Parameters<typeof updateSimulatorOrder>[1]);
+  } catch (err: any) {
+    console.error("[v0] PATCH /api/admin/pedidos/[id] updateSimulatorOrder error:", err?.message);
+    return NextResponse.json(
+      { ok: false, message: "Não foi possível atualizar o pedido. " + (err?.message ?? "") },
+      { status: 500 }
+    );
+  }
+
   const updated = await getSimulatorOrderById(Number(id));
   return NextResponse.json({ ok: true, order: updated, message: "Pedido atualizado com sucesso." });
 }
