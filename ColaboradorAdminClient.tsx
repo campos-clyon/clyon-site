@@ -4,6 +4,7 @@ import type { ComponentType, ReactNode } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { clearColaboradorStorage, getColaboradorItem } from "@/lib/colaborador-storage";
+import PedidoDetailModal from "@/components/admin/PedidoDetailModal";
 import {
   AlertTriangle,
   ArrowRight,
@@ -493,7 +494,7 @@ export default function ColaboradorAdminClient() {
   const [savingLeadStatus, setSavingLeadStatus] = useState(false);
   const [leadsLastUpdate, setLeadsLastUpdate] = useState<Date | null>(null);
   const [activeLeadsTab, setActiveLeadsTab] = useState<"leads" | "eventos">("leads");
-  // ── Pedidos state ───────────────────────────────────��─────���───────────────
+  // ── Pedidos state ───────────────────────────────────���─────���───────────────
   type SimulatorOrder = {
     id: number;
     serviceType?: string | null;
@@ -2138,218 +2139,25 @@ export default function ColaboradorAdminClient() {
             </section>
           )}
 
-          {/* Modal de detalhe do pedido */}
-          {pedidoDetalheOpen && selectedPedido && (
-            <div
-              className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/70 px-3 py-8 backdrop-blur-sm"
-              onClick={(e) => { if (e.target === e.currentTarget) setPedidoDetalheOpen(false); }}
-            >
-              <div className="w-full max-w-3xl rounded-[28px] border border-cyan-300/20 bg-[#07111d] p-6 shadow-[0_40px_120px_rgba(4,11,20,0.7)]">
-                <div className="mb-5 flex items-start justify-between gap-4">
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-[0.24em] text-cyan-200">Pedido #{selectedPedido.id}</p>
-                    <h3 className="mt-1 text-xl font-semibold text-white">{selectedPedido.contactName ?? "Cliente"}</h3>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setPedidoDetalheOpen(false)}
-                    className="rounded-full border border-white/10 bg-white/[0.04] p-2 text-slate-400 transition hover:text-white"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                </div>
-
-                <div className="grid gap-5 md:grid-cols-2">
-                  {/* Dados do cliente */}
-                  <div className="space-y-3 rounded-[20px] border border-white/10 bg-white/[0.03] p-4">
-                    <h4 className="text-xs font-semibold uppercase tracking-[0.2em] text-cyan-200">Dados do cliente</h4>
-                    <div className="space-y-2 text-sm">
-                      {[
-                        { label: "Nome", value: selectedPedido.contactName },
-                        { label: "Telefone", value: selectedPedido.contactPhone },
-                        { label: "Email", value: selectedPedido.contactEmail },
-                      ].map((row) => row.value ? (
-                        <div key={row.label} className="flex items-center justify-between gap-2">
-                          <span className="text-slate-500">{row.label}</span>
-                          <span className="font-medium text-white">{row.value}</span>
-                        </div>
-                      ) : null)}
-                    </div>
-                    {selectedPedido.contactPhone && (
-                      <a
-                        href={`https://wa.me/351${selectedPedido.contactPhone.replace(/\D/g, "")}?text=${encodeURIComponent(`Olá ${selectedPedido.contactName ?? ""}! Estamos a analisar o seu pedido #${selectedPedido.id} (${selectedPedido.serviceType ?? "serviço"}). Entraremos em contacto em breve.`)}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="mt-2 flex w-full items-center justify-center gap-2 rounded-[14px] bg-emerald-500 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-400"
-                      >
-                        <Phone className="h-4 w-4" />
-                        Enviar WhatsApp
-                      </a>
-                    )}
-                  </div>
-
-                  {/* Dados do serviço */}
-                  <div className="space-y-3 rounded-[20px] border border-white/10 bg-white/[0.03] p-4">
-                    <h4 className="text-xs font-semibold uppercase tracking-[0.2em] text-cyan-200">Serviço</h4>
-                    <div className="space-y-2 text-sm">
-                      {[
-                        { label: "Tipo", value: selectedPedido.serviceType },
-                        { label: "Urgência", value: selectedPedido.urgency },
-                        { label: "Descrição", value: selectedPedido.description },
-                        { label: "Morada", value: selectedPedido.address },
-                        { label: "Localidade", value: selectedPedido.city },
-                        { label: "Andar", value: selectedPedido.floor },
-                        { label: "Elevador", value: selectedPedido.hasElevator },
-                        { label: "Distância", value: selectedPedido.distanceText },
-                      ].map((row) => row.value ? (
-                        <div key={row.label} className="flex items-start justify-between gap-2">
-                          <span className="shrink-0 text-slate-500">{row.label}</span>
-                          <span className="text-right font-medium text-white">{row.value}</span>
-                        </div>
-                      ) : null)}
-                    </div>
-                  </div>
-
-                  {/* Estimativa IA */}
-                  <div className="space-y-3 rounded-[20px] border border-white/10 bg-white/[0.03] p-4">
-                    <h4 className="text-xs font-semibold uppercase tracking-[0.2em] text-cyan-200">Estimativa IA</h4>
-                    <div className="space-y-2 text-sm">
-                      {[
-                        { label: "Mínimo", value: selectedPedido.estimateMin ? `${selectedPedido.estimateMin} €` : null },
-                        { label: "Máximo", value: selectedPedido.estimateMax ? `${selectedPedido.estimateMax} €` : null },
-                        { label: "Total", value: selectedPedido.estimateTotal ? `${selectedPedido.estimateTotal} €` : null },
-                      ].map((row) => row.value ? (
-                        <div key={row.label} className="flex items-center justify-between gap-2">
-                          <span className="text-slate-500">{row.label}</span>
-                          <span className="font-semibold text-emerald-400">{row.value}</span>
-                        </div>
-                      ) : null)}
-                    </div>
-                  </div>
-
-                  {/* Atribuição */}
-                  <div className="space-y-3 rounded-[20px] border border-white/10 bg-white/[0.03] p-4">
-                    <h4 className="text-xs font-semibold uppercase tracking-[0.2em] text-cyan-200">Atribuição</h4>
-                    <div className="space-y-2 text-sm">
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="text-slate-500">Assistente</span>
-                        <span className="font-medium text-white">{selectedPedido.assignedToName ?? <span className="text-rose-400">Sem assistente</span>}</span>
-                      </div>
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="text-slate-500">Status</span>
-                        <span className="font-medium text-white capitalize">{selectedPedido.status}</span>
-                      </div>
-                    </div>
-                    {assistentes.length > 0 && (
-                      <div className="mt-3">
-                        <p className="mb-1.5 text-xs text-slate-500">Reatribuir a:</p>
-                        <select
-                          defaultValue=""
-                          onChange={async (e) => {
-                            const assistenteId = e.target.value;
-                            if (!assistenteId || !token) return;
-                            try {
-                              const res = await fetch(`/api/admin/pedidos/${selectedPedido.id}/assign`, {
-                                method: "POST",
-                                headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-                                body: JSON.stringify({ assistenteId: Number(assistenteId) }),
-                              });
-                              if (res.ok) {
-                                const data = await res.json();
-                                setSelectedPedido((prev) => prev ? { ...prev, assignedToId: data.assignedToId, assignedToName: data.assignedToName, status: "atribuido" } : prev);
-                                setPedidos((prev) => prev.map((p) => p.id === selectedPedido.id ? { ...p, assignedToId: data.assignedToId, assignedToName: data.assignedToName, status: "atribuido" } : p));
-                              }
-                            } catch {}
-                          }}
-                          className="h-10 w-full rounded-[12px] border border-cyan-300/20 bg-[#0d1f35] px-3 text-sm text-white outline-none focus:border-cyan-400 [color-scheme:dark]"
-                        >
-                          <option value="">Selecionar assistente</option>
-                          {assistentes.map((a) => (
-                            <option key={a.id} value={a.id}>{a.nome}</option>
-                          ))}
-                        </select>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Botões de acção */}
-                <div className="mt-5 flex flex-wrap gap-2">
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      if (!token) return;
-                      try {
-                        const res = await fetch(`/api/admin/pedidos/${selectedPedido.id}/approve`, {
-                          method: "POST",
-                          headers: { Authorization: `Bearer ${token}` },
-                        });
-                        if (res.ok) {
-                          setSelectedPedido((prev) => prev ? { ...prev, status: "aprovado" } : prev);
-                          setPedidos((prev) => prev.map((p) => p.id === selectedPedido.id ? { ...p, status: "aprovado" } : p));
-                        }
-                      } catch {}
-                    }}
-                    className="flex items-center gap-2 rounded-[14px] bg-emerald-500 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-400"
-                  >
-                    <CheckCircle2 className="h-4 w-4" />
-                    Aprovar orçamento
-                  </button>
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      if (!token) return;
-                      await fetch(`/api/admin/pedidos/${selectedPedido.id}`, {
-                        method: "PATCH",
-                        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-                        body: JSON.stringify({ status: "precisa_info" }),
-                      });
-                      setSelectedPedido((prev) => prev ? { ...prev, status: "precisa_info" } : prev);
-                      setPedidos((prev) => prev.map((p) => p.id === selectedPedido.id ? { ...p, status: "precisa_info" } : p));
-                    }}
-                    className="flex items-center gap-2 rounded-[14px] border border-orange-400/30 bg-orange-400/10 px-4 py-2.5 text-sm font-semibold text-orange-300 transition hover:bg-orange-400/20"
-                  >
-                    <MessageCircle className="h-4 w-4" />
-                    Pedir mais info
-                  </button>
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      if (!token) return;
-                      await fetch(`/api/admin/pedidos/${selectedPedido.id}`, {
-                        method: "PATCH",
-                        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-                        body: JSON.stringify({ status: "presencial_recomendado" }),
-                      });
-                      setSelectedPedido((prev) => prev ? { ...prev, status: "presencial_recomendado" } : prev);
-                      setPedidos((prev) => prev.map((p) => p.id === selectedPedido.id ? { ...p, status: "presencial_recomendado" } : p));
-                    }}
-                    className="flex items-center gap-2 rounded-[14px] border border-red-400/30 bg-red-400/10 px-4 py-2.5 text-sm font-semibold text-red-300 transition hover:bg-red-400/20"
-                  >
-                    <MapPin className="h-4 w-4" />
-                    Recomendar presencial
-                  </button>
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      if (!token) return;
-                      await fetch(`/api/admin/pedidos/${selectedPedido.id}`, {
-                        method: "PATCH",
-                        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-                        body: JSON.stringify({ status: "cancelado" }),
-                      });
-                      setSelectedPedido((prev) => prev ? { ...prev, status: "cancelado" } : prev);
-                      setPedidos((prev) => prev.map((p) => p.id === selectedPedido.id ? { ...p, status: "cancelado" } : p));
-                    }}
-                    className="ml-auto flex items-center gap-2 rounded-[14px] border border-rose-600/30 bg-rose-600/10 px-4 py-2.5 text-sm font-semibold text-rose-400 transition hover:bg-rose-600/20"
-                  >
-                    <X className="h-4 w-4" />
-                    Cancelar pedido
-                  </button>
-                </div>
-              </div>
-            </div>
+          {/* Modal de detalhe do pedido — novo PedidoDetailModal */}
+          {pedidoDetalheOpen && selectedPedido && token && (
+            <PedidoDetailModal
+              id={selectedPedido.id}
+              token={token}
+              isAdmin={isAdminGeral}
+              onClose={() => { setPedidoDetalheOpen(false); setSelectedPedido(null); }}
+              onDeleted={(deletedId) => {
+                setPedidos((prev) => prev.filter((p) => p.id !== deletedId));
+                setPedidoDetalheOpen(false);
+                setSelectedPedido(null);
+              }}
+              onUpdated={(updated) => {
+                setPedidos((prev) => prev.map((p) => p.id === updated.id ? { ...p, ...updated } as SimulatorOrder : p));
+                setSelectedPedido((prev) => prev ? { ...prev, ...updated } as SimulatorOrder : prev);
+              }}
+            />
           )}
+
 
           {activeSection === "operacao" && (
             <section className="space-y-4 rounded-[28px] border border-slate-700/60 bg-slate-900/80 p-5 shadow-[0_8px_32px_rgba(0,0,0,0.28)]">
