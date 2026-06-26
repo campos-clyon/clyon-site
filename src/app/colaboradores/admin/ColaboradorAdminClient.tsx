@@ -1,6 +1,6 @@
 "use client";
 
-import LegacyAdminClient from "../../../../ColaboradorAdminClient";
+import LegacyAdminClient from "@/components/admin/LegacyAdminClient";
 
 export default function ColaboradorAdminClient() {
   return <LegacyAdminClient />;
