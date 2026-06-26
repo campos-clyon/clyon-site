@@ -768,9 +768,12 @@ export async function getTodayRegistroByColaborador(colaboradorId: number) {
 // ─── SimulatorOrders ──────────────────────────────────────────────────────────
 
 let _simulatorOrdersEnsured = false;
+// Bump this version number any time new migrations are added so the guard re-runs
+const MIGRATION_VERSION = 2;
+let _migrationVersion = 0;
 
-async function ensureSimulatorOrdersTable() {
-  if (_simulatorOrdersEnsured) return;
+export async function ensureSimulatorOrdersTable() {
+  if (_simulatorOrdersEnsured && _migrationVersion >= MIGRATION_VERSION) return;
   const pool = await getPool();
   if (!pool) return;
   await pool.execute(`
@@ -816,24 +819,31 @@ async function ensureSimulatorOrdersTable() {
   // Migração: adicionar colunas novas se a tabela já existia (sem falhar se já existem)
   const migrations = [
     `ALTER TABLE simulatorOrders MODIFY COLUMN status VARCHAR(40) NOT NULL DEFAULT 'pendente'`,
-    `ALTER TABLE simulatorOrders ADD COLUMN IF NOT EXISTS priority VARCHAR(20) DEFAULT 'normal'`,
-    `ALTER TABLE simulatorOrders ADD COLUMN IF NOT EXISTS precoFinalIva DECIMAL(10,2)`,
-    `ALTER TABLE simulatorOrders ADD COLUMN IF NOT EXISTS mensagemCliente TEXT`,
-    `ALTER TABLE simulatorOrders ADD COLUMN IF NOT EXISTS assignedToId INT`,
-    `ALTER TABLE simulatorOrders ADD COLUMN IF NOT EXISTS assignedToName VARCHAR(120)`,
-    `ALTER TABLE simulatorOrders ADD COLUMN IF NOT EXISTS assignedAt TIMESTAMP NULL DEFAULT NULL`,
-    `ALTER TABLE simulatorOrders ADD COLUMN IF NOT EXISTS chatJson LONGTEXT`,
-    `ALTER TABLE simulatorOrders ADD COLUMN IF NOT EXISTS historyJson LONGTEXT`,
-    `ALTER TABLE simulatorOrders ADD COLUMN IF NOT EXISTS reviewJson TEXT`,
-    `ALTER TABLE simulatorOrders ADD COLUMN IF NOT EXISTS viewedAt TIMESTAMP NULL DEFAULT NULL`,
-    `ALTER TABLE simulatorOrders ADD COLUMN IF NOT EXISTS postalCode VARCHAR(20)`,
-    `ALTER TABLE simulatorOrders ADD COLUMN IF NOT EXISTS parkingDistance VARCHAR(60)`,
-    `ALTER TABLE simulatorOrders ADD COLUMN IF NOT EXISTS city VARCHAR(120)`,
+    // Each ALTER is wrapped in try/catch above — safe to run on every cold start
+    `ALTER TABLE simulatorOrders ADD COLUMN priority VARCHAR(20) DEFAULT 'normal'`,
+    `ALTER TABLE simulatorOrders ADD COLUMN precoFinalIva DECIMAL(10,2)`,
+    `ALTER TABLE simulatorOrders ADD COLUMN mensagemCliente TEXT`,
+    `ALTER TABLE simulatorOrders ADD COLUMN assignedToId INT`,
+    `ALTER TABLE simulatorOrders ADD COLUMN assignedToName VARCHAR(120)`,
+    `ALTER TABLE simulatorOrders ADD COLUMN assignedAt TIMESTAMP NULL DEFAULT NULL`,
+    `ALTER TABLE simulatorOrders ADD COLUMN chatJson LONGTEXT`,
+    `ALTER TABLE simulatorOrders ADD COLUMN historyJson LONGTEXT`,
+    `ALTER TABLE simulatorOrders ADD COLUMN reviewJson TEXT`,
+    `ALTER TABLE simulatorOrders ADD COLUMN viewedAt TIMESTAMP NULL DEFAULT NULL`,
+    `ALTER TABLE simulatorOrders ADD COLUMN postalCode VARCHAR(20)`,
+    `ALTER TABLE simulatorOrders ADD COLUMN parkingDistance VARCHAR(60)`,
+    `ALTER TABLE simulatorOrders ADD COLUMN city VARCHAR(120)`,
   ];
   for (const sql of migrations) {
-    try { await pool.execute(sql); } catch {}
+    try { await pool.execute(sql); } catch (e: any) {
+      // Log only non-"duplicate column" errors so we can see real problems
+      if (!e?.message?.includes("Duplicate column")) {
+        console.error("[v0] migration skipped:", e?.message);
+      }
+    }
   }
   _simulatorOrdersEnsured = true;
+  _migrationVersion = MIGRATION_VERSION;
 }
 
 export async function createSimulatorOrder(data: InsertSimulatorOrder): Promise<number> {

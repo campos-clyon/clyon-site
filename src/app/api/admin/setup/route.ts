@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { upsertWandersonAdmin, ensureColaboradoresSchema, ensureSimulatorSettingsTable, ensureGalleryMediaTable, getEffectiveRole, getPool } from "@/lib/db";
+import { upsertWandersonAdmin, ensureColaboradoresSchema, ensureSimulatorSettingsTable, ensureGalleryMediaTable, ensureSimulatorOrdersTable, getEffectiveRole, getPool } from "@/lib/db";
 
 export const runtime = "nodejs";
 
@@ -39,7 +39,10 @@ export async function POST(req: NextRequest) {
     await ensureColaboradoresSchema();
     console.log("[v0] admin/setup: ✓ Esquema colaboradores garantido");
 
-    // 2. Garantir tabelas auxiliares
+    // 2. Garantir tabelas auxiliares (incluindo colunas novas de simulatorOrders)
+    await ensureSimulatorOrdersTable();
+    console.log("[v0] admin/setup: ✓ Tabela simulatorOrders e colunas garantidas");
+
     await ensureSimulatorSettingsTable();
     console.log("[v0] admin/setup: ✓ Tabela simulatorSettings garantida");
 
@@ -94,6 +97,7 @@ export async function POST(req: NextRequest) {
       timestamp: new Date().toISOString(),
       migrations: [
         "Schema colaboradores",
+        "Tabela simulatorOrders (postalCode, city, parkingDistance, priority, ...)",
         "Tabela simulatorSettings",
         "Tabela galleryMedia",
         "Configuração de funções",
