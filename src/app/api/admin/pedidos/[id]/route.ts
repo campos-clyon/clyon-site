@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSimulatorOrderById, updateSimulatorOrder, markOrderAsViewed } from "@/lib/db";
+import { getSimulatorOrderById, updateSimulatorOrder, markOrderAsViewed, deleteSimulatorOrder } from "@/lib/db";
 import { verifyColaboradorAuthHeader } from "@/lib/colaborador-auth";
 
 export const runtime = "nodejs";
@@ -73,5 +73,23 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
   await updateSimulatorOrder(Number(id), body as Parameters<typeof updateSimulatorOrder>[1]);
   const updated = await getSimulatorOrderById(Number(id));
-  return NextResponse.json({ ok: true, order: updated });
+  return NextResponse.json({ ok: true, order: updated, message: "Pedido atualizado com sucesso." });
+}
+
+// DELETE /api/admin/pedidos/[id]
+// Apenas admin geral pode excluir pedidos definitivamente.
+export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { err, colab } = await authenticate(req);
+  if (err) return err;
+  const { id } = await params;
+
+  if (!colab!.isAdmin) {
+    return NextResponse.json({ error: "Apenas o admin pode excluir pedidos." }, { status: 403 });
+  }
+
+  const order = await getSimulatorOrderById(Number(id));
+  if (!order) return NextResponse.json({ error: "Pedido não encontrado" }, { status: 404 });
+
+  await deleteSimulatorOrder(Number(id));
+  return NextResponse.json({ ok: true, message: "Pedido excluído com sucesso." });
 }
