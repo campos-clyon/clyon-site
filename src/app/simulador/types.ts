@@ -47,6 +47,25 @@ export interface ReceiverData {
   email?: string;
 }
 
+// ── Mudança: condições de acesso por local ──────────────────────────────────
+export interface MovingAccess {
+  floor?: string;
+  hasElevator?: "yes" | "small" | "no" | "unknown";
+  parkingDistance?: "door" | "under_20m" | "over_30m" | "difficult" | "unknown";
+  difficultAccess?: boolean;
+  accessNotes?: string;
+}
+
+// ── Mudança: distância origem → destino ──────────────────────────────────────
+export interface MovingDistance {
+  distanceMeters?: number;
+  distanceKm?: number;
+  durationSeconds?: number;
+  durationText?: string;
+  calculatedAt?: string;
+  isEstimate?: boolean;
+}
+
 export interface OrderData {
   serviceType?: ServiceType;
   description?: string;
@@ -65,8 +84,19 @@ export interface OrderData {
   urgency?: "no" | "today" | "tomorrow" | "this_week" | "flexible";
   receiver?: ReceiverData;
   // Campos específicos para entulho
-  entulhoState?: "ensacado" | "chao" | "misto" | "unknown"; // ensacado vs no chão/por ensacar
-  entulhoQuantidade?: string; // confirmação/clarificação da quantidade
+  entulhoState?: "ensacado" | "chao" | "misto" | "unknown";
+  entulhoQuantidade?: string;
+  // Campos específicos para mudança (dois endereços)
+  originAddress?: AddressData;
+  originAddressValue?: string;
+  originAddressStatus?: AddressStatus;
+  destinationAddress?: AddressData;
+  destinationAddressValue?: string;
+  destinationAddressStatus?: AddressStatus;
+  originAccess?: MovingAccess;
+  destinationAccess?: MovingAccess;
+  movingDistance?: MovingDistance;
+  movingDistanceStatus?: DistanceStatus;
 }
 
 export type EstimateStatus = "estimated" | "needs_more_info" | "onsite_required";

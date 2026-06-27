@@ -9,6 +9,8 @@ import type {
   DistanceStatus,
   EstimateResult,
   AddressStatus,
+  MovingAccess,
+  MovingDistance,
 } from "./types";
 import AddressAutocomplete from "./components/AddressAutocomplete";
 import OrderSummaryCard from "./components/OrderSummaryCard";
@@ -74,6 +76,32 @@ export default function SimulatorThreePhaseForm() {
     updateField("distanceStatus", status);
   };
 
+  // ── Mudança: handlers de morada de origem e destino ──────────────────────
+  const handleOriginSelect = (data: AddressData) => {
+    updateField("originAddress", data);
+    updateField("originAddressValue", data.formattedAddress || "");
+    updateField("originAddressStatus", "selected");
+  };
+
+  const handleDestinationSelect = (data: AddressData) => {
+    updateField("destinationAddress", data);
+    updateField("destinationAddressValue", data.formattedAddress || "");
+    updateField("destinationAddressStatus", "selected");
+  };
+
+  const handleMovingDistanceCalculated = (distance: MovingDistance, status: DistanceStatus) => {
+    updateField("movingDistance", distance);
+    updateField("movingDistanceStatus", status);
+  };
+
+  const updateOriginAccess = (field: keyof MovingAccess, value: unknown) => {
+    updateField("originAccess", { ...formData.originAccess, [field]: value });
+  };
+
+  const updateDestinationAccess = (field: keyof MovingAccess, value: unknown) => {
+    updateField("destinationAccess", { ...formData.destinationAccess, [field]: value });
+  };
+
   const isPhase1Valid = () => {
     // Deve ter serviço selecionado
     if (!formData.serviceType) return false;
@@ -96,7 +124,19 @@ export default function SimulatorThreePhaseForm() {
   };
 
   const isPhase2Valid = () => {
-    // Se rés-do-chão, não precisa de elevador; caso contrário, é obrigatório
+    if (formData.serviceType === "mudanca") {
+      // Mudança: obriga origem e destino com acesso completo nos dois lados
+      const hasOrigin = !!(formData.originAddress?.formattedAddress);
+      const hasDestination = !!(formData.destinationAddress?.formattedAddress);
+      const originElevatorValid =
+        formData.originAccess?.floor === "rés-do-chão" ? true : !!formData.originAccess?.hasElevator;
+      const destElevatorValid =
+        formData.destinationAccess?.floor === "rés-do-chão" ? true : !!formData.destinationAccess?.hasElevator;
+      const originAccessOk = !!(formData.originAccess?.floor && originElevatorValid && formData.originAccess?.parkingDistance);
+      const destAccessOk = !!(formData.destinationAccess?.floor && destElevatorValid && formData.destinationAccess?.parkingDistance);
+      return hasOrigin && hasDestination && originAccessOk && destAccessOk;
+    }
+    // Outros serviços: apenas uma morada
     const elevatorValid = formData.floor === "rés-do-chão" ? true : !!formData.hasElevator;
     return formData.address?.formattedAddress && formData.floor && elevatorValid && formData.parkingDistance;
   };
@@ -412,6 +452,11 @@ export default function SimulatorThreePhaseForm() {
                   onAddressSelect={handleAddressSelect}
                   onDistanceCalculated={handleDistanceCalculated}
                   updateField={updateField}
+                  onOriginSelect={handleOriginSelect}
+                  onDestinationSelect={handleDestinationSelect}
+                  onMovingDistanceCalculated={handleMovingDistanceCalculated}
+                  updateOriginAccess={updateOriginAccess}
+                  updateDestinationAccess={updateDestinationAccess}
                 />
               )}
 
@@ -554,6 +599,91 @@ function Phase1Service({
   );
 }
 
+// ── Selector de andar + elevador + estacionamento reutilizável ──────────────
+function AccessFields({
+  prefix,
+  floor,
+  hasElevator,
+  parkingDistance,
+  difficultAccess,
+  onChange,
+}: {
+  prefix: string;
+  floor?: string;
+  hasElevator?: string;
+  parkingDistance?: string;
+  difficultAccess?: boolean;
+  onChange: (field: keyof MovingAccess, value: unknown) => void;
+}) {
+  const selectCls = "w-full px-3 py-2 border-2 border-gray-300 bg-white rounded-xl text-sm focus:ring-2 focus:ring-cyan-600 focus:border-cyan-600 shadow-sm";
+  return (
+    <div className="space-y-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="space-y-1.5">
+          <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wide">Andar *</label>
+          <select
+            value={floor || ""}
+            onChange={(e) => {
+              onChange("floor", e.target.value);
+              if (e.target.value === "rés-do-chão") onChange("hasElevator", "");
+            }}
+            className={selectCls}
+          >
+            <option value="">Seleccione...</option>
+            <option value="rés-do-chão">Rés-do-chão</option>
+            <option value="1º">1º Andar</option>
+            <option value="2º">2º Andar</option>
+            <option value="3º">3º Andar</option>
+            <option value="4º+">4º Andar ou superior</option>
+          </select>
+        </div>
+
+        {floor && floor !== "rés-do-chão" && (
+          <div className="space-y-1.5">
+            <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wide">Elevador *</label>
+            <select
+              value={hasElevator || ""}
+              onChange={(e) => onChange("hasElevator", e.target.value)}
+              className={selectCls}
+            >
+              <option value="">Seleccione...</option>
+              <option value="yes">Sim, funciona</option>
+              <option value="small">Sim, mas é pequeno</option>
+              <option value="no">Não tem</option>
+              <option value="unknown">Não sei</option>
+            </select>
+          </div>
+        )}
+      </div>
+
+      <div className="space-y-1.5">
+        <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wide">Estacionamento *</label>
+        <select
+          value={parkingDistance || ""}
+          onChange={(e) => onChange("parkingDistance", e.target.value)}
+          className={selectCls}
+        >
+          <option value="">Seleccione...</option>
+          <option value="door">Sim, mesmo à porta</option>
+          <option value="under_20m">Sim, até 20 metros</option>
+          <option value="over_30m">Mais de 30 metros</option>
+          <option value="difficult">Estacionamento difícil</option>
+        </select>
+      </div>
+
+      <label className="flex items-center gap-2 cursor-pointer">
+        <input
+          type="checkbox"
+          checked={!!difficultAccess}
+          onChange={(e) => onChange("difficultAccess", e.target.checked)}
+          className="rounded border-gray-400 accent-cyan-600"
+        />
+        <span className="text-sm text-gray-700">Acesso difícil ou desmontagem necessária</span>
+      </label>
+    </div>
+  );
+}
+
 // Phase 2 Component
 function Phase2Location({
   formData,
@@ -562,6 +692,11 @@ function Phase2Location({
   onAddressSelect,
   onDistanceCalculated,
   updateField,
+  onOriginSelect,
+  onDestinationSelect,
+  onMovingDistanceCalculated,
+  updateOriginAccess,
+  updateDestinationAccess,
 }: {
   formData: FormState;
   addressValue: string;
@@ -569,7 +704,223 @@ function Phase2Location({
   onAddressSelect: (data: AddressData) => void;
   onDistanceCalculated: (distance: DistanceFromBase, status: DistanceStatus) => void;
   updateField: (field: string, value: unknown) => void;
+  onOriginSelect: (data: AddressData) => void;
+  onDestinationSelect: (data: AddressData) => void;
+  onMovingDistanceCalculated: (distance: MovingDistance, status: DistanceStatus) => void;
+  updateOriginAccess: (field: keyof MovingAccess, value: unknown) => void;
+  updateDestinationAccess: (field: keyof MovingAccess, value: unknown) => void;
 }) {
+  const isMudanca = formData.serviceType === "mudanca";
+
+  // ── Percurso da mudança ─────────────────────────────────────────────────
+  const [calcStatus, setCalcStatus] = useState<DistanceStatus>("idle");
+
+  const calcSelectCls = "w-full px-4 py-2 border-2 border-gray-400 bg-white rounded-xl focus:ring-2 focus:ring-cyan-600 focus:border-cyan-600 shadow-sm";
+
+  const calcMovingRoute = async () => {
+    const origin = formData.originAddress;
+    const dest = formData.destinationAddress;
+    if (!origin || !dest) return;
+    setCalcStatus("calculating");
+    try {
+      const res = await fetch("/api/maps/route", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ origin, destination: dest }),
+      });
+      const data = await res.json();
+      if (data.ok) {
+        const result: MovingDistance = {
+          distanceMeters: data.distanceMeters,
+          distanceKm: data.distanceKm,
+          durationSeconds: data.durationSeconds,
+          durationText: data.durationText,
+          calculatedAt: new Date().toISOString(),
+        };
+        setCalcStatus("calculated");
+        onMovingDistanceCalculated(result, "calculated");
+      } else {
+        // Fallback Haversine
+        if (origin.lat && origin.lng && dest.lat && dest.lng) {
+          const R = 6371;
+          const dLat = ((dest.lat - origin.lat) * Math.PI) / 180;
+          const dLng = ((dest.lng - origin.lng) * Math.PI) / 180;
+          const a =
+            Math.sin(dLat / 2) ** 2 +
+            Math.cos((origin.lat * Math.PI) / 180) * Math.cos((dest.lat * Math.PI) / 180) *
+            Math.sin(dLng / 2) ** 2;
+          const km = Math.round(R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)) * 10) / 10;
+          const mins = Math.round((km / 60) * 60);
+          const result: MovingDistance = {
+            distanceMeters: Math.round(km * 1000),
+            distanceKm: km,
+            durationSeconds: mins * 60,
+            durationText: mins < 60 ? `~${mins} min` : `~${Math.floor(mins / 60)}h${mins % 60 ? ` ${mins % 60}min` : ""}`,
+            calculatedAt: new Date().toISOString(),
+            isEstimate: true,
+          };
+          setCalcStatus("calculated");
+          onMovingDistanceCalculated(result, "calculated");
+        } else {
+          setCalcStatus("error");
+          onMovingDistanceCalculated({}, "error");
+        }
+      }
+    } catch {
+      setCalcStatus("error");
+      onMovingDistanceCalculated({}, "error");
+    }
+  };
+
+  // Auto-calcular percurso quando ambas as moradas estiverem selecionadas
+  const originReady = !!(formData.originAddress?.formattedAddress);
+  const destReady = !!(formData.destinationAddress?.formattedAddress);
+  const autoCalcRef = useState(false);
+  const [autoCalcDone, setAutoCalcDone] = useState(false);
+
+  useEffect(() => {
+    if (isMudanca && originReady && destReady && !autoCalcDone && calcStatus === "idle") {
+      setAutoCalcDone(true);
+      calcMovingRoute();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isMudanca, originReady, destReady]);
+
+  // Reset autoCalc se as moradas mudarem
+  useEffect(() => {
+    setAutoCalcDone(false);
+    setCalcStatus("idle");
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [formData.originAddress?.formattedAddress, formData.destinationAddress?.formattedAddress]);
+
+  if (isMudanca) {
+    return (
+      <div className="space-y-6">
+        <h2 className="text-2xl font-bold text-gray-900">Local e acesso da mudança</h2>
+
+        {/* Card: Moradas */}
+        <div className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+          <div className="px-5 py-3 bg-gray-50 border-b border-gray-200">
+            <h3 className="text-sm font-semibold text-gray-800">Moradas da mudança</h3>
+          </div>
+          <div className="p-5 grid grid-cols-1 lg:grid-cols-2 gap-5">
+            {/* Origem */}
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="flex items-center justify-center w-5 h-5 rounded-full bg-blue-600 text-white text-[10px] font-bold">A</span>
+                <span className="text-sm font-semibold text-gray-800">Morada de origem</span>
+              </div>
+              <AddressAutocomplete
+                value={formData.originAddressValue || ""}
+                onChange={(v) => updateField("originAddressValue", v)}
+                onSelect={onOriginSelect}
+                placeholder="Rua, número, localidade de origem..."
+              />
+            </div>
+
+            {/* Destino */}
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="flex items-center justify-center w-5 h-5 rounded-full bg-emerald-600 text-white text-[10px] font-bold">B</span>
+                <span className="text-sm font-semibold text-gray-800">Morada de destino</span>
+              </div>
+              <AddressAutocomplete
+                value={formData.destinationAddressValue || ""}
+                onChange={(v) => updateField("destinationAddressValue", v)}
+                onSelect={onDestinationSelect}
+                placeholder="Rua, número, localidade de destino..."
+              />
+            </div>
+          </div>
+
+          {/* Percurso */}
+          {(originReady && destReady) && (
+            <div className="px-5 pb-4">
+              {calcStatus === "calculating" && (
+                <p className="text-xs text-blue-600 flex items-center gap-1.5">
+                  <svg className="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                  </svg>
+                  A calcular percurso da mudança...
+                </p>
+              )}
+              {calcStatus === "calculated" && formData.movingDistance?.distanceKm && (
+                <div className="inline-flex items-center gap-2 rounded-full bg-blue-50 border border-blue-200 px-3 py-1.5 text-xs font-medium text-blue-800">
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                  </svg>
+                  Percurso: {formData.movingDistance.distanceKm} km · {formData.movingDistance.durationText}
+                  {formData.movingDistance.isEstimate && " (estimativa)"}
+                </div>
+              )}
+              {(calcStatus === "error" || calcStatus === "idle") && (
+                <button
+                  type="button"
+                  onClick={calcMovingRoute}
+                  className="inline-flex items-center gap-1.5 text-xs font-medium text-blue-600 hover:text-blue-800 transition-colors"
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                  </svg>
+                  Calcular percurso da mudança
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Card: Condições de acesso */}
+        <div className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+          <div className="px-5 py-3 bg-gray-50 border-b border-gray-200">
+            <h3 className="text-sm font-semibold text-gray-800">Condições de acesso</h3>
+          </div>
+          <div className="p-5 grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Acesso na origem */}
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <span className="flex items-center justify-center w-5 h-5 rounded-full bg-blue-600 text-white text-[10px] font-bold">A</span>
+                <span className="text-sm font-semibold text-gray-700">Acesso na origem</span>
+              </div>
+              <AccessFields
+                prefix="origin"
+                floor={formData.originAccess?.floor}
+                hasElevator={formData.originAccess?.hasElevator}
+                parkingDistance={formData.originAccess?.parkingDistance}
+                difficultAccess={formData.originAccess?.difficultAccess}
+                onChange={updateOriginAccess}
+              />
+            </div>
+
+            {/* Acesso no destino */}
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <span className="flex items-center justify-center w-5 h-5 rounded-full bg-emerald-600 text-white text-[10px] font-bold">B</span>
+                <span className="text-sm font-semibold text-gray-700">Acesso no destino</span>
+              </div>
+              <AccessFields
+                prefix="destination"
+                floor={formData.destinationAccess?.floor}
+                hasElevator={formData.destinationAccess?.hasElevator}
+                parkingDistance={formData.destinationAccess?.parkingDistance}
+                difficultAccess={formData.destinationAccess?.difficultAccess}
+                onChange={updateDestinationAccess}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Validation hint */}
+        {(!originReady || !destReady) && (
+          <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+            Preencha a origem e o destino da mudança para continuar.
+          </p>
+        )}
+      </div>
+    );
+  }
+
+  // ── Outros serviços: layout original ────────────────────────────────────
   return (
     <div className="space-y-6">
       <h2 className="text-2xl font-bold text-gray-900">Morada e condições de acesso</h2>
@@ -590,12 +941,11 @@ function Phase2Location({
             onChange={(e) => {
               const newFloor = e.target.value;
               updateField("floor", newFloor);
-              // Se rés-do-chão, resetar elevador (não é relevante)
               if (newFloor === "rés-do-chão") {
                 updateField("hasElevator", "");
               }
             }}
-            className="w-full px-4 py-2 border-2 border-gray-400 bg-white rounded-xl focus:ring-2 focus:ring-cyan-600 focus:border-cyan-600 shadow-sm"
+            className={calcSelectCls}
           >
             <option value="">Seleccione...</option>
             <option value="rés-do-chão">Rés-do-chão</option>
@@ -612,7 +962,7 @@ function Phase2Location({
             <select
               value={formData.hasElevator || ""}
               onChange={(e) => updateField("hasElevator", e.target.value)}
-              className="w-full px-4 py-2 border-2 border-gray-400 bg-white rounded-xl focus:ring-2 focus:ring-cyan-600 focus:border-cyan-600 shadow-sm"
+              className={calcSelectCls}
             >
               <option value="">Seleccione...</option>
               <option value="yes">Sim, funciona</option>
@@ -629,7 +979,7 @@ function Phase2Location({
         <select
           value={formData.parkingDistance || ""}
           onChange={(e) => updateField("parkingDistance", e.target.value)}
-          className="w-full px-4 py-2 border-2 border-gray-400 bg-white rounded-xl focus:ring-2 focus:ring-cyan-600 focus:border-cyan-600 shadow-sm"
+          className={calcSelectCls}
         >
           <option value="">Seleccione...</option>
           <option value="door">Sim, mesmo à porta</option>

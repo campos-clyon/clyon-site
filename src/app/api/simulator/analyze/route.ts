@@ -99,19 +99,59 @@ function formatOrderDataForPrompt(order: OrderData): string {
     );
   }
 
+  if (order.serviceType === "mudanca") {
+    // Mudança: dois endereços + acesso separado
+    const elevLabel = (v?: string) =>
+      v === "yes" ? "Sim, funciona" : v === "small" ? "Sim, pequeno" : v === "no" ? "Não tem" : "(não especificado)";
+    const parkLabel = (v?: string) =>
+      v === "door" ? "À porta" : v === "under_20m" ? "Até 20m" : v === "over_30m" ? "Mais de 30m" : v === "difficult" ? "Difícil" : "(não especificado)";
+
+    lines.push(
+      "",
+      "=== MUDANÇA: MORADA DE ORIGEM ===",
+      `Morada: ${order.originAddress?.formattedAddress || "(não fornecida)"}`,
+      `Localidade: ${order.originAddress?.city || "(não fornecida)"}`,
+      `Código Postal: ${order.originAddress?.postalCode || "(não fornecido)"}`,
+      "",
+      "=== MUDANÇA: ACESSO NA ORIGEM ===",
+      `Andar: ${order.originAccess?.floor || "(não fornecido)"}`,
+      `Elevador: ${elevLabel(order.originAccess?.hasElevator)}`,
+      `Estacionamento: ${parkLabel(order.originAccess?.parkingDistance)}`,
+      `Acesso Difícil: ${order.originAccess?.difficultAccess ? "Sim" : "Não"}`,
+      "",
+      "=== MUDANÇA: MORADA DE DESTINO ===",
+      `Morada: ${order.destinationAddress?.formattedAddress || "(não fornecida)"}`,
+      `Localidade: ${order.destinationAddress?.city || "(não fornecida)"}`,
+      `Código Postal: ${order.destinationAddress?.postalCode || "(não fornecido)"}`,
+      "",
+      "=== MUDANÇA: ACESSO NO DESTINO ===",
+      `Andar: ${order.destinationAccess?.floor || "(não fornecido)"}`,
+      `Elevador: ${elevLabel(order.destinationAccess?.hasElevator)}`,
+      `Estacionamento: ${parkLabel(order.destinationAccess?.parkingDistance)}`,
+      `Acesso Difícil: ${order.destinationAccess?.difficultAccess ? "Sim" : "Não"}`,
+      "",
+      "=== MUDANÇA: PERCURSO ===",
+      `Distância Origem→Destino: ${order.movingDistance?.distanceKm ? `${order.movingDistance.distanceKm} km` : "(não calculada)"}`,
+      `Duração Estimada: ${order.movingDistance?.durationText || "(não calculada)"}`,
+    );
+  } else {
+    lines.push(
+      "",
+      "=== LOCALIZAÇÃO ===",
+      `Morada: ${order.address?.formattedAddress || "(não fornecida)"}`,
+      `Localidade: ${order.address?.city || "(não fornecida)"}`,
+      `Código Postal: ${order.address?.postalCode || "(não fornecido)"}`,
+      `Distância da Base: ${order.distanceFromBase?.distanceKm ? `${order.distanceFromBase.distanceKm} km` : "(não calculada)"}`,
+      "",
+      "=== CONDIÇÕES DE ACESSO ===",
+      `Andar: ${order.floor || "(não fornecido)"}`,
+      `Elevador: ${order.hasElevator ? "Sim" : "Não / Não especificado"}`,
+      `Estacionamento: ${order.parkingDistance || "(não especificado)"}`,
+      `Acesso Difícil: ${order.needsDismantling ? "Sim" : "Não"}`,
+    );
+  }
+
   lines.push(
-    "",
-    "=== LOCALIZAÇÃO ===",
-    `Morada: ${order.address?.formattedAddress || "(não fornecida)"}`,
-    `Localidade: ${order.address?.city || "(não fornecida)"}`,
-    `Código Postal: ${order.address?.postalCode || "(não fornecido)"}`,
-    `Distância da Base: ${order.distanceFromBase?.distanceKm ? `${order.distanceFromBase.distanceKm} km` : "(não calculada)"}`,
-    "",
-    "=== CONDIÇÕES DE ACESSO ===",
-    `Andar: ${order.floor || "(não fornecido)"}`,
-    `Elevador: ${order.hasElevator ? "Sim" : "Não / Não especificado"}`,
-    `Estacionamento: ${order.parkingDistance || "(não especificado)"}`,
-    `Acesso Difícil: ${order.needsDismantling ? "Sim" : "Não"}`,
     "",
     "=== URGÊNCIA ===",
     `Urgência: ${order.urgency || "(não especificada)"}`,
@@ -158,9 +198,14 @@ INSTRUÇÕES CRÍTICAS
    - Se estado="No chão/Por ensacar" → usar 3.00€/saco
    - Se estado="Misto" → aproximar 2.75€/saco (média)
    - Fórmula: preço_por_saco × quantidade × (1 + distância_factor + acesso_factor)
-3. Se falta quantidade de sacos ou estado do entulho → "needs_more_info"
-4. Se falta zona/localidade → "needs_more_info"
-5. Se não conseguir calcular com segurança → "onsite_required"
+3. MUDANÇA ESPECÍFICO:
+   - Quando o serviço for Mudança, considera origem e destino separadamente
+   - Avalia andar, elevador e estacionamento nos dois locais
+   - A distância principal é o percurso entre origem e destino
+   - Se faltar morada de origem OU de destino → "needs_more_info"
+4. Se falta quantidade de sacos ou estado do entulho → "needs_more_info"
+5. Se falta zona/localidade → "needs_more_info"
+6. Se não conseguir calcular com segurança → "onsite_required"
 6. IVA sempre é 23% (0.23x)
 7. Validar que os valores fazem sentido no contexto (ex: 100 sacos de entulho)
 

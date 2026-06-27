@@ -151,30 +151,73 @@ export default function OrderSummaryCard({ order, onEdit }: OrderSummaryCardProp
           value={fileCount > 0 ? `${fileCount} ${fileCount === 1 ? "ficheiro" : "ficheiros"}` : `${fileCount} ficheiros`}
           status={fileCount > 0 ? "filled" : "pending"}
         />
-        <SummaryRow
-          icon={<svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>}
-          label="Morada"
-          value={order.address?.formattedAddress ?? order.city}
-          status={order.address?.formattedAddress || order.city ? "filled" : "pending"}
-        />
-        <SummaryRow
-          icon={<svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>}
-          label="Andar"
-          value={order.floor}
-          status={order.floor ? "filled" : "pending"}
-        />
-        <SummaryRow
-          icon={<svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1" strokeWidth={1.5} /><rect x="14" y="3" width="7" height="7" rx="1" strokeWidth={1.5} /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6.5 10v4m0 0v4m0-4h4m-4 0H3" /></svg>}
-          label="Elevador"
-          value={order.hasElevator ? ELEVATOR_LABELS[order.hasElevator] : undefined}
-          status={order.hasElevator ? "filled" : "pending"}
-        />
-        <SummaryRow
-          icon={<svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7h8m0 0l-3-3m3 3l-3 3M3 17l3 3 3-3M3 17V7m18 10l-3 3-3-3m3 3V7" /></svg>}
-          label="Estacionamento"
-          value={order.parkingDistance ? PARKING_LABELS[order.parkingDistance] : undefined}
-          status={order.parkingDistance ? "filled" : "pending"}
-        />
+        {order.serviceType === "mudanca" ? (
+          <>
+            <SummaryRow
+              icon={<svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>}
+              label="Origem"
+              value={order.originAddress?.formattedAddress}
+              status={order.originAddress?.formattedAddress ? "filled" : "pending"}
+            />
+            <SummaryRow
+              icon={<svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>}
+              label="Destino"
+              value={order.destinationAddress?.formattedAddress}
+              status={order.destinationAddress?.formattedAddress ? "filled" : "pending"}
+            />
+            <SummaryRow
+              icon={<svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>}
+              label="Andar origem"
+              value={order.originAccess?.floor}
+              status={order.originAccess?.floor ? "filled" : "pending"}
+            />
+            <SummaryRow
+              icon={<svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1" strokeWidth={1.5} /><rect x="14" y="3" width="7" height="7" rx="1" strokeWidth={1.5} /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6.5 10v4m0 0v4m0-4h4m-4 0H3" /></svg>}
+              label="Elevador origem"
+              value={order.originAccess?.hasElevator ? ELEVATOR_LABELS[order.originAccess.hasElevator] : undefined}
+              status={order.originAccess?.hasElevator ? "filled" : "pending"}
+            />
+            <SummaryRow
+              icon={<svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>}
+              label="Andar destino"
+              value={order.destinationAccess?.floor}
+              status={order.destinationAccess?.floor ? "filled" : "pending"}
+            />
+            <SummaryRow
+              icon={<svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1" strokeWidth={1.5} /><rect x="14" y="3" width="7" height="7" rx="1" strokeWidth={1.5} /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6.5 10v4m0 0v4m0-4h4m-4 0H3" /></svg>}
+              label="Elevador destino"
+              value={order.destinationAccess?.hasElevator ? ELEVATOR_LABELS[order.destinationAccess.hasElevator] : undefined}
+              status={order.destinationAccess?.hasElevator ? "filled" : "pending"}
+            />
+          </>
+        ) : (
+          <>
+            <SummaryRow
+              icon={<svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>}
+              label="Morada"
+              value={order.address?.formattedAddress ?? order.city}
+              status={order.address?.formattedAddress || order.city ? "filled" : "pending"}
+            />
+            <SummaryRow
+              icon={<svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>}
+              label="Andar"
+              value={order.floor}
+              status={order.floor ? "filled" : "pending"}
+            />
+            <SummaryRow
+              icon={<svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1" strokeWidth={1.5} /><rect x="14" y="3" width="7" height="7" rx="1" strokeWidth={1.5} /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6.5 10v4m0 0v4m0-4h4m-4 0H3" /></svg>}
+              label="Elevador"
+              value={order.hasElevator ? ELEVATOR_LABELS[order.hasElevator] : undefined}
+              status={order.hasElevator ? "filled" : "pending"}
+            />
+            <SummaryRow
+              icon={<svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7h8m0 0l-3-3m3 3l-3 3M3 17l3 3 3-3M3 17V7m18 10l-3 3-3-3m3 3V7" /></svg>}
+              label="Estacionamento"
+              value={order.parkingDistance ? PARKING_LABELS[order.parkingDistance] : undefined}
+              status={order.parkingDistance ? "filled" : "pending"}
+            />
+          </>
+        )}
         <SummaryRow
           icon={<svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>}
           label="Contacto"
@@ -187,26 +230,47 @@ export default function OrderSummaryCard({ order, onEdit }: OrderSummaryCardProp
           value={order.urgency ? URGENCY_LABELS[order.urgency] : undefined}
           status={order.urgency ? "filled" : "pending"}
         />
-        <SummaryRow
-          icon={<svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>}
-          label="Distância da base"
-          value={
-            order.distanceStatus === "calculated" && order.distanceFromBase?.distanceKm
-              ? `${order.distanceFromBase.distanceKm} km · ${order.distanceFromBase.durationText}`
-              : order.distanceStatus === "calculating"
-              ? "A calcular..."
-              : order.distanceStatus === "error"
-              ? "A confirmar manualmente"
-              : undefined
-          }
-          status={
-            order.distanceStatus === "calculated"
-              ? "filled"
-              : order.distanceStatus === "calculating"
-              ? "in_progress"
-              : "pending"
-          }
-        />
+        {order.serviceType === "mudanca" ? (
+          <SummaryRow
+            icon={<svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" /></svg>}
+            label="Percurso da mudança"
+            value={
+              order.movingDistanceStatus === "calculated" && order.movingDistance?.distanceKm
+                ? `${order.movingDistance.distanceKm} km · ${order.movingDistance.durationText}`
+                : order.movingDistanceStatus === "calculating"
+                ? "A calcular..."
+                : undefined
+            }
+            status={
+              order.movingDistanceStatus === "calculated"
+                ? "filled"
+                : order.movingDistanceStatus === "calculating"
+                ? "in_progress"
+                : "pending"
+            }
+          />
+        ) : (
+          <SummaryRow
+            icon={<svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>}
+            label="Distância da base"
+            value={
+              order.distanceStatus === "calculated" && order.distanceFromBase?.distanceKm
+                ? `${order.distanceFromBase.distanceKm} km · ${order.distanceFromBase.durationText}`
+                : order.distanceStatus === "calculating"
+                ? "A calcular..."
+                : order.distanceStatus === "error"
+                ? "A confirmar manualmente"
+                : undefined
+            }
+            status={
+              order.distanceStatus === "calculated"
+                ? "filled"
+                : order.distanceStatus === "calculating"
+                ? "in_progress"
+                : "pending"
+            }
+          />
+        )}
       </div>
     </div>
   );
