@@ -1188,20 +1188,22 @@ export async function getSimulatorOrdersByAssistant(assignedToId: number): Promi
     return [];
   }
   // Assistente vê:
-  //  1. pedidos atribuídos a si
-  //  2. pedidos ainda sem assistente (fila geral: assignedToId IS NULL ou status 'pendente')
+  //  1. pedidos explicitamente atribuídos a si (assignedToId = ?)
+  //  2. pedidos na fila geral: assignedToId IS NULL — inclui status 'pendente' e 'sem_assistente'
   // Nunca vê pedidos atribuídos a outro assistente.
   const [rows] = await pool.execute(
     `SELECT id, contactName, contactPhone, address, serviceType, status, precoFinal, estimateTotal,
-            createdAt, updatedAt, dataAgendada, assignedToId, assignedToName, priority, viewedAt
+            createdAt, updatedAt, dataAgendada, assignedToId, assignedToName, priority, viewedAt,
+            description, urgency, distanceKm
      FROM simulatorOrders
      WHERE assignedToId = ?
-        OR assignedToId IS NULL
-     ORDER BY createdAt DESC LIMIT 200`,
+        OR (assignedToId IS NULL AND status IN ('pendente', 'sem_assistente', 'novo'))
+     ORDER BY createdAt DESC
+     LIMIT 200`,
     [assignedToId]
   ) as any[];
   const result = rows as SimulatorOrder[];
-  console.log("[v0] getSimulatorOrdersByAssistant: ✓ Retornando", result.length, "pedidos para assistente id=", assignedToId, "(inclui fila geral)");
+  console.log("[v0] getSimulatorOrdersByAssistant: ✓", result.length, "pedidos — atribuídos a", assignedToId, "+ fila geral");
   return result;
 }
 

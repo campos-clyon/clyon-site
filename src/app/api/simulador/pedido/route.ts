@@ -26,6 +26,7 @@ export async function POST(req: NextRequest) {
 
     // ── Atribuição automática: assistente com menos pedidos activos ────────
     const assigned = await pickLeastLoadedAssistant();
+    console.log("[v0] POST /api/simulador/pedido: pickLeastLoadedAssistant =", assigned ? `${assigned.nome} (id=${assigned.id})` : "null — fila geral");
 
     const row: InsertSimulatorOrder = {
       serviceType: order.serviceType ?? null,
@@ -64,7 +65,7 @@ export async function POST(req: NextRequest) {
       distanceText: order.movingDistance?.durationText ?? order.distanceFromBase?.durationText ?? null,
       chatJson: chatHistory ? JSON.stringify(chatHistory) : null,
       priority,
-      status: assigned ? "atribuido" : "pendente",
+      status: assigned ? "atribuido" : "sem_assistente",
       assignedToId: assigned?.id ?? null,
       assignedToName: assigned?.nome ?? null,
       assignedAt: assigned ? new Date() : null,
@@ -75,11 +76,13 @@ export async function POST(req: NextRequest) {
     // ── Confirmação de escrita: garantir que a linha existe antes de retornar sucesso
     const created = await getSimulatorOrderById(id);
     if (!created) {
+      console.error("[v0] POST /api/simulador/pedido: ❌ Pedido #", id, " não encontrado após INSERT — possível falha de escrita na BD.");
       return NextResponse.json(
         { ok: false, error: `Pedido #${id} não encontrado após criação — erro de escrita na BD.` },
         { status: 500 }
       );
     }
+    console.log("[v0] POST /api/simulador/pedido: ✓ Confirmado na BD — id=", created.id, "status=", created.status, "assignedToId=", created.assignedToId, "assignedToName=", created.assignedToName);
 
     // Histórico
     await appendOrderHistory(id, {

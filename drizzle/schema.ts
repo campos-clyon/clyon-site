@@ -105,6 +105,7 @@ export type InsertGalleryMedia = typeof galleryMedia.$inferInsert;
 
 export type OrderStatus =
   | "pendente"
+  | "sem_assistente"
   | "atribuido"
   | "em_analise"
   | "precisa_info"
