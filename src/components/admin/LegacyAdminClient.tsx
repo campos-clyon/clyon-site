@@ -797,7 +797,7 @@ export default function ColaboradorAdminClient() {
     if (activeSection !== "pedidos" || !token) return;
     carregarPedidos(token, pedidoStatusFilter, pedidoSearchDebounced);
     carregarAssistentes(token);
-    const interval = setInterval(() => carregarPedidos(token, pedidoStatusFilter, pedidoSearchDebounced), 20000);
+    const interval = setInterval(() => carregarPedidos(token, pedidoStatusFilter, pedidoSearchDebounced), 120000);
     return () => clearInterval(interval);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeSection, token, pedidoStatusFilter, pedidoSearchDebounced]);
