@@ -314,8 +314,8 @@ export default function SimulatorThreePhaseForm() {
       });
 
       setSuccessOrderId(result.id);
-      if (result.assignedToId && result.assignedTo) {
-        setSuccessAssignedTo({ id: result.assignedToId, name: result.assignedTo });
+      if (result.assignedToId && (result.assignedToName || result.assignedTo)) {
+        setSuccessAssignedTo({ id: result.assignedToId, name: result.assignedToName ?? result.assignedTo });
       }
       localStorage.removeItem(DRAFT_KEY);
     } catch (err) {
@@ -407,11 +407,19 @@ export default function SimulatorThreePhaseForm() {
                 </div>
                 <div className="h-px bg-gradient-to-r from-blue-200 to-cyan-200"></div>
                 <div className="text-sm text-gray-700 space-y-3">
-                  <p>
-                    ✓ Pedido enviado para a fila geral<br/>
-                    ✓ Os assistentes podem aceitar ou rejeitar<br/>
-                    ✓ Serão contactados pelo telefone ou email
-                  </p>
+                  {successAssignedTo ? (
+                    <p>
+                      Pedido enviado para análise.<br/>
+                      Assistente responsável: <span className="font-semibold text-gray-900">{successAssignedTo.name}</span>.<br/>
+                      Entraremos em contacto pelo telefone ou email.
+                    </p>
+                  ) : (
+                    <p>
+                      Pedido enviado para análise.<br/>
+                      Os assistentes irão avaliar o pedido em breve.<br/>
+                      Entraremos em contacto pelo telefone ou email.
+                    </p>
+                  )}
                   <p className="font-semibold text-gray-900 pt-2">
                     Guarde este número para referência futura.
                   </p>

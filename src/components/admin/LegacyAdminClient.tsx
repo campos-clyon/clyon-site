@@ -402,6 +402,7 @@ export default function ColaboradorAdminClient() {
 
   const [token, setToken] = useState("");
   const [adminNome, setAdminNome] = useState("");
+  const [colabId, setColabId] = useState<number | null>(null);
   const [isAdminGeral, setIsAdminGeral] = useState(false);
   const [colaboradores, setColaboradores] = useState<Colaborador[]>([]);
   const [loading, setLoading] = useState(true);
@@ -494,7 +495,7 @@ export default function ColaboradorAdminClient() {
   const [savingLeadStatus, setSavingLeadStatus] = useState(false);
   const [leadsLastUpdate, setLeadsLastUpdate] = useState<Date | null>(null);
   const [activeLeadsTab, setActiveLeadsTab] = useState<"leads" | "eventos">("leads");
-  // ── Pedidos state ───────────���───────────────────────���─────���───────────────
+  // ── Pedidos state ───────────�����───────────────────────���─────���───────────────
   type SimulatorOrder = {
     id: number;
     serviceType?: string | null;
@@ -574,6 +575,8 @@ export default function ColaboradorAdminClient() {
     setToken(storedToken);
     setAdminNome(storedNome || "Administração");
     setIsAdminGeral(isAdminGeral);
+    const storedId = getColaboradorItem("id");
+    if (storedId) setColabId(Number(storedId));
 
     // Verificar se há section no URL (ex: ?section=pedidos)
     const searchParams = new URLSearchParams(window.location.search);
@@ -2121,13 +2124,38 @@ export default function ColaboradorAdminClient() {
                               <td className="px-3 py-3 text-slate-400">{p.assignedToName ?? <span className="text-rose-400">Sem assistente</span>}</td>
                               <td className="px-3 py-3 text-xs text-slate-500">{p.createdAt ? new Intl.DateTimeFormat("pt-PT", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }).format(new Date(p.createdAt)) : "—"}</td>
                               <td className="rounded-r-[14px] px-3 py-3 text-right">
-                                <button
-                                  type="button"
-                                  className="rounded-[10px] border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs font-medium text-cyan-100 transition group-hover:border-cyan-400/30 group-hover:bg-cyan-400/10"
-                                  onClick={(e) => { e.stopPropagation(); setSelectedPedido(p); setPedidoDetalheOpen(true); }}
-                                >
-                                  Abrir
-                                </button>
+                                <div className="flex items-center justify-end gap-2">
+                                  {/* Aceitar: visível apenas para assistentes em pedidos sem atribuição */}
+                                  {!isAdminGeral && !p.assignedToId && colabId && (
+                                    <button
+                                      type="button"
+                                      className="rounded-[10px] border border-emerald-400/30 bg-emerald-400/10 px-3 py-1.5 text-xs font-semibold text-emerald-300 hover:bg-emerald-400/20 transition"
+                                      onClick={async (e) => {
+                                        e.stopPropagation();
+                                        try {
+                                          const r = await fetch("/api/admin/pedidos", {
+                                            method: "PATCH",
+                                            headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+                                            body: JSON.stringify({ id: p.id, assignedToId: colabId, assignedToName: adminNome, status: "atribuido" }),
+                                          });
+                                          if (r.ok) {
+                                            const { order: updated } = await r.json();
+                                            setPedidos((prev) => prev.map((x) => x.id === p.id ? { ...x, ...updated } : x));
+                                          }
+                                        } catch {}
+                                      }}
+                                    >
+                                      Aceitar
+                                    </button>
+                                  )}
+                                  <button
+                                    type="button"
+                                    className="rounded-[10px] border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs font-medium text-cyan-100 transition group-hover:border-cyan-400/30 group-hover:bg-cyan-400/10"
+                                    onClick={(e) => { e.stopPropagation(); setSelectedPedido(p); setPedidoDetalheOpen(true); }}
+                                  >
+                                    Abrir
+                                  </button>
+                                </div>
                               </td>
                             </tr>
                           );

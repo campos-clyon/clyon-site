@@ -57,14 +57,19 @@ export async function GET(req: NextRequest) {
     console.log("[v0] GET /api/admin/pedidos: Admin - pedidos carregados:", orders.length, "contadores:", counts);
     return NextResponse.json({ orders, counts, role: "admin_geral" });
   } else {
-    // Assistente vê apenas pedidos atribuídos a si
-    console.log("[v0] GET /api/admin/pedidos: Assistente (id=", colab!.id, ") - carregando seus pedidos");
+    // Assistente vê pedidos atribuídos a si + pedidos da fila geral (assignedToId IS NULL)
     const orders = await getSimulatorOrdersByAssistant(colab!.id);
-    console.log("[v0] GET /api/admin/pedidos: Assistente - pedidos encontrados:", orders.length);
-    
-    // Filtrar por status e pesquisa no lado do servidor
+
+    // Filtrar por status e pesquisa.
+    // "sem_assistente" não é um status real — é uma vista sobre assignedToId IS NULL.
     const filtered = orders.filter((o) => {
-      if (status && status !== "todos" && o.status !== status) return false;
+      if (status && status !== "todos") {
+        if (status === "sem_assistente") {
+          if (o.assignedToId !== null && o.assignedToId !== undefined) return false;
+        } else {
+          if (o.status !== status) return false;
+        }
+      }
       if (search) {
         const s = search.toLowerCase();
         if (
@@ -76,18 +81,17 @@ export async function GET(req: NextRequest) {
       }
       return true;
     });
-    console.log("[v0] GET /api/admin/pedidos: Assistente - após filtro:", filtered.length);
-    
-    // Contagens apenas dos pedidos do assistente
+
+    // Contagens correctas: baseadas em TODOS os pedidos visíveis (sem filtro de status)
+    const allVisible = orders; // lista completa (apenas filtro de pesquisa pode ter sido aplicado)
     const counts: Record<string, number> = {};
-    for (const o of filtered) counts[o.status] = (counts[o.status] ?? 0) + 1;
-    // "total" explícito para compatibilidade com o frontend
-    counts["total"] = filtered.length;
-    // "pendente" = não visualizados (viewedAt IS NULL) no subset do assistente
-    counts["pendente"] = filtered.filter((o) => !o.viewedAt).length;
-    // "sem_assistente" = sem assignedToId no subset
-    counts["sem_assistente"] = filtered.filter((o) => !o.assignedToId).length;
-    console.log("[v0] GET /api/admin/pedidos: Assistente - contadores:", counts);
+    for (const o of allVisible) counts[o.status] = (counts[o.status] ?? 0) + 1;
+    counts["total"] = allVisible.length;
+    // "pendente" = novos não visualizados
+    counts["pendente"] = allVisible.filter((o) => !o.viewedAt).length;
+    // "sem_assistente" = na fila geral
+    counts["sem_assistente"] = allVisible.filter((o) => !o.assignedToId).length;
+
     return NextResponse.json({ orders: filtered, counts, role: "assistente" });
   }
 }
@@ -105,13 +109,25 @@ export async function PATCH(req: NextRequest) {
   if (!colab!.isAdmin) {
     const order = await getSimulatorOrderById(Number(id));
     if (!order) return NextResponse.json({ error: "Pedido não encontrado" }, { status: 404 });
-    if (order.assignedToId !== colab!.id) {
+
+    const isAssignedToMe = order.assignedToId === colab!.id;
+    const isUnassigned = !order.assignedToId; // fila geral — qualquer assistente pode aceitar
+    const isAccepting =
+      fields.assignedToId === colab!.id && fields.status === "atribuido";
+
+    if (!isAssignedToMe && !isUnassigned) {
       return NextResponse.json({ error: "Sem permissão para editar este pedido" }, { status: 403 });
     }
-    // Assistente não pode reatribuir nem aprovar — remover esses campos
-    delete fields.assignedToId;
-    delete fields.assignedToName;
-    delete fields.status; // Assistente não muda status directamente aqui
+
+    // Assistente só pode reatribuir a si mesmo (ao aceitar da fila geral)
+    if (fields.assignedToId && fields.assignedToId !== colab!.id) {
+      return NextResponse.json({ error: "Não pode atribuir pedido a outro assistente" }, { status: 403 });
+    }
+
+    // Assistente não pode alterar status livremente — apenas ao aceitar
+    if (fields.status && !isAccepting) {
+      delete fields.status;
+    }
   }
 
   const updateData: Record<string, unknown> = { ...fields };
