@@ -35,11 +35,19 @@ export default function SimulatorThreePhaseForm() {
   const [formData, setFormData] = useState<FormState>({});
   const [analysis, setAnalysis] = useState<EstimateResult | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [analyzeStep, setAnalyzeStep] = useState(0); // 0=idle 1=calc 2=validate 3=prepare
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successOrderId, setSuccessOrderId] = useState<number | null>(null);
   const [successAssignedTo, setSuccessAssignedTo] = useState<{ id: number; name: string } | null>(null);
   const [addressValue, setAddressValue] = useState("");
   const [error, setError] = useState<string | null>(null);
+
+  const ANALYZE_STEP_LABELS = [
+    "Analisar pedido",
+    "A calcular estimativa...",
+    "A validar condições de acesso...",
+    "A preparar envio para análise...",
+  ];
 
   // Limpar localStorage ao inicializar (F5 sempre reseta)
   useEffect(() => {
@@ -156,67 +164,100 @@ export default function SimulatorThreePhaseForm() {
     }
 
     setIsAnalyzing(true);
+    setAnalyzeStep(1);
     setError(null);
 
-    try {
-      console.log("[v0] SimulatorThreePhaseForm: Enviando para análise Gemini...", {
-        serviceType: formData.serviceType,
-        contactName: formData.receiver?.name,
-        contactPhone: formData.receiver?.phone,
-        description: formData.description?.substring(0, 50),
-      });
+    // ── Progressive step labels ────────────────────────────────────────────
+    const stepTimers: ReturnType<typeof setTimeout>[] = [];
+    stepTimers.push(setTimeout(() => setAnalyzeStep(2), 1200));
+    stepTimers.push(setTimeout(() => setAnalyzeStep(3), 2400));
 
+    // ── Hard 4s client timeout: se API ainda não respondeu, forçar fallback UI
+    let hardTimeoutFired = false;
+    const hardTimer = setTimeout(() => {
+      hardTimeoutFired = true;
+      setIsAnalyzing(false);
+      setAnalyzeStep(0);
+      // Mostrar card "pronto para análise" sem bloquear cliente
+      setAnalysis({
+        status: "estimated",
+        estimatedPriceWithoutVat: null,
+        vatAmount: null,
+        estimatedPriceWithVat: null,
+        difficultyLevel: 2,
+        summary: "Análise em processamento.",
+        assumptions: [],
+        missingFields: [],
+        customerMessage: "A equipa CLYON irá confirmar os dados e entrar em contacto em breve.",
+        internalNotes: ["Timeout no cliente (4s) — análise do servidor ainda em curso."],
+        analysisSource: "timeout_fallback",
+      });
+    }, 4000);
+
+    try {
       const res = await fetch("/api/simulator/analyze", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ order: formData }),
       });
 
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error || "Erro ao analisar pedido");
+      // Limpar todos os timers — resposta chegou a tempo
+      stepTimers.forEach(clearTimeout);
+      clearTimeout(hardTimer);
+
+      if (hardTimeoutFired) {
+        // Hard timeout já mostrou o card — continuar só para auto-save
+      } else if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error((err as Record<string, string>).error || "Erro ao analisar pedido");
+      } else {
+        const result: EstimateResult = await res.json();
+        setAnalysis(result);
       }
 
-      const result: EstimateResult = await res.json();
-      console.log("[v0] SimulatorThreePhaseForm: ✓ Análise recebida -", {
-        status: result.status,
-        price: result.estimatedPriceWithVat,
-      });
-
-      setAnalysis(result);
-
-      // Auto-save: Registar pedido automaticamente após análise
-      console.log("[v0] SimulatorThreePhaseForm: Auto-saving pedido após análise...");
+      // Auto-save: sempre guardar na BD, independentemente de Gemini ou fallback
       try {
+        const currentAnalysis = hardTimeoutFired
+          ? {
+              status: "estimated" as const,
+              estimatedPriceWithoutVat: null,
+              vatAmount: null,
+              estimatedPriceWithVat: null,
+              difficultyLevel: 2 as const,
+              summary: "Timeout — aguarda análise da equipa",
+              assumptions: [],
+              missingFields: [],
+              customerMessage: "",
+              internalNotes: ["Timeout cliente 4s"],
+              analysisSource: "timeout_fallback" as const,
+            }
+          : analysis;
+
         const saveRes = await fetch("/api/simulador/pedido", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            order: formData,
-            estimate: result,
-          }),
+          body: JSON.stringify({ order: formData, estimate: currentAnalysis }),
         });
-
-        if (!saveRes.ok) {
-          const err = await saveRes.json();
-          throw new Error(err.error || "Erro ao salvar pedido");
+        if (saveRes.ok) {
+          const saved = await saveRes.json();
+          setSuccessOrderId(saved.id);
         }
-
-        const saved = await saveRes.json();
-        console.log("[v0] SimulatorThreePhaseForm: ✓ Pedido auto-saved -", saved.id);
-        setSuccessOrderId(saved.id);
-        // Pedido foi guardado com sucesso
-      } catch (autoSaveErr) {
-        console.error("[v0] SimulatorThreePhaseForm: ⚠ Auto-save falhou -", autoSaveErr);
-        // Não falhar o fluxo se auto-save falhar, mas avisar
-        setError("Nota: Pedido foi analisado mas houve erro ao registar. Por favor tente novamente.");
+      } catch {
+        // Auto-save failure não bloqueia o cliente
       }
+
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Erro ao analisar pedido";
-      console.error("[v0] SimulatorThreePhaseForm: ❌", message);
-      setError(message);
+      stepTimers.forEach(clearTimeout);
+      clearTimeout(hardTimer);
+      if (!hardTimeoutFired) {
+        const message = err instanceof Error ? err.message : "Erro ao analisar pedido";
+        setError(message);
+      }
     } finally {
-      setIsAnalyzing(false);
+      if (!hardTimeoutFired) {
+        setIsAnalyzing(false);
+        setAnalyzeStep(0);
+      }
     }
   };
 
@@ -513,9 +554,15 @@ export default function SimulatorThreePhaseForm() {
                     <button
                       onClick={handleAnalyze}
                       disabled={!canAnalyze || isAnalyzing}
-                      className="ml-auto flex items-center gap-2 px-6 py-3 bg-cyan-600 hover:bg-cyan-700 disabled:bg-gray-400 text-white font-semibold rounded-xl transition-colors"
+                      className="ml-auto flex items-center gap-2 px-6 py-3 bg-cyan-600 hover:bg-cyan-700 disabled:bg-gray-400 text-white font-semibold rounded-xl transition-colors min-w-[240px] justify-center"
                     >
-                      {isAnalyzing ? "A analisar..." : "Analisar pedido"}
+                      {isAnalyzing && (
+                        <svg className="w-4 h-4 animate-spin shrink-0" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                        </svg>
+                      )}
+                      {ANALYZE_STEP_LABELS[analyzeStep] || "Analisar pedido"}
                     </button>
                   )}
                 </div>

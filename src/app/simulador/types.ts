@@ -102,6 +102,8 @@ export interface OrderData {
 export type EstimateStatus = "estimated" | "needs_more_info" | "onsite_required";
 export type DifficultyLevel = 1 | 2 | 3 | 4 | 5;
 
+export type AnalysisSource = "gemini" | "local_fast_estimate" | "timeout_fallback";
+
 export interface EstimateResult {
   status: EstimateStatus;
   estimatedPriceWithoutVat: number | null;
@@ -113,6 +115,9 @@ export interface EstimateResult {
   missingFields: string[];
   customerMessage: string;
   internalNotes: string[];
+  // Metadata sobre a fonte da análise
+  analysisSource?: AnalysisSource;
+  _pricingSnapshot?: Record<string, unknown>;
 }
 
 export type ChatMessageRole = "assistant" | "user";

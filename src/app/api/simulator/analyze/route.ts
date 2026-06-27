@@ -1,75 +1,105 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import type { NextRequest } from "next/server";
 import type { OrderData, EstimateResult } from "../../../simulador/types";
-import { getActivePricingRulesForGemini, createPricingSnapshot } from "@/lib/pricing-helper";
+import {
+  getActivePricingRulesForGemini,
+  createPricingSnapshot,
+  calculateFastEstimate,
+} from "@/lib/pricing-helper";
+
+// Gemini abortado após este tempo — cliente nunca fica preso
+const GEMINI_TIMEOUT_MS = 4000;
 
 export async function POST(req: NextRequest) {
+  let order: OrderData;
   try {
-    const { order, estimate, chatHistory } = await req.json();
-    console.log("[v0] POST /api/simulator/analyze: Iniciando análise com Gemini");
+    const body = await req.json();
+    order = body.order;
+  } catch {
+    return Response.json({ error: "Body JSON inválido" }, { status: 400 });
+  }
 
-    // Validar env vars
-    const apiKey = process.env.GEMINI_API_KEY;
-    const modelName = process.env.GEMINI_MODEL || "gemini-2.0-flash";
+  // ── 1. Estimativa rápida local (sempre calculada, < 50ms) ────────────────
+  const fastEstimate = await calculateFastEstimate(order as never);
 
-    if (!apiKey) {
-      console.error("[v0] POST /api/simulator/analyze: ❌ GEMINI_API_KEY não configurada");
-      return Response.json(
-        { error: "Chave Gemini não configurada no servidor" },
-        { status: 500 }
-      );
-    }
+  // ── 2. Remover ficheiros pesados antes de enviar ao Gemini ───────────────
+  // Apenas metadados, nunca base64 ou blobs (evita timeout por payload enorme)
+  const orderForGemini: OrderData = {
+    ...order,
+    files: order.files?.map((f) => ({
+      id: f.id,
+      name: f.name,
+      size: f.size,
+      type: f.type,
+      mimeType: f.mimeType,
+      // base64 e previewUrl excluídos propositadamente
+    })) ?? [],
+  };
 
-    // Carregar preçário dinâmico do backoffice
+  // ── 3. Chamar Gemini com timeout rígido de 4s ────────────────────────────
+  const apiKey = process.env.GEMINI_API_KEY;
+  const modelName = process.env.GEMINI_MODEL || "gemini-2.0-flash";
+
+  if (!apiKey) {
+    // Sem chave → devolver estimativa local imediatamente
+    return Response.json({
+      ...fastEstimate,
+      internalNotes: [
+        ...fastEstimate.internalNotes,
+        "GEMINI_API_KEY não configurada — usada estimativa local.",
+      ],
+    });
+  }
+
+  try {
     const pricingRules = await getActivePricingRulesForGemini();
     const pricingSnapshot = await createPricingSnapshot();
-    
-    console.log("[v0] POST /api/simulator/analyze: ✓ Preçário carregado do backoffice");
-
-    // Construir prompt para Gemini com preçário dinâmico
-    const formattedData = formatOrderDataForPrompt(order);
+    const formattedData = formatOrderDataForPrompt(orderForGemini);
     const prompt = buildAnalysisPrompt(formattedData, pricingRules);
-
-    console.log("[v0] POST /api/simulator/analyze: Chamando Gemini com modelo:", modelName);
 
     const client = new GoogleGenerativeAI(apiKey);
     const model = client.getGenerativeModel({ model: modelName });
 
-    const result = await model.generateContent(prompt);
-    const responseText = result.response.text();
+    // Race: Gemini vs timeout
+    const geminiResult = await Promise.race([
+      model.generateContent(prompt),
+      new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error("GEMINI_TIMEOUT")), GEMINI_TIMEOUT_MS)
+      ),
+    ]);
 
-    console.log("[v0] POST /api/simulator/analyze: Resposta Gemini recebida (", responseText.length, "chars)");
-
-    // Parse resposta JSON do Gemini
+    const responseText = (geminiResult as Awaited<ReturnType<typeof model.generateContent>>).response.text();
     const analysis = parseGeminiResponse(responseText);
-    
-    // Adicionar snapshot do preçário usado
-    const responseWithMetadata = {
+
+    return Response.json({
       ...analysis,
+      analysisSource: "gemini" as const,
       internalNotes: [
         ...(analysis.internalNotes || []),
         `Preçário usado: ${pricingSnapshot?.timestamp || "default"}`,
       ],
-      _pricingSnapshot: pricingSnapshot, // Para debug/admin
-    };
+      _pricingSnapshot: pricingSnapshot ?? undefined,
+    } satisfies EstimateResult);
 
-    console.log("[v0] POST /api/simulator/analyze: ✓ Análise completa -", {
-      status: analysis.status,
-      price: analysis.estimatedPriceWithVat,
-      difficulty: analysis.difficultyLevel,
-      pricingSnapshot: pricingSnapshot?.timestamp,
-    });
-
-    return Response.json(responseWithMetadata);
   } catch (error) {
-    console.error("[v0] POST /api/simulator/analyze: ❌ Erro", error);
-    return Response.json(
-      {
-        error: "Erro ao analisar pedido",
-        details: error instanceof Error ? error.message : String(error),
-      },
-      { status: 500 }
+    const isTimeout = error instanceof Error && error.message === "GEMINI_TIMEOUT";
+    console.error(
+      "[v0] /api/simulator/analyze:",
+      isTimeout ? "⏱ Gemini timeout — usando estimativa local" : "❌ Erro Gemini",
+      isTimeout ? "" : error
     );
+
+    // Fallback: devolver estimativa local com nota interna
+    return Response.json({
+      ...fastEstimate,
+      analysisSource: "timeout_fallback" as const,
+      internalNotes: [
+        ...fastEstimate.internalNotes,
+        isTimeout
+          ? `Gemini não respondeu em ${GEMINI_TIMEOUT_MS}ms. Foi usada estimativa rápida local.`
+          : `Erro Gemini: ${error instanceof Error ? error.message : String(error)}. Foi usada estimativa rápida local.`,
+      ],
+    });
   }
 }
 
