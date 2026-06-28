@@ -104,6 +104,14 @@ export type DifficultyLevel = 1 | 2 | 3 | 4 | 5;
 
 export type AnalysisSource = "gemini" | "local_fast_estimate" | "timeout_fallback";
 
+/** Custo de mão de obra calculado segundo a regra CLYON */
+export interface LaborCost {
+  estimatedHours: number;   // nunca < 1
+  peopleCount: 3;           // fixo
+  hourlyRatePerPerson: 9;   // fixo — 9€/hora/pessoa
+  laborCost: number;        // = estimatedHours × 3 × 9
+}
+
 export interface EstimateResult {
   status: EstimateStatus;
   estimatedPriceWithoutVat: number | null;
@@ -115,6 +123,8 @@ export interface EstimateResult {
   missingFields: string[];
   customerMessage: string;
   internalNotes: string[];
+  /** Detalhes de mão de obra (sempre presente quando status = "estimated") */
+  labor?: LaborCost;
   // Metadata sobre a fonte da análise
   analysisSource?: AnalysisSource;
   _pricingSnapshot?: Record<string, unknown>;

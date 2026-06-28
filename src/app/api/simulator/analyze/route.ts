@@ -209,7 +209,13 @@ Sua tarefa é analisar o pedido abaixo e retornar APENAS um JSON válido com os 
   "assumptions": ["array", "de", "pressupostos"],
   "missingFields": ["array", "de", "campos faltantes"],
   "customerMessage": "mensagem para o cliente",
-  "internalNotes": ["notas internas"]
+  "internalNotes": ["notas internas"],
+  "labor": {
+    "estimatedHours": número (nunca < 1),
+    "peopleCount": 3,
+    "hourlyRatePerPerson": 9,
+    "laborCost": número
+  }
 }
 
 ═══════════════════════════════════════════════════════════
@@ -257,6 +263,18 @@ function parseGeminiResponse(response: string): EstimateResult {
     // Validar e retornar com defaults
     const diffLevel = Math.max(1, Math.min(5, parsed.difficultyLevel || 2)) as 1 | 2 | 3 | 4 | 5;
 
+    // Extrair e validar campo labor — se o Gemini o devolver, usar; caso contrário calcular localmente
+    let labor = undefined;
+    if (parsed.labor && typeof parsed.labor.estimatedHours === "number") {
+      const hrs = Math.max(1, parsed.labor.estimatedHours);
+      labor = {
+        estimatedHours: hrs,
+        peopleCount: 3 as const,
+        hourlyRatePerPerson: 9 as const,
+        laborCost: Math.round(hrs * 3 * 9 * 100) / 100,
+      };
+    }
+
     return {
       status: parsed.status || "estimated",
       estimatedPriceWithoutVat: parsed.estimatedPriceWithoutVat ?? null,
@@ -268,6 +286,7 @@ function parseGeminiResponse(response: string): EstimateResult {
       missingFields: Array.isArray(parsed.missingFields) ? parsed.missingFields : [],
       customerMessage: parsed.customerMessage || "Análise completada",
       internalNotes: Array.isArray(parsed.internalNotes) ? parsed.internalNotes : [],
+      labor,
     };
   } catch (error) {
     console.error("[v0] parseGeminiResponse: ❌ Erro ao parse JSON", error);

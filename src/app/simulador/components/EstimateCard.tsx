@@ -190,18 +190,25 @@ export default function EstimateCard({ estimate, loading, canGenerate, onGenerat
               <div className="space-y-1.5">
                 <div className="flex justify-between text-sm text-[#475569]">
                   <span>Valor sem IVA</span>
-                  <span className="font-medium text-[#102033]">{estimate.estimatedPriceWithoutVat?.toFixed(0)}€</span>
+                  <span className="font-medium text-[#102033]">{estimate.estimatedPriceWithoutVat?.toFixed(2)}€</span>
                 </div>
                 <div className="flex justify-between text-sm text-[#475569]">
                   <span>IVA ({vatRate}%)</span>
-                  <span className="font-medium text-[#102033]">{estimate.vatAmount?.toFixed(0)}€</span>
+                  <span className="font-medium text-[#102033]">{estimate.vatAmount?.toFixed(2)}€</span>
                 </div>
                 <div className="flex justify-between text-base font-semibold text-[#102033] pt-1.5 border-t border-[#BBF7D0]">
                   <span>Total estimado</span>
-                  <span className="text-[#16A34A]">{estimate.estimatedPriceWithVat?.toFixed(0)}€</span>
+                  <span className="text-[#16A34A]">{estimate.estimatedPriceWithVat?.toFixed(2)}€</span>
                 </div>
               </div>
             </div>
+
+            {/* Mão de obra — nota discreta */}
+            {estimate.labor && (
+              <p className="text-[11px] text-[#94A3B8] leading-relaxed">
+                Inclui estimativa de mão de obra: {estimate.labor.estimatedHours}h com equipa de {estimate.labor.peopleCount} pessoas ({estimate.labor.estimatedHours} × {estimate.labor.peopleCount} pessoas × {estimate.labor.hourlyRatePerPerson}€/h = {estimate.labor.laborCost.toFixed(2)}€).
+              </p>
+            )}
 
             {/* Mensagem ao cliente */}
             <p className="text-xs text-[#64748B] leading-relaxed">{estimate.customerMessage}</p>

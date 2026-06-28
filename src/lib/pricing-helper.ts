@@ -1,6 +1,7 @@
 import { getSimulatorSettings } from "./db";
 import type { SimulatorSettingKey, SimulatorSettingsMap } from "./simulator-settings";
 import { createSimulatorSettingsMap } from "./simulator-settings";
+import type { LaborCost } from "../app/simulador/types";
 
 /**
  * Carrega todas as configurações de preços ativas do backoffice
@@ -83,7 +84,27 @@ REGRA OBRIGATÓRIA PARA ENTULHO:
 Usar APENAS os preços acima.
 Fórmula: (quantidade de sacos × preço_saco) + (distância_km × ${settingsMap.entulho_distancia_km}) + acrescimos_acesso
 Nunca inventar valores.
-Se faltar quantidade de sacos, devolver status "needs_more_info".`;
+Se faltar quantidade de sacos, devolver status "needs_more_info".
+
+MÃO DE OBRA (OBRIGATÓRIA em todos os serviços):
+- Equipa fixa: 3 pessoas
+- Valor hora por pessoa: 9€
+- Mínimo: 1 hora
+- Fórmula: horas_estimadas × 3 × 9€
+
+Guia de horas:
+- Trabalho simples (1 sofá, R/C, acesso fácil): 1h
+- Trabalho médio (vários móveis, 1º-2º andar): 1.5h a 2h
+- Trabalho complexo (mudança, muitos itens, sem elevador, acesso difícil): 3h ou mais
+- Entulho até 30 sacos: 1h; 31-80 sacos: 1.5h; 81-150 sacos: 2.5h; >150 sacos: 3.5h
+
+A mão de obra deve ser somada ANTES de calcular o IVA:
+  total_sem_iva = itens + distância + acesso + mão_de_obra
+  iva = total_sem_iva × 0.23
+  total_com_iva = total_sem_iva + iva
+
+Deves incluir no JSON os campos:
+  "labor": { "estimatedHours": X, "peopleCount": 3, "hourlyRatePerPerson": 9, "laborCost": X }`;
 }
 
 /**
@@ -110,7 +131,13 @@ ACESSOS:
 
 REGRA ENTULHO:
 Usar APENAS os preços acima.
-Fórmula: (quantidade de sacos × preço_saco) + (distância_km × 2) + acrescimos`;
+Fórmula: (quantidade de sacos × preço_saco) + (distância_km × 2) + acrescimos
+
+MÃO DE OBRA (OBRIGATÓRIA):
+- Equipa fixa: 3 pessoas | Valor hora: 9€ | Mínimo: 1h
+- Fórmula: horas_estimadas × 3 × 9€
+- Simples: 1h | Médio: 1.5-2h | Complexo: 3h+
+- Somar ANTES do IVA. Incluir campo "labor" no JSON.`;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -139,6 +166,7 @@ export interface FastEstimateResult {
   estimatedPriceWithoutVat: number | null;
   vatAmount: number | null;
   estimatedPriceWithVat: number | null;
+  labor?: LaborCost;
   difficultyLevel: 1 | 2 | 3 | 4 | 5;
   summary: string;
   assumptions: string[];
@@ -178,6 +206,85 @@ function accessExtra(
     notes.push(`Acesso difícil: +${difficultExtra}€`);
   }
   return { cost, notes };
+}
+
+// ─── Mão de obra ─────────────────────────────────────────────────────────────
+// Regras fixas CLYON:
+//   equipa = 3 pessoas
+//   valor hora por pessoa = 9€
+//   mínimo = 1 hora
+// ─────────────────────────────────────────────────────────────────────────────
+
+const LABOR_PEOPLE = 3 as const;
+const LABOR_HOURLY_RATE = 9 as const;
+const LABOR_MIN_HOURS = 1;
+
+/**
+ * Estima horas de trabalho com base no tipo de serviço e condições de acesso.
+ * Nunca devolve menos de LABOR_MIN_HOURS (1h).
+ */
+export function estimateLaborHours(input: FastEstimateInput): number {
+  let hours = LABOR_MIN_HOURS;
+
+  const svc = input.serviceType;
+
+  if (svc === "mudanca") {
+    // Mudança: base 2h + acesso origem/destino
+    hours = 2;
+    const origFloor = floorNumber(input.originAccess?.floor);
+    const destFloor = floorNumber(input.destinationAccess?.floor);
+    const origNoElev = input.originAccess?.hasElevator === "no";
+    const destNoElev = input.destinationAccess?.hasElevator === "no";
+    if (origFloor >= 3 && origNoElev) hours += 1;
+    if (destFloor >= 3 && destNoElev) hours += 1;
+    if (input.originAccess?.difficultAccess || input.destinationAccess?.difficultAccess) hours += 0.5;
+    const distKm = input.movingDistance?.distanceKm ?? 0;
+    if (distKm > 30) hours += 0.5;
+
+  } else if (svc === "recolha_entulho") {
+    // Entulho: baseado na quantidade de sacos
+    const qtd = parseInt((input.entulhoQuantidade ?? "").replace(/[^\d]/g, ""), 10) || 0;
+    if (qtd <= 30) hours = 1;
+    else if (qtd <= 80) hours = 1.5;
+    else if (qtd <= 150) hours = 2.5;
+    else hours = 3.5;
+    // Entulho no chão — precisa ensacar (+0.5h)
+    if (input.entulhoState === "chao" || input.entulhoState === "misto") hours += 0.5;
+
+  } else {
+    // Recolha de móveis/monos/outro
+    const floor = floorNumber(input.floor);
+    const noElev = input.hasElevator === "no";
+    if (floor === 0) {
+      hours = 1; // rés-do-chão — serviço simples
+    } else if (floor <= 2) {
+      hours = 1; // 1º ou 2º andar
+    } else {
+      hours = 1.5; // 3º andar ou superior
+    }
+    if (noElev && floor >= 3) hours += 0.5;
+    if (input.parkingDistance === "difficult") hours += 0.5;
+    // Desmontagem
+    if (input.needsDismantling === "medium") hours += 0.5;
+    else if (input.needsDismantling === "complex" || input.needsDismantling === "true" || input.needsDismantling === true) hours += 1;
+  }
+
+  // Garantir mínimo de 1h
+  return Math.max(LABOR_MIN_HOURS, Math.round(hours * 2) / 2); // arredondar a 0.5h
+}
+
+/**
+ * Calcula o custo de mão de obra com as regras fixas CLYON.
+ * equipa = 3 pessoas, 9€/hora/pessoa, mínimo 1 hora.
+ */
+export function calculateLaborCost(hours: number): LaborCost {
+  const clampedHours = Math.max(LABOR_MIN_HOURS, hours);
+  return {
+    estimatedHours: clampedHours,
+    peopleCount: LABOR_PEOPLE,
+    hourlyRatePerPerson: LABOR_HOURLY_RATE,
+    laborCost: Math.round(clampedHours * LABOR_PEOPLE * LABOR_HOURLY_RATE * 100) / 100,
+  };
 }
 
 export async function calculateFastEstimate(input: FastEstimateInput): Promise<FastEstimateResult> {
@@ -309,6 +416,15 @@ export async function calculateFastEstimate(input: FastEstimateInput): Promise<F
     };
   }
 
+  // ── Mão de obra ─────────────────────────────────────────────────────────────
+  const laborHours = estimateLaborHours(input);
+  const labor = calculateLaborCost(laborHours);
+  basePrice = Math.round((basePrice + labor.laborCost) * 100) / 100;
+  assumptions.push(
+    `Mão de obra: ${labor.estimatedHours}h × ${labor.peopleCount} pessoas × ${labor.hourlyRatePerPerson}€/h = ${labor.laborCost}€`
+  );
+  notes.push(`Labor: ${labor.estimatedHours}h, ${labor.peopleCount}p, ${labor.hourlyRatePerPerson}€/h → ${labor.laborCost}€`);
+
   const vatRate = 0.23;
   const vat = Math.round(basePrice * vatRate * 100) / 100;
   const withVat = Math.round((basePrice + vat) * 100) / 100;
@@ -328,11 +444,12 @@ export async function calculateFastEstimate(input: FastEstimateInput): Promise<F
     estimatedPriceWithoutVat: Math.round(basePrice * 100) / 100,
     vatAmount: vat,
     estimatedPriceWithVat: withVat,
+    labor,
     difficultyLevel: diff,
     summary: `Estimativa rápida calculada com base no preçário atual CLYON.`,
     assumptions,
     missingFields: [],
-    customerMessage: "Esta estimativa será confirmada pela equipa CLYON após análise dos dados.",
+    customerMessage: `Inclui estimativa de mão de obra: ${labor.estimatedHours}h com equipa de ${labor.peopleCount} pessoas.`,
     internalNotes: [...notes, `Total s/IVA: ${basePrice.toFixed(2)}€, IVA 23%: ${vat}€, Total: ${withVat}€`],
     analysisSource: "local_fast_estimate",
   };

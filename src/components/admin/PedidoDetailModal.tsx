@@ -68,6 +68,12 @@ type GeminiEstimate = {
   missingFields?: string[];
   customerMessage?: string;
   internalNotes?: string[];
+  labor?: {
+    estimatedHours?: number;
+    peopleCount?: number;
+    hourlyRatePerPerson?: number;
+    laborCost?: number;
+  };
 };
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -786,6 +792,36 @@ export default function PedidoDetailModal({ id, token, isAdmin, onClose, onDelet
                                   {DIFFICULTY_LABEL[est.difficultyLevel] ?? est.difficultyLevel}
                                 </span>
                               </div>
+                            </div>
+                          )}
+                          {/* Breakdown: mão de obra + IVA */}
+                          {(est.estimatedPriceWithoutVat != null || est.labor) && (
+                            <div className="rounded-[16px] border border-white/[0.06] bg-white/[0.02] p-4 space-y-2">
+                              <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 mb-3">Breakdown de valores</p>
+                              {est.labor && (
+                                <div className="flex items-center justify-between text-xs text-slate-400">
+                                  <span>Mão de obra ({est.labor.estimatedHours}h × {est.labor.peopleCount}p × {est.labor.hourlyRatePerPerson}€/h)</span>
+                                  <span className="font-semibold text-slate-300">{est.labor.laborCost?.toFixed(2)}€</span>
+                                </div>
+                              )}
+                              {est.estimatedPriceWithoutVat != null && (
+                                <div className="flex items-center justify-between text-xs text-slate-400 pt-1 border-t border-white/[0.04]">
+                                  <span>Total sem IVA</span>
+                                  <span className="font-semibold text-slate-300">{est.estimatedPriceWithoutVat.toFixed(2)}€</span>
+                                </div>
+                              )}
+                              {est.vatAmount != null && (
+                                <div className="flex items-center justify-between text-xs text-slate-400">
+                                  <span>IVA 23%</span>
+                                  <span className="font-semibold text-slate-300">{est.vatAmount.toFixed(2)}€</span>
+                                </div>
+                              )}
+                              {est.estimatedPriceWithVat != null && (
+                                <div className="flex items-center justify-between text-sm font-bold text-slate-200 pt-1 border-t border-white/[0.04]">
+                                  <span>Total com IVA</span>
+                                  <span className="text-cyan-300">{est.estimatedPriceWithVat.toFixed(2)}€</span>
+                                </div>
+                              )}
                             </div>
                           )}
                           {est.summary && (
