@@ -67,20 +67,49 @@ export default function AnalysisResultCard({
 
       {/* Price Section (se estimated) */}
       {analysis.status === "estimated" && analysis.estimatedPriceWithVat && (
-        <div className="bg-white rounded-xl p-4 space-y-2">
-          <p className="text-sm text-gray-600">Preço Estimado</p>
+        <div className="bg-white rounded-xl p-4 space-y-3">
+          {/* Total em destaque */}
           <div className="flex items-baseline gap-2">
             <span className="text-3xl font-bold text-gray-900">
               €{analysis.estimatedPriceWithVat.toFixed(2)}
             </span>
-            <span className="text-sm text-gray-500">+ IVA incluído</span>
+            <span className="text-sm text-gray-500">IVA incluído</span>
           </div>
-          {analysis.estimatedPriceWithoutVat && analysis.vatAmount && (
-            <div className="text-xs text-gray-600 pt-2 border-t border-gray-200">
-              <p>Sem IVA: €{analysis.estimatedPriceWithoutVat.toFixed(2)}</p>
-              <p>IVA (23%): €{analysis.vatAmount.toFixed(2)}</p>
+
+          {/* Breakdown detalhado */}
+          <div className="space-y-1.5 pt-2 border-t border-gray-100">
+            {/* Mão de obra */}
+            {analysis.labor && (
+              <div className="flex justify-between text-xs text-gray-500">
+                <span>
+                  Mão de obra&nbsp;
+                  <span className="text-gray-400">
+                    ({analysis.labor.estimatedHours}h &times; {analysis.labor.peopleCount}p &times; {analysis.labor.hourlyRatePerPerson}€/h)
+                  </span>
+                </span>
+                <span className="font-medium text-gray-700">€{analysis.labor.laborCost.toFixed(2)}</span>
+              </div>
+            )}
+            {/* Sem IVA */}
+            {analysis.estimatedPriceWithoutVat && (
+              <div className="flex justify-between text-xs text-gray-500">
+                <span>Subtotal sem IVA</span>
+                <span className="font-medium text-gray-700">€{analysis.estimatedPriceWithoutVat.toFixed(2)}</span>
+              </div>
+            )}
+            {/* IVA */}
+            {analysis.vatAmount && (
+              <div className="flex justify-between text-xs text-gray-500">
+                <span>IVA (23%)</span>
+                <span className="font-medium text-gray-700">€{analysis.vatAmount.toFixed(2)}</span>
+              </div>
+            )}
+            {/* Total */}
+            <div className="flex justify-between text-sm font-semibold text-gray-900 pt-1.5 border-t border-gray-200">
+              <span>Total com IVA</span>
+              <span className="text-green-700">€{analysis.estimatedPriceWithVat.toFixed(2)}</span>
             </div>
-          )}
+          </div>
         </div>
       )}
 

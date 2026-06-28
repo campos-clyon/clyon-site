@@ -179,15 +179,30 @@ export default function EstimateCard({ estimate, loading, canGenerate, onGenerat
         {/* Estado: estimativa gerada */}
         {estimate?.status === "estimated" && (
           <div className="space-y-4">
-            {/* Preços */}
-            <div className="p-4 rounded-xl bg-[#F0FDF4] border border-[#BBF7D0]">
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-xs font-medium text-[#166534]">Estimativa calculada</span>
+            {/* Breakdown de valores */}
+            <div className="p-4 rounded-xl bg-[#F0FDF4] border border-[#BBF7D0] space-y-2">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-semibold text-[#166534]">Estimativa calculada</span>
                 <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${DIFFICULTY_COLORS[estimate.difficultyLevel]}`}>
                   {DIFFICULTY_LABELS[estimate.difficultyLevel]}
                 </span>
               </div>
-              <div className="space-y-1.5">
+
+              {/* Linha de mão de obra */}
+              {estimate.labor && (
+                <div className="flex justify-between text-xs text-[#475569]">
+                  <span>
+                    Mão de obra&nbsp;
+                    <span className="text-[#94A3B8]">
+                      ({estimate.labor.estimatedHours}h &times; {estimate.labor.peopleCount}p &times; {estimate.labor.hourlyRatePerPerson}€/h)
+                    </span>
+                  </span>
+                  <span className="font-medium text-[#102033]">{estimate.labor.laborCost.toFixed(2)}€</span>
+                </div>
+              )}
+
+              {/* Separador */}
+              <div className="border-t border-[#BBF7D0] pt-2 space-y-1.5">
                 <div className="flex justify-between text-sm text-[#475569]">
                   <span>Valor sem IVA</span>
                   <span className="font-medium text-[#102033]">{estimate.estimatedPriceWithoutVat?.toFixed(2)}€</span>
@@ -202,13 +217,6 @@ export default function EstimateCard({ estimate, loading, canGenerate, onGenerat
                 </div>
               </div>
             </div>
-
-            {/* Mão de obra — nota discreta */}
-            {estimate.labor && (
-              <p className="text-[11px] text-[#94A3B8] leading-relaxed">
-                Inclui estimativa de mão de obra: {estimate.labor.estimatedHours}h com equipa de {estimate.labor.peopleCount} pessoas ({estimate.labor.estimatedHours} × {estimate.labor.peopleCount} pessoas × {estimate.labor.hourlyRatePerPerson}€/h = {estimate.labor.laborCost.toFixed(2)}€).
-              </p>
-            )}
 
             {/* Mensagem ao cliente */}
             <p className="text-xs text-[#64748B] leading-relaxed">{estimate.customerMessage}</p>

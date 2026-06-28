@@ -157,6 +157,9 @@ export interface FastEstimateInput {
   movingDistance?: { distanceKm?: number };
   originAccess?: { floor?: string; hasElevator?: string; parkingDistance?: string; difficultAccess?: boolean };
   destinationAccess?: { floor?: string; hasElevator?: string; parkingDistance?: string; difficultAccess?: boolean };
+  /** Lista de itens pesados descritos pelo cliente (ex: "sofá 3 lugares", "frigorífico") */
+  heavyItems?: string[];
+  description?: string;
 }
 
 export interface FastEstimateResult {
@@ -174,6 +177,33 @@ export interface FastEstimateResult {
   customerMessage: string;
   internalNotes: string[];
   analysisSource: "local_fast_estimate";
+}
+
+/**
+ * Classifica um item descrito em texto como "pequeno", "medio" ou "grande".
+ * Heurística baseada em palavras-chave comuns em pedidos CLYON.
+ */
+function classifyItem(description: string): "pequeno" | "medio" | "grande" {
+  const d = description.toLowerCase();
+
+  // Itens grandes (>2m): sofás, camas, roupeiros, frigoríficos, máquinas, etc.
+  const large = [
+    "sofá", "sofa", "roupeiro", "guarda-roupa", "guarda roupa", "frigorífico", "frigorifico",
+    "máquina de lavar", "maquina de lavar", "cama dupla", "cama casal", "cama king",
+    "cama queen", "armário", "armario", "secretária grande", "secretaria grande",
+    "estante grande", "aparador", "vitrine", "piano", "camas", "sofas", "cama de casal",
+    "estante", "escrivaninha grande", "tv grande", "televisão grande",
+  ];
+  // Itens médios (1-2m): cadeiras, mesas pequenas, caixas, gavetas, etc.
+  const medium = [
+    "cadeira", "mesa", "gaveta", "comoda", "cómoda", "criado", "prateleira",
+    "caixote", "caixa grande", "microondas", "forno", "ar condicionado", "cadeiras",
+    "secretária pequena", "secretaria pequena", "banqueta", "poltrona",
+  ];
+
+  if (large.some((kw) => d.includes(kw))) return "grande";
+  if (medium.some((kw) => d.includes(kw))) return "medio";
+  return "pequeno";
 }
 
 function floorNumber(floor?: string): number {
@@ -255,15 +285,22 @@ export function estimateLaborHours(input: FastEstimateInput): number {
     // Recolha de móveis/monos/outro
     const floor = floorNumber(input.floor);
     const noElev = input.hasElevator === "no";
-    if (floor === 0) {
-      hours = 1; // rés-do-chão — serviço simples
-    } else if (floor <= 2) {
-      hours = 1; // 1º ou 2º andar
+    const itemCount = input.heavyItems?.length ?? 0;
+
+    // Base: 1h para 1-2 itens, +0.5h por cada 2 itens adicionais
+    if (itemCount <= 2) {
+      hours = 1;
+    } else if (itemCount <= 4) {
+      hours = 1.5;
     } else {
-      hours = 1.5; // 3º andar ou superior
+      hours = 2;
     }
+
+    // Acesso por andar
+    if (floor >= 3) hours += 0.5;
     if (noElev && floor >= 3) hours += 0.5;
     if (input.parkingDistance === "difficult") hours += 0.5;
+
     // Desmontagem
     if (input.needsDismantling === "medium") hours += 0.5;
     else if (input.needsDismantling === "complex" || input.needsDismantling === "true" || input.needsDismantling === true) hours += 1;
@@ -366,17 +403,56 @@ export async function calculateFastEstimate(input: FastEstimateInput): Promise<F
       basePrice = baseMin;
     }
 
-  // ── Outros serviços ──────────────────────────────────────────────────────────
+  // ── Outros serviços (recolha de móveis, monos, esvaziamento, etc.) ──────────
   } else {
     const distKm = input.distanceFromBase?.distanceKm ?? 0;
-    const distCost = distKm * (pricing.moveis_distancia_km ?? 2.5);
-    const baseLoad = pricing.moveis_carga_base ?? 30;
-    basePrice = baseLoad + distCost;
-    assumptions.push(`Base: ${baseLoad}€ + ${distKm} km × ${pricing.moveis_distancia_km ?? 2.5}€/km`);
+    const pricePerKm = pricing.moveis_distancia_km ?? 2.5;
+    const cargaBase = pricing.moveis_carga_base ?? 2; // base operacional mínima
 
-    const acc = accessExtra(input.floor, input.hasElevator, input.needsDismantling === "simple" || input.needsDismantling === true, pricing);
+    // Custo por item — usa heavyItems quando disponível
+    let itemsCost = 0;
+    const itemsCountBySize = { pequeno: 0, medio: 0, grande: 0 };
+
+    if (input.heavyItems && input.heavyItems.length > 0) {
+      for (const item of input.heavyItems) {
+        const size = classifyItem(item);
+        itemsCountBySize[size]++;
+        const price =
+          size === "grande"
+            ? (pricing.moveis_item_grande ?? 13)
+            : size === "medio"
+            ? (pricing.moveis_item_medio ?? 7)
+            : (pricing.moveis_item_pequeno ?? 5);
+        itemsCost += price;
+        assumptions.push(`${item}: ${price}€ (item ${size})`);
+      }
+    } else {
+      // Sem lista de itens — estimar a partir da descrição ou usar mínimo
+      itemsCost = cargaBase;
+      assumptions.push(`Sem itens especificados — base mínima: ${cargaBase}€`);
+    }
+
+    // Custo de distância
+    const distCost = distKm * pricePerKm;
+    if (distKm > 0) {
+      assumptions.push(`Distância: ${distKm} km × ${pricePerKm}€/km = ${distCost.toFixed(2)}€`);
+    }
+
+    basePrice = itemsCost + distCost;
+
+    // Custo de acesso
+    const acc = accessExtra(
+      input.floor,
+      input.hasElevator,
+      input.needsDismantling === "complex" || input.needsDismantling === true,
+      pricing
+    );
     basePrice += acc.cost;
     assumptions.push(...acc.notes);
+
+    notes.push(
+      `Itens: ${itemsCost.toFixed(2)}€ (G:${itemsCountBySize.grande} M:${itemsCountBySize.medio} P:${itemsCountBySize.pequeno}), dist: ${distCost.toFixed(2)}€, acesso: ${acc.cost.toFixed(2)}€`
+    );
   }
 
   // ── Determinar status ────────────────────────────────────────────────────────
