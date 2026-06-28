@@ -274,14 +274,59 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
         gcalEventId      = freshResp.data.id!;
         calendarEventUrl = freshResp.data.htmlLink ?? buildEventLink(calendarTargetId, gcalEventId);
       } catch (retryErr: any) {
+        const retryMsg: string = retryErr?.message ?? String(retryErr);
+        const retryDisabled =
+          retryMsg.toLowerCase().includes("has not been used") ||
+          retryMsg.toLowerCase().includes("is disabled");
+        if (retryDisabled) {
+          const m = retryMsg.match(/project\s+(\d+)/i);
+          const pid = m?.[1] ?? null;
+          return NextResponse.json(
+            {
+              error: "A Google Calendar API não está activada neste projecto Google Cloud.",
+              errorCode: "calendar_api_disabled",
+              enableUrl: pid
+                ? `https://console.developers.google.com/apis/api/calendar-json.googleapis.com/overview?project=${pid}`
+                : "https://console.developers.google.com/apis/api/calendar-json.googleapis.com/overview",
+              projectId: pid,
+            },
+            { status: 403 }
+          );
+        }
         return NextResponse.json(
-          { error: `Erro ao criar evento na Google Calendar API: ${retryErr?.message ?? retryErr}` },
+          { error: `Erro ao criar evento na Google Calendar API: ${retryMsg}` },
           { status: 500 }
         );
       }
     } else {
-      const msg = apiErr?.errors?.[0]?.message ?? apiErr?.message ?? "Erro desconhecido na Google Calendar API.";
-      return NextResponse.json({ error: msg }, { status: 500 });
+      const rawMsg: string = apiErr?.errors?.[0]?.message ?? apiErr?.message ?? "Erro desconhecido na Google Calendar API.";
+
+      // Detect "API not enabled" error from Google and surface the enable URL
+      const isApiDisabled =
+        rawMsg.toLowerCase().includes("has not been used") ||
+        rawMsg.toLowerCase().includes("is disabled") ||
+        apiErr?.code === 403;
+
+      // Extract project ID from the error message if present (e.g. "project 443649873745")
+      const projectMatch = rawMsg.match(/project\s+(\d+)/i);
+      const projectId = projectMatch?.[1] ?? null;
+      const enableUrl = projectId
+        ? `https://console.developers.google.com/apis/api/calendar-json.googleapis.com/overview?project=${projectId}`
+        : "https://console.developers.google.com/apis/api/calendar-json.googleapis.com/overview";
+
+      if (isApiDisabled) {
+        return NextResponse.json(
+          {
+            error: "A Google Calendar API não está activada neste projecto Google Cloud.",
+            errorCode: "calendar_api_disabled",
+            enableUrl,
+            projectId,
+          },
+          { status: 403 }
+        );
+      }
+
+      return NextResponse.json({ error: rawMsg }, { status: 500 });
     }
   }
 

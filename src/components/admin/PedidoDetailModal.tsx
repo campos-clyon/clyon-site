@@ -325,6 +325,7 @@ export default function PedidoDetailModal({ id, token, isAdmin, colabId, colabFu
   const [cmMsg, setCmMsg] = useState("");
   const [cmError, setCmError] = useState("");
   const [cmTargetName, setCmTargetName] = useState<string | null>(null);
+  const [cmApiDisabledUrl, setCmApiDisabledUrl] = useState<string | null>(null);
 
   // Accept state (assistente aceitar pedido da fila geral)
   const [accepting, setAccepting] = useState(false);
@@ -674,6 +675,7 @@ export default function PedidoDetailModal({ id, token, isAdmin, colabId, colabFu
     setCmMsg("");
     setCmError("");
     setCmTargetName(null);
+    setCmApiDisabledUrl(null);
   }
 
   function openCalendarModal() {
@@ -714,8 +716,13 @@ export default function PedidoDetailModal({ id, token, isAdmin, colabId, colabFu
       });
       const data = await res.json();
       if (!res.ok || data?.ok === false) {
+        // Surface the API-disabled URL separately so the UI can render an action link
+        if (data?.errorCode === "calendar_api_disabled" && data?.enableUrl) {
+          setCmApiDisabledUrl(data.enableUrl);
+        }
         throw new Error(data?.error || "Erro ao agendar serviço.");
       }
+      setCmApiDisabledUrl(null);
       const updated = data?.order ?? order;
       setOrder(updated);
       populateEdit(updated);
@@ -2175,7 +2182,33 @@ export default function PedidoDetailModal({ id, token, isAdmin, colabId, colabFu
 
                 {/* Messages */}
                 {cmError && (
-                  <p className="rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-2.5 text-xs font-semibold text-red-400">{cmError}</p>
+                  <div className="rounded-xl border border-red-500/25 bg-red-500/[0.07] px-4 py-3 space-y-2">
+                    <div className="flex items-start gap-2">
+                      <svg className="mt-0.5 h-4 w-4 flex-shrink-0 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <p className="text-xs font-semibold leading-relaxed text-red-400">{cmError}</p>
+                    </div>
+                    {cmApiDisabledUrl && (
+                      <div className="rounded-lg border border-amber-400/20 bg-amber-400/[0.05] px-3 py-2.5 space-y-2">
+                        <p className="text-xs text-amber-300 leading-relaxed">
+                          A <strong>Google Calendar API</strong> precisa de ser activada no Google Cloud Console antes de poder criar eventos.
+                        </p>
+                        <a
+                          href={cmApiDisabledUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-flex items-center gap-1.5 rounded-lg border border-amber-400/30 bg-amber-400/10 px-3 py-1.5 text-xs font-bold text-amber-300 transition hover:bg-amber-400/20"
+                        >
+                          <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                          </svg>
+                          Activar Google Calendar API
+                        </a>
+                        <p className="text-[10px] text-slate-500">Depois de activar, aguarde 1-2 minutos e tente novamente.</p>
+                      </div>
+                    )}
+                  </div>
                 )}
                 {cmMsg && (
                   <div className="rounded-xl border border-violet-400/20 bg-violet-400/10 px-4 py-3 space-y-2">
