@@ -327,6 +327,8 @@ export default function PedidoDetailModal({ id, token, isAdmin, colabId, colabFu
   const [cmTargetName, setCmTargetName] = useState<string | null>(null);
   const [cmApiDisabledUrl, setCmApiDisabledUrl] = useState<string | null>(null);
   const [cmErrorCode, setCmErrorCode] = useState<string | null>(null);
+  const [cmCalendarDescription, setCmCalendarDescription] = useState("");
+  const [cmDescriptionLoading, setCmDescriptionLoading] = useState(false);
 
   // Accept state (assistente aceitar pedido da fila geral)
   const [accepting, setAccepting] = useState(false);
@@ -678,12 +680,26 @@ export default function PedidoDetailModal({ id, token, isAdmin, colabId, colabFu
     setCmTargetName(null);
     setCmApiDisabledUrl(null);
     setCmErrorCode(null);
+    setCmCalendarDescription("");
   }
 
   function openCalendarModal() {
     if (!order) return;
     populateCalendarModal(order);
     setCalendarModalOpen(true);
+    // Fetch Gemini-powered preview description in background
+    setCmDescriptionLoading(true);
+    fetch(`/api/admin/pedidos/${order.id}/calendar/preview`, { headers: authHeader })
+      .then((r) => r.json())
+      .then((data) => {
+        if (data?.calendarDescription) {
+          setCmCalendarDescription(data.calendarDescription);
+        }
+      })
+      .catch(() => {
+        // Ignore — user can still schedule without a pre-filled description
+      })
+      .finally(() => setCmDescriptionLoading(false));
   }
 
   async function handleScheduleModal() {
@@ -714,6 +730,7 @@ export default function PedidoDetailModal({ id, token, isAdmin, colabId, colabFu
           destinationAddress: cmDestinationAddress || undefined,
           route: cmRoute || undefined,
           calendarNotes: cmNotes || undefined,
+          calendarDescription: cmCalendarDescription || undefined,
         }),
       });
       const data = await res.json();
@@ -726,6 +743,7 @@ export default function PedidoDetailModal({ id, token, isAdmin, colabId, colabFu
       }
       setCmApiDisabledUrl(null);
       setCmErrorCode(null);
+      setCmCalendarDescription("");
       const updated = data?.order ?? order;
       setOrder(updated);
       populateEdit(updated);
@@ -2181,6 +2199,34 @@ export default function PedidoDetailModal({ id, token, isAdmin, colabId, colabFu
                     <label className={lbCls}>Observacoes para a agenda (opcional)</label>
                     <textarea rows={2} value={cmNotes} onChange={(e) => setCmNotes(e.target.value)} className={calCls} placeholder="Ex: Levar embalagens extra, acesso pelo lado esquerdo..." />
                   </div>
+                </section>
+
+                {/* Descricao que vai para a agenda */}
+                <section className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-violet-400">Descrição que irá para a agenda</p>
+                    {cmDescriptionLoading && (
+                      <span className="flex items-center gap-1.5 text-[10px] text-slate-500">
+                        <svg className="h-3 w-3 animate-spin" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                        </svg>
+                        A gerar com Gemini...
+                      </span>
+                    )}
+                    {!cmDescriptionLoading && cmCalendarDescription && (
+                      <span className="text-[10px] text-violet-400/70">Editável — alterações serão enviadas para a agenda</span>
+                    )}
+                  </div>
+                  <textarea
+                    rows={10}
+                    value={cmCalendarDescription}
+                    onChange={(e) => setCmCalendarDescription(e.target.value)}
+                    className={`${calCls} font-mono text-xs`}
+                    placeholder={cmDescriptionLoading ? "A gerar descrição..." : "A descrição será gerada automaticamente ao abrir o modal. Pode editar antes de agendar."}
+                    disabled={cmDescriptionLoading}
+                  />
+                  <p className="text-[10px] text-slate-600">Se deixar em branco, a rota gera automaticamente a descrição com os dados do pedido.</p>
                 </section>
 
                 {/* Messages */}
