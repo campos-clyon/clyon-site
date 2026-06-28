@@ -432,7 +432,8 @@ export default function PedidoDetailModal({ id, token, isAdmin, colabId, colabFu
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || "Erro ao recalcular estimativa.");
-      // Guardar a nova estimativa no pedido
+
+      // Guardar sempre — mesmo que seja estimativa de referência — para persistir missingFields
       const saveRes = await fetch(`/api/admin/pedidos/${order.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json", ...authHeader },
@@ -444,7 +445,18 @@ export default function PedidoDetailModal({ id, token, isAdmin, colabId, colabFu
       }
       const updated = await saveRes.json();
       setOrder(updated.order ?? updated);
-      setSaveMsg("Estimativa recalculada com sucesso.");
+
+      // Mensagem contextual com base na fonte da estimativa
+      const src = data.analysisSource ?? data.source ?? "";
+      const isRef = src === "gemini_reference" || src === "fallback_reference";
+      const missing: string[] = data.missingFields?.filter(Boolean) ?? [];
+      if (isRef && missing.length > 0) {
+        setSaveMsg(`Estimativa de referência gerada. Actualize: ${missing.slice(0, 3).join(", ")}${missing.length > 3 ? " e outros" : ""}.`);
+      } else if (isRef) {
+        setSaveMsg("Estimativa de referência gerada — confirme antes de enviar ao cliente.");
+      } else {
+        setSaveMsg("Estimativa calculada com sucesso pelo Gemini.");
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Erro ao recalcular estimativa.");
     } finally {
@@ -1263,22 +1275,131 @@ export default function PedidoDetailModal({ id, token, isAdmin, colabId, colabFu
                       const estData = parseEstimate(order.estimateJson);
                       const isRef = estData?.analysisSource === "gemini_reference" || estData?.analysisSource === "fallback_reference";
                       const noPrice = !estData?.estimatedPriceWithoutVat || estData.estimatedPriceWithoutVat <= 0;
+                      const missing: string[] = estData?.missingFields?.filter(Boolean) ?? [];
+
                       if (noPrice && !isRef) {
                         return (
-                          <div className="rounded-[16px] border border-red-400/20 bg-red-400/[0.04] px-4 py-3">
-                            <p className="text-sm font-semibold text-red-400 mb-1">Este pedido ainda não tem estimativa.</p>
-                            <p className="text-xs text-slate-400">Clique em <strong className="text-slate-300">Recalcular estimativa</strong> para gerar uma estimativa automática com base nos dados guardados.</p>
+                          <div className="rounded-[16px] border border-red-400/25 bg-red-400/[0.06] p-5 space-y-4">
+                            {/* Header */}
+                            <div className="flex items-start gap-3">
+                              <div className="mt-0.5 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-xl border border-red-400/30 bg-red-400/10">
+                                <svg className="h-4 w-4 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                              </div>
+                              <div>
+                                <p className="text-sm font-bold text-red-300">Este pedido não tem estimativa</p>
+                                <p className="mt-0.5 text-xs leading-relaxed text-slate-400">
+                                  A análise automática não produziu um valor. Clique em <strong className="text-slate-200">Pedir estimativa ao Gemini</strong> para tentar novamente.
+                                </p>
+                              </div>
+                            </div>
+
+                            {/* Campos em falta — se o Gemini indicou */}
+                            {missing.length > 0 && (
+                              <div className="rounded-xl border border-amber-400/20 bg-amber-400/[0.05] px-4 py-3">
+                                <p className="mb-2 text-[10px] font-bold uppercase tracking-wider text-amber-400">
+                                  Informação em falta — actualize antes de tentar novamente
+                                </p>
+                                <ul className="space-y-1.5">
+                                  {missing.map((f, i) => (
+                                    <li key={i} className="flex items-center gap-2 text-xs text-amber-300">
+                                      <svg className="h-3.5 w-3.5 flex-shrink-0 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
+                                      </svg>
+                                      {f.replace(/_/g, " ")}
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+
+                            {/* Botao de acção */}
+                            <button
+                              onClick={handleRecalcularEstimativa}
+                              disabled={recalculating}
+                              className="flex w-full items-center justify-center gap-2 rounded-xl border border-red-400/30 bg-red-400/10 py-2.5 text-sm font-bold text-red-300 transition hover:bg-red-400/20 disabled:opacity-60"
+                            >
+                              {recalculating ? (
+                                <>
+                                  <svg className="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                                  </svg>
+                                  A pedir estimativa ao Gemini...
+                                </>
+                              ) : (
+                                <>
+                                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                  </svg>
+                                  Pedir estimativa ao Gemini
+                                </>
+                              )}
+                            </button>
                           </div>
                         );
                       }
+
                       if (!isRef) return null;
+
                       return (
-                        <div className="rounded-[16px] border border-amber-400/20 bg-amber-400/[0.04] px-4 py-3 space-y-1">
-                          <p className="text-sm font-semibold text-amber-400">Estimativa de referência — apenas uso interno</p>
-                          <p className="text-xs leading-relaxed text-slate-400">
-                            Esta estimativa foi gerada como apoio interno porque o sistema não conseguiu aplicar totalmente o preçário CLYON.
-                            Confirme o valor antes de enviar ao cliente.
-                          </p>
+                        <div className="rounded-[16px] border border-amber-400/20 bg-amber-400/[0.04] p-5 space-y-4">
+                          <div className="flex items-start gap-3">
+                            <div className="mt-0.5 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-xl border border-amber-400/30 bg-amber-400/10">
+                              <svg className="h-4 w-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                              </svg>
+                            </div>
+                            <div>
+                              <p className="text-sm font-bold text-amber-300">Estimativa de referência — apenas uso interno</p>
+                              <p className="mt-0.5 text-xs leading-relaxed text-slate-400">
+                                O preçário CLYON não foi totalmente aplicado. Confirme o valor antes de enviar ao cliente ou tente novamente com mais dados.
+                              </p>
+                            </div>
+                          </div>
+
+                          {/* Campos em falta da estimativa de referência */}
+                          {missing.length > 0 && (
+                            <div className="rounded-xl border border-amber-400/20 bg-amber-400/[0.05] px-4 py-3">
+                              <p className="mb-2 text-[10px] font-bold uppercase tracking-wider text-amber-400">
+                                Dados em falta para melhor estimativa
+                              </p>
+                              <ul className="space-y-1.5">
+                                {missing.map((f, i) => (
+                                  <li key={i} className="flex items-center gap-2 text-xs text-amber-300">
+                                    <svg className="h-3.5 w-3.5 flex-shrink-0 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
+                                    </svg>
+                                    {f.replace(/_/g, " ")}
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+
+                          <button
+                            onClick={handleRecalcularEstimativa}
+                            disabled={recalculating}
+                            className="flex w-full items-center justify-center gap-2 rounded-xl border border-amber-400/30 bg-amber-400/10 py-2.5 text-sm font-bold text-amber-300 transition hover:bg-amber-400/20 disabled:opacity-60"
+                          >
+                            {recalculating ? (
+                              <>
+                                <svg className="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                                </svg>
+                                A pedir estimativa ao Gemini...
+                              </>
+                            ) : (
+                              <>
+                                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                </svg>
+                                Tentar novamente com o Gemini
+                              </>
+                            )}
+                          </button>
                         </div>
                       );
                     })()}
