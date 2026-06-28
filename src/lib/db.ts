@@ -776,7 +776,7 @@ export async function getTodayRegistroByColaborador(colaboradorId: number) {
 
 let _simulatorOrdersEnsured = false;
 // Bump this version number any time new migrations are added so the guard re-runs
-const MIGRATION_VERSION = 3;
+const MIGRATION_VERSION = 4;
 let _migrationVersion = 0;
 
 export async function ensureSimulatorOrdersTable() {
@@ -843,6 +843,14 @@ export async function ensureSimulatorOrdersTable() {
     // v3 migrations — rawOrderJson stores full form data (origin/dest for mudanca), acceptedAt tracks when assistant accepted
     `ALTER TABLE simulatorOrders ADD COLUMN rawOrderJson LONGTEXT`,
     `ALTER TABLE simulatorOrders ADD COLUMN acceptedAt TIMESTAMP NULL DEFAULT NULL`,
+    // v4 migrations — calendar scheduling fields
+    `ALTER TABLE simulatorOrders ADD COLUMN scheduledDate DATE NULL DEFAULT NULL`,
+    `ALTER TABLE simulatorOrders ADD COLUMN scheduledStartTime VARCHAR(10) NULL DEFAULT NULL`,
+    `ALTER TABLE simulatorOrders ADD COLUMN scheduledEndTime VARCHAR(10) NULL DEFAULT NULL`,
+    `ALTER TABLE simulatorOrders ADD COLUMN calendarEventId VARCHAR(255) NULL DEFAULT NULL`,
+    `ALTER TABLE simulatorOrders ADD COLUMN calendarEventUrl TEXT NULL DEFAULT NULL`,
+    `ALTER TABLE simulatorOrders ADD COLUMN calendarStatus VARCHAR(30) NULL DEFAULT 'not_scheduled'`,
+    `ALTER TABLE simulatorOrders ADD COLUMN calendarNotes TEXT NULL DEFAULT NULL`,
   ];
   for (const sql of migrations) {
     try { await pool.execute(sql); } catch (e: any) {
@@ -964,6 +972,13 @@ export async function updateSimulatorOrder(
     urgency: string | null;
     rawOrderJson: string | null;
     acceptedAt: Date | null;
+    scheduledDate: string | null;
+    scheduledStartTime: string | null;
+    scheduledEndTime: string | null;
+    calendarEventId: string | null;
+    calendarEventUrl: string | null;
+    calendarStatus: string | null;
+    calendarNotes: string | null;
   }>
 ) {
   await ensureSimulatorOrdersTable();

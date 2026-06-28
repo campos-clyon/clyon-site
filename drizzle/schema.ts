@@ -167,6 +167,20 @@ export interface SimulatorOrder {
   rawOrderJson?: string | null;
   /** Timestamp when an assistant accepted this order from the general queue */
   acceptedAt?: Date | null;
+  /** Scheduled service date (YYYY-MM-DD) */
+  scheduledDate?: string | null;
+  /** Scheduled start time (HH:MM) */
+  scheduledStartTime?: string | null;
+  /** Scheduled end time (HH:MM) */
+  scheduledEndTime?: string | null;
+  /** Google Calendar event ID once created */
+  calendarEventId?: string | null;
+  /** Google Calendar event URL */
+  calendarEventUrl?: string | null;
+  /** Calendar scheduling status */
+  calendarStatus?: "not_scheduled" | "scheduled" | "updated" | null;
+  /** Notes included in the calendar event */
+  calendarNotes?: string | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -206,4 +220,11 @@ export interface InsertSimulatorOrder {
   dataAgendada?: Date | null;
   rawOrderJson?: string | null;
   acceptedAt?: Date | null;
+  scheduledDate?: string | null;
+  scheduledStartTime?: string | null;
+  scheduledEndTime?: string | null;
+  calendarEventId?: string | null;
+  calendarEventUrl?: string | null;
+  calendarStatus?: string | null;
+  calendarNotes?: string | null;
 }

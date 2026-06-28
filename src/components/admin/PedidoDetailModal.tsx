@@ -55,6 +55,13 @@ export type PedidoOrder = {
   reviewJson?: string | null;
   rawOrderJson?: string | null;
   dataAgendada?: string | null;
+  scheduledDate?: string | null;
+  scheduledStartTime?: string | null;
+  scheduledEndTime?: string | null;
+  calendarEventId?: string | null;
+  calendarEventUrl?: string | null;
+  calendarStatus?: "not_scheduled" | "scheduled" | "updated" | null;
+  calendarNotes?: string | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -279,6 +286,15 @@ export default function PedidoDetailModal({ id, token, isAdmin, colabId, colabFu
   const [assistants, setAssistants] = useState<{ id: number; nome: string; activePedidos?: number }[]>([]);
   const [editAssignedToId, setEditAssignedToId] = useState<number | null>(null);
 
+  // Calendar / scheduling state
+  const [schedDate, setSchedDate] = useState("");
+  const [schedStart, setSchedStart] = useState("");
+  const [schedEnd, setSchedEnd] = useState("");
+  const [schedNotes, setSchedNotes] = useState("");
+  const [scheduling, setScheduling] = useState(false);
+  const [schedMsg, setSchedMsg] = useState("");
+  const [schedError, setSchedError] = useState("");
+
   // Accept state (assistente aceitar pedido da fila geral)
   const [accepting, setAccepting] = useState(false);
   const [acceptMsg, setAcceptMsg] = useState("");
@@ -312,6 +328,10 @@ export default function PedidoDetailModal({ id, token, isAdmin, colabId, colabFu
     setEditPriority(o.priority ?? "normal");
     setEditDataAgendada(o.dataAgendada ? o.dataAgendada.slice(0, 16) : "");
     setEditAssignedToId(o.assignedToId ?? null);
+    setSchedDate(o.scheduledDate ?? "");
+    setSchedStart(o.scheduledStartTime ?? "");
+    setSchedEnd(o.scheduledEndTime ?? "");
+    setSchedNotes(o.calendarNotes ?? "");
   }
 
   const fetchOrder = useCallback(async () => {
@@ -484,6 +504,48 @@ export default function PedidoDetailModal({ id, token, isAdmin, colabId, colabFu
       setError(e.message || "Erro ao aceitar o pedido.");
     } finally {
       setAccepting(false);
+    }
+  }
+
+  async function handleSchedule() {
+    if (!order) return;
+    if (!schedDate || !schedStart || !schedEnd) {
+      setSchedError("Preencha a data, hora de início e hora de fim.");
+      return;
+    }
+    setScheduling(true);
+    setSchedMsg("");
+    setSchedError("");
+    try {
+      const res = await fetch(`/api/admin/pedidos/${order.id}/calendar`, {
+        method: "POST",
+        headers: { ...authHeader, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          scheduledDate: schedDate,
+          scheduledStartTime: schedStart,
+          scheduledEndTime: schedEnd,
+          calendarNotes: schedNotes || null,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok || data?.ok === false) {
+        throw new Error(data?.error || "Erro ao agendar serviço.");
+      }
+      const updated = data?.order ?? order;
+      setOrder(updated);
+      populateEdit(updated);
+      setSchedMsg(data.message ?? "Serviço agendado com sucesso.");
+      setTimeout(() => setSchedMsg(""), 5000);
+      onUpdated?.(updated);
+
+      // Auto-open Google Calendar in new tab
+      if (data.calendarEventUrl) {
+        window.open(data.calendarEventUrl, "_blank", "noopener,noreferrer");
+      }
+    } catch (e: any) {
+      setSchedError(e.message || "Não foi possível agendar o serviço. Tente novamente.");
+    } finally {
+      setScheduling(false);
     }
   }
 
@@ -660,6 +722,36 @@ export default function PedidoDetailModal({ id, token, isAdmin, colabId, colabFu
                       </svg>
                       WhatsApp
                     </a>
+                    {/* Agendar serviço — admin ou assistente responsável, pedido aprovado/confirmado/em_execucao */}
+                    {(isAdmin || (colabFuncao === "assistente" && order.assignedToId === colabId)) &&
+                      (["aprovado", "confirmado", "em_execucao"].includes(order.status) || !!order.scheduledDate) && (
+                        order.calendarEventId ? (
+                          // Already scheduled — show "open in calendar" + jump to tab
+                          <a
+                            href={order.calendarEventUrl ?? "#"}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="hidden lg:flex items-center gap-1.5 rounded-2xl border border-violet-400/30 bg-violet-400/10 px-4 py-2 text-sm font-semibold text-violet-300 hover:bg-violet-400/20 transition"
+                            title={`Agendado: ${order.scheduledDate} ${order.scheduledStartTime}–${order.scheduledEndTime}`}
+                          >
+                            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                            Abrir na agenda
+                          </a>
+                        ) : (
+                          <button
+                            onClick={() => setActiveTab("atribuicao")}
+                            className="hidden lg:flex items-center gap-1.5 rounded-2xl border border-violet-400/30 bg-violet-400/10 px-4 py-2 text-sm font-semibold text-violet-300 hover:bg-violet-400/20 transition"
+                          >
+                            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                            Agendar serviço
+                          </button>
+                        )
+                      )
+                    }
                     {/* Excluir — apenas admin geral */}
                     {isAdmin && <button
                       onClick={() => setShowDelete(true)}
@@ -1249,6 +1341,126 @@ export default function PedidoDetailModal({ id, token, isAdmin, colabId, colabFu
                         {saving ? "A guardar..." : "Guardar alterações"}
                       </button>
                     </div>
+
+                    {/* ── Agenda do serviço ──────────────────────────────── */}
+                    {(isAdmin || (colabFuncao === "assistente" && order.assignedToId === colabId)) && (
+                      <div className="rounded-[20px] border border-violet-400/20 bg-violet-400/[0.03] p-5 space-y-4">
+                        <div className="flex items-center justify-between">
+                          <h4 className="text-sm font-bold text-violet-300 flex items-center gap-2">
+                            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                            Agenda do serviço
+                          </h4>
+                          {/* Current calendar status badge */}
+                          {order.calendarStatus === "scheduled" && (
+                            <span className="rounded-full border border-violet-400/30 bg-violet-400/10 px-2.5 py-0.5 text-[11px] font-semibold text-violet-300">
+                              Agendado
+                            </span>
+                          )}
+                          {order.calendarStatus === "updated" && (
+                            <span className="rounded-full border border-violet-400/30 bg-violet-400/10 px-2.5 py-0.5 text-[11px] font-semibold text-violet-300">
+                              Agenda actualizada
+                            </span>
+                          )}
+                          {(!order.calendarStatus || order.calendarStatus === "not_scheduled") && (
+                            <span className="rounded-full border border-slate-600/40 bg-slate-600/10 px-2.5 py-0.5 text-[11px] font-semibold text-slate-500">
+                              Não agendado
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Show confirmed schedule when already set */}
+                        {order.scheduledDate && order.calendarStatus !== "not_scheduled" && (
+                          <div className="rounded-[14px] border border-violet-400/15 bg-violet-400/[0.05] p-3 text-sm text-violet-200">
+                            <span className="font-semibold">{order.scheduledDate}</span>
+                            {order.scheduledStartTime && order.scheduledEndTime && (
+                              <span className="ml-2 text-violet-300">{order.scheduledStartTime}–{order.scheduledEndTime}</span>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Scheduling form */}
+                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                          <Field label="Data do serviço">
+                            <input
+                              type="date"
+                              value={schedDate}
+                              onChange={(e) => setSchedDate(e.target.value)}
+                              className={inputCls}
+                            />
+                          </Field>
+                          <Field label="Hora de início">
+                            <input
+                              type="time"
+                              value={schedStart}
+                              onChange={(e) => setSchedStart(e.target.value)}
+                              className={inputCls}
+                            />
+                          </Field>
+                          <Field label="Hora de fim">
+                            <input
+                              type="time"
+                              value={schedEnd}
+                              onChange={(e) => setSchedEnd(e.target.value)}
+                              className={inputCls}
+                            />
+                          </Field>
+                        </div>
+                        <Field label="Observações para a agenda (opcional)">
+                          <textarea
+                            rows={2}
+                            value={schedNotes}
+                            onChange={(e) => setSchedNotes(e.target.value)}
+                            className={inputCls}
+                            placeholder="Ex: Levar embalagens extra, acesso pelo lado esquerdo..."
+                          />
+                        </Field>
+
+                        {/* Messages */}
+                        {schedError && (
+                          <p className="text-xs font-semibold text-red-400">{schedError}</p>
+                        )}
+                        {schedMsg && (
+                          <p className="text-xs font-semibold text-violet-300">{schedMsg}</p>
+                        )}
+
+                        {/* Action buttons */}
+                        <div className="flex flex-wrap items-center gap-2">
+                          <button
+                            onClick={handleSchedule}
+                            disabled={scheduling || !schedDate || !schedStart || !schedEnd}
+                            className="flex items-center gap-1.5 rounded-2xl bg-violet-500 px-4 py-2 text-sm font-bold text-white hover:bg-violet-400 disabled:opacity-50 transition"
+                          >
+                            {scheduling ? (
+                              <svg className="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                              </svg>
+                            ) : (
+                              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                              </svg>
+                            )}
+                            {scheduling ? "A agendar..." : order.calendarEventId ? "Actualizar agenda" : "Agendar serviço"}
+                          </button>
+
+                          {order.calendarEventUrl && (
+                            <a
+                              href={order.calendarEventUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="flex items-center gap-1.5 rounded-2xl border border-violet-400/30 bg-violet-400/10 px-4 py-2 text-sm font-semibold text-violet-300 hover:bg-violet-400/20 transition"
+                            >
+                              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                              </svg>
+                              Abrir na agenda
+                            </a>
+                          )}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
 
