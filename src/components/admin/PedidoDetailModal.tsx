@@ -275,6 +275,10 @@ export default function PedidoDetailModal({ id, token, isAdmin, colabId, colabFu
   const [editPriority, setEditPriority] = useState<OrderPriority>("normal");
   const [editDataAgendada, setEditDataAgendada] = useState("");
 
+  // Assistentes (para dropdown de atribuição — apenas admin)
+  const [assistants, setAssistants] = useState<{ id: number; nome: string; activePedidos?: number }[]>([]);
+  const [editAssignedToId, setEditAssignedToId] = useState<number | null>(null);
+
   // Accept state (assistente aceitar pedido da fila geral)
   const [accepting, setAccepting] = useState(false);
   const [acceptMsg, setAcceptMsg] = useState("");
@@ -307,6 +311,7 @@ export default function PedidoDetailModal({ id, token, isAdmin, colabId, colabFu
     setEditStatus(o.status);
     setEditPriority(o.priority ?? "normal");
     setEditDataAgendada(o.dataAgendada ? o.dataAgendada.slice(0, 16) : "");
+    setEditAssignedToId(o.assignedToId ?? null);
   }
 
   const fetchOrder = useCallback(async () => {
@@ -328,6 +333,19 @@ export default function PedidoDetailModal({ id, token, isAdmin, colabId, colabFu
   }, [id, token]);
 
   useEffect(() => { void fetchOrder(); }, [fetchOrder]);
+
+  // Fetch lista de assistentes quando admin abre a aba de atribuição
+  useEffect(() => {
+    if (!isAdmin || activeTab !== "atribuicao" || assistants.length > 0) return;
+    fetch("/api/admin/assistentes", { headers: authHeader })
+      .then((r) => r.json())
+      .then((data) => {
+        const list = data?.assistants ?? data?.assistentes ?? [];
+        setAssistants(list);
+      })
+      .catch(() => {});
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAdmin, activeTab]);
 
   // Close on ESC
   useEffect(() => {
@@ -366,6 +384,16 @@ export default function PedidoDetailModal({ id, token, isAdmin, colabId, colabFu
       if (isAdmin) {
         body.precoFinal = editPrecoFinal || null;
         body.precoFinalIva = editPrecoFinalIva || null;
+        // Atribuição de assistente — deriva o nome a partir da lista carregada
+        body.assignedToId = editAssignedToId ?? null;
+        body.assignedToName = editAssignedToId
+          ? (assistants.find((a) => a.id === editAssignedToId)?.nome ?? order.assignedToName ?? null)
+          : null;
+        // Se estamos a atribuir e o pedido ainda está sem assistente, muda status para atribuido
+        if (editAssignedToId && !order.assignedToId && body.status === "sem_assistente") {
+          body.status = "atribuido";
+          setEditStatus("atribuido");
+        }
       }
       const res = await fetch(`/api/admin/pedidos/${order.id}`, {
         method: "PATCH",
@@ -1176,12 +1204,43 @@ export default function PedidoDetailModal({ id, token, isAdmin, colabId, colabFu
                         <input type="datetime-local" value={editDataAgendada} onChange={(e) => setEditDataAgendada(e.target.value)} className={inputCls} />
                       </Field>
                     </div>
-                    <div className="grid grid-cols-2 gap-3">
-                      <ReadonlyField label="Assistente atribuída" value={order.assignedToName ?? "Não atribuído"} />
-                      <ReadonlyField label="Atribuído em" value={order.assignedAt ? fmt(order.assignedAt) : null} />
-                      <ReadonlyField label="Última atualização" value={fmt(order.updatedAt)} />
-                      <ReadonlyField label="Criado em" value={fmt(order.createdAt)} />
-                    </div>
+                    {/* Atribuição de assistente — editável apenas para admin */}
+                    {isAdmin ? (
+                      <div className="space-y-3">
+                        <Field label="Assistente responsável">
+                          <select
+                            value={editAssignedToId ?? ""}
+                            onChange={(e) => setEditAssignedToId(e.target.value ? Number(e.target.value) : null)}
+                            className={selectCls}
+                          >
+                            <option value="" className={optionCls}>Sem atribuição (fila geral)</option>
+                            {assistants.map((a) => (
+                              <option key={a.id} value={a.id} className={optionCls}>
+                                {a.nome}{a.activePedidos !== undefined ? ` — ${a.activePedidos} pedido${a.activePedidos !== 1 ? "s" : ""} activo${a.activePedidos !== 1 ? "s" : ""}` : ""}
+                              </option>
+                            ))}
+                          </select>
+                          {assistants.length === 0 && (
+                            <p className="mt-1.5 text-[11px] text-slate-500">A carregar assistentes...</p>
+                          )}
+                        </Field>
+                        <div className="grid grid-cols-2 gap-3">
+                          <ReadonlyField label="Atribuído em" value={order.assignedAt ? fmt(order.assignedAt) : null} />
+                          <ReadonlyField label="Criado em" value={fmt(order.createdAt)} />
+                          <ReadonlyField label="Última atualização" value={fmt(order.updatedAt)} />
+                          {(order as any).acceptedAt && (
+                            <ReadonlyField label="Aceite em" value={fmt((order as any).acceptedAt)} />
+                          )}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-2 gap-3">
+                        <ReadonlyField label="Assistente atribuída" value={order.assignedToName ?? "Fila geral"} />
+                        <ReadonlyField label="Atribuído em" value={order.assignedAt ? fmt(order.assignedAt) : null} />
+                        <ReadonlyField label="Última atualização" value={fmt(order.updatedAt)} />
+                        <ReadonlyField label="Criado em" value={fmt(order.createdAt)} />
+                      </div>
+                    )}
                     <Field label="Notas internas (visíveis apenas no backoffice)">
                       <textarea rows={4} value={editNotasInternas} onChange={(e) => setEditNotasInternas(e.target.value)} className={inputCls} placeholder="Notas para a equipa..." />
                     </Field>
