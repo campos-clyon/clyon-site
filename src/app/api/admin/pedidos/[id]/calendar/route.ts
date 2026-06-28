@@ -196,8 +196,13 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
   // ── Google Calendar API ───────────────────────────────────────────────────
 
-  const calendarTargetId   = process.env.CLYON_GOOGLE_CALENDAR_ID?.trim()   || "primary";
-  const calendarTargetName = process.env.CLYON_GOOGLE_CALENDAR_NAME?.trim() || null;
+  // "primary" does NOT work with Service Accounts — it resolves to the SA's own
+  // inbox calendar, not the organisation calendar. Always fall back to the known
+  // CLYON calendar ID so the error is explicit if the env var is missing.
+  const calendarTargetId   = process.env.CLYON_GOOGLE_CALENDAR_ID?.trim()   || "geral@clyon.pt";
+  const calendarTargetName = process.env.CLYON_GOOGLE_CALENDAR_NAME?.trim() || "Agenda Organização CLYON";
+
+  console.log("[calendar] Using calendarId:", calendarTargetId);
   const timeZone           = "Europe/Lisbon";
 
   let gcalEventId: string;
@@ -330,10 +335,13 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
         );
       }
 
-      // 404 notFound — wrong calendarId
+      // 404 notFound — wrong calendarId or SA not shared on the calendar
       if (apiErr?.code === 404 || lc.includes("notfound") || lc.includes("not found")) {
         return NextResponse.json(
-          { error: "Agenda não encontrada. Verifique o ID da agenda (CLYON_GOOGLE_CALENDAR_ID)." },
+          {
+            error: `Agenda "${calendarTargetId}" não encontrada ou não partilhada com a Service Account. Nas definições da agenda Google Calendar > "Partilhado com" adicione "${process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL?.trim() ?? "email da Service Account"}" com permissão "Fazer alterações nos eventos".`,
+            errorCode: "calendar_not_found",
+          },
           { status: 404 }
         );
       }

@@ -326,6 +326,7 @@ export default function PedidoDetailModal({ id, token, isAdmin, colabId, colabFu
   const [cmError, setCmError] = useState("");
   const [cmTargetName, setCmTargetName] = useState<string | null>(null);
   const [cmApiDisabledUrl, setCmApiDisabledUrl] = useState<string | null>(null);
+  const [cmErrorCode, setCmErrorCode] = useState<string | null>(null);
 
   // Accept state (assistente aceitar pedido da fila geral)
   const [accepting, setAccepting] = useState(false);
@@ -676,6 +677,7 @@ export default function PedidoDetailModal({ id, token, isAdmin, colabId, colabFu
     setCmError("");
     setCmTargetName(null);
     setCmApiDisabledUrl(null);
+    setCmErrorCode(null);
   }
 
   function openCalendarModal() {
@@ -716,13 +718,14 @@ export default function PedidoDetailModal({ id, token, isAdmin, colabId, colabFu
       });
       const data = await res.json();
       if (!res.ok || data?.ok === false) {
-        // Surface the API-disabled URL separately so the UI can render an action link
         if (data?.errorCode === "calendar_api_disabled" && data?.enableUrl) {
           setCmApiDisabledUrl(data.enableUrl);
         }
+        setCmErrorCode(data?.errorCode ?? null);
         throw new Error(data?.error || "Erro ao agendar serviço.");
       }
       setCmApiDisabledUrl(null);
+      setCmErrorCode(null);
       const updated = data?.order ?? order;
       setOrder(updated);
       populateEdit(updated);
@@ -2182,17 +2185,20 @@ export default function PedidoDetailModal({ id, token, isAdmin, colabId, colabFu
 
                 {/* Messages */}
                 {cmError && (
-                  <div className="rounded-xl border border-red-500/25 bg-red-500/[0.07] px-4 py-3 space-y-2">
+                  <div className="rounded-xl border border-red-500/25 bg-red-500/[0.07] px-4 py-3 space-y-3">
                     <div className="flex items-start gap-2">
                       <svg className="mt-0.5 h-4 w-4 flex-shrink-0 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
                       <p className="text-xs font-semibold leading-relaxed text-red-400">{cmError}</p>
                     </div>
+
+                    {/* API not enabled */}
                     {cmApiDisabledUrl && (
                       <div className="rounded-lg border border-amber-400/20 bg-amber-400/[0.05] px-3 py-2.5 space-y-2">
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-amber-400">Como resolver</p>
                         <p className="text-xs text-amber-300 leading-relaxed">
-                          A <strong>Google Calendar API</strong> precisa de ser activada no Google Cloud Console antes de poder criar eventos.
+                          A <strong>Google Calendar API</strong> precisa de ser activada no Google Cloud Console.
                         </p>
                         <a
                           href={cmApiDisabledUrl}
@@ -2206,6 +2212,38 @@ export default function PedidoDetailModal({ id, token, isAdmin, colabId, colabFu
                           Activar Google Calendar API
                         </a>
                         <p className="text-[10px] text-slate-500">Depois de activar, aguarde 1-2 minutos e tente novamente.</p>
+                      </div>
+                    )}
+
+                    {/* Calendar not shared with Service Account */}
+                    {cmErrorCode === "calendar_not_found" && !cmApiDisabledUrl && (
+                      <div className="rounded-lg border border-sky-400/20 bg-sky-400/[0.05] px-3 py-3 space-y-2">
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-sky-400">Como resolver — 3 passos</p>
+                        <ol className="space-y-2 text-xs text-slate-300 leading-relaxed list-none">
+                          <li className="flex items-start gap-2">
+                            <span className="mt-0.5 flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full border border-sky-400/40 text-[9px] font-bold text-sky-400">1</span>
+                            Abra o <strong>Google Calendar</strong> com a conta <strong>geral@clyon.pt</strong>
+                          </li>
+                          <li className="flex items-start gap-2">
+                            <span className="mt-0.5 flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full border border-sky-400/40 text-[9px] font-bold text-sky-400">2</span>
+                            Clique nos <strong>3 pontos</strong> ao lado de <em>Organização CLYON</em> &rarr; <strong>Definições e partilha</strong>
+                          </li>
+                          <li className="flex items-start gap-2">
+                            <span className="mt-0.5 flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full border border-sky-400/40 text-[9px] font-bold text-sky-400">3</span>
+                            Em <strong>Partilhado com pessoas específicas</strong> adicione o email da Service Account com permissão <em>Fazer alterações nos eventos</em>
+                          </li>
+                        </ol>
+                        <a
+                          href="https://calendar.google.com/calendar/r/settings"
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-flex items-center gap-1.5 rounded-lg border border-sky-400/30 bg-sky-400/10 px-3 py-1.5 text-xs font-bold text-sky-300 transition hover:bg-sky-400/20"
+                        >
+                          <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                          </svg>
+                          Abrir definições do Google Calendar
+                        </a>
                       </div>
                     )}
                   </div>
