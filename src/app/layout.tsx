@@ -241,7 +241,7 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteSchema) }}
         />
       </head>
-      <body className="site-aqua-shell min-h-screen bg-white text-slate-900 antialiased">
+      <body className="site-aqua-shell min-h-screen bg-white text-slate-900 antialiased overflow-x-hidden">
         <Script
           id="gtag-src"
           strategy="lazyOnload"

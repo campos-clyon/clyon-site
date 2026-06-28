@@ -449,30 +449,30 @@ export default function SimulatorThreePhaseForm() {
     <div className="min-h-screen bg-gradient-to-br from-[#F7FBFF] to-white py-6 px-4">
       <div className="max-w-7xl mx-auto">
         {/* Progress Indicator */}
-        <div className="flex items-center justify-center gap-3 mb-10">
+        <div className="flex items-center justify-center gap-1 sm:gap-3 mb-10 w-full overflow-hidden">
           {PHASES.map((phaseName, idx) => {
             const phaseNum = idx + 1;
             const isActive = phaseNum === phase;
             const isCompleted = phaseNum < phase || (phaseNum === 1 && isPhase1Valid()) || (phaseNum === 2 && isPhase2Valid()) || (phaseNum === 3 && isPhase3Valid());
 
             return (
-              <div key={phaseNum} className="flex items-center">
-                <div
-                  className={`w-12 h-12 rounded-full flex items-center justify-center font-semibold transition-colors ${
-                    isActive
-                      ? "bg-cyan-600 text-white"
-                      : isCompleted
-                        ? "bg-green-600 text-white"
-                        : "bg-gray-200 text-gray-600"
-                  }`}
-                >
-                  {isCompleted && phaseNum < phase ? "✓" : phaseNum}
-                </div>
-                <div className="mx-2 text-center">
-                  <p className="text-sm text-gray-600">{phaseName}</p>
+              <div key={phaseNum} className="flex items-center min-w-0 shrink">
+                <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 shrink">
+                  <div
+                    className={`w-8 h-8 sm:w-12 sm:h-12 rounded-full flex items-center justify-center font-semibold text-sm sm:text-base transition-colors shrink-0 ${
+                      isActive
+                        ? "bg-cyan-600 text-white"
+                        : isCompleted
+                          ? "bg-green-600 text-white"
+                          : "bg-gray-200 text-gray-600"
+                    }`}
+                  >
+                    {isCompleted && phaseNum < phase ? "✓" : phaseNum}
+                  </div>
+                  <p className="text-xs sm:text-sm text-gray-600 leading-tight break-words min-w-0">{phaseName}</p>
                 </div>
                 {idx < PHASES.length - 1 && (
-                  <div className={`w-12 h-1 ${isCompleted ? "bg-green-600" : "bg-gray-300"}`} />
+                  <div className={`w-4 sm:w-12 h-1 mx-1 sm:mx-2 shrink-0 ${isCompleted ? "bg-green-600" : "bg-gray-300"}`} />
                 )}
               </div>
             );
