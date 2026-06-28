@@ -199,10 +199,22 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   // "primary" does NOT work with Service Accounts — it resolves to the SA's own
   // inbox calendar, not the organisation calendar. Always fall back to the known
   // CLYON calendar ID so the error is explicit if the env var is missing.
-  const calendarTargetId   = process.env.CLYON_GOOGLE_CALENDAR_ID?.trim()   || "geral@clyon.pt";
-  const calendarTargetName = process.env.CLYON_GOOGLE_CALENDAR_NAME?.trim() || "Agenda Organização CLYON";
+  // Strip quotes, whitespace, and any invisible characters that Vercel env var
+  // storage sometimes adds when the value is copy-pasted.
+  const rawCalId = process.env.CLYON_GOOGLE_CALENDAR_ID ?? "";
+  const calendarTargetId =
+    rawCalId
+      .trim()
+      .replace(/^["'`]|["'`]$/g, "")  // strip surrounding quotes
+      .replace(/\r|\n/g, "")           // strip newlines
+    || "geral@clyon.pt";               // hard fallback
 
-  console.log("[calendar] Using calendarId:", calendarTargetId);
+  const calendarTargetName =
+    (process.env.CLYON_GOOGLE_CALENDAR_NAME?.trim()) || "Agenda Organização CLYON";
+
+  console.log("[calendar] rawCalId repr:", JSON.stringify(rawCalId));
+  console.log("[calendar] calendarTargetId:", calendarTargetId);
+  console.log("[calendar] calendarTargetId length:", calendarTargetId.length);
   const timeZone           = "Europe/Lisbon";
 
   let gcalEventId: string;
@@ -337,9 +349,10 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
       // 404 notFound — wrong calendarId or SA not shared on the calendar
       if (apiErr?.code === 404 || lc.includes("notfound") || lc.includes("not found")) {
+        const saEmail = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL?.trim() ?? "email da Service Account";
         return NextResponse.json(
           {
-            error: `Agenda "${calendarTargetId}" não encontrada ou não partilhada com a Service Account. Nas definições da agenda Google Calendar > "Partilhado com" adicione "${process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL?.trim() ?? "email da Service Account"}" com permissão "Fazer alterações nos eventos".`,
+            error: `Agenda não encontrada: ID="${calendarTargetId}" (len=${calendarTargetId.length}). Certifique-se que "${saEmail}" tem permissão "Fazer alterações nos eventos" na agenda.`,
             errorCode: "calendar_not_found",
           },
           { status: 404 }
