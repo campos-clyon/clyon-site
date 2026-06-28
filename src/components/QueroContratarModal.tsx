@@ -265,7 +265,7 @@ export default function QueroContratarModal({ open, onClose }: Props) {
       role="dialog"
       aria-modal="true"
       aria-labelledby="modal-title"
-      className="fixed inset-0 z-[9999] flex items-center justify-center overflow-y-auto p-4"
+      className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
       onClick={handleOverlayClick}
     >
       {/* Overlay */}
@@ -274,7 +274,7 @@ export default function QueroContratarModal({ open, onClose }: Props) {
       {/* Dialog */}
       <div
         ref={dialogRef}
-        className="relative z-10 w-full max-w-lg rounded-3xl bg-white shadow-2xl sm:max-h-[90dvh] sm:overflow-y-auto"
+        className="relative z-10 w-full max-w-lg max-h-[90dvh] overflow-y-auto rounded-3xl bg-white shadow-2xl"
       >
         {/* Barra de topo compacta — só botão fechar */}
         <div className="sticky top-0 z-10 flex items-center justify-between rounded-t-3xl bg-white px-5 pt-5 pb-3 border-b border-slate-100">
@@ -505,7 +505,6 @@ export default function QueroContratarModal({ open, onClose }: Props) {
                     type="file"
                     accept="image/*"
                     multiple
-                    capture={undefined}
                     className="hidden"
                     onChange={handleFotos}
                   />
