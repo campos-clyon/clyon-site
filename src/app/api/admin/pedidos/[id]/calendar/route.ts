@@ -196,25 +196,21 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
   // ── Google Calendar API ───────────────────────────────────────────────────
 
-  // "primary" does NOT work with Service Accounts — it resolves to the SA's own
-  // inbox calendar, not the organisation calendar. Always fall back to the known
-  // CLYON calendar ID so the error is explicit if the env var is missing.
-  // Strip quotes, whitespace, and any invisible characters that Vercel env var
-  // storage sometimes adds when the value is copy-pasted.
-  const rawCalId = process.env.CLYON_GOOGLE_CALENDAR_ID ?? "";
-  const calendarTargetId =
-    rawCalId
+  // Resolve calendarId — guard against placeholder values like "<id real...>"
+  const calendarTargetId = (() => {
+    const raw = (process.env.CLYON_GOOGLE_CALENDAR_ID ?? "")
       .trim()
-      .replace(/^["'`]|["'`]$/g, "")  // strip surrounding quotes
-      .replace(/\r|\n/g, "")           // strip newlines
-    || "geral@clyon.pt";               // hard fallback
+      .replace(/^["'`]|["'`]$/g, "") // strip surrounding quotes
+      .replace(/\r|\n/g, "");         // strip newlines
+    // Reject placeholders (contain < or >) or empty string
+    if (!raw || raw.includes("<") || raw.includes(">")) {
+      return "geral@clyon.pt"; // confirmed real ID from Google Calendar settings
+    }
+    return raw;
+  })();
 
   const calendarTargetName =
     (process.env.CLYON_GOOGLE_CALENDAR_NAME?.trim()) || "Agenda Organização CLYON";
-
-  console.log("[calendar] rawCalId repr:", JSON.stringify(rawCalId));
-  console.log("[calendar] calendarTargetId:", calendarTargetId);
-  console.log("[calendar] calendarTargetId length:", calendarTargetId.length);
   const timeZone           = "Europe/Lisbon";
 
   let gcalEventId: string;
