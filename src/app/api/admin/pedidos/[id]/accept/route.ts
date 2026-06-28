@@ -3,6 +3,7 @@ import {
   getSimulatorOrderById,
   updateSimulatorOrder,
   appendOrderHistory,
+  getColaboradorById,
 } from "@/lib/db";
 import { verifyColaboradorAuthHeader } from "@/lib/colaborador-auth";
 
@@ -11,35 +12,42 @@ export const runtime = "nodejs";
 /**
  * POST /api/admin/pedidos/[id]/accept
  *
- * Permite a uma assistente aceitar um pedido da fila geral.
+ * Permite a uma assistente aceitar um pedido da fila geral (assignedToId IS NULL).
  * Regras:
- *   - Apenas assistentes activas com canReceiveSimulatorRequests=1 podem aceitar.
- *   - O pedido tem de estar sem assistente (assignedToId IS NULL) e com status
- *     "sem_assistente", "pendente" ou "novo".
- *   - Admin geral (isAdmin=1) pode forçar a aceitação (reatribuição) sem restrições.
- *   - Se outro assistente já aceitou, devolve erro amigável.
+ *   - JWT válido obrigatório.
+ *   - Colaborador tem de ser assistente com active=1 e canReceiveSimulatorRequests=1.
+ *   - O pedido deve estar sem assistente ou já atribuído ao mesmo colaborador.
+ *   - Admin geral (isAdmin=1) pode forçar sem verificar canReceiveSimulatorRequests.
+ *   - Se outro assistente já aceitou, devolve 409 com mensagem amigável.
  */
 export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const colab = await verifyColaboradorAuthHeader(req.headers.get("authorization"));
-  if (!colab) {
+  const jwt = await verifyColaboradorAuthHeader(req.headers.get("authorization"));
+  if (!jwt) {
     return NextResponse.json({ ok: false, message: "Não autorizado." }, { status: 401 });
   }
 
   const { id } = await params;
   const orderId = Number(id);
 
-  const order = await getSimulatorOrderById(orderId);
+  const [order, colab] = await Promise.all([
+    getSimulatorOrderById(orderId),
+    getColaboradorById(jwt.id),
+  ]);
+
   if (!order) {
     return NextResponse.json({ ok: false, message: "Pedido não encontrado." }, { status: 404 });
+  }
+  if (!colab) {
+    return NextResponse.json({ ok: false, message: "Colaborador não encontrado." }, { status: 404 });
   }
 
   const isAdmin = colab.isAdmin === 1;
   const isAssistente = colab.funcao === "assistente";
 
-  // Permissão: admin geral passa sempre; assistente precisa de canReceiveSimulatorRequests=1 e active=1
+  // Permission checks for non-admins
   if (!isAdmin) {
     if (!isAssistente) {
       return NextResponse.json(
@@ -47,13 +55,13 @@ export async function POST(
         { status: 403 }
       );
     }
-    if (!colab.active) {
+    if (!colab.active || colab.active === 0) {
       return NextResponse.json(
         { ok: false, message: "A sua conta está inativa." },
         { status: 403 }
       );
     }
-    if (!colab.canReceiveSimulatorRequests) {
+    if (!colab.canReceiveSimulatorRequests || colab.canReceiveSimulatorRequests === 0) {
       return NextResponse.json(
         { ok: false, message: "Não tem permissão para aceitar pedidos do simulador." },
         { status: 403 }
@@ -61,7 +69,7 @@ export async function POST(
     }
   }
 
-  // Verificar se o pedido já foi aceite por outra pessoa
+  // Already claimed by someone else?
   if (order.assignedToId && order.assignedToId !== colab.id) {
     return NextResponse.json(
       {
@@ -72,7 +80,7 @@ export async function POST(
     );
   }
 
-  // Verificar se o pedido está num estado aceitável
+  // Status guard — only accept "open" orders unless admin
   const acceptableStatuses = ["sem_assistente", "pendente", "novo"];
   if (!acceptableStatuses.includes(order.status) && !isAdmin) {
     return NextResponse.json(
@@ -84,11 +92,10 @@ export async function POST(
     );
   }
 
-  // Aceitar o pedido
   await updateSimulatorOrder(orderId, {
     assignedToId: colab.id,
     assignedToName: colab.nome,
-    assignedAt: new Date().toISOString() as unknown as null, // cast para o tipo do update
+    assignedAt: new Date().toISOString() as unknown as null,
     status: "atribuido",
     acceptedAt: new Date() as unknown as null,
   } as Parameters<typeof updateSimulatorOrder>[1]);

@@ -286,6 +286,13 @@ export async function getColaboradorByNome(nome: string) {
   return result[0] ?? undefined;
 }
 
+export async function getColaboradorById(id: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select().from(colaboradores).where(eq(colaboradores.id, id)).limit(1);
+  return result[0] ?? undefined;
+}
+
 /**
  * Garante que a coluna funcao da tabela colaboradores aceita o valor 'assistente'.
  * Seguro para correr múltiplas vezes — falha silenciosamente se o enum já existir.
@@ -1264,4 +1271,4 @@ export function canManageUsers(user: { isAdmin: number }): boolean {
   return !!user.isAdmin;
 }
 
-// ─── SimulatorOrders END ──────────────────────────────────────────────────────
+// ─── SimulatorOrders END ───────────────────────────────────────���──────────────
