@@ -1,6 +1,6 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import type { NextRequest } from "next/server";
-import type { OrderData, EstimateResult } from "../../../simulador/types";
+import type { OrderData, EstimateResult, ExternalMarketEstimate, AnalysisSource } from "../../../simulador/types";
 import {
   getActivePricingRulesForGemini,
   createPricingSnapshot,
@@ -9,6 +9,174 @@ import {
 
 // Gemini abortado após este tempo — cliente nunca fica preso
 const GEMINI_TIMEOUT_MS = 4000;
+// Pesquisa externa — timeout maior (grounding é mais lenta)
+const GROUNDING_TIMEOUT_MS = 8000;
+
+// ── Decidir se precisamos de pesquisa externa ─────────────────────────────────
+function needsExternalSearch(analysis: EstimateResult): boolean {
+  if (analysis.status === "onsite_required") return true;
+  if (analysis.confidence === "low") return true;
+  if (!analysis.estimatedPriceWithoutVat) return true;
+  // missingFields críticos que indicam que o preçário não chegou
+  const critical = ["serviceType", "city", "description", "zona"];
+  const hasCritical = analysis.missingFields?.some((f) =>
+    critical.some((c) => f.toLowerCase().includes(c))
+  );
+  if (hasCritical) return true;
+  // Gemini não conseguiu calcular preço mas status é "estimated" (valor 0 ou nulo)
+  if (
+    analysis.status === "estimated" &&
+    (analysis.estimatedPriceWithoutVat === 0 || analysis.estimatedPriceWithoutVat === null)
+  )
+    return true;
+  return false;
+}
+
+// ── Construir query de pesquisa — SEM dados pessoais ─────────────────────────
+function buildSearchQuery(order: OrderData): string {
+  const serviceMap: Record<string, string> = {
+    recolha_moveis: "recolha de móveis",
+    recolha_monos: "recolha de monos volumosos",
+    recolha_entulho: "recolha de entulho",
+    esvaziamento_casa: "esvaziamento de casa",
+    esvaziamento_apartamento: "esvaziamento de apartamento",
+    mudanca: "mudança de casa",
+    outro: "serviço de transporte",
+  };
+  const service = serviceMap[order.serviceType ?? ""] ?? "serviço de transporte";
+  // Usar apenas cidade/localidade genérica, nunca morada completa, nome, telefone ou email
+  const city = order.address?.city ?? order.city ?? "Lisboa";
+  const safeCity = city.split(",")[0].split(" ").slice(0, 2).join(" "); // "Lisboa" ou "Setúbal"
+
+  let q = `preço ${service} ${safeCity} Portugal`;
+
+  if (order.serviceType === "recolha_entulho" && order.entulhoQuantidade) {
+    q = `preço recolha entulho sacos ${safeCity} Portugal`;
+  } else if (order.serviceType === "mudanca") {
+    q = `preço mudança pequena ${safeCity} Portugal empresa mudanças`;
+  } else if (order.serviceType === "esvaziamento_casa" || order.serviceType === "esvaziamento_apartamento") {
+    q = `preço esvaziamento apartamento ${safeCity} Portugal`;
+  }
+
+  return q;
+}
+
+// ── Pesquisa externa com Gemini + Google Search grounding ────────────────────
+async function getExternalMarketEstimate(
+  order: OrderData,
+  apiKey: string,
+  modelName: string
+): Promise<ExternalMarketEstimate | null> {
+  const searchQuery = buildSearchQuery(order);
+  const serviceLabel = order.serviceType ?? "serviço não especificado";
+
+  const prompt = `Você é um analista interno da empresa CLYON em Portugal.
+
+TAREFA: Pesquisa referências de mercado para o seguinte serviço, usando apenas termos genéricos sem dados pessoais.
+
+Serviço: ${serviceLabel}
+Query de pesquisa: ${searchQuery}
+
+INSTRUÇÕES IMPORTANTES:
+1. Esta pesquisa é apenas referência interna para a equipa CLYON. Não substitui o preçário oficial CLYON.
+2. Procura referências de preços de mercado para serviços semelhantes em Portugal, preferencialmente Grande Lisboa / Setúbal.
+3. Considera empresas de recolha de móveis, recolha de entulho, mudanças, esvaziamento de casas e transporte de volumosos.
+4. Devolve um intervalo estimado e explica a lógica.
+5. Inclui fontes consultadas quando disponíveis.
+6. Não uses dados pessoais do cliente na pesquisa.
+7. Se não houver fonte fiável, usa confidence low.
+
+Retorna APENAS um JSON válido com este formato exato:
+{
+  "minWithoutVat": número ou null,
+  "maxWithoutVat": número ou null,
+  "suggestedWithoutVat": número ou null,
+  "confidence": "high" | "medium" | "low",
+  "reasoning": "string com explicação do raciocínio e fontes",
+  "sources": [
+    { "title": "string", "url": "string", "snippet": "string opcional" }
+  ]
+}
+
+Se não encontrares informação suficiente, devolve null para os valores numéricos e confidence "low".
+Retorna APENAS o JSON sem texto adicional.`;
+
+  try {
+    const client = new GoogleGenerativeAI(apiKey);
+    // gemini-1.5-flash suporta googleSearchRetrieval grounding
+    const groundingModel = client.getGenerativeModel({
+      model: "gemini-1.5-flash",
+      tools: [{ googleSearchRetrieval: { dynamicRetrievalConfig: { dynamicThreshold: 0.3 } } }],
+    });
+
+    const groundingResult = await Promise.race([
+      groundingModel.generateContent(prompt),
+      new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error("GROUNDING_TIMEOUT")), GROUNDING_TIMEOUT_MS)
+      ),
+    ]);
+
+    const resp = (groundingResult as Awaited<ReturnType<typeof groundingModel.generateContent>>).response;
+    const text = resp.text();
+    const groundingMeta = resp.candidates?.[0]?.groundingMetadata;
+
+    // Parse JSON da resposta
+    let jsonStr = text.trim();
+    if (jsonStr.startsWith("```json")) jsonStr = jsonStr.slice(7);
+    if (jsonStr.startsWith("```")) jsonStr = jsonStr.slice(3);
+    if (jsonStr.endsWith("```")) jsonStr = jsonStr.slice(0, -3);
+
+    const parsed = JSON.parse(jsonStr.trim());
+
+    // Extrair fontes do grounding metadata (mais fiável que o que o Gemini inventar)
+    const groundingSources = (groundingMeta?.groundingChunks ?? [])
+      .filter((c: any) => c.web?.uri)
+      .map((c: any) => ({
+        title: c.web.title ?? c.web.uri,
+        url: c.web.uri,
+      }))
+      .slice(0, 5); // máximo 5 fontes
+
+    // Fundir fontes do grounding com as que o Gemini declarou (sem duplicados)
+    const allUrls = new Set(groundingSources.map((s: any) => s.url));
+    const geminiSources = (Array.isArray(parsed.sources) ? parsed.sources : []).filter(
+      (s: any) => s.url && !allUrls.has(s.url)
+    );
+    const sources = [...groundingSources, ...geminiSources].slice(0, 5);
+
+    return {
+      minWithoutVat: typeof parsed.minWithoutVat === "number" ? parsed.minWithoutVat : null,
+      maxWithoutVat: typeof parsed.maxWithoutVat === "number" ? parsed.maxWithoutVat : null,
+      suggestedWithoutVat: typeof parsed.suggestedWithoutVat === "number" ? parsed.suggestedWithoutVat : null,
+      confidence: (["high", "medium", "low"].includes(parsed.confidence) ? parsed.confidence : "low") as "high" | "medium" | "low",
+      reasoning: typeof parsed.reasoning === "string" ? parsed.reasoning : "Pesquisa externa realizada.",
+      sources,
+      searchedAt: new Date().toISOString(),
+    };
+  } catch (err) {
+    const isTimeout = err instanceof Error && err.message === "GROUNDING_TIMEOUT";
+    console.error("[v0] getExternalMarketEstimate:", isTimeout ? "timeout" : "erro", err);
+    return null;
+  }
+}
+
+// ── Determinar analysisSource final ──────────────────────────────────────────
+function resolveAnalysisSource(
+  baseSource: AnalysisSource,
+  externalEstimate: ExternalMarketEstimate | null,
+  analysis: EstimateResult
+): AnalysisSource {
+  if (!externalEstimate) {
+    // Sem pesquisa externa — fonte é o preçário CLYON (via Gemini ou local)
+    if (baseSource === "gemini" || baseSource === "clyon_pricing") return "clyon_pricing";
+    if (analysis.status === "onsite_required" || analysis.confidence === "low")
+      return "needs_human_review";
+    return baseSource;
+  }
+  // Com pesquisa externa
+  if (analysis.estimatedPriceWithoutVat) return "clyon_pricing_plus_web_reference";
+  return "web_reference_only";
+}
 
 export async function POST(req: NextRequest) {
   let order: OrderData;
@@ -23,7 +191,6 @@ export async function POST(req: NextRequest) {
   const fastEstimate = await calculateFastEstimate(order as never);
 
   // ── 2. Remover ficheiros pesados antes de enviar ao Gemini ───────────────
-  // Apenas metadados, nunca base64 ou blobs (evita timeout por payload enorme)
   const orderForGemini: OrderData = {
     ...order,
     files: order.files?.map((f) => ({
@@ -32,24 +199,28 @@ export async function POST(req: NextRequest) {
       size: f.size,
       type: f.type,
       mimeType: f.mimeType,
-      // base64 e previewUrl excluídos propositadamente
     })) ?? [],
   };
 
-  // ── 3. Chamar Gemini com timeout rígido de 4s ────────────────────────────
   const apiKey = process.env.GEMINI_API_KEY;
-  const modelName = process.env.GEMINI_MODEL || "gemini-2.0-flash";
 
   if (!apiKey) {
-    // Sem chave → devolver estimativa local imediatamente
     return Response.json({
       ...fastEstimate,
+      analysisSource: "clyon_pricing" as AnalysisSource,
+      confidence: "medium" as const,
       internalNotes: [
         ...fastEstimate.internalNotes,
         "GEMINI_API_KEY não configurada — usada estimativa local.",
       ],
-    });
+    } satisfies EstimateResult);
   }
+
+  const modelName = process.env.GEMINI_MODEL || "gemini-2.0-flash";
+
+  // ── 3. Chamar Gemini com timeout rígido ──────────────────────────────────
+  let analysis: EstimateResult;
+  let baseSource: AnalysisSource = "clyon_pricing";
 
   try {
     const pricingRules = await getActivePricingRulesForGemini();
@@ -60,7 +231,6 @@ export async function POST(req: NextRequest) {
     const client = new GoogleGenerativeAI(apiKey);
     const model = client.getGenerativeModel({ model: modelName });
 
-    // Race: Gemini vs timeout
     const geminiResult = await Promise.race([
       model.generateContent(prompt),
       new Promise<never>((_, reject) =>
@@ -69,39 +239,88 @@ export async function POST(req: NextRequest) {
     ]);
 
     const responseText = (geminiResult as Awaited<ReturnType<typeof model.generateContent>>).response.text();
-    const analysis = parseGeminiResponse(responseText);
+    analysis = parseGeminiResponse(responseText);
+    baseSource = "clyon_pricing";
 
-    return Response.json({
+    analysis = {
       ...analysis,
-      analysisSource: "gemini" as const,
       internalNotes: [
         ...(analysis.internalNotes || []),
         `Preçário usado: ${pricingSnapshot?.timestamp || "default"}`,
       ],
       _pricingSnapshot: pricingSnapshot ?? undefined,
-    } satisfies EstimateResult);
-
+    };
   } catch (error) {
     const isTimeout = error instanceof Error && error.message === "GEMINI_TIMEOUT";
     console.error(
       "[v0] /api/simulator/analyze:",
-      isTimeout ? "⏱ Gemini timeout — usando estimativa local" : "❌ Erro Gemini",
+      isTimeout ? "Gemini timeout — usando estimativa local" : "Erro Gemini",
       isTimeout ? "" : error
     );
-
-    // Fallback: devolver estimativa local com nota interna
-    return Response.json({
+    analysis = {
       ...fastEstimate,
-      analysisSource: "timeout_fallback" as const,
       internalNotes: [
         ...fastEstimate.internalNotes,
         isTimeout
-          ? `Gemini não respondeu em ${GEMINI_TIMEOUT_MS}ms. Foi usada estimativa rápida local.`
-          : `Erro Gemini: ${error instanceof Error ? error.message : String(error)}. Foi usada estimativa rápida local.`,
+          ? `Gemini não respondeu em ${GEMINI_TIMEOUT_MS}ms. Estimativa rápida local usada.`
+          : `Erro Gemini: ${error instanceof Error ? error.message : String(error)}. Estimativa rápida local usada.`,
       ],
-    });
+    };
+    baseSource = isTimeout ? "timeout_fallback" : "local_fast_estimate";
   }
+
+  // ── 4. Pesquisa externa se necessário ────────────────────────────────────
+  let externalMarketEstimate: ExternalMarketEstimate | null = null;
+
+  if (needsExternalSearch(analysis)) {
+    externalMarketEstimate = await getExternalMarketEstimate(order, apiKey, modelName);
+    if (externalMarketEstimate) {
+      analysis = {
+        ...analysis,
+        internalNotes: [
+          ...(analysis.internalNotes ?? []),
+          `Pesquisa de mercado externa realizada (${externalMarketEstimate.sources.length} fonte(s)). Confiança: ${externalMarketEstimate.confidence}.`,
+        ],
+      };
+    }
+  }
+
+  // ── 5. Determinar fonte e confiança finais ────────────────────────────────
+  const analysisSource = resolveAnalysisSource(baseSource, externalMarketEstimate, analysis);
+
+  // Confiança: propagar o que o Gemini definiu, ou inferir
+  let confidence: "high" | "medium" | "low" = analysis.confidence ?? "medium";
+  if (analysis.status === "onsite_required" || analysis.status === "needs_more_info") {
+    confidence = "low";
+  } else if (analysis.estimatedPriceWithoutVat && analysis.missingFields?.length === 0) {
+    confidence = "high";
+  }
+
+  // ── 6. Mensagem ao cliente — nunca expor referência externa ──────────────
+  let customerMessage = analysis.customerMessage;
+  if (
+    analysisSource === "web_reference_only" ||
+    analysisSource === "needs_human_review" ||
+    confidence === "low"
+  ) {
+    customerMessage =
+      "Pedido recebido para análise. A equipa CLYON irá confirmar os dados e entrar em contacto em breve.";
+  }
+
+  // ── 7. Compor resposta final ──────────────────────────────────────────────
+  const result: EstimateResult = {
+    ...analysis,
+    analysisSource,
+    confidence,
+    customerMessage,
+    // Incluir referência externa APENAS quando existir — backoffice lê este campo
+    ...(externalMarketEstimate ? { externalMarketEstimate } : {}),
+  };
+
+  return Response.json(result);
 }
+
+// ─── Helpers ────────────────────────────────────────────────────────────────
 
 function formatOrderDataForPrompt(order: OrderData): string {
   const lines = [
@@ -111,7 +330,6 @@ function formatOrderDataForPrompt(order: OrderData): string {
     `Descrição: ${order.description || "(não fornecida)"}`,
   ];
 
-  // Adicionar campos específicos de entulho se aplicável
   if (order.serviceType === "recolha_entulho") {
     lines.push(
       "",
@@ -130,7 +348,6 @@ function formatOrderDataForPrompt(order: OrderData): string {
   }
 
   if (order.serviceType === "mudanca") {
-    // Mudança: dois endereços + acesso separado
     const elevLabel = (v?: string) =>
       v === "yes" ? "Sim, funciona" : v === "small" ? "Sim, pequeno" : v === "no" ? "Não tem" : "(não especificado)";
     const parkLabel = (v?: string) =>
@@ -205,6 +422,7 @@ Sua tarefa é analisar o pedido abaixo e retornar APENAS um JSON válido com os 
   "vatAmount": número ou null,
   "estimatedPriceWithVat": número ou null,
   "difficultyLevel": 1-5,
+  "confidence": "high" | "medium" | "low",
   "summary": "string com resumo da análise",
   "assumptions": ["array", "de", "pressupostos"],
   "missingFields": ["array", "de", "campos faltantes"],
@@ -241,9 +459,10 @@ INSTRUÇÕES CRÍTICAS
    - Se faltar morada de origem OU de destino → "needs_more_info"
 4. Se falta quantidade de sacos ou estado do entulho → "needs_more_info"
 5. Se falta zona/localidade → "needs_more_info"
-6. Se não conseguir calcular com segurança → "onsite_required"
-6. IVA sempre é 23% (0.23x)
-7. Validar que os valores fazem sentido no contexto (ex: 100 sacos de entulho)
+6. Se não conseguir calcular com segurança → "onsite_required" com confidence "low"
+7. IVA sempre é 23% (0.23x)
+8. Valida que os valores fazem sentido no contexto
+9. Define sempre o campo "confidence": "high" se preçário cobre bem, "medium" se há incerteza, "low" se não consegues calcular
 
 Analise o pedido abaixo e retorne APENAS o JSON sem qualquer texto adicional:
 
@@ -252,7 +471,6 @@ ${formattedData}`;
 
 function parseGeminiResponse(response: string): EstimateResult {
   try {
-    // Limpar possível markdown code blocks
     let jsonStr = response.trim();
     if (jsonStr.startsWith("```json")) jsonStr = jsonStr.slice(7);
     if (jsonStr.startsWith("```")) jsonStr = jsonStr.slice(3);
@@ -260,10 +478,8 @@ function parseGeminiResponse(response: string): EstimateResult {
 
     const parsed = JSON.parse(jsonStr.trim());
 
-    // Validar e retornar com defaults
     const diffLevel = Math.max(1, Math.min(5, parsed.difficultyLevel || 2)) as 1 | 2 | 3 | 4 | 5;
 
-    // Extrair e validar campo labor — se o Gemini o devolver, usar; caso contrário calcular localmente
     let labor = undefined;
     if (parsed.labor && typeof parsed.labor.estimatedHours === "number") {
       const hrs = Math.max(1, parsed.labor.estimatedHours);
@@ -275,12 +491,17 @@ function parseGeminiResponse(response: string): EstimateResult {
       };
     }
 
+    const confidence = (["high", "medium", "low"].includes(parsed.confidence)
+      ? parsed.confidence
+      : "medium") as "high" | "medium" | "low";
+
     return {
       status: parsed.status || "estimated",
       estimatedPriceWithoutVat: parsed.estimatedPriceWithoutVat ?? null,
       vatAmount: parsed.vatAmount ?? null,
       estimatedPriceWithVat: parsed.estimatedPriceWithVat ?? null,
       difficultyLevel: diffLevel,
+      confidence,
       summary: parsed.summary || "Análise com base nos dados fornecidos",
       assumptions: Array.isArray(parsed.assumptions) ? parsed.assumptions : [],
       missingFields: Array.isArray(parsed.missingFields) ? parsed.missingFields : [],
@@ -289,8 +510,7 @@ function parseGeminiResponse(response: string): EstimateResult {
       labor,
     };
   } catch (error) {
-    console.error("[v0] parseGeminiResponse: ❌ Erro ao parse JSON", error);
-    // Fallback se Gemini não retornar JSON válido
+    console.error("[v0] parseGeminiResponse: Erro ao parse JSON", error);
     const diffLevel: 1 | 2 | 3 | 4 | 5 = 2;
     return {
       status: "needs_more_info",
@@ -298,6 +518,7 @@ function parseGeminiResponse(response: string): EstimateResult {
       vatAmount: null,
       estimatedPriceWithVat: null,
       difficultyLevel: diffLevel,
+      confidence: "low",
       summary: "Análise incompleta. Por favor, forneça mais informações.",
       assumptions: [],
       missingFields: ["Dados incompletos para análise precisa"],

@@ -181,6 +181,13 @@ export interface SimulatorOrder {
   calendarStatus?: "not_scheduled" | "scheduled" | "updated" | null;
   /** Notes included in the calendar event */
   calendarNotes?: string | null;
+  /**
+   * Extended analysis JSON — stores clyonEstimate, externalMarketEstimate,
+   * analysisSource, confidence, and pricingRulesSnapshot.
+   * Serialised as JSON string in the DB column analysisJsonExtended.
+   * ONLY for backoffice use — never sent to the client.
+   */
+  analysisJsonExtended?: string | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -227,4 +234,5 @@ export interface InsertSimulatorOrder {
   calendarEventUrl?: string | null;
   calendarStatus?: string | null;
   calendarNotes?: string | null;
+  analysisJsonExtended?: string | null;
 }

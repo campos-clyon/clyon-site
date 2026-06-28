@@ -62,6 +62,7 @@ export type PedidoOrder = {
   calendarEventUrl?: string | null;
   calendarStatus?: "not_scheduled" | "scheduled" | "updated" | null;
   calendarNotes?: string | null;
+  analysisJsonExtended?: string | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -1196,6 +1197,128 @@ export default function PedidoDetailModal({ id, token, isAdmin, colabId, colabFu
                         </div>
                       </div>
                     )}
+                    {/* ── Referência externa de mercado — apenas backoffice ── */}
+                    {(() => {
+                      if (!order.analysisJsonExtended) return null;
+                      let ext: { externalMarketEstimate?: any; analysisSource?: string; confidence?: string } | null = null;
+                      try { ext = JSON.parse(order.analysisJsonExtended); } catch { return null; }
+                      const eme = ext?.externalMarketEstimate;
+                      if (!eme) return null;
+                      const fmtVal = (v: number | null | undefined) =>
+                        v != null ? `${v.toFixed(2).replace(".", ",")}€` : "—";
+                      const confLabel: Record<string, string> = { high: "Alta", medium: "Média", low: "Baixa" };
+                      const confColor: Record<string, string> = {
+                        high: "text-emerald-400 border-emerald-400/30 bg-emerald-400/10",
+                        medium: "text-amber-400 border-amber-400/30 bg-amber-400/10",
+                        low: "text-red-400 border-red-400/30 bg-red-400/10",
+                      };
+                      const confCls = confColor[eme.confidence ?? "low"] ?? confColor.low;
+                      const srcLabel: Record<string, string> = {
+                        clyon_pricing: "Preçário CLYON",
+                        clyon_pricing_plus_web_reference: "Preçário CLYON + referência web",
+                        web_reference_only: "Referência web (sem preçário)",
+                        needs_human_review: "Requer revisão humana",
+                      };
+                      const searchedAt = eme.searchedAt
+                        ? new Date(eme.searchedAt).toLocaleString("pt-PT", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" })
+                        : null;
+                      return (
+                        <div className="rounded-[24px] border border-amber-400/20 bg-amber-400/[0.03] p-5 space-y-4">
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-bold uppercase tracking-wider text-amber-400">
+                              Referencia externa de mercado
+                            </span>
+                            <div className="flex items-center gap-2">
+                              {eme.confidence && (
+                                <span className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold ${confCls}`}>
+                                  Confiança {confLabel[eme.confidence] ?? eme.confidence}
+                                </span>
+                              )}
+                              <span className="rounded-full border border-amber-400/20 bg-amber-400/10 px-2 py-0.5 text-[10px] font-semibold text-amber-400">
+                                Interno
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Source badge */}
+                          {ext?.analysisSource && srcLabel[ext.analysisSource] && (
+                            <p className="text-[11px] text-slate-500">
+                              Fonte: <span className="text-slate-400">{srcLabel[ext.analysisSource]}</span>
+                            </p>
+                          )}
+
+                          {/* Price range */}
+                          <div className="grid grid-cols-3 gap-3">
+                            <div className="rounded-[16px] border border-amber-400/10 bg-amber-400/[0.04] p-3">
+                              <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-amber-700">Mínimo s/ IVA</p>
+                              <p className="mt-1 text-base font-bold text-amber-300">{fmtVal(eme.minWithoutVat)}</p>
+                            </div>
+                            <div className="rounded-[16px] border border-amber-400/10 bg-amber-400/[0.04] p-3">
+                              <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-amber-700">Máximo s/ IVA</p>
+                              <p className="mt-1 text-base font-bold text-amber-300">{fmtVal(eme.maxWithoutVat)}</p>
+                            </div>
+                            <div className="rounded-[16px] border border-amber-400/15 bg-amber-400/[0.07] p-3">
+                              <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-amber-600">Sugestão s/ IVA</p>
+                              <p className="mt-1 text-base font-bold text-amber-200">{fmtVal(eme.suggestedWithoutVat)}</p>
+                            </div>
+                          </div>
+
+                          {/* Reasoning */}
+                          {eme.reasoning && (
+                            <div>
+                              <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-amber-600">Raciocínio</p>
+                              <p className="text-xs leading-relaxed text-slate-400">{eme.reasoning}</p>
+                            </div>
+                          )}
+
+                          {/* Sources */}
+                          {Array.isArray(eme.sources) && eme.sources.length > 0 && (
+                            <div>
+                              <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-amber-600">
+                                Fontes consultadas ({eme.sources.length})
+                              </p>
+                              <ul className="space-y-1.5">
+                                {eme.sources.map((s: any, i: number) => (
+                                  <li key={i} className="flex items-start gap-2">
+                                    <span className="mt-1 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-amber-500" />
+                                    <div>
+                                      {s.url ? (
+                                        <a
+                                          href={s.url}
+                                          target="_blank"
+                                          rel="noreferrer"
+                                          className="text-xs font-medium text-amber-300 hover:text-amber-200 hover:underline"
+                                        >
+                                          {s.title || s.url}
+                                        </a>
+                                      ) : (
+                                        <span className="text-xs font-medium text-amber-300">{s.title}</span>
+                                      )}
+                                      {s.snippet && (
+                                        <p className="mt-0.5 text-[11px] text-slate-500">{s.snippet}</p>
+                                      )}
+                                    </div>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+
+                          {/* Timestamp */}
+                          {searchedAt && (
+                            <p className="text-[11px] text-slate-600">Pesquisa realizada em: {searchedAt}</p>
+                          )}
+
+                          {/* Disclaimer */}
+                          <div className="rounded-[12px] border border-amber-400/15 bg-amber-400/[0.04] px-4 py-2.5">
+                            <p className="text-[11px] leading-relaxed text-amber-700">
+                              Esta referencia e apenas apoio interno. O valor final deve ser confirmado pela equipa CLYON com base no precario oficial.
+                            </p>
+                          </div>
+                        </div>
+                      );
+                    })()}
+
                     {isAdmin && (
                       <div>
                         <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.15em] text-slate-500">Valores finais (editável pelo admin)</p>

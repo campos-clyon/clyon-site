@@ -102,7 +102,14 @@ export interface OrderData {
 export type EstimateStatus = "estimated" | "needs_more_info" | "onsite_required";
 export type DifficultyLevel = 1 | 2 | 3 | 4 | 5;
 
-export type AnalysisSource = "gemini" | "local_fast_estimate" | "timeout_fallback";
+export type AnalysisSource =
+  | "clyon_pricing"
+  | "clyon_pricing_plus_web_reference"
+  | "web_reference_only"
+  | "needs_human_review"
+  | "gemini"
+  | "local_fast_estimate"
+  | "timeout_fallback";
 
 /** Custo de mão de obra calculado segundo a regra CLYON */
 export interface LaborCost {
@@ -110,6 +117,27 @@ export interface LaborCost {
   peopleCount: 3;           // fixo
   hourlyRatePerPerson: 9;   // fixo — 9€/hora/pessoa
   laborCost: number;        // = estimatedHours × 3 × 9
+}
+
+/** Fonte de informação consultada na pesquisa externa */
+export interface ExternalSource {
+  title: string;
+  url: string;
+  snippet?: string;
+}
+
+/**
+ * Estimativa de referência obtida por pesquisa externa (web grounding via Gemini).
+ * Apenas para uso interno no backoffice — nunca exposta ao cliente.
+ */
+export interface ExternalMarketEstimate {
+  minWithoutVat: number | null;
+  maxWithoutVat: number | null;
+  suggestedWithoutVat: number | null;
+  reasoning: string;
+  sources: ExternalSource[];
+  searchedAt: string;
+  confidence: "high" | "medium" | "low";
 }
 
 export interface EstimateResult {
@@ -125,8 +153,15 @@ export interface EstimateResult {
   internalNotes: string[];
   /** Detalhes de mão de obra (sempre presente quando status = "estimated") */
   labor?: LaborCost;
-  // Metadata sobre a fonte da análise
+  /** Fonte da análise — preçário CLYON tem sempre prioridade */
   analysisSource?: AnalysisSource;
+  /** Confiança geral da análise */
+  confidence?: "high" | "medium" | "low";
+  /**
+   * Referência de mercado obtida por pesquisa externa.
+   * APENAS para uso interno (assistente/admin). Nunca mostrar ao cliente.
+   */
+  externalMarketEstimate?: ExternalMarketEstimate;
   _pricingSnapshot?: Record<string, unknown>;
 }
 

@@ -59,6 +59,28 @@ export async function POST(req: NextRequest) {
       estimateMax: estimate?.estimatedPriceWithVat?.toString() ?? null,
       estimateTotal: estimate?.estimatedPriceWithVat?.toString() ?? null,
       estimateJson: estimate ? JSON.stringify(estimate) : null,
+      // Guardar análise completa incluindo externalMarketEstimate, analysisSource e confidence
+      // Este campo é APENAS para uso interno no backoffice — nunca exposto ao cliente
+      analysisJsonExtended: estimate
+        ? JSON.stringify({
+            analysisSource: estimate.analysisSource ?? null,
+            confidence: estimate.confidence ?? null,
+            clyonEstimate: {
+              status: estimate.status,
+              estimatedPriceWithoutVat: estimate.estimatedPriceWithoutVat,
+              vatAmount: estimate.vatAmount,
+              estimatedPriceWithVat: estimate.estimatedPriceWithVat,
+              difficultyLevel: estimate.difficultyLevel,
+              summary: estimate.summary,
+              assumptions: estimate.assumptions,
+              missingFields: estimate.missingFields,
+              internalNotes: estimate.internalNotes,
+              labor: estimate.labor ?? null,
+            },
+            externalMarketEstimate: estimate.externalMarketEstimate ?? null,
+            savedAt: new Date().toISOString(),
+          })
+        : null,
       distanceKm: (order.movingDistance?.distanceKm ?? order.distanceFromBase?.distanceKm)?.toString() ?? null,
       distanceText: order.movingDistance?.durationText ?? order.distanceFromBase?.durationText ?? null,
       chatJson: chatHistory ? JSON.stringify(chatHistory) : null,

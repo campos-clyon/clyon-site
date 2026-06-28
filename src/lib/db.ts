@@ -776,7 +776,7 @@ export async function getTodayRegistroByColaborador(colaboradorId: number) {
 
 let _simulatorOrdersEnsured = false;
 // Bump this version number any time new migrations are added so the guard re-runs
-const MIGRATION_VERSION = 4;
+const MIGRATION_VERSION = 5;
 let _migrationVersion = 0;
 
 export async function ensureSimulatorOrdersTable() {
@@ -851,6 +851,8 @@ export async function ensureSimulatorOrdersTable() {
     `ALTER TABLE simulatorOrders ADD COLUMN calendarEventUrl TEXT NULL DEFAULT NULL`,
     `ALTER TABLE simulatorOrders ADD COLUMN calendarStatus VARCHAR(30) NULL DEFAULT 'not_scheduled'`,
     `ALTER TABLE simulatorOrders ADD COLUMN calendarNotes TEXT NULL DEFAULT NULL`,
+    // v5 migrations — extended analysis JSON (includes externalMarketEstimate, analysisSource, confidence)
+    `ALTER TABLE simulatorOrders ADD COLUMN analysisJsonExtended LONGTEXT NULL DEFAULT NULL`,
   ];
   for (const sql of migrations) {
     try { await pool.execute(sql); } catch (e: any) {
@@ -979,6 +981,7 @@ export async function updateSimulatorOrder(
     calendarEventUrl: string | null;
     calendarStatus: string | null;
     calendarNotes: string | null;
+    analysisJsonExtended: string | null;
   }>
 ) {
   await ensureSimulatorOrdersTable();
