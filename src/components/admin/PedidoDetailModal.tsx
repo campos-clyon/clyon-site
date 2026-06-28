@@ -664,12 +664,8 @@ export default function PedidoDetailModal({ id, token, isAdmin, colabId, colabFu
       setSchedNotes(updated.calendarNotes ?? "");
 
       setCmTargetName(data.calendarTargetName ?? null);
-      setCmMsg("Evento preparado com sucesso. O Google Calendar foi aberto numa nova aba.");
+      setCmMsg(data.message ?? "Evento criado na agenda da organização com sucesso.");
       onUpdated?.(updated);
-
-      if (data.calendarEventUrl) {
-        window.open(data.calendarEventUrl, "_blank", "noopener,noreferrer");
-      }
     } catch (e: any) {
       setCmError(e.message || "Não foi possível agendar o serviço. Tente novamente.");
     } finally {
@@ -1973,7 +1969,7 @@ export default function PedidoDetailModal({ id, token, isAdmin, colabId, colabFu
                         <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                         </svg>
-                        Abrir no Google Calendar
+                        Ver evento na agenda
                       </a>
                     )}
                   </div>
