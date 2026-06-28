@@ -20,79 +20,15 @@ function toGcalDateTime(date: string, time: string): string {
   return `${d}T${t}`;
 }
 
-/**
- * Builds the full event description from the order data.
- */
-function buildEventDescription(order: Awaited<ReturnType<typeof getSimulatorOrderById>>, raw: Record<string, any>): string {
-  if (!order) return "";
 
-  const isMov = (order.serviceType ?? "").toLowerCase().replace(/[^a-z]/g, "").includes("mudanca") ||
-                (order.serviceType ?? "").toLowerCase() === "moving";
-
-  const lines: string[] = [
-    `Pedido #${order.id}`,
-    "",
-    "CLIENTE",
-    `Nome: ${order.contactName ?? "—"}`,
-    `Telefone: ${order.contactPhone ?? "—"}`,
-    `Email: ${order.contactEmail ?? "—"}`,
-    "",
-    "SERVIÇO",
-    `Tipo: ${order.serviceType ?? "—"}`,
-    `Descrição: ${order.description ?? "—"}`,
-    "",
-  ];
-
-  if (isMov) {
-    const originAddr = raw.originAddress?.formattedAddress ?? raw.originAddress?.address ?? order.address;
-    const destAddr = raw.destinationAddress?.formattedAddress ?? raw.destinationAddress?.address;
-    const dist = raw.movingDistance?.distanceText ?? (order.distanceKm ? `${order.distanceKm} km` : null);
-    const originAccess = raw.originAccess ?? {};
-    const destAccess = raw.destinationAccess ?? {};
-
-    lines.push(
-      "MORADA",
-      "",
-      "ORIGEM",
-      `Morada: ${originAddr ?? "—"}`,
-      `Andar: ${originAccess.floor ?? "—"} | Elevador: ${originAccess.hasElevator ?? "—"} | Estacionamento: ${originAccess.parkingDistance ?? "—"}`,
-      ...(originAccess.difficultAccess ? ["Acesso difícil: Sim"] : []),
-      ...(originAccess.observations ? [`Obs: ${originAccess.observations}`] : []),
-      "",
-      "DESTINO",
-      `Morada: ${destAddr ?? "—"}`,
-      `Andar: ${destAccess.floor ?? "—"} | Elevador: ${destAccess.hasElevator ?? "—"} | Estacionamento: ${destAccess.parkingDistance ?? "—"}`,
-      ...(destAccess.difficultAccess ? ["Acesso difícil: Sim"] : []),
-      ...(destAccess.observations ? [`Obs: ${destAccess.observations}`] : []),
-      "",
-      ...(dist ? [`PERCURSO: ${dist}`] : []),
-    );
-  } else {
-    lines.push(
-      "MORADA",
-      `Morada: ${order.address ?? "—"}`,
-      `Localidade: ${order.city ?? "—"}`,
-      `Andar: ${order.floor ?? "—"} | Elevador: ${order.hasElevator ?? "—"} | Estacionamento: ${order.parkingDistance ?? "—"}`,
-    );
-  }
-
-  lines.push(
-    "",
-    "VALORES",
-    `Sem IVA: ${order.precoFinal ? `€${order.precoFinal}` : "—"}`,
-    `Total c/ IVA: ${order.precoFinalIva ? `€${order.precoFinalIva}` : "—"}`,
-    "",
-    "EQUIPA",
-    `Assistente: ${order.assignedToName ?? "—"}`,
-    `Status: ${order.status}`,
-    ...(order.notasInternas ? ["", `Notas internas: ${order.notasInternas}`] : []),
-  );
-
-  return lines.join("\n");
-}
 
 // POST /api/admin/pedidos/[id]/calendar
-// Body: { scheduledDate, scheduledStartTime, scheduledEndTime, calendarNotes? }
+// Body (from confirm modal):
+//   title?, scheduledDate, scheduledStartTime, scheduledEndTime,
+//   customerName?, customerPhone?, customerEmail?,
+//   serviceType?, serviceDescription?,
+//   address?, originAddress?, destinationAddress?, route?,
+//   calendarNotes?
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { err, colab } = await authenticate(req);
   if (err) return err;
@@ -118,34 +54,84 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   const scheduledEndTime = (body.scheduledEndTime as string | undefined)?.trim();
   const calendarNotes = (body.calendarNotes as string | undefined)?.trim() ?? null;
 
+  // Edited fields from confirm modal (fall back to order data when absent)
+  const customerName     = (body.customerName as string | undefined)?.trim()       || order.contactName       || "";
+  const customerPhone    = (body.customerPhone as string | undefined)?.trim()      || order.contactPhone      || "";
+  const customerEmail    = (body.customerEmail as string | undefined)?.trim()      || order.contactEmail      || "";
+  const serviceType      = (body.serviceType as string | undefined)?.trim()        || order.serviceType       || "";
+  const serviceDesc      = (body.serviceDescription as string | undefined)?.trim() || order.description       || "";
+  const addrAddress      = (body.address as string | undefined)?.trim()            || order.address           || "";
+  const originAddr       = (body.originAddress as string | undefined)?.trim()      || "";
+  const destAddr         = (body.destinationAddress as string | undefined)?.trim() || "";
+  const routeText        = (body.route as string | undefined)?.trim()              || "";
+
   if (!scheduledDate || !scheduledStartTime || !scheduledEndTime) {
     return NextResponse.json({ error: "Data, hora de início e hora de fim são obrigatórios." }, { status: 400 });
   }
 
-  // Parse rawOrderJson for address details
-  let rawOrder: Record<string, any> = {};
-  try { rawOrder = order.rawOrderJson ? JSON.parse(order.rawOrderJson) : {}; } catch {}
+  const isMov = (serviceType).toLowerCase().replace(/[^a-z]/g, "").includes("mudanca") ||
+                (order.serviceType ?? "").toLowerCase() === "moving" ||
+                (originAddr !== "" && destAddr !== "");
 
-  const isMov = (order.serviceType ?? "").toLowerCase().replace(/[^a-z]/g, "").includes("mudanca") ||
-                (order.serviceType ?? "").toLowerCase() === "moving";
+  // Build event title from edited field or fallback
+  const eventTitle = ((body.title as string | undefined)?.trim()) ||
+    [`Pedido #${orderId}`, customerName, serviceType].filter(Boolean).join(" - ");
 
-  // Build event title: "Pedido #13 - Sílvia Marques - Mudança"
-  const eventTitle = [
-    `Pedido #${order.id}`,
-    order.contactName,
-    order.serviceType,
-  ].filter(Boolean).join(" - ");
+  // Build description from edited fields
+  const descLines: string[] = [
+    `Pedido #${orderId}`,
+    "",
+    "CLIENTE",
+    `Nome: ${customerName || "—"}`,
+    `Telefone: ${customerPhone || "—"}`,
+    ...(customerEmail ? [`Email: ${customerEmail}`] : []),
+    "",
+    "SERVICO",
+    `Tipo: ${serviceType || "—"}`,
+    `Descricao: ${serviceDesc || "—"}`,
+    "",
+  ];
 
-  // Build event description
-  const description = [
-    buildEventDescription(order, rawOrder),
-    ...(calendarNotes ? ["", `OBSERVAÇÕES AGENDA\n${calendarNotes}`] : []),
-  ].join("\n");
+  if (isMov) {
+    descLines.push(
+      "MORADA",
+      "",
+      "ORIGEM",
+      `Morada: ${originAddr || "—"}`,
+      "",
+      "DESTINO",
+      `Morada: ${destAddr || "—"}`,
+      ...(routeText ? ["", `PERCURSO: ${routeText}`] : []),
+    );
+  } else {
+    descLines.push(
+      "MORADA",
+      `Morada: ${addrAddress || "—"}`,
+      `Localidade: ${order.city || "—"}`,
+    );
+  }
 
-  // Build event location
-  const location = isMov
-    ? (rawOrder.originAddress?.formattedAddress ?? rawOrder.originAddress?.address ?? order.address ?? "")
-    : (order.address ?? "");
+  if (order.precoFinal || order.precoFinalIva) {
+    descLines.push(
+      "",
+      "VALORES",
+      `Sem IVA: ${order.precoFinal ? `€${order.precoFinal}` : "—"}`,
+      `Total c/ IVA: ${order.precoFinalIva ? `€${order.precoFinalIva}` : "—"}`,
+    );
+  }
+
+  if (order.assignedToName) {
+    descLines.push("", `Assistente: ${order.assignedToName}`);
+  }
+
+  if (calendarNotes) {
+    descLines.push("", `OBSERVACOES\n${calendarNotes}`);
+  }
+
+  const description = descLines.join("\n");
+
+  // Location: for Mudanca use origin; otherwise use single address
+  const location = isMov ? (originAddr || addrAddress) : addrAddress;
 
   // Build Google Calendar URL (link-based, no API key needed)
   const startDt = toGcalDateTime(scheduledDate, scheduledStartTime);

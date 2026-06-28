@@ -287,7 +287,7 @@ export default function PedidoDetailModal({ id, token, isAdmin, colabId, colabFu
   const [assistants, setAssistants] = useState<{ id: number; nome: string; activePedidos?: number }[]>([]);
   const [editAssignedToId, setEditAssignedToId] = useState<number | null>(null);
 
-  // Calendar / scheduling state
+  // Calendar / scheduling state (Atribuição tab block)
   const [schedDate, setSchedDate] = useState("");
   const [schedStart, setSchedStart] = useState("");
   const [schedEnd, setSchedEnd] = useState("");
@@ -295,6 +295,26 @@ export default function PedidoDetailModal({ id, token, isAdmin, colabId, colabFu
   const [scheduling, setScheduling] = useState(false);
   const [schedMsg, setSchedMsg] = useState("");
   const [schedError, setSchedError] = useState("");
+
+  // Calendar confirm modal state
+  const [calendarModalOpen, setCalendarModalOpen] = useState(false);
+  const [cmTitle, setCmTitle] = useState("");
+  const [cmDate, setCmDate] = useState("");
+  const [cmStart, setCmStart] = useState("");
+  const [cmEnd, setCmEnd] = useState("");
+  const [cmClientName, setCmClientName] = useState("");
+  const [cmClientPhone, setCmClientPhone] = useState("");
+  const [cmClientEmail, setCmClientEmail] = useState("");
+  const [cmServiceType, setCmServiceType] = useState("");
+  const [cmDescription, setCmDescription] = useState("");
+  const [cmAddress, setCmAddress] = useState("");
+  const [cmOriginAddress, setCmOriginAddress] = useState("");
+  const [cmDestinationAddress, setCmDestinationAddress] = useState("");
+  const [cmRoute, setCmRoute] = useState("");
+  const [cmNotes, setCmNotes] = useState("");
+  const [cmScheduling, setCmScheduling] = useState(false);
+  const [cmMsg, setCmMsg] = useState("");
+  const [cmError, setCmError] = useState("");
 
   // Accept state (assistente aceitar pedido da fila geral)
   const [accepting, setAccepting] = useState(false);
@@ -550,6 +570,106 @@ export default function PedidoDetailModal({ id, token, isAdmin, colabId, colabFu
     }
   }
 
+  /** Pré-preenche o modal de confirmação com os dados do pedido */
+  function populateCalendarModal(o: PedidoOrder) {
+    const raw = parseRawOrder(o.rawOrderJson);
+    const isMov = isMudanca(o.serviceType);
+    const originAddr =
+      raw.originAddress?.formattedAddress ??
+      raw.originAddress?.address ??
+      o.address ??
+      "";
+    const destAddr =
+      raw.destinationAddress?.formattedAddress ??
+      raw.destinationAddress?.address ??
+      "";
+    const distText =
+      raw.movingDistance?.distanceText ??
+      (o.distanceKm ? `${o.distanceKm} km` : "");
+
+    const serviceLabel = getServiceLabel(o.serviceType);
+    const title = [o.contactName, serviceLabel].filter(Boolean).join(" - ");
+
+    setCmTitle(title);
+    setCmDate(o.scheduledDate ?? "");
+    setCmStart(o.scheduledStartTime ?? "");
+    setCmEnd(o.scheduledEndTime ?? "");
+    setCmClientName(o.contactName ?? "");
+    setCmClientPhone(o.contactPhone ?? "");
+    setCmClientEmail(o.contactEmail ?? "");
+    setCmServiceType(serviceLabel);
+    setCmDescription(o.description ?? "");
+    setCmAddress(isMov ? "" : (o.address ?? ""));
+    setCmOriginAddress(isMov ? originAddr : "");
+    setCmDestinationAddress(isMov ? destAddr : "");
+    setCmRoute(isMov ? distText : "");
+    setCmNotes(o.calendarNotes ?? "");
+    setCmMsg("");
+    setCmError("");
+  }
+
+  function openCalendarModal() {
+    if (!order) return;
+    populateCalendarModal(order);
+    setCalendarModalOpen(true);
+  }
+
+  async function handleScheduleModal() {
+    if (!order) return;
+    if (!cmDate || !cmStart || !cmEnd) {
+      setCmError("Data, hora de início e hora de fim são obrigatórios.");
+      return;
+    }
+    setCmScheduling(true);
+    setCmMsg("");
+    setCmError("");
+    try {
+      const res = await fetch(`/api/admin/pedidos/${order.id}/calendar`, {
+        method: "POST",
+        headers: { ...authHeader, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: cmTitle || undefined,
+          scheduledDate: cmDate,
+          scheduledStartTime: cmStart,
+          scheduledEndTime: cmEnd,
+          customerName: cmClientName || undefined,
+          customerPhone: cmClientPhone || undefined,
+          customerEmail: cmClientEmail || undefined,
+          serviceType: cmServiceType || undefined,
+          serviceDescription: cmDescription || undefined,
+          address: cmAddress || undefined,
+          originAddress: cmOriginAddress || undefined,
+          destinationAddress: cmDestinationAddress || undefined,
+          route: cmRoute || undefined,
+          calendarNotes: cmNotes || undefined,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok || data?.ok === false) {
+        throw new Error(data?.error || "Erro ao agendar serviço.");
+      }
+      const updated = data?.order ?? order;
+      setOrder(updated);
+      populateEdit(updated);
+      // Sync Atribuição tab fields too
+      setSchedDate(updated.scheduledDate ?? "");
+      setSchedStart(updated.scheduledStartTime ?? "");
+      setSchedEnd(updated.scheduledEndTime ?? "");
+      setSchedNotes(updated.calendarNotes ?? "");
+
+      setCmMsg("Evento preparado com sucesso. O Google Calendar foi aberto numa nova aba.");
+      onUpdated?.(updated);
+
+      if (data.calendarEventUrl) {
+        window.open(data.calendarEventUrl, "_blank", "noopener,noreferrer");
+      }
+    } catch (e: any) {
+      setCmError(e.message || "Não foi possível agendar o serviço. Tente novamente.");
+    } finally {
+      setCmScheduling(false);
+    }
+  }
+
   // ─── Render ────────────────────────────────────────────────────────────────
 
   return (
@@ -726,30 +846,18 @@ export default function PedidoDetailModal({ id, token, isAdmin, colabId, colabFu
                     {/* Agendar serviço — admin ou assistente responsável, pedido aprovado/confirmado/em_execucao */}
                     {(isAdmin || (colabFuncao === "assistente" && order.assignedToId === colabId)) &&
                       (["aprovado", "confirmado", "em_execucao"].includes(order.status) || !!order.scheduledDate) && (
-                        order.calendarEventId ? (
-                          <a
-                            href={order.calendarEventUrl ?? "#"}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="hidden lg:flex items-center gap-1.5 rounded-2xl border border-violet-400/30 bg-violet-400/10 px-4 py-2 text-sm font-semibold text-violet-300 hover:bg-violet-400/20 transition"
-                            title={`Agendado para ${order.scheduledDate} ${order.scheduledStartTime}–${order.scheduledEndTime}`}
-                          >
-                            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                            </svg>
-                            Abrir no Google Calendar
-                          </a>
-                        ) : (
-                          <button
-                            onClick={() => setActiveTab("atribuicao")}
-                            className="hidden lg:flex items-center gap-1.5 rounded-2xl border border-violet-400/30 bg-violet-400/10 px-4 py-2 text-sm font-semibold text-violet-300 hover:bg-violet-400/20 transition"
-                          >
-                            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                            </svg>
-                            Agendar no Google Calendar
-                          </button>
-                        )
+                        /* Both states (scheduled or not) open the confirm modal.
+                           "Abrir no Google Calendar" is shown after scheduling inside the modal itself. */
+                        <button
+                          onClick={openCalendarModal}
+                          className="hidden lg:flex items-center gap-1.5 rounded-2xl border border-violet-400/30 bg-violet-400/10 px-4 py-2 text-sm font-semibold text-violet-300 hover:bg-violet-400/20 transition"
+                          title={order.calendarEventId ? `Atualizar agenda (agendado para ${order.scheduledDate} ${order.scheduledStartTime}–${order.scheduledEndTime})` : "Agendar no Google Calendar"}
+                        >
+                          <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                          </svg>
+                          {order.calendarEventId ? "Atualizar agenda" : "Agendar no Google Calendar"}
+                        </button>
                       )
                     }
                     {/* Excluir — apenas admin geral */}
@@ -1658,6 +1766,187 @@ export default function PedidoDetailModal({ id, token, isAdmin, colabId, colabFu
           </button>
         </div>
       )}
+
+      {/* ── Calendar confirm modal ───────────────────────────────────────── */}
+      {calendarModalOpen && order && (() => {
+        const isMov = isMudanca(order.serviceType);
+        const calCls = "w-full rounded-xl border border-white/10 bg-white/[0.04] px-3.5 py-2.5 text-sm text-white placeholder:text-slate-500 focus:border-violet-400/40 focus:outline-none focus:ring-1 focus:ring-violet-400/20 transition";
+        const lbCls = "block text-[10px] font-semibold uppercase tracking-[0.15em] text-slate-500 mb-1.5";
+        return (
+          <div
+            className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
+            onClick={(e) => { if (e.target === e.currentTarget) setCalendarModalOpen(false); }}
+          >
+            <div
+              className="relative flex w-full max-w-2xl flex-col overflow-hidden rounded-[24px] border border-violet-400/20 bg-[#070e17] shadow-[0_40px_100px_rgba(0,0,0,0.9)]"
+              style={{ maxHeight: "92vh" }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header */}
+              <div className="flex-shrink-0 border-b border-white/[0.06] px-6 py-5">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <h2 className="text-base font-bold text-white">Agendar servico no Google Calendar</h2>
+                    <p className="mt-1 text-xs text-slate-500">Confirme os dados antes de enviar para a agenda.</p>
+                  </div>
+                  <button
+                    onClick={() => setCalendarModalOpen(false)}
+                    className="mt-0.5 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/[0.04] text-slate-400 hover:text-white transition"
+                  >
+                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
+              {/* Scrollable body */}
+              <div className="flex-1 overflow-y-auto px-6 py-5 space-y-6">
+
+                {/* Dados do evento */}
+                <section className="space-y-3">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-violet-400">Dados do evento</p>
+                  <div>
+                    <label className={lbCls}>Titulo do evento</label>
+                    <input type="text" value={cmTitle} onChange={(e) => setCmTitle(e.target.value)} className={calCls} placeholder="Ex: Maria Silva - Mudanca" />
+                  </div>
+                  <div className="grid grid-cols-3 gap-3">
+                    <div>
+                      <label className={lbCls}>Data do servico</label>
+                      <input type="date" value={cmDate} onChange={(e) => setCmDate(e.target.value)} className={calCls} />
+                    </div>
+                    <div>
+                      <label className={lbCls}>Hora de inicio</label>
+                      <input type="time" value={cmStart} onChange={(e) => setCmStart(e.target.value)} className={calCls} />
+                    </div>
+                    <div>
+                      <label className={lbCls}>Hora de fim</label>
+                      <input type="time" value={cmEnd} onChange={(e) => setCmEnd(e.target.value)} className={calCls} />
+                    </div>
+                  </div>
+                </section>
+
+                {/* Cliente */}
+                <section className="space-y-3">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-violet-400">Cliente</p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className={lbCls}>Nome do cliente</label>
+                      <input type="text" value={cmClientName} onChange={(e) => setCmClientName(e.target.value)} className={calCls} />
+                    </div>
+                    <div>
+                      <label className={lbCls}>Telefone</label>
+                      <input type="tel" value={cmClientPhone} onChange={(e) => setCmClientPhone(e.target.value)} className={calCls} />
+                    </div>
+                  </div>
+                  <div>
+                    <label className={lbCls}>Email (opcional)</label>
+                    <input type="email" value={cmClientEmail} onChange={(e) => setCmClientEmail(e.target.value)} className={calCls} />
+                  </div>
+                </section>
+
+                {/* Servico */}
+                <section className="space-y-3">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-violet-400">Servico</p>
+                  <div>
+                    <label className={lbCls}>Tipo de servico</label>
+                    <input type="text" value={cmServiceType} onChange={(e) => setCmServiceType(e.target.value)} className={calCls} />
+                  </div>
+                  <div>
+                    <label className={lbCls}>Descricao do trabalho</label>
+                    <textarea rows={3} value={cmDescription} onChange={(e) => setCmDescription(e.target.value)} className={calCls} placeholder="Descreva o trabalho a realizar..." />
+                  </div>
+                </section>
+
+                {/* Localizacao */}
+                <section className="space-y-3">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-violet-400">Localizacao</p>
+                  {isMov ? (
+                    <>
+                      <div>
+                        <label className={lbCls}>Morada de origem</label>
+                        <input type="text" value={cmOriginAddress} onChange={(e) => setCmOriginAddress(e.target.value)} className={calCls} />
+                      </div>
+                      <div>
+                        <label className={lbCls}>Morada de destino</label>
+                        <input type="text" value={cmDestinationAddress} onChange={(e) => setCmDestinationAddress(e.target.value)} className={calCls} />
+                      </div>
+                      <div>
+                        <label className={lbCls}>Percurso (opcional)</label>
+                        <input type="text" value={cmRoute} onChange={(e) => setCmRoute(e.target.value)} className={calCls} placeholder="Ex: 12 km" />
+                      </div>
+                    </>
+                  ) : (
+                    <div>
+                      <label className={lbCls}>Morada do servico</label>
+                      <input type="text" value={cmAddress} onChange={(e) => setCmAddress(e.target.value)} className={calCls} />
+                    </div>
+                  )}
+                </section>
+
+                {/* Observacoes */}
+                <section className="space-y-3">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-violet-400">Observacoes</p>
+                  <div>
+                    <label className={lbCls}>Observacoes para a agenda (opcional)</label>
+                    <textarea rows={2} value={cmNotes} onChange={(e) => setCmNotes(e.target.value)} className={calCls} placeholder="Ex: Levar embalagens extra, acesso pelo lado esquerdo..." />
+                  </div>
+                </section>
+
+                {/* Messages */}
+                {cmError && (
+                  <p className="rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-2.5 text-xs font-semibold text-red-400">{cmError}</p>
+                )}
+                {cmMsg && (
+                  <div className="rounded-xl border border-violet-400/20 bg-violet-400/10 px-4 py-3 space-y-1.5">
+                    <p className="text-xs font-semibold text-violet-300">{cmMsg}</p>
+                    {order.calendarEventUrl && (
+                      <a
+                        href={order.calendarEventUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center gap-1.5 text-xs font-semibold text-violet-400 hover:text-violet-200 hover:underline"
+                      >
+                        <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                        </svg>
+                        Abrir no Google Calendar
+                      </a>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Footer */}
+              <div className="flex-shrink-0 border-t border-white/[0.06] px-6 py-4 flex items-center justify-end gap-3">
+                <button
+                  onClick={() => setCalendarModalOpen(false)}
+                  className="rounded-xl border border-white/10 bg-white/[0.04] px-5 py-2.5 text-sm font-semibold text-slate-300 hover:bg-white/[0.08] transition"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleScheduleModal}
+                  disabled={cmScheduling || !cmDate || !cmStart || !cmEnd}
+                  className="flex items-center gap-2 rounded-xl bg-violet-500 px-5 py-2.5 text-sm font-bold text-white hover:bg-violet-400 disabled:opacity-50 transition"
+                >
+                  {cmScheduling ? (
+                    <svg className="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                    </svg>
+                  ) : (
+                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                  )}
+                  {cmScheduling ? "A agendar..." : order.calendarEventId ? "Atualizar agenda" : "Agendar agora"}
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* ── Delete confirmation ── */}
       {showDelete && order && (
