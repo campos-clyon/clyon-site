@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { google } from "googleapis";
-import crypto from "crypto";
 import { getSimulatorOrderById, updateSimulatorOrder } from "@/lib/db";
 import { verifyColaboradorAuthHeader } from "@/lib/colaborador-auth";
 
@@ -15,52 +14,43 @@ async function authenticate(req: NextRequest) {
 }
 
 // ─── Private key normalisation ────────────────────────────────────────────────
-// Env vars often arrive with literal "\n" instead of real newlines.
-// Additionally, some providers export PKCS#1 ("RSA PRIVATE KEY") but
-// google-auth-library / Node 18+ crypto requires PKCS#8 ("PRIVATE KEY").
-// We convert on the fly using Node's native crypto module.
+// Env vars arrive from Vercel/hosting with literal "\n" instead of real
+// newlines, and sometimes wrapped in quotes. This function handles both cases.
+// We deliberately do NOT use crypto.createPrivateKey() because that path
+// triggers the DECODER::unsupported error on OpenSSL 3 / Node 18+ when the
+// key is PKCS#1. google.auth.JWT accepts the PEM string directly and handles
+// both PKCS#1 and PKCS#8 transparently.
 
-function normalisePrivateKey(raw: string): string {
-  // 1. Unescape literal \n sequences from env var storage
-  let key = raw.replace(/\\n/g, "\n").trim();
-
-  // 2. If the key is still a single line without headers, wrap it
-  if (!key.includes("-----BEGIN")) {
-    key = `-----BEGIN PRIVATE KEY-----\n${key}\n-----END PRIVATE KEY-----`;
+function normalizePrivateKey(raw?: string): string {
+  if (!raw) {
+    throw new Error("GOOGLE_PRIVATE_KEY não configurada.");
   }
 
-  // 3. Convert PKCS#1 (RSA PRIVATE KEY) → PKCS#8 (PRIVATE KEY) when needed
-  //    Node 18+ rejects PKCS#1 in newer OpenSSL builds with DECODER::unsupported
-  if (key.includes("BEGIN RSA PRIVATE KEY")) {
-    try {
-      const keyObject = crypto.createPrivateKey({ key, format: "pem", type: "pkcs1" });
-      key = keyObject.export({ type: "pkcs8", format: "pem" }) as string;
-    } catch (convErr) {
-      // Conversion failed — return as-is and let google-auth handle the error message
-      console.error("[calendar/route] PKCS#1→PKCS#8 conversion failed:", convErr);
-    }
-  }
-
-  return key;
+  return raw
+    .trim()
+    .replace(/^["']|["']$/g, "")   // strip surrounding quotes if any
+    .replace(/\\n/g, "\n")          // unescape literal \n sequences
+    .replace(/\r/g, "");            // remove carriage returns
 }
 
 // ─── Google Calendar API client ───────────────────────────────────────────────
+// Use google.auth.JWT instead of GoogleAuth so the PEM key is passed directly
+// without going through Node's crypto subsystem (avoids DECODER::unsupported).
 
 function getCalendarClient() {
-  const email = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL?.trim();
-  const rawKey = process.env.GOOGLE_PRIVATE_KEY?.trim() ?? "";
+  const clientEmail = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL?.trim();
+  const privateKey = normalizePrivateKey(process.env.GOOGLE_PRIVATE_KEY);
 
-  if (!email || !rawKey) {
-    throw new Error("GOOGLE_SERVICE_ACCOUNT_EMAIL e GOOGLE_PRIVATE_KEY são obrigatórios.");
+  if (!clientEmail) {
+    throw new Error("GOOGLE_SERVICE_ACCOUNT_EMAIL não configurado.");
   }
 
-  const privateKey = normalisePrivateKey(rawKey);
+  console.log("[calendar] Service Account email:", clientEmail);
+  console.log("[calendar] Private key starts OK:", privateKey.startsWith("-----BEGIN"));
 
-  const auth = new google.auth.GoogleAuth({
-    credentials: {
-      client_email: email,
-      private_key: privateKey,
-    },
+  const auth = new google.auth.JWT({
+    email: clientEmail,
+    key: privateKey,
     scopes: ["https://www.googleapis.com/auth/calendar"],
   });
 
@@ -300,32 +290,55 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       }
     } else {
       const rawMsg: string = apiErr?.errors?.[0]?.message ?? apiErr?.message ?? "Erro desconhecido na Google Calendar API.";
+      const lc = rawMsg.toLowerCase();
 
-      // Detect "API not enabled" error from Google and surface the enable URL
-      const isApiDisabled =
-        rawMsg.toLowerCase().includes("has not been used") ||
-        rawMsg.toLowerCase().includes("is disabled") ||
-        apiErr?.code === 403;
-
-      // Extract project ID from the error message if present (e.g. "project 443649873745")
-      const projectMatch = rawMsg.match(/project\s+(\d+)/i);
-      const projectId = projectMatch?.[1] ?? null;
-      const enableUrl = projectId
-        ? `https://console.developers.google.com/apis/api/calendar-json.googleapis.com/overview?project=${projectId}`
-        : "https://console.developers.google.com/apis/api/calendar-json.googleapis.com/overview";
-
-      if (isApiDisabled) {
+      // ── Specific error classification ──────────────────────────────────────
+      // DECODER::unsupported — private key mal formatada
+      if (lc.includes("decoder") || lc.includes("unsupported") || lc.includes("pkcs")) {
         return NextResponse.json(
-          {
-            error: "A Google Calendar API não está activada neste projecto Google Cloud.",
-            errorCode: "calendar_api_disabled",
-            enableUrl,
-            projectId,
-          },
+          { error: "A chave da agenda CLYON está mal configurada. Verifique GOOGLE_PRIVATE_KEY." },
+          { status: 500 }
+        );
+      }
+
+      // API not enabled — surface enable URL
+      if (lc.includes("has not been used") || lc.includes("is disabled")) {
+        const projectMatch = rawMsg.match(/project\s+(\d+)/i);
+        const projectId = projectMatch?.[1] ?? null;
+        const enableUrl = projectId
+          ? `https://console.developers.google.com/apis/api/calendar-json.googleapis.com/overview?project=${projectId}`
+          : "https://console.developers.google.com/apis/api/calendar-json.googleapis.com/overview";
+        return NextResponse.json(
+          { error: "A Google Calendar API não está activada neste projecto Google Cloud.", errorCode: "calendar_api_disabled", enableUrl, projectId },
           { status: 403 }
         );
       }
 
+      // 403 — calendar not shared with Service Account
+      if (apiErr?.code === 403) {
+        return NextResponse.json(
+          { error: "Sem permissão para aceder à agenda. Partilhe a agenda com o email da Service Account." },
+          { status: 403 }
+        );
+      }
+
+      // invalid_grant — key/email mismatch
+      if (lc.includes("invalid_grant") || lc.includes("invalid grant")) {
+        return NextResponse.json(
+          { error: "Credenciais inválidas (invalid_grant). Verifique se GOOGLE_SERVICE_ACCOUNT_EMAIL e GOOGLE_PRIVATE_KEY correspondem." },
+          { status: 401 }
+        );
+      }
+
+      // 404 notFound — wrong calendarId
+      if (apiErr?.code === 404 || lc.includes("notfound") || lc.includes("not found")) {
+        return NextResponse.json(
+          { error: "Agenda não encontrada. Verifique o ID da agenda (CLYON_GOOGLE_CALENDAR_ID)." },
+          { status: 404 }
+        );
+      }
+
+      // Generic fallback
       return NextResponse.json({ error: rawMsg }, { status: 500 });
     }
   }
