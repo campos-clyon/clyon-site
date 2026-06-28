@@ -52,18 +52,27 @@ function buildEventDescription(order: Awaited<ReturnType<typeof getSimulatorOrde
 
     lines.push(
       "MORADA",
-      `Origem: ${originAddr ?? "—"}`,
-      `  Andar: ${originAccess.floor ?? "—"} | Elevador: ${originAccess.hasElevator ?? "—"} | Estacionamento: ${originAccess.parkingDistance ?? "—"}`,
-      `Destino: ${destAddr ?? "—"}`,
-      `  Andar: ${destAccess.floor ?? "—"} | Elevador: ${destAccess.hasElevator ?? "—"} | Estacionamento: ${destAccess.parkingDistance ?? "—"}`,
-      ...(dist ? [`Percurso: ${dist}`] : []),
+      "",
+      "ORIGEM",
+      `Morada: ${originAddr ?? "—"}`,
+      `Andar: ${originAccess.floor ?? "—"} | Elevador: ${originAccess.hasElevator ?? "—"} | Estacionamento: ${originAccess.parkingDistance ?? "—"}`,
+      ...(originAccess.difficultAccess ? ["Acesso difícil: Sim"] : []),
+      ...(originAccess.observations ? [`Obs: ${originAccess.observations}`] : []),
+      "",
+      "DESTINO",
+      `Morada: ${destAddr ?? "—"}`,
+      `Andar: ${destAccess.floor ?? "—"} | Elevador: ${destAccess.hasElevator ?? "—"} | Estacionamento: ${destAccess.parkingDistance ?? "—"}`,
+      ...(destAccess.difficultAccess ? ["Acesso difícil: Sim"] : []),
+      ...(destAccess.observations ? [`Obs: ${destAccess.observations}`] : []),
+      "",
+      ...(dist ? [`PERCURSO: ${dist}`] : []),
     );
   } else {
     lines.push(
       "MORADA",
-      `Serviço: ${order.address ?? "—"}`,
+      `Morada: ${order.address ?? "—"}`,
       `Localidade: ${order.city ?? "—"}`,
-      `Andar: ${order.floor ?? "—"} | Elevador: ${order.hasElevator ?? "—"}`,
+      `Andar: ${order.floor ?? "—"} | Elevador: ${order.hasElevator ?? "—"} | Estacionamento: ${order.parkingDistance ?? "—"}`,
     );
   }
 

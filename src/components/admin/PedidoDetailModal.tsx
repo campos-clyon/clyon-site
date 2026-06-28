@@ -726,18 +726,17 @@ export default function PedidoDetailModal({ id, token, isAdmin, colabId, colabFu
                     {(isAdmin || (colabFuncao === "assistente" && order.assignedToId === colabId)) &&
                       (["aprovado", "confirmado", "em_execucao"].includes(order.status) || !!order.scheduledDate) && (
                         order.calendarEventId ? (
-                          // Already scheduled — show "open in calendar" + jump to tab
                           <a
                             href={order.calendarEventUrl ?? "#"}
                             target="_blank"
                             rel="noreferrer"
                             className="hidden lg:flex items-center gap-1.5 rounded-2xl border border-violet-400/30 bg-violet-400/10 px-4 py-2 text-sm font-semibold text-violet-300 hover:bg-violet-400/20 transition"
-                            title={`Agendado: ${order.scheduledDate} ${order.scheduledStartTime}–${order.scheduledEndTime}`}
+                            title={`Agendado para ${order.scheduledDate} ${order.scheduledStartTime}–${order.scheduledEndTime}`}
                           >
                             <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                             </svg>
-                            Abrir na agenda
+                            Abrir no Google Calendar
                           </a>
                         ) : (
                           <button
@@ -747,7 +746,7 @@ export default function PedidoDetailModal({ id, token, isAdmin, colabId, colabFu
                             <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                             </svg>
-                            Agendar serviço
+                            Agendar no Google Calendar
                           </button>
                         )
                       )
@@ -1359,8 +1358,8 @@ export default function PedidoDetailModal({ id, token, isAdmin, colabId, colabFu
                             </span>
                           )}
                           {order.calendarStatus === "updated" && (
-                            <span className="rounded-full border border-violet-400/30 bg-violet-400/10 px-2.5 py-0.5 text-[11px] font-semibold text-violet-300">
-                              Agenda actualizada
+                            <span className="rounded-full border border-sky-400/30 bg-sky-400/10 px-2.5 py-0.5 text-[11px] font-semibold text-sky-300">
+                              Atualizado
                             </span>
                           )}
                           {(!order.calendarStatus || order.calendarStatus === "not_scheduled") && (
@@ -1370,15 +1369,25 @@ export default function PedidoDetailModal({ id, token, isAdmin, colabId, colabFu
                           )}
                         </div>
 
-                        {/* Show confirmed schedule when already set */}
-                        {order.scheduledDate && order.calendarStatus !== "not_scheduled" && (
-                          <div className="rounded-[14px] border border-violet-400/15 bg-violet-400/[0.05] p-3 text-sm text-violet-200">
-                            <span className="font-semibold">{order.scheduledDate}</span>
-                            {order.scheduledStartTime && order.scheduledEndTime && (
-                              <span className="ml-2 text-violet-300">{order.scheduledStartTime}–{order.scheduledEndTime}</span>
-                            )}
-                          </div>
-                        )}
+                        {/* Confirmed schedule pill */}
+                        {order.scheduledDate && order.calendarStatus && order.calendarStatus !== "not_scheduled" && (() => {
+                          const [y, m, d] = order.scheduledDate!.split("-");
+                          const datePt = `${d}/${m}/${y}`;
+                          return (
+                            <div className="flex items-center gap-2 rounded-[14px] border border-violet-400/20 bg-violet-400/[0.06] px-4 py-2.5 text-sm">
+                              <svg className="h-4 w-4 shrink-0 text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                              </svg>
+                              <span className="text-violet-200">
+                                Agendado para{" "}
+                                <span className="font-bold text-white">{datePt}</span>
+                                {order.scheduledStartTime && order.scheduledEndTime && (
+                                  <>, <span className="font-bold text-white">{order.scheduledStartTime}–{order.scheduledEndTime}</span></>
+                                )}
+                              </span>
+                            </div>
+                          );
+                        })()}
 
                         {/* Scheduling form */}
                         <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
@@ -1442,7 +1451,7 @@ export default function PedidoDetailModal({ id, token, isAdmin, colabId, colabFu
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                               </svg>
                             )}
-                            {scheduling ? "A agendar..." : order.calendarEventId ? "Actualizar agenda" : "Agendar serviço"}
+                            {scheduling ? "A agendar..." : order.calendarEventId ? "Atualizar no Google Calendar" : "Agendar no Google Calendar"}
                           </button>
 
                           {order.calendarEventUrl && (
@@ -1455,7 +1464,7 @@ export default function PedidoDetailModal({ id, token, isAdmin, colabId, colabFu
                               <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                               </svg>
-                              Abrir na agenda
+                              Abrir no Google Calendar
                             </a>
                           )}
                         </div>
