@@ -186,7 +186,8 @@ function ReadonlyField({ label, value }: { label: string; value?: string | null 
 }
 
 const inputCls = "w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-2.5 text-sm text-white placeholder:text-slate-500 focus:border-cyan-400/40 focus:outline-none focus:ring-1 focus:ring-cyan-400/20 transition";
-const selectCls = `${inputCls} appearance-none cursor-pointer`;
+const selectCls = "w-full rounded-2xl border border-white/10 bg-[#111827] px-4 py-2.5 text-sm text-white focus:border-cyan-400/40 focus:outline-none focus:ring-1 focus:ring-cyan-400/20 transition appearance-none cursor-pointer";
+const optionCls = "bg-[#111827] text-white";
 
 // ─── Main component ───────────────────────────────────────────────────────────
 
@@ -380,7 +381,7 @@ export default function AdminPedidoDetalheClient({ id }: { id: number }) {
     finally { setSaving(false); }
   }
 
-  // ─── Render guards ──────────────────────────────────────────────────────────
+  // ��── Render guards ──────────────────────────────────────────────────────────
 
   if (!ready || loading) {
     return (
@@ -666,9 +667,9 @@ export default function AdminPedidoDetalheClient({ id }: { id: number }) {
                 </Field>
                 <Field label="Urgência">
                   <select value={editUrgency} onChange={(e) => setEditUrgency(e.target.value)} className={selectCls}>
-                    <option value="">Normal</option>
-                    <option value="urgente">Urgente</option>
-                    <option value="flexivel">Flexível</option>
+                    <option value="" className={optionCls}>Normal</option>
+                    <option value="urgente" className={optionCls}>Urgente</option>
+                    <option value="flexivel" className={optionCls}>Flexível</option>
                   </select>
                 </Field>
               </div>
@@ -690,15 +691,15 @@ export default function AdminPedidoDetalheClient({ id }: { id: number }) {
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <Field label="Tipo de serviço">
                   <select value={editServiceType} onChange={(e) => setEditServiceType(e.target.value)} className={selectCls}>
-                    <option value="">Selecionar...</option>
-                    {SERVICE_TYPES.map((s) => <option key={s} value={s}>{s}</option>)}
+                    <option value="" className={optionCls}>Selecionar...</option>
+                    {SERVICE_TYPES.map((s) => <option key={s} value={s} className={optionCls}>{s}</option>)}
                   </select>
                 </Field>
                 <Field label="Urgência">
                   <select value={editUrgency} onChange={(e) => setEditUrgency(e.target.value)} className={selectCls}>
-                    <option value="">Normal</option>
-                    <option value="urgente">Urgente</option>
-                    <option value="flexivel">Flexível</option>
+                    <option value="" className={optionCls}>Normal</option>
+                    <option value="urgente" className={optionCls}>Urgente</option>
+                    <option value="flexivel" className={optionCls}>Flexível</option>
                   </select>
                 </Field>
               </div>
@@ -737,18 +738,18 @@ export default function AdminPedidoDetalheClient({ id }: { id: number }) {
                 </Field>
                 <Field label="Elevador">
                   <select value={editHasElevator} onChange={(e) => setEditHasElevator(e.target.value)} className={selectCls}>
-                    <option value="">Não informado</option>
-                    <option value="sim">Sim</option>
-                    <option value="nao">Não</option>
+                    <option value="" className={optionCls}>Não informado</option>
+                    <option value="sim" className={optionCls}>Sim</option>
+                    <option value="nao" className={optionCls}>Não</option>
                   </select>
                 </Field>
                 <Field label="Distância de estacionamento">
                   <select value={editParkingDistance} onChange={(e) => setEditParkingDistance(e.target.value)} className={selectCls}>
-                    <option value="">Não informado</option>
-                    <option value="porta">À porta</option>
-                    <option value="proximo">Próximo (até 50m)</option>
-                    <option value="medio">Médio (50-200m)</option>
-                    <option value="longe">Longe (mais de 200m)</option>
+                    <option value="" className={optionCls}>Não informado</option>
+                    <option value="porta" className={optionCls}>À porta</option>
+                    <option value="proximo" className={optionCls}>Próximo (até 50m)</option>
+                    <option value="medio" className={optionCls}>Médio (50-200m)</option>
+                    <option value="longe" className={optionCls}>Longe (mais de 200m)</option>
                   </select>
                 </Field>
               </div>
@@ -951,16 +952,16 @@ export default function AdminPedidoDetalheClient({ id }: { id: number }) {
                 <Field label="Status do pedido">
                   <select value={editStatus} onChange={(e) => setEditStatus(e.target.value as OrderStatus)} className={selectCls}>
                     {ALL_STATUSES.map((s) => (
-                      <option key={s} value={s}>{STATUS_CFG[s]?.label ?? s}</option>
+                      <option key={s} value={s} className={optionCls}>{STATUS_CFG[s]?.label ?? s}</option>
                     ))}
                   </select>
                 </Field>
                 <Field label="Prioridade">
                   <select value={editPriority} onChange={(e) => setEditPriority(e.target.value as OrderPriority)} className={selectCls}>
-                    <option value="baixa">Baixa</option>
-                    <option value="normal">Normal</option>
-                    <option value="alta">Alta</option>
-                    <option value="urgente">Urgente</option>
+                    <option value="baixa" className={optionCls}>Baixa</option>
+                    <option value="normal" className={optionCls}>Normal</option>
+                    <option value="alta" className={optionCls}>Alta</option>
+                    <option value="urgente" className={optionCls}>Urgente</option>
                   </select>
                 </Field>
                 <Field label="Data agendada">
