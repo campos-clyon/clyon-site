@@ -107,6 +107,8 @@ export type AnalysisSource =
   | "clyon_pricing_plus_web_reference"
   | "web_reference_only"
   | "needs_human_review"
+  | "gemini_reference"
+  | "fallback_reference"
   | "gemini"
   | "local_fast_estimate"
   | "timeout_fallback";
@@ -145,6 +147,10 @@ export interface EstimateResult {
   estimatedPriceWithoutVat: number | null;
   vatAmount: number | null;
   estimatedPriceWithVat: number | null;
+  /** Limite inferior do intervalo estimado (sem IVA) */
+  estimateMinWithoutVat?: number | null;
+  /** Limite superior do intervalo estimado (sem IVA) */
+  estimateMaxWithoutVat?: number | null;
   difficultyLevel: DifficultyLevel;
   summary: string;
   assumptions: string[];

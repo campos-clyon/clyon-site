@@ -5,6 +5,7 @@ import {
   getActivePricingRulesForGemini,
   createPricingSnapshot,
   calculateFastEstimate,
+  buildReferenceEstimate,
 } from "@/lib/pricing-helper";
 
 // Gemini abortado após este tempo — cliente nunca fica preso
@@ -166,15 +167,30 @@ function resolveAnalysisSource(
   externalEstimate: ExternalMarketEstimate | null,
   analysis: EstimateResult
 ): AnalysisSource {
+  // Fallback de referência — preservar a fonte original
+  if (baseSource === "fallback_reference") return "fallback_reference";
+
   if (!externalEstimate) {
-    // Sem pesquisa externa — fonte é o preçário CLYON (via Gemini ou local)
-    if (baseSource === "gemini" || baseSource === "clyon_pricing") return "clyon_pricing";
-    if (analysis.status === "onsite_required" || analysis.confidence === "low")
+    // Sem pesquisa externa
+    if (baseSource === "gemini" || baseSource === "clyon_pricing") {
+      // Gemini não conseguiu calcular preço → marca como referência Gemini
+      if (!analysis.estimatedPriceWithoutVat || analysis.estimatedPriceWithoutVat <= 0) {
+        return "gemini_reference";
+      }
+      return "clyon_pricing";
+    }
+    if (baseSource === "timeout_fallback" || baseSource === "local_fast_estimate") {
+      return baseSource;
+    }
+    if (analysis.status === "onsite_required" || analysis.confidence === "low") {
       return "needs_human_review";
+    }
     return baseSource;
   }
   // Com pesquisa externa
-  if (analysis.estimatedPriceWithoutVat) return "clyon_pricing_plus_web_reference";
+  if (analysis.estimatedPriceWithoutVat && analysis.estimatedPriceWithoutVat > 0) {
+    return "clyon_pricing_plus_web_reference";
+  }
   return "web_reference_only";
 }
 
@@ -242,6 +258,26 @@ export async function POST(req: NextRequest) {
     analysis = parseGeminiResponse(responseText);
     baseSource = "clyon_pricing";
 
+    // Zero-price guard: se o Gemini devolveu preço 0 ou null, aplicar fallback de referência
+    const geminiPrice = analysis.estimatedPriceWithoutVat;
+    if (!geminiPrice || geminiPrice <= 0) {
+      const ref = buildReferenceEstimate(order as never);
+      analysis = {
+        ...ref,
+        // Manter campos qualitativos do Gemini (summary, missingFields, assumptions)
+        status: analysis.status === "needs_more_info" ? "needs_more_info" : ref.status,
+        summary: analysis.summary || ref.summary,
+        missingFields: [...(analysis.missingFields ?? []), ...(ref.missingFields ?? [])],
+        assumptions: [...(analysis.assumptions ?? []), ...ref.assumptions],
+        internalNotes: [
+          ...(analysis.internalNotes ?? []),
+          "Gemini devolveu preço 0 ou null — aplicada estimativa de referência.",
+          ...ref.internalNotes,
+        ],
+      } as EstimateResult;
+      baseSource = "gemini_reference";
+    }
+
     analysis = {
       ...analysis,
       internalNotes: [
@@ -301,6 +337,8 @@ export async function POST(req: NextRequest) {
   if (
     analysisSource === "web_reference_only" ||
     analysisSource === "needs_human_review" ||
+    analysisSource === "gemini_reference" ||
+    analysisSource === "fallback_reference" ||
     confidence === "low"
   ) {
     customerMessage =
@@ -418,9 +456,11 @@ Sua tarefa é analisar o pedido abaixo e retornar APENAS um JSON válido com os 
 
 {
   "status": "estimated" | "onsite_required" | "needs_more_info",
-  "estimatedPriceWithoutVat": número ou null,
-  "vatAmount": número ou null,
-  "estimatedPriceWithVat": número ou null,
+  "estimatedPriceWithoutVat": número (NUNCA null ou 0),
+  "vatAmount": número (NUNCA null ou 0),
+  "estimatedPriceWithVat": número (NUNCA null ou 0),
+  "estimateMinWithoutVat": número ou null,
+  "estimateMaxWithoutVat": número ou null,
   "difficultyLevel": 1-5,
   "confidence": "high" | "medium" | "low",
   "summary": "string com resumo da análise",
@@ -463,6 +503,17 @@ INSTRUÇÕES CRÍTICAS
 7. IVA sempre é 23% (0.23x)
 8. Valida que os valores fazem sentido no contexto
 9. Define sempre o campo "confidence": "high" se preçário cobre bem, "medium" se há incerteza, "low" se não consegues calcular
+10. REGRA OBRIGATÓRIA — NUNCA DEVOLVER PREÇO 0:
+    - Se não conseguires aplicar diretamente o preçário CLYON, usa o teu conhecimento geral de mercado e lógica operacional para devolver uma estimativa de referência para a equipa.
+    - Essa estimativa deve ter confidence "low" e apenas para uso interno (nunca mostrar ao cliente como orçamento final).
+    - Nunca deixes estimatedPriceWithoutVat, vatAmount ou estimatedPriceWithVat como null ou 0.
+    - Se os dados forem insuficientes, usa os valores mínimos de referência:
+        recolha_moveis: 80€ a 150€ s/IVA | recolha_monos: 80€ a 160€ s/IVA
+        esvaziamento_apartamento: 250€ a 600€ s/IVA | esvaziamento_casa: 300€ a 800€ s/IVA
+        mudanca: 150€ a 350€ s/IVA | recolha_entulho: 120€ a 300€ s/IVA | outro: 100€ a 250€ s/IVA
+    - Inclui campos em falta em missingFields e pressupostos usados em assumptions.
+    - Inclui sempre labour com mínimo 1h × 3 pessoas × 9€.
+11. Quando a informação for insuficiente, devolve o intervalo mínimo e máximo em estimateMinWithoutVat e estimateMaxWithoutVat.
 
 Analise o pedido abaixo e retorne APENAS o JSON sem qualquer texto adicional:
 
@@ -500,6 +551,8 @@ function parseGeminiResponse(response: string): EstimateResult {
       estimatedPriceWithoutVat: parsed.estimatedPriceWithoutVat ?? null,
       vatAmount: parsed.vatAmount ?? null,
       estimatedPriceWithVat: parsed.estimatedPriceWithVat ?? null,
+      estimateMinWithoutVat: typeof parsed.estimateMinWithoutVat === "number" ? parsed.estimateMinWithoutVat : null,
+      estimateMaxWithoutVat: typeof parsed.estimateMaxWithoutVat === "number" ? parsed.estimateMaxWithoutVat : null,
       difficultyLevel: diffLevel,
       confidence,
       summary: parsed.summary || "Análise com base nos dados fornecidos",

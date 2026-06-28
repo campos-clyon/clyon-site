@@ -76,7 +76,11 @@ type GeminiEstimate = {
   estimatedPriceWithoutVat?: number | null;
   vatAmount?: number | null;
   estimatedPriceWithVat?: number | null;
+  estimateMinWithoutVat?: number | null;
+  estimateMaxWithoutVat?: number | null;
   difficultyLevel?: number;
+  confidence?: "high" | "medium" | "low";
+  analysisSource?: string;
   summary?: string;
   assumptions?: string[];
   missingFields?: string[];
@@ -263,6 +267,7 @@ export default function PedidoDetailModal({ id, token, isAdmin, colabId, colabFu
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saveMsg, setSaveMsg] = useState("");
+  const [recalculating, setRecalculating] = useState(false);
   const [error, setError] = useState("");
   const [activeTab, setActiveTab] = useState<TabId>("geral");
 
@@ -401,6 +406,51 @@ export default function PedidoDetailModal({ id, token, isAdmin, colabId, colabFu
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [onClose, showDelete, lightbox]);
+
+  async function handleRecalcularEstimativa() {
+    if (!order) return;
+    setRecalculating(true);
+    setSaveMsg("");
+    setError("");
+    try {
+      // Reconstituir orderData a partir dos campos guardados no pedido
+      const orderData = {
+        serviceType: order.serviceType ?? undefined,
+        description: order.description ?? undefined,
+        address: order.address ? { formattedAddress: order.address, city: order.city ?? "" } : undefined,
+        city: order.city ?? undefined,
+        floor: order.floor ?? undefined,
+        hasElevator: order.hasElevator ?? undefined,
+        parkingDistance: order.parkingDistance ?? undefined,
+        distanceFromBase: order.distanceKm ? { distanceKm: Number(order.distanceKm) } : undefined,
+        urgency: order.urgency ?? undefined,
+      };
+      const res = await fetch("/api/simulator/analyze", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...authHeader },
+        body: JSON.stringify({ order: orderData }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error || "Erro ao recalcular estimativa.");
+      // Guardar a nova estimativa no pedido
+      const saveRes = await fetch(`/api/admin/pedidos/${order.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", ...authHeader },
+        body: JSON.stringify({ estimateJson: JSON.stringify(data) }),
+      });
+      if (!saveRes.ok) {
+        const saveErr = await saveRes.json().catch(() => ({}));
+        throw new Error(saveErr?.error || "Erro ao guardar nova estimativa.");
+      }
+      const updated = await saveRes.json();
+      setOrder(updated.order ?? updated);
+      setSaveMsg("Estimativa recalculada com sucesso.");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Erro ao recalcular estimativa.");
+    } finally {
+      setRecalculating(false);
+    }
+  }
 
   async function handleSave() {
     if (!order) return;
@@ -1187,7 +1237,51 @@ export default function PedidoDetailModal({ id, token, isAdmin, colabId, colabFu
                 {/* Estimativa */}
                 {activeTab === "estimativa" && (
                   <div className="space-y-6">
-                    <h3 className="text-base font-bold text-white">Estimativa e valores</h3>
+                    {/* ── Cabeçalho + badge de referência ── */}
+                    {(() => {
+                      const estData = parseEstimate(order.estimateJson);
+                      const isRef = estData?.analysisSource === "gemini_reference" || estData?.analysisSource === "fallback_reference";
+                      const noPrice = !estData?.estimatedPriceWithoutVat || estData.estimatedPriceWithoutVat <= 0;
+                      return (
+                        <div className="flex flex-wrap items-start gap-3">
+                          <h3 className="text-base font-bold text-white flex-1">Estimativa e valores</h3>
+                          {isRef && (
+                            <span className="rounded-full border border-amber-400/40 bg-amber-400/10 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-amber-400">
+                              Estimativa de referência
+                            </span>
+                          )}
+                          {noPrice && !isRef && (
+                            <span className="rounded-full border border-red-400/30 bg-red-400/10 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-red-400">
+                              Sem estimativa
+                            </span>
+                          )}
+                        </div>
+                      );
+                    })()}
+                    {/* ── Aviso de estimativa de referência ── */}
+                    {(() => {
+                      const estData = parseEstimate(order.estimateJson);
+                      const isRef = estData?.analysisSource === "gemini_reference" || estData?.analysisSource === "fallback_reference";
+                      const noPrice = !estData?.estimatedPriceWithoutVat || estData.estimatedPriceWithoutVat <= 0;
+                      if (noPrice && !isRef) {
+                        return (
+                          <div className="rounded-[16px] border border-red-400/20 bg-red-400/[0.04] px-4 py-3">
+                            <p className="text-sm font-semibold text-red-400 mb-1">Este pedido ainda não tem estimativa.</p>
+                            <p className="text-xs text-slate-400">Clique em <strong className="text-slate-300">Recalcular estimativa</strong> para gerar uma estimativa automática com base nos dados guardados.</p>
+                          </div>
+                        );
+                      }
+                      if (!isRef) return null;
+                      return (
+                        <div className="rounded-[16px] border border-amber-400/20 bg-amber-400/[0.04] px-4 py-3 space-y-1">
+                          <p className="text-sm font-semibold text-amber-400">Estimativa de referência — apenas uso interno</p>
+                          <p className="text-xs leading-relaxed text-slate-400">
+                            Esta estimativa foi gerada como apoio interno porque o sistema não conseguiu aplicar totalmente o preçário CLYON.
+                            Confirme o valor antes de enviar ao cliente.
+                          </p>
+                        </div>
+                      );
+                    })()}
                     <div>
                       <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.15em] text-slate-500">Estimativa da IA</p>
                       <div className="grid grid-cols-3 gap-3">
@@ -1329,6 +1423,10 @@ export default function PedidoDetailModal({ id, token, isAdmin, colabId, colabFu
                         clyon_pricing_plus_web_reference: "Preçário CLYON + referência web",
                         web_reference_only: "Referência web (sem preçário)",
                         needs_human_review: "Requer revisão humana",
+                        gemini_reference: "Estimativa Gemini (referência interna)",
+                        fallback_reference: "Estimativa de referência automática",
+                        local_fast_estimate: "Cálculo local rápido",
+                        timeout_fallback: "Fallback por timeout",
                       };
                       const searchedAt = eme.searchedAt
                         ? new Date(eme.searchedAt).toLocaleString("pt-PT", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" })
@@ -1447,6 +1545,21 @@ export default function PedidoDetailModal({ id, token, isAdmin, colabId, colabFu
                       <textarea rows={4} value={editNotasInternas} onChange={(e) => setEditNotasInternas(e.target.value)} className={inputCls} placeholder="Notas internas (não visíveis pelo cliente)..." />
                     </Field>
                     <div className="flex flex-wrap justify-end gap-2">
+                      <button
+                        onClick={handleRecalcularEstimativa}
+                        disabled={recalculating || saving}
+                        className="flex items-center gap-2 rounded-2xl border border-violet-400/30 bg-violet-400/10 px-5 py-2.5 text-sm font-semibold text-violet-300 hover:bg-violet-400/20 disabled:opacity-60 transition"
+                      >
+                        {recalculating ? (
+                          <>
+                            <svg className="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                            </svg>
+                            A recalcular...
+                          </>
+                        ) : "Recalcular estimativa"}
+                      </button>
                       <button onClick={() => handleStatusQuick("aprovado")} disabled={saving}
                         className="flex items-center gap-2 rounded-2xl border border-emerald-400/30 bg-emerald-400/10 px-5 py-2.5 text-sm font-semibold text-emerald-300 hover:bg-emerald-400/20 disabled:opacity-60 transition">
                         Aprovar orçamento

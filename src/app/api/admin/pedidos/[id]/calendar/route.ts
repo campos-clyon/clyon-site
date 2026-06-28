@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { google } from "googleapis";
+import crypto from "crypto";
 import { getSimulatorOrderById, updateSimulatorOrder } from "@/lib/db";
 import { verifyColaboradorAuthHeader } from "@/lib/colaborador-auth";
 
@@ -13,19 +14,47 @@ async function authenticate(req: NextRequest) {
   return { err: null, colab };
 }
 
+// ─── Private key normalisation ────────────────────────────────────────────────
+// Env vars often arrive with literal "\n" instead of real newlines.
+// Additionally, some providers export PKCS#1 ("RSA PRIVATE KEY") but
+// google-auth-library / Node 18+ crypto requires PKCS#8 ("PRIVATE KEY").
+// We convert on the fly using Node's native crypto module.
+
+function normalisePrivateKey(raw: string): string {
+  // 1. Unescape literal \n sequences from env var storage
+  let key = raw.replace(/\\n/g, "\n").trim();
+
+  // 2. If the key is still a single line without headers, wrap it
+  if (!key.includes("-----BEGIN")) {
+    key = `-----BEGIN PRIVATE KEY-----\n${key}\n-----END PRIVATE KEY-----`;
+  }
+
+  // 3. Convert PKCS#1 (RSA PRIVATE KEY) → PKCS#8 (PRIVATE KEY) when needed
+  //    Node 18+ rejects PKCS#1 in newer OpenSSL builds with DECODER::unsupported
+  if (key.includes("BEGIN RSA PRIVATE KEY")) {
+    try {
+      const keyObject = crypto.createPrivateKey({ key, format: "pem", type: "pkcs1" });
+      key = keyObject.export({ type: "pkcs8", format: "pem" }) as string;
+    } catch (convErr) {
+      // Conversion failed — return as-is and let google-auth handle the error message
+      console.error("[calendar/route] PKCS#1→PKCS#8 conversion failed:", convErr);
+    }
+  }
+
+  return key;
+}
+
 // ─── Google Calendar API client ───────────────────────────────────────────────
 
 function getCalendarClient() {
   const email = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL?.trim();
-  // Replace literal \n escape sequences that can appear when pasting private keys into env vars
   const rawKey = process.env.GOOGLE_PRIVATE_KEY?.trim() ?? "";
-  const privateKey = rawKey.startsWith("-----")
-    ? rawKey
-    : rawKey.replace(/\\n/g, "\n");
 
-  if (!email || !privateKey) {
+  if (!email || !rawKey) {
     throw new Error("GOOGLE_SERVICE_ACCOUNT_EMAIL e GOOGLE_PRIVATE_KEY são obrigatórios.");
   }
+
+  const privateKey = normalisePrivateKey(rawKey);
 
   const auth = new google.auth.GoogleAuth({
     credentials: {

@@ -164,11 +164,13 @@ export interface FastEstimateInput {
 
 export interface FastEstimateResult {
   ok: boolean;
-  source: "local_fast_estimate";
+  source: "local_fast_estimate" | "fallback_reference";
   status: "estimated" | "onsite_required" | "needs_more_info";
   estimatedPriceWithoutVat: number | null;
   vatAmount: number | null;
   estimatedPriceWithVat: number | null;
+  estimateMinWithoutVat?: number | null;
+  estimateMaxWithoutVat?: number | null;
   labor?: LaborCost;
   difficultyLevel: 1 | 2 | 3 | 4 | 5;
   summary: string;
@@ -176,7 +178,101 @@ export interface FastEstimateResult {
   missingFields: string[];
   customerMessage: string;
   internalNotes: string[];
-  analysisSource: "local_fast_estimate";
+  analysisSource: "local_fast_estimate" | "fallback_reference";
+  confidence?: "high" | "medium" | "low";
+}
+
+// ─── Ranges de referência por tipo de serviço ─────────────────────────────────
+// Valores mínimos de referência INTERNA — nunca mostrar ao cliente como orçamento final
+const SERVICE_REFERENCE_RANGES: Record<string, { min: number; max: number; suggested: number }> = {
+  recolha_moveis:            { min: 80,  max: 150, suggested: 110 },
+  recolha_monos:             { min: 80,  max: 160, suggested: 115 },
+  recolha_entulho:           { min: 120, max: 300, suggested: 180 },
+  esvaziamento_apartamento:  { min: 250, max: 600, suggested: 380 },
+  esvaziamento_casa:         { min: 300, max: 800, suggested: 500 },
+  mudanca:                   { min: 150, max: 350, suggested: 220 },
+  outro:                     { min: 100, max: 250, suggested: 160 },
+};
+
+/**
+ * Estimativa de referência — usada quando não há dados suficientes para
+ * calcular pelo preçário CLYON nem o Gemini conseguiu produzir valor.
+ * NUNCA mostrar ao cliente como orçamento final.
+ * Assegura que nenhum pedido fica com preço 0 ou null.
+ */
+export function buildReferenceEstimate(input: FastEstimateInput): FastEstimateResult {
+  const svc = input.serviceType ?? "outro";
+  const range = SERVICE_REFERENCE_RANGES[svc] ?? SERVICE_REFERENCE_RANGES["outro"];
+
+  const assumptions: string[] = [
+    `Tipo de serviço: ${svc}`,
+    `Intervalo de referência mínimo para este tipo: ${range.min}€ a ${range.max}€ s/IVA`,
+    "Valor sugerido: ponto médio do intervalo de referência",
+  ];
+  const missingFields: string[] = [];
+
+  let suggestedBase = range.suggested;
+
+  // Ajuste por distância — usar estimativa de zona quando não há km
+  const distKm =
+    input.distanceFromBase?.distanceKm ??
+    input.movingDistance?.distanceKm ??
+    null;
+
+  if (distKm && distKm > 0) {
+    const distExtra = distKm * 2; // 2€/km como referência
+    suggestedBase += distExtra;
+    assumptions.push(`Distância: ${distKm} km × 2€/km = +${distExtra.toFixed(0)}€`);
+  } else {
+    // Sem km → usar estimativa de zona
+    const cityRef = (input as any).address?.city ?? (input as any).city ?? "";
+    const isLisboa = cityRef.toLowerCase().includes("lisboa") || cityRef.toLowerCase().includes("setúbal");
+    const refKm = isLisboa ? 20 : 25;
+    const distExtra = refKm * 2;
+    suggestedBase += distExtra;
+    assumptions.push(`Distância não calculada — estimativa ${refKm} km referência (${isLisboa ? "Grande Lisboa" : "zona genérica"}): +${distExtra.toFixed(0)}€`);
+    missingFields.push("distância da base");
+  }
+
+  // Mão de obra mínima
+  const laborHours = estimateLaborHours(input);
+  const labor = calculateLaborCost(laborHours);
+  suggestedBase += labor.laborCost;
+  assumptions.push(`Mão de obra: ${labor.estimatedHours}h × ${labor.peopleCount}p × ${labor.hourlyRatePerPerson}€/h = ${labor.laborCost}€`);
+
+  // IVA
+  const vatRate = 0.23;
+  const vatAmount = Math.round(suggestedBase * vatRate * 100) / 100;
+  const withVat = Math.round((suggestedBase + vatAmount) * 100) / 100;
+
+  // Guardar min/max com mão de obra incluída
+  const minWithLabor = Math.round((range.min + labor.laborCost) * 100) / 100;
+  const maxWithLabor = Math.round((range.max + labor.laborCost) * 100) / 100;
+
+  return {
+    ok: true,
+    source: "fallback_reference",
+    status: "onsite_required",
+    estimatedPriceWithoutVat: Math.round(suggestedBase * 100) / 100,
+    vatAmount,
+    estimatedPriceWithVat: withVat,
+    estimateMinWithoutVat: minWithLabor,
+    estimateMaxWithoutVat: maxWithLabor,
+    labor,
+    difficultyLevel: 2,
+    confidence: "low",
+    summary: "Estimativa de referência interna (dados insuficientes para calcular pelo preçário CLYON).",
+    assumptions,
+    missingFields,
+    customerMessage: "Pedido recebido para análise. A equipa CLYON irá confirmar os dados e entrar em contacto em breve.",
+    internalNotes: [
+      "ESTIMATIVA DE REFERENCIA — não usar como orçamento final sem revisão da equipa.",
+      `Intervalo de referência: ${range.min}€ a ${range.max}€ s/IVA (sem mão de obra)`,
+      `Com mão de obra: ${minWithLabor}€ a ${maxWithLabor}€ s/IVA`,
+      `Valor sugerido s/IVA: ${Math.round(suggestedBase * 100) / 100}€, c/IVA: ${withVat}€`,
+    ],
+    analysisSource: "fallback_reference",
+  };
 }
 
 /**
@@ -455,40 +551,22 @@ export async function calculateFastEstimate(input: FastEstimateInput): Promise<F
     );
   }
 
-  // ── Determinar status ────────────────────────────────────────────────────────
-  if (missing.length > 0) {
+  // ── Determinar status — NUNCA devolver preço 0 ou null ──────────────────────
+  // Se faltarem dados OU o preço calculado for 0, usar a estimativa de referência
+  if (missing.length > 0 || basePrice <= 0) {
+    const ref = buildReferenceEstimate(input);
     return {
-      ok: true,
-      source: "local_fast_estimate",
-      status: "needs_more_info",
-      estimatedPriceWithoutVat: null,
-      vatAmount: null,
-      estimatedPriceWithVat: null,
-      difficultyLevel: 2,
-      summary: "Faltam dados para calcular estimativa.",
-      assumptions,
-      missingFields: missing,
-      customerMessage: "A equipa CLYON irá confirmar os dados e entrar em contacto com uma proposta.",
-      internalNotes: notes,
-      analysisSource: "local_fast_estimate",
-    };
-  }
-
-  if (basePrice <= 0) {
-    return {
-      ok: true,
-      source: "local_fast_estimate",
-      status: "onsite_required",
-      estimatedPriceWithoutVat: null,
-      vatAmount: null,
-      estimatedPriceWithVat: null,
-      difficultyLevel: 3,
-      summary: "Não foi possível calcular estimativa com os dados fornecidos.",
-      assumptions,
-      missingFields: [],
-      customerMessage: "A equipa CLYON irá analisar os dados e entrar em contacto com uma proposta.",
-      internalNotes: [...notes, "Preço calculado = 0, provavelmente dados insuficientes."],
-      analysisSource: "local_fast_estimate",
+      ...ref,
+      // Preservar pressupostos do cálculo local (úteis para a equipa)
+      assumptions: [...assumptions, ...ref.assumptions],
+      missingFields: [...missing, ...ref.missingFields],
+      internalNotes: [
+        ...notes,
+        missing.length > 0
+          ? `Dados em falta: ${missing.join(", ")} — aplicada estimativa de referência.`
+          : "Preço calculado = 0 — aplicada estimativa de referência.",
+        ...ref.internalNotes,
+      ],
     };
   }
 
@@ -513,20 +591,25 @@ export async function calculateFastEstimate(input: FastEstimateInput): Promise<F
   const diff: 1 | 2 | 3 | 4 | 5 =
     totalFloors >= 6 ? 4 : totalFloors >= 4 ? 3 : totalFloors >= 2 ? 2 : 1;
 
+  const roundedBase = Math.round(basePrice * 100) / 100;
   return {
     ok: true,
     source: "local_fast_estimate",
     status: "estimated",
-    estimatedPriceWithoutVat: Math.round(basePrice * 100) / 100,
+    estimatedPriceWithoutVat: roundedBase,
     vatAmount: vat,
     estimatedPriceWithVat: withVat,
+    // Min/max com ±15% para mostrar intervalo no backoffice
+    estimateMinWithoutVat: Math.round(roundedBase * 0.85 * 100) / 100,
+    estimateMaxWithoutVat: Math.round(roundedBase * 1.15 * 100) / 100,
     labor,
     difficultyLevel: diff,
+    confidence: "medium" as const,
     summary: `Estimativa rápida calculada com base no preçário atual CLYON.`,
     assumptions,
     missingFields: [],
     customerMessage: `Inclui estimativa de mão de obra: ${labor.estimatedHours}h com equipa de ${labor.peopleCount} pessoas.`,
-    internalNotes: [...notes, `Total s/IVA: ${basePrice.toFixed(2)}€, IVA 23%: ${vat}€, Total: ${withVat}€`],
+    internalNotes: [...notes, `Total s/IVA: ${roundedBase.toFixed(2)}€, IVA 23%: ${vat}€, Total: ${withVat}€`],
     analysisSource: "local_fast_estimate",
   };
 }
