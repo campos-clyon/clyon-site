@@ -854,8 +854,8 @@ function Phase2Location({
         <h2 className="text-2xl font-bold text-gray-900">Local e acesso da mudança</h2>
 
         {/* Card: Moradas */}
-        <div className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
-          <div className="px-5 py-3 bg-gray-50 border-b border-gray-200">
+        <div className="rounded-2xl border border-gray-200 bg-white shadow-sm">
+          <div className="px-5 py-3 bg-gray-50 border-b border-gray-200 rounded-t-2xl">
             <h3 className="text-sm font-semibold text-gray-800">Moradas da mudança</h3>
           </div>
           <div className="p-5 grid grid-cols-1 lg:grid-cols-2 gap-5">
@@ -926,8 +926,8 @@ function Phase2Location({
         </div>
 
         {/* Card: Condições de acesso */}
-        <div className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
-          <div className="px-5 py-3 bg-gray-50 border-b border-gray-200">
+        <div className="rounded-2xl border border-gray-200 bg-white shadow-sm">
+          <div className="px-5 py-3 bg-gray-50 border-b border-gray-200 rounded-t-2xl">
             <h3 className="text-sm font-semibold text-gray-800">Condições de acesso</h3>
           </div>
           <div className="p-5 grid grid-cols-1 lg:grid-cols-2 gap-6">
