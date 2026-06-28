@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback } from "react";
-import { X, CheckCircle2, Loader2 } from "lucide-react";
+import { X, CheckCircle2, Loader2, ImagePlus, XCircle } from "lucide-react";
 import { trackLeadFormStart, trackLeadFormSubmit } from "@/lib/analytics";
 
 const TIPOS_SERVICO = [
@@ -62,6 +62,9 @@ export default function QueroContratarModal({ open, onClose }: Props) {
   const [errors, setErrors] = useState<Partial<Record<keyof FormData, string>>>({});
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [fotos, setFotos] = useState<File[]>([]);
+  const [fotoPreviews, setFotoPreviews] = useState<string[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
   const firstFieldRef = useRef<HTMLInputElement>(null);
   const trackedOpen = useRef(false);
@@ -216,6 +219,32 @@ export default function QueroContratarModal({ open, onClose }: Props) {
     }
   }
 
+  function handleFotos(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(e.target.files ?? []).slice(0, 5 - fotos.length);
+    if (!files.length) return;
+    const newFotos = [...fotos, ...files].slice(0, 5);
+    setFotos(newFotos);
+    // Generate preview URLs
+    Promise.all(
+      newFotos.map(
+        (f) =>
+          new Promise<string>((resolve) => {
+            const reader = new FileReader();
+            reader.onload = (ev) => resolve(ev.target?.result as string);
+            reader.readAsDataURL(f);
+          }),
+      ),
+    ).then(setFotoPreviews);
+    // Reset input so the same file can be selected again
+    e.target.value = "";
+  }
+
+  function removeFoto(idx: number) {
+    const next = fotos.filter((_, i) => i !== idx);
+    setFotos(next);
+    setFotoPreviews((prev) => prev.filter((_, i) => i !== idx));
+  }
+
   function handleClose() {
     onClose();
     // Reset state after transition
@@ -224,6 +253,8 @@ export default function QueroContratarModal({ open, onClose }: Props) {
       setErrors({});
       setSuccess(false);
       setLoading(false);
+      setFotos([]);
+      setFotoPreviews([]);
     }, 300);
   }
 
@@ -234,7 +265,7 @@ export default function QueroContratarModal({ open, onClose }: Props) {
       role="dialog"
       aria-modal="true"
       aria-labelledby="modal-title"
-      className="fixed inset-0 z-[9999] flex items-start justify-center overflow-y-auto p-4 pt-16 sm:items-center sm:pt-0"
+      className="fixed inset-0 z-[9999] flex items-center justify-center overflow-y-auto p-4"
       onClick={handleOverlayClick}
     >
       {/* Overlay */}
@@ -450,14 +481,71 @@ export default function QueroContratarModal({ open, onClose }: Props) {
                   Mensagem{" "}
                   <span className="text-slate-400 font-normal">(opcional)</span>
                 </label>
-                <textarea
-                  id="lead-mensagem"
-                  rows={3}
-                  value={form.mensagem}
-                  onChange={(e) => set("mensagem", e.target.value)}
-                  placeholder="Descreva o que necessita, quantidade aproximada, urgência..."
-                  className="w-full resize-none rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-300"
-                />
+                <div className="relative rounded-2xl border border-slate-200 bg-white transition focus-within:border-cyan-400 focus-within:ring-2 focus-within:ring-cyan-300">
+                  <textarea
+                    id="lead-mensagem"
+                    rows={3}
+                    value={form.mensagem}
+                    onChange={(e) => set("mensagem", e.target.value)}
+                    placeholder="Descreva o que necessita, quantidade aproximada, urgência..."
+                    className="w-full resize-none rounded-2xl bg-transparent px-4 py-3 pr-12 text-sm outline-none placeholder:text-slate-400"
+                  />
+                  {/* Botão adicionar imagem */}
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={fotos.length >= 5}
+                    aria-label="Adicionar foto"
+                    className="absolute bottom-2.5 right-2.5 flex h-8 w-8 items-center justify-center rounded-xl bg-slate-100 text-slate-500 transition hover:bg-cyan-100 hover:text-cyan-600 disabled:opacity-40"
+                  >
+                    <ImagePlus className="h-4 w-4" />
+                  </button>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    capture={undefined}
+                    className="hidden"
+                    onChange={handleFotos}
+                  />
+                </div>
+                {/* Thumbnails das fotos seleccionadas */}
+                {fotoPreviews.length > 0 && (
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {fotoPreviews.map((src, i) => (
+                      <div key={i} className="relative h-16 w-16 flex-shrink-0">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={src}
+                          alt={`Foto ${i + 1}`}
+                          className="h-full w-full rounded-xl object-cover border border-slate-200"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removeFoto(i)}
+                          aria-label="Remover foto"
+                          className="absolute -top-1.5 -right-1.5 rounded-full bg-white text-slate-500 shadow hover:text-rose-500"
+                        >
+                          <XCircle className="h-4 w-4" />
+                        </button>
+                      </div>
+                    ))}
+                    {fotos.length < 5 && (
+                      <button
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-xl border-2 border-dashed border-slate-300 text-slate-400 hover:border-cyan-400 hover:text-cyan-500 transition"
+                        aria-label="Adicionar mais fotos"
+                      >
+                        <ImagePlus className="h-5 w-5" />
+                      </button>
+                    )}
+                  </div>
+                )}
+                {fotos.length > 0 && (
+                  <p className="mt-1 text-xs text-slate-400">{fotos.length}/5 foto{fotos.length !== 1 ? "s" : ""} adicionada{fotos.length !== 1 ? "s" : ""}</p>
+                )}
               </div>
 
               {/* Consentimento */}
