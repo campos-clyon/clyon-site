@@ -6,7 +6,7 @@ import { BUSINESS_PHONE } from "@/lib/seo-data";
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 type OrderStatus =
-  | "pendente" | "atribuido" | "em_analise" | "precisa_info"
+  | "sem_assistente" | "pendente" | "atribuido" | "em_analise" | "precisa_info"
   | "estimativa_pronta" | "presencial_recomendado" | "aprovado"
   | "enviado_cliente" | "confirmado" | "em_execucao" | "concluido"
   | "cancelado" | "rejeitado";
@@ -50,8 +50,10 @@ export type PedidoOrder = {
   assignedToId?: number | null;
   assignedToName?: string | null;
   assignedAt?: string | null;
+  acceptedAt?: string | null;
   historyJson?: string | null;
   reviewJson?: string | null;
+  rawOrderJson?: string | null;
   dataAgendada?: string | null;
   createdAt: string;
   updatedAt: string;
@@ -79,6 +81,7 @@ type GeminiEstimate = {
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const STATUS_CFG: Record<OrderStatus, { label: string; dot: string; badge: string }> = {
+  sem_assistente:         { label: "Fila geral",          dot: "bg-yellow-400",  badge: "bg-yellow-400/10 border-yellow-400/30 text-yellow-300" },
   pendente:               { label: "Pendente",            dot: "bg-amber-400",   badge: "bg-amber-400/10 border-amber-400/30 text-amber-300" },
   atribuido:              { label: "Atribuído",           dot: "bg-sky-400",     badge: "bg-sky-400/10 border-sky-400/30 text-sky-300" },
   em_analise:             { label: "Em análise",          dot: "bg-violet-400",  badge: "bg-violet-400/10 border-violet-400/30 text-violet-300" },
@@ -95,7 +98,7 @@ const STATUS_CFG: Record<OrderStatus, { label: string; dot: string; badge: strin
 };
 
 const ALL_STATUSES: OrderStatus[] = [
-  "pendente", "atribuido", "em_analise", "precisa_info",
+  "sem_assistente", "pendente", "atribuido", "em_analise", "precisa_info",
   "estimativa_pronta", "presencial_recomendado", "aprovado",
   "confirmado", "em_execucao", "concluido", "cancelado",
 ];
@@ -160,6 +163,34 @@ function parseFiles(json?: string | null): string[] {
   } catch { return []; }
 }
 
+/**
+ * Normaliza o serviceType para um valor interno consistente.
+ * Aceita variantes: mudanca, Mudança, Mudanca, mudança, moving → "Mudança"
+ */
+function normalizeServiceType(value?: string | null): string {
+  if (!value) return "";
+  const v = value.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  if (v === "mudanca" || v === "moving" || v === "mudanca") return "Mudança";
+  // Capitalizar primeira letra para correspondência com SERVICE_TYPES
+  return value.trim();
+}
+
+/** Devolve o label a mostrar para um serviceType */
+function getServiceLabel(value?: string | null): string {
+  if (!value) return "—";
+  return normalizeServiceType(value) || value;
+}
+
+/** Verifica se o serviceType é Mudança */
+function isMudanca(value?: string | null): boolean {
+  return normalizeServiceType(value) === "Mudança";
+}
+
+/** Faz parse do rawOrderJson guardado pelo simulador */
+function parseRawOrder(json?: string | null): Record<string, any> {
+  try { return json ? JSON.parse(json) : {}; } catch { return {}; }
+}
+
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
 function StatusBadge({ status }: { status: OrderStatus }) {
@@ -202,6 +233,10 @@ type Props = {
   id: number;
   token: string;
   isAdmin: boolean;
+  /** ID do colaborador autenticado (para verificar atribuição) */
+  colabId?: number;
+  /** Função do colaborador: "assistente" | "admin" | etc. */
+  colabFuncao?: string;
   onClose: () => void;
   onDeleted?: (id: number) => void;
   onUpdated?: (order: PedidoOrder) => void;
@@ -209,7 +244,7 @@ type Props = {
 
 // ─── Main component ───────────────────────────────────────────────────────────
 
-export default function PedidoDetailModal({ id, token, isAdmin, onClose, onDeleted, onUpdated }: Props) {
+export default function PedidoDetailModal({ id, token, isAdmin, colabId, colabFuncao, onClose, onDeleted, onUpdated }: Props) {
   const authHeader = { Authorization: `Bearer ${token}` };
 
   const [order, setOrder] = useState<PedidoOrder | null>(null);
@@ -240,6 +275,10 @@ export default function PedidoDetailModal({ id, token, isAdmin, onClose, onDelet
   const [editPriority, setEditPriority] = useState<OrderPriority>("normal");
   const [editDataAgendada, setEditDataAgendada] = useState("");
 
+  // Accept state (assistente aceitar pedido da fila geral)
+  const [accepting, setAccepting] = useState(false);
+  const [acceptMsg, setAcceptMsg] = useState("");
+
   // Delete modal
   const [showDelete, setShowDelete] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState("");
@@ -252,7 +291,7 @@ export default function PedidoDetailModal({ id, token, isAdmin, onClose, onDelet
     setEditContactName(o.contactName ?? "");
     setEditContactPhone(o.contactPhone ?? "");
     setEditContactEmail(o.contactEmail ?? "");
-    setEditServiceType(o.serviceType ?? "");
+    setEditServiceType(normalizeServiceType(o.serviceType));
     setEditDescription(o.description ?? "");
     setEditUrgency(o.urgency ?? "");
     setEditAddress(o.address ?? "");
@@ -393,6 +432,33 @@ export default function PedidoDetailModal({ id, token, isAdmin, onClose, onDelet
     }
   }
 
+  async function handleAccept() {
+    if (!order) return;
+    setAccepting(true);
+    setAcceptMsg("");
+    setError("");
+    try {
+      const res = await fetch(`/api/admin/pedidos/${order.id}/accept`, {
+        method: "POST",
+        headers: authHeader,
+      });
+      const data = await safeJson(res);
+      if (!res.ok || data?.ok === false) {
+        throw new Error(data?.message || "Não foi possível aceitar o pedido.");
+      }
+      const updated = data?.order ?? order;
+      setOrder(updated);
+      populateEdit(updated);
+      setAcceptMsg("Pedido aceite com sucesso!");
+      setTimeout(() => setAcceptMsg(""), 4000);
+      onUpdated?.(updated);
+    } catch (e: any) {
+      setError(e.message || "Erro ao aceitar o pedido.");
+    } finally {
+      setAccepting(false);
+    }
+  }
+
   // ─── Render ────────────────────────────────────────────────────────────────
 
   return (
@@ -401,8 +467,8 @@ export default function PedidoDetailModal({ id, token, isAdmin, onClose, onDelet
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
       <div
-        className="relative flex w-full max-w-[1100px] flex-col overflow-hidden rounded-[32px] border border-white/[0.08] bg-[#070e17] shadow-[0_40px_120px_rgba(0,0,0,0.8)]"
-        style={{ maxHeight: "calc(100vh - 2rem)" }}
+        className="relative flex w-full flex-col overflow-hidden rounded-[28px] border border-white/[0.08] bg-[#070e17] shadow-[0_40px_120px_rgba(0,0,0,0.8)]"
+        style={{ maxWidth: "min(1600px, 96vw)", maxHeight: "94vh", height: "94vh" }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* ── Loading ── */}
@@ -440,7 +506,7 @@ export default function PedidoDetailModal({ id, token, isAdmin, onClose, onDelet
           );
 
           return (
-            <div className="flex flex-col" style={{ maxHeight: "calc(100vh - 2rem)" }}>
+            <div className="flex flex-col" style={{ height: "94vh", maxHeight: "94vh" }}>
               {/* ── Header ── */}
               <div className="flex-shrink-0 border-b border-white/[0.06] px-6 py-5">
                 <div className="flex items-start justify-between gap-4">
@@ -459,9 +525,13 @@ export default function PedidoDetailModal({ id, token, isAdmin, onClose, onDelet
                           order.priority === "alta" ? "text-amber-400" : "text-slate-500"
                         }`}>{order.priority}</span>
                       )}
-                      {order.assignedToName && (
+                      {order.assignedToName ? (
                         <span className="text-xs text-slate-500">
                           Assistente: <span className="font-semibold text-sky-400">{order.assignedToName}</span>
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 rounded-full border border-yellow-400/30 bg-yellow-400/10 px-2.5 py-0.5 text-[10px] font-semibold text-yellow-300">
+                          Fila geral
                         </span>
                       )}
                       <span className="text-xs text-slate-600">{fmt(order.createdAt)}</span>
@@ -469,9 +539,40 @@ export default function PedidoDetailModal({ id, token, isAdmin, onClose, onDelet
                   </div>
 
                   <div className="flex flex-shrink-0 flex-wrap items-center gap-2">
+                    {acceptMsg && (
+                      <span className="rounded-xl border border-cyan-400/30 bg-cyan-400/10 px-3 py-1 text-xs font-semibold text-cyan-300">
+                        {acceptMsg}
+                      </span>
+                    )}
                     {saveMsg && (
                       <span className="rounded-xl border border-emerald-400/30 bg-emerald-400/10 px-3 py-1 text-xs font-semibold text-emerald-300">
                         {saveMsg}
+                      </span>
+                    )}
+                    {/* Aceitar pedido — visível apenas para assistentes quando pedido está na fila geral */}
+                    {!isAdmin && colabFuncao === "assistente" && !order.assignedToId && (
+                      <button
+                        onClick={handleAccept}
+                        disabled={accepting}
+                        className="flex items-center gap-1.5 rounded-2xl bg-cyan-400 px-4 py-2 text-sm font-bold text-slate-950 hover:bg-cyan-300 disabled:opacity-60 transition"
+                      >
+                        {accepting ? (
+                          <svg className="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                          </svg>
+                        ) : (
+                          <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                        )}
+                        {accepting ? "A aceitar..." : "Aceitar pedido"}
+                      </button>
+                    )}
+                    {/* Pedido já atribuído a outra assistente */}
+                    {!isAdmin && colabFuncao === "assistente" && order.assignedToId && order.assignedToId !== colabId && (
+                      <span className="rounded-xl border border-slate-400/20 bg-slate-400/10 px-3 py-1 text-xs font-semibold text-slate-400">
+                        Atribuído a {order.assignedToName}
                       </span>
                     )}
                     {error && !showDelete && (
@@ -531,8 +632,8 @@ export default function PedidoDetailModal({ id, token, isAdmin, onClose, onDelet
                       </svg>
                       WhatsApp
                     </a>
-                    {/* Excluir — visível para todos os colaboradores */}
-                    <button
+                    {/* Excluir — apenas admin geral */}
+                    {isAdmin && <button
                       onClick={() => setShowDelete(true)}
                       className="flex items-center gap-1.5 rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-2 text-sm font-semibold text-red-400 hover:bg-red-500/20 transition"
                     >
@@ -540,7 +641,7 @@ export default function PedidoDetailModal({ id, token, isAdmin, onClose, onDelet
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                       </svg>
                       Excluir
-                    </button>
+                    </button>}
                     {/* Fechar */}
                     <button
                       onClick={onClose}
@@ -577,7 +678,13 @@ export default function PedidoDetailModal({ id, token, isAdmin, onClose, onDelet
               <div className="flex-1 overflow-y-auto px-6 py-6">
 
                 {/* Geral */}
-                {activeTab === "geral" && (
+                {activeTab === "geral" && (() => {
+                  const raw = parseRawOrder(order.rawOrderJson);
+                  const isMov = isMudanca(order.serviceType);
+                  const originAddr = raw.originAddress?.formattedAddress ?? raw.originAddress?.address ?? order.address;
+                  const destAddr = raw.destinationAddress?.formattedAddress ?? raw.destinationAddress?.address;
+                  const movDist = raw.movingDistance?.distanceText ?? (order.distanceKm ? `${order.distanceKm} km` : null);
+                  return (
                   <div className="space-y-6">
                     <h3 className="text-base font-bold text-white">Resumo geral</h3>
                     <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
@@ -585,15 +692,21 @@ export default function PedidoDetailModal({ id, token, isAdmin, onClose, onDelet
                         { label: "Pedido nº", value: `#${order.id}` },
                         { label: "Cliente", value: order.contactName },
                         { label: "Telefone", value: order.contactPhone },
-                        { label: "Serviço", value: order.serviceType },
+                        { label: "Serviço", value: getServiceLabel(order.serviceType) },
                         { label: "Status", value: STATUS_CFG[order.status]?.label ?? order.status },
                         { label: "Prioridade", value: order.priority ?? "normal" },
-                        { label: "Assistente", value: order.assignedToName ?? "Não atribuído" },
+                        {
+                          label: "Assistente",
+                          value: order.assignedToName ?? "Fila geral",
+                        },
                         { label: "Estimativa IA", value: fmtEur(order.estimateTotal) },
                         { label: "Preço final s/IVA", value: fmtEur(order.precoFinal) },
                         { label: "Preço final c/IVA", value: fmtEur(order.precoFinalIva) },
                         { label: "Data de entrada", value: fmt(order.createdAt) },
                         { label: "Última atualização", value: fmt(order.updatedAt) },
+                        ...(isMov && originAddr ? [{ label: "Origem", value: originAddr }] : []),
+                        ...(isMov && destAddr ? [{ label: "Destino", value: destAddr }] : []),
+                        ...(isMov && movDist ? [{ label: "Percurso", value: movDist }] : []),
                       ].map((item) => (
                         <div key={item.label} className="rounded-[18px] border border-white/[0.06] bg-white/[0.02] p-4">
                           <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-slate-600">{item.label}</p>
@@ -640,7 +753,8 @@ export default function PedidoDetailModal({ id, token, isAdmin, onClose, onDelet
                       </div>
                     )}
                   </div>
-                )}
+                  );
+                })()}
 
                 {/* Cliente */}
                 {activeTab === "cliente" && (
@@ -681,10 +795,27 @@ export default function PedidoDetailModal({ id, token, isAdmin, onClose, onDelet
                     <h3 className="text-base font-bold text-white">Dados do serviço</h3>
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                       <Field label="Tipo de serviço">
-                        <select value={editServiceType} onChange={(e) => setEditServiceType(e.target.value)} className={selectCls}>
+                        <select
+                          value={editServiceType}
+                          onChange={(e) => setEditServiceType(e.target.value)}
+                          className={selectCls}
+                        >
                           <option value="" className={optionCls}>Selecionar...</option>
-                          {SERVICE_TYPES.map((s) => <option key={s} value={s} className={optionCls}>{s}</option>)}
+                          {SERVICE_TYPES.map((s) => (
+                            <option
+                              key={s}
+                              value={s}
+                              className={optionCls}
+                              /* Seleciona se o valor normalizado bate */
+                            >{s}</option>
+                          ))}
                         </select>
+                        {/* Nota de diagnóstico se o valor não bate com nenhuma opção */}
+                        {editServiceType && !SERVICE_TYPES.includes(editServiceType) && (
+                          <p className="mt-1 text-[10px] text-amber-400">
+                            Valor original: &quot;{order.serviceType}&quot; — normalizado para &quot;{editServiceType}&quot;
+                          </p>
+                        )}
                       </Field>
                       <Field label="Urgência">
                         <select value={editUrgency} onChange={(e) => setEditUrgency(e.target.value)} className={selectCls}>
@@ -710,46 +841,117 @@ export default function PedidoDetailModal({ id, token, isAdmin, onClose, onDelet
                 )}
 
                 {/* Morada */}
-                {activeTab === "morada" && (
-                  <div className="space-y-6">
-                    <h3 className="text-base font-bold text-white">Morada e acesso</h3>
-                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                      <Field label="Morada completa">
-                        <input type="text" value={editAddress} onChange={(e) => setEditAddress(e.target.value)} className={inputCls} placeholder="Rua, número, andar..." />
-                      </Field>
-                      <Field label="Localidade">
-                        <input type="text" value={editCity} onChange={(e) => setEditCity(e.target.value)} className={inputCls} placeholder="Lisboa, Porto..." />
-                      </Field>
-                      <Field label="Código postal">
-                        <input type="text" value={editPostalCode} onChange={(e) => setEditPostalCode(e.target.value)} className={inputCls} placeholder="1234-567" />
-                      </Field>
-                      <Field label="Andar">
-                        <input type="text" value={editFloor} onChange={(e) => setEditFloor(e.target.value)} className={inputCls} placeholder="Ex: 3º andar" />
-                      </Field>
-                      <Field label="Elevador">
-                        <select value={editHasElevator} onChange={(e) => setEditHasElevator(e.target.value)} className={selectCls}>
-                          <option value="" className={optionCls}>Não informado</option>
-                          <option value="sim" className={optionCls}>Sim</option>
-                          <option value="nao" className={optionCls}>Não</option>
-                        </select>
-                      </Field>
-                      <Field label="Distância de estacionamento">
-                        <select value={editParkingDistance} onChange={(e) => setEditParkingDistance(e.target.value)} className={selectCls}>
-                          <option value="" className={optionCls}>Não informado</option>
-                          <option value="porta" className={optionCls}>À porta</option>
-                          <option value="proximo" className={optionCls}>Próximo (até 50m)</option>
-                          <option value="medio" className={optionCls}>Médio (50-200m)</option>
-                          <option value="longe" className={optionCls}>Longe (mais de 200m)</option>
-                        </select>
-                      </Field>
+                {activeTab === "morada" && (() => {
+                  const raw = parseRawOrder(order.rawOrderJson);
+                  const isMov = isMudanca(order.serviceType);
+                  const originAccess = raw.originAccess ?? {};
+                  const destAccess = raw.destinationAccess ?? {};
+                  const originAddr = raw.originAddress ?? {};
+                  const destAddr = raw.destinationAddress ?? {};
+                  const movDist = raw.movingDistance ?? {};
+                  const baseDist = raw.distanceFromBase ?? {};
+
+                  if (isMov) {
+                    return (
+                      <div className="space-y-8">
+                        <h3 className="text-base font-bold text-white">Morada de mudança — Origem e Destino</h3>
+
+                        {/* Origem */}
+                        <div className="rounded-[20px] border border-cyan-400/20 bg-cyan-400/[0.03] p-5">
+                          <p className="mb-4 text-xs font-bold uppercase tracking-wider text-cyan-400">Origem</p>
+                          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                            <ReadonlyField label="Morada de origem" value={originAddr.formattedAddress ?? originAddr.address ?? order.address} />
+                            <ReadonlyField label="Localidade" value={originAddr.city ?? order.city} />
+                            <ReadonlyField label="Código postal" value={originAddr.postalCode ?? order.postalCode} />
+                            <ReadonlyField label="Andar" value={originAccess.floor ?? order.floor} />
+                            <ReadonlyField label="Elevador" value={originAccess.hasElevator ?? order.hasElevator} />
+                            <ReadonlyField label="Estacionamento" value={originAccess.parkingDistance ?? order.parkingDistance} />
+                            <ReadonlyField label="Acesso difícil" value={originAccess.difficultAccess ? "Sim" : originAccess.difficultAccess === false ? "Não" : null} />
+                            {originAccess.observations && (
+                              <div className="sm:col-span-2">
+                                <ReadonlyField label="Observações origem" value={originAccess.observations} />
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Destino */}
+                        <div className="rounded-[20px] border border-violet-400/20 bg-violet-400/[0.03] p-5">
+                          <p className="mb-4 text-xs font-bold uppercase tracking-wider text-violet-400">Destino</p>
+                          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                            <ReadonlyField label="Morada de destino" value={destAddr.formattedAddress ?? destAddr.address} />
+                            <ReadonlyField label="Localidade" value={destAddr.city} />
+                            <ReadonlyField label="Código postal" value={destAddr.postalCode} />
+                            <ReadonlyField label="Andar" value={destAccess.floor} />
+                            <ReadonlyField label="Elevador" value={destAccess.hasElevator} />
+                            <ReadonlyField label="Estacionamento" value={destAccess.parkingDistance} />
+                            <ReadonlyField label="Acesso difícil" value={destAccess.difficultAccess ? "Sim" : destAccess.difficultAccess === false ? "Não" : null} />
+                            {destAccess.observations && (
+                              <div className="sm:col-span-2">
+                                <ReadonlyField label="Observações destino" value={destAccess.observations} />
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Percurso */}
+                        {(movDist.distanceText || movDist.distanceKm || order.distanceKm || baseDist.distanceText) && (
+                          <div className="rounded-[20px] border border-white/[0.06] bg-white/[0.02] p-5">
+                            <p className="mb-4 text-xs font-bold uppercase tracking-wider text-slate-400">Percurso</p>
+                            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                              <ReadonlyField label="Origem → Destino" value={movDist.distanceText ?? (order.distanceKm ? `${order.distanceKm} km` : null)} />
+                              <ReadonlyField label="Duração" value={movDist.durationText ?? order.distanceText} />
+                              {baseDist.distanceText && <ReadonlyField label="Base → Origem" value={baseDist.distanceText} />}
+                              {baseDist.durationText && <ReadonlyField label="Duração base" value={baseDist.durationText} />}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  }
+
+                  // Outros serviços — morada única com campos editáveis
+                  return (
+                    <div className="space-y-6">
+                      <h3 className="text-base font-bold text-white">Morada e acesso</h3>
+                      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                        <Field label="Morada completa">
+                          <input type="text" value={editAddress} onChange={(e) => setEditAddress(e.target.value)} className={inputCls} placeholder="Rua, número, andar..." />
+                        </Field>
+                        <Field label="Localidade">
+                          <input type="text" value={editCity} onChange={(e) => setEditCity(e.target.value)} className={inputCls} placeholder="Lisboa, Porto..." />
+                        </Field>
+                        <Field label="Código postal">
+                          <input type="text" value={editPostalCode} onChange={(e) => setEditPostalCode(e.target.value)} className={inputCls} placeholder="1234-567" />
+                        </Field>
+                        <Field label="Andar">
+                          <input type="text" value={editFloor} onChange={(e) => setEditFloor(e.target.value)} className={inputCls} placeholder="Ex: 3º andar" />
+                        </Field>
+                        <Field label="Elevador">
+                          <select value={editHasElevator} onChange={(e) => setEditHasElevator(e.target.value)} className={selectCls}>
+                            <option value="" className={optionCls}>Não informado</option>
+                            <option value="sim" className={optionCls}>Sim</option>
+                            <option value="nao" className={optionCls}>Não</option>
+                          </select>
+                        </Field>
+                        <Field label="Distância de estacionamento">
+                          <select value={editParkingDistance} onChange={(e) => setEditParkingDistance(e.target.value)} className={selectCls}>
+                            <option value="" className={optionCls}>Não informado</option>
+                            <option value="porta" className={optionCls}>À porta</option>
+                            <option value="proximo" className={optionCls}>Próximo (até 50m)</option>
+                            <option value="medio" className={optionCls}>Médio (50-200m)</option>
+                            <option value="longe" className={optionCls}>Longe (mais de 200m)</option>
+                          </select>
+                        </Field>
+                      </div>
+                      <div className="flex justify-end">
+                        <button onClick={handleSave} disabled={saving} className="flex items-center gap-2 rounded-2xl bg-cyan-400 px-5 py-2.5 text-sm font-bold text-slate-950 hover:bg-cyan-300 disabled:opacity-60 transition">
+                          {saving ? "A guardar..." : "Guardar alterações"}
+                        </button>
+                      </div>
                     </div>
-                    <div className="flex justify-end">
-                      <button onClick={handleSave} disabled={saving} className="flex items-center gap-2 rounded-2xl bg-cyan-400 px-5 py-2.5 text-sm font-bold text-slate-950 hover:bg-cyan-300 disabled:opacity-60 transition">
-                        {saving ? "A guardar..." : "Guardar alterações"}
-                      </button>
-                    </div>
-                  </div>
-                )}
+                  );
+                })()}
 
                 {/* Estimativa */}
                 {activeTab === "estimativa" && (

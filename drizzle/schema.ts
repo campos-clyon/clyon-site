@@ -163,6 +163,10 @@ export interface SimulatorOrder {
   colaboradorId?: number | null;
   dataAgendada?: Date | null;
   viewedAt?: Date | null;
+  /** Full raw form data JSON — stores originAddress, destinationAddress, originAccess, destinationAccess, movingDistance, etc. */
+  rawOrderJson?: string | null;
+  /** Timestamp when an assistant accepted this order from the general queue */
+  acceptedAt?: Date | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -200,4 +204,6 @@ export interface InsertSimulatorOrder {
   reviewJson?: string | null;
   colaboradorId?: number | null;
   dataAgendada?: Date | null;
+  rawOrderJson?: string | null;
+  acceptedAt?: Date | null;
 }

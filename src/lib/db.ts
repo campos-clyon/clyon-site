@@ -769,7 +769,7 @@ export async function getTodayRegistroByColaborador(colaboradorId: number) {
 
 let _simulatorOrdersEnsured = false;
 // Bump this version number any time new migrations are added so the guard re-runs
-const MIGRATION_VERSION = 2;
+const MIGRATION_VERSION = 3;
 let _migrationVersion = 0;
 
 export async function ensureSimulatorOrdersTable() {
@@ -833,6 +833,9 @@ export async function ensureSimulatorOrdersTable() {
     `ALTER TABLE simulatorOrders ADD COLUMN postalCode VARCHAR(20)`,
     `ALTER TABLE simulatorOrders ADD COLUMN parkingDistance VARCHAR(60)`,
     `ALTER TABLE simulatorOrders ADD COLUMN city VARCHAR(120)`,
+    // v3 migrations — rawOrderJson stores full form data (origin/dest for mudanca), acceptedAt tracks when assistant accepted
+    `ALTER TABLE simulatorOrders ADD COLUMN rawOrderJson LONGTEXT`,
+    `ALTER TABLE simulatorOrders ADD COLUMN acceptedAt TIMESTAMP NULL DEFAULT NULL`,
   ];
   for (const sql of migrations) {
     try { await pool.execute(sql); } catch (e: any) {
@@ -952,6 +955,8 @@ export async function updateSimulatorOrder(
     hasElevator: string | null;
     parkingDistance: string | null;
     urgency: string | null;
+    rawOrderJson: string | null;
+    acceptedAt: Date | null;
   }>
 ) {
   await ensureSimulatorOrdersTable();

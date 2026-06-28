@@ -1,11 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
   createSimulatorOrder,
-  updateSimulatorOrder,
   getSimulatorOrderById,
   appendOrderHistory,
   calculateOrderPriority,
-  pickLeastLoadedAssistant,
 } from "@/lib/db";
 import type { InsertSimulatorOrder } from "../../../../../drizzle/schema";
 
@@ -24,9 +22,9 @@ export async function POST(req: NextRequest) {
       estimateTotal: estimate?.estimatedPriceWithVat?.toString() ?? null,
     });
 
-    // ── Atribuição automática: assistente com menos pedidos activos ────────
-    const assigned = await pickLeastLoadedAssistant();
-    console.log("[v0] POST /api/simulador/pedido: pickLeastLoadedAssistant =", assigned ? `${assigned.nome} (id=${assigned.id})` : "null — fila geral");
+    // ── Sem atribuição automática ─────────────────────────────────────────────
+    // Pedidos entram sempre na fila geral. Uma assistente deve aceitar
+    // manualmente via POST /api/admin/pedidos/[id]/accept.
 
     const row: InsertSimulatorOrder = {
       serviceType: order.serviceType ?? null,
@@ -38,7 +36,7 @@ export async function POST(req: NextRequest) {
             }))
           )
         : null,
-      // Morada: mudança tem origem/destino; outros serviços têm morada única
+      // Morada principal: para mudança guardamos a origem; para outros o endereço único
       address:
         order.serviceType === "mudanca"
           ? (order.originAddress?.formattedAddress ?? order.address?.formattedAddress ?? null)
@@ -65,32 +63,33 @@ export async function POST(req: NextRequest) {
       distanceText: order.movingDistance?.durationText ?? order.distanceFromBase?.durationText ?? null,
       chatJson: chatHistory ? JSON.stringify(chatHistory) : null,
       priority,
-      status: assigned ? "atribuido" : "sem_assistente",
-      assignedToId: assigned?.id ?? null,
-      assignedToName: assigned?.nome ?? null,
-      assignedAt: assigned ? new Date() : null,
+      // Sempre sem assistente — fluxo de aceitação manual obrigatório
+      status: "sem_assistente",
+      assignedToId: null,
+      assignedToName: null,
+      assignedAt: null,
+      // Guardar todo o JSON do formulário para preservar dados de mudança
+      // (originAddress, destinationAddress, originAccess, destinationAccess, movingDistance, heavyItems, etc.)
+      rawOrderJson: JSON.stringify(order),
     };
 
     const id = await createSimulatorOrder(row);
 
-    // ── Confirmação de escrita: garantir que a linha existe antes de retornar sucesso
+    // Confirmação de escrita
     const created = await getSimulatorOrderById(id);
     if (!created) {
-      console.error("[v0] POST /api/simulador/pedido: ❌ Pedido #", id, " não encontrado após INSERT — possível falha de escrita na BD.");
+      console.error("[v0] POST /api/simulador/pedido: pedido #", id, " não encontrado após INSERT");
       return NextResponse.json(
-        { ok: false, error: `Pedido #${id} não encontrado após criação — erro de escrita na BD.` },
+        { ok: false, error: `Pedido #${id} não encontrado após criação.` },
         { status: 500 }
       );
     }
-    console.log("[v0] POST /api/simulador/pedido: ✓ Confirmado na BD — id=", created.id, "status=", created.status, "assignedToId=", created.assignedToId, "assignedToName=", created.assignedToName);
 
     // Histórico
     await appendOrderHistory(id, {
       type: "created",
       by: null,
-      message: assigned
-        ? `Pedido criado via simulador e atribuído automaticamente a ${assigned.nome}. Serviço: ${order.serviceType ?? "—"}. Prioridade: ${priority}.`
-        : `Pedido criado via simulador. Fila geral. Serviço: ${order.serviceType ?? "—"}. Prioridade: ${priority}.`,
+      message: `Pedido criado via simulador. Fila geral (sem assistente). Serviço: ${order.serviceType ?? "—"}. Prioridade: ${priority}.`,
     });
 
     return NextResponse.json({
@@ -98,13 +97,14 @@ export async function POST(req: NextRequest) {
       id: created.id,
       status: created.status,
       priority: created.priority,
-      assignedToId: created.assignedToId ?? null,
-      assignedToName: created.assignedToName ?? null,
+      assignedToId: null,
+      assignedToName: null,
       createdAt: created.createdAt,
-      queue: assigned ? "assigned" : "general",
+      queue: "general",
+      message: "Pedido enviado com sucesso. A equipa CLYON irá analisar e uma assistente aceitará o pedido em breve.",
     });
   } catch (err: any) {
-    console.error("[v0] POST /api/simulador/pedido: ❌ Erro:", err.message);
+    console.error("[v0] POST /api/simulador/pedido: erro:", err.message);
     return NextResponse.json({ ok: false, error: err.message }, { status: 500 });
   }
 }

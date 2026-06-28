@@ -390,6 +390,14 @@ const getInitials = (name: string) =>
     .map((part) => part[0]?.toUpperCase() || "")
     .join("");
 
+/** Normaliza serviceType para label legível (mudanca/Mudança/moving → "Mudança") */
+function normalizeServiceTypeLabel(value?: string | null): string {
+  if (!value) return "—";
+  const v = value.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  if (v === "mudanca" || v === "moving") return "Mudança";
+  return value.trim();
+}
+
 const formatRoleLabel = (role: Colaborador["funcao"]) => {
   if (role === "admin") return "Administrador";
   if (role === "assistente") return "Assistente";
@@ -403,6 +411,7 @@ export default function ColaboradorAdminClient() {
   const [token, setToken] = useState("");
   const [adminNome, setAdminNome] = useState("");
   const [colabId, setColabId] = useState<number | null>(null);
+  const [colabFuncao, setColabFuncao] = useState<string>("");
   const [isAdminGeral, setIsAdminGeral] = useState(false);
   const [colaboradores, setColaboradores] = useState<Colaborador[]>([]);
   const [loading, setLoading] = useState(true);
@@ -577,6 +586,7 @@ export default function ColaboradorAdminClient() {
     setIsAdminGeral(isAdminGeral);
     const storedId = getColaboradorItem("id");
     if (storedId) setColabId(Number(storedId));
+    setColabFuncao(storedFuncao);
 
     // Verificar se há section no URL (ex: ?section=pedidos)
     const searchParams = new URLSearchParams(window.location.search);
@@ -1708,6 +1718,7 @@ export default function ColaboradorAdminClient() {
                   <div className="space-y-1.5">
                     {pedidos.slice(0, 5).map((p) => {
                       const statusColors: Record<string, string> = {
+                        sem_assistente: "bg-yellow-500/20 text-yellow-300",
                         pendente: "bg-blue-500/20 text-blue-300",
                         atribuido: "bg-purple-500/20 text-purple-300",
                         em_analise: "bg-yellow-500/20 text-yellow-300",
@@ -1735,7 +1746,7 @@ export default function ColaboradorAdminClient() {
                         >
                           <span className="w-8 text-right text-xs font-mono text-slate-500">#{p.id}</span>
                           <span className="flex-1 truncate font-medium text-white">{p.contactName ?? "—"}</span>
-                          <span className="hidden truncate text-slate-400 sm:block">{p.serviceType ?? "—"}</span>
+                          <span className="hidden truncate text-slate-400 sm:block">{normalizeServiceTypeLabel(p.serviceType)}</span>
                           <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${statusColors[p.status] ?? "bg-slate-500/20 text-slate-400"}`}>
                             {statusLabel[p.status] ?? p.status}
                           </span>
@@ -2075,6 +2086,7 @@ export default function ColaboradorAdminClient() {
                         })
                         .map((p) => {
                           const statusColors: Record<string, string> = {
+                            sem_assistente: "bg-yellow-500/20 text-yellow-300 border-yellow-500/30",
                             pendente: "bg-blue-500/20 text-blue-300 border-blue-500/30",
                             atribuido: "bg-purple-500/20 text-purple-300 border-purple-500/30",
                             em_analise: "bg-yellow-500/20 text-yellow-300 border-yellow-500/30",
@@ -2113,7 +2125,7 @@ export default function ColaboradorAdminClient() {
                               <td className="rounded-l-[14px] px-3 py-3 text-xs font-mono text-slate-500">#{p.id}</td>
                               <td className="px-3 py-3 font-medium text-white">{p.contactName ?? "—"}</td>
                               <td className="px-3 py-3 text-slate-300">{p.contactPhone ?? "—"}</td>
-                              <td className="px-3 py-3 text-slate-300">{p.serviceType ?? "—"}</td>
+                              <td className="px-3 py-3 text-slate-300">{normalizeServiceTypeLabel(p.serviceType)}</td>
                               <td className="px-3 py-3 text-slate-400">{p.city ?? "—"}</td>
                               <td className={`px-3 py-3 font-semibold capitalize ${urgencyColors[p.urgency ?? "normal"] ?? "text-slate-400"}`}>{p.urgency ?? "—"}</td>
                               <td className="px-3 py-3">
@@ -2126,21 +2138,23 @@ export default function ColaboradorAdminClient() {
                               <td className="rounded-r-[14px] px-3 py-3 text-right">
                                 <div className="flex items-center justify-end gap-2">
                                   {/* Aceitar: visível apenas para assistentes em pedidos sem atribuição */}
-                                  {!isAdminGeral && !p.assignedToId && colabId && (
+                                  {!isAdminGeral && !p.assignedToId && (
                                     <button
                                       type="button"
                                       className="rounded-[10px] border border-emerald-400/30 bg-emerald-400/10 px-3 py-1.5 text-xs font-semibold text-emerald-300 hover:bg-emerald-400/20 transition"
                                       onClick={async (e) => {
                                         e.stopPropagation();
                                         try {
-                                          const r = await fetch("/api/admin/pedidos", {
-                                            method: "PATCH",
-                                            headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-                                            body: JSON.stringify({ id: p.id, assignedToId: colabId, assignedToName: adminNome, status: "atribuido" }),
+                                          const r = await fetch(`/api/admin/pedidos/${p.id}/accept`, {
+                                            method: "POST",
+                                            headers: { Authorization: `Bearer ${token}` },
                                           });
-                                          if (r.ok) {
-                                            const { order: updated } = await r.json();
+                                          const data = await r.json();
+                                          if (r.ok && data?.ok) {
+                                            const updated = data.order ?? { ...p, assignedToId: colabId, assignedToName: adminNome, status: "atribuido" };
                                             setPedidos((prev) => prev.map((x) => x.id === p.id ? { ...x, ...updated } : x));
+                                          } else {
+                                            alert(data?.message ?? "Erro ao aceitar pedido.");
                                           }
                                         } catch {}
                                       }}
@@ -2173,6 +2187,8 @@ export default function ColaboradorAdminClient() {
               id={selectedPedido.id}
               token={token}
               isAdmin={isAdminGeral}
+              colabId={colabId ?? undefined}
+              colabFuncao={colabFuncao}
               onClose={() => { setPedidoDetalheOpen(false); setSelectedPedido(null); }}
               onDeleted={(deletedId) => {
                 setPedidos((prev) => prev.filter((p) => p.id !== deletedId));
@@ -2963,7 +2979,7 @@ export default function ColaboradorAdminClient() {
             </section>
           )}
 
-          {/* ═══════════════════════════ LEADS ═══════════════════════════ */}
+          {/* ═══════════════════════════ LEADS ══��════════════════════════ */}
           {activeSection === "leads" && (
             <section className="space-y-4 rounded-[28px] border border-cyan-300/16 bg-[linear-gradient(180deg,rgba(9,25,40,0.94)_0%,rgba(11,30,47,0.92)_100%)] p-5 shadow-[0_20px_70px_rgba(3,10,18,0.22)]">
               {/* Header */}

@@ -29,7 +29,9 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   const order = await getSimulatorOrderById(Number(id));
   if (!order) return NextResponse.json({ error: "Pedido não encontrado" }, { status: 404 });
 
-  if (!colab!.isAdmin && order.assignedToId !== colab!.id) {
+  // Assistente pode ver: (1) pedidos atribuídos a si, (2) pedidos da fila geral (sem assistente)
+  const isUnassigned = !order.assignedToId;
+  if (!colab!.isAdmin && order.assignedToId !== colab!.id && !isUnassigned) {
     return NextResponse.json({ error: "Sem permissão para ver este pedido" }, { status: 403 });
   }
 
@@ -51,8 +53,10 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   const order = await getSimulatorOrderById(Number(id));
   if (!order) return NextResponse.json({ error: "Pedido não encontrado" }, { status: 404 });
 
+  // Assistente pode editar: pedidos atribuídos a si. Pedidos da fila geral são editados
+  // apenas via /accept — aqui bloqueamos para evitar race conditions.
   if (!colab!.isAdmin && order.assignedToId !== colab!.id) {
-    return NextResponse.json({ error: "Sem permissão para editar este pedido" }, { status: 403 });
+    return NextResponse.json({ error: "Sem permissão para editar este pedido. Use o botão 'Aceitar' primeiro." }, { status: 403 });
   }
 
   let body: Record<string, unknown>;
@@ -91,10 +95,13 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 }
 
 // DELETE /api/admin/pedidos/[id]
-// Qualquer colaborador autenticado pode excluir pedidos.
+// Apenas admin geral pode excluir pedidos.
 export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const { err } = await authenticate(req);
+  const { err, colab } = await authenticate(req);
   if (err) return err;
+  if (colab!.isAdmin !== 1) {
+    return NextResponse.json({ error: "Apenas administradores podem excluir pedidos." }, { status: 403 });
+  }
   const { id } = await params;
 
   const order = await getSimulatorOrderById(Number(id));
