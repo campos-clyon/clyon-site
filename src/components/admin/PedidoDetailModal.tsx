@@ -63,6 +63,10 @@ export type PedidoOrder = {
   calendarStatus?: "not_scheduled" | "scheduled" | "updated" | null;
   calendarNotes?: string | null;
   analysisJsonExtended?: string | null;
+  /** ID do calendário CLYON onde o evento foi enviado */
+  calendarTargetId?: string | null;
+  /** Nome legível do calendário de destino */
+  calendarTargetName?: string | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -315,6 +319,7 @@ export default function PedidoDetailModal({ id, token, isAdmin, colabId, colabFu
   const [cmScheduling, setCmScheduling] = useState(false);
   const [cmMsg, setCmMsg] = useState("");
   const [cmError, setCmError] = useState("");
+  const [cmTargetName, setCmTargetName] = useState<string | null>(null);
 
   // Accept state (assistente aceitar pedido da fila geral)
   const [accepting, setAccepting] = useState(false);
@@ -606,6 +611,7 @@ export default function PedidoDetailModal({ id, token, isAdmin, colabId, colabFu
     setCmNotes(o.calendarNotes ?? "");
     setCmMsg("");
     setCmError("");
+    setCmTargetName(null);
   }
 
   function openCalendarModal() {
@@ -657,6 +663,7 @@ export default function PedidoDetailModal({ id, token, isAdmin, colabId, colabFu
       setSchedEnd(updated.scheduledEndTime ?? "");
       setSchedNotes(updated.calendarNotes ?? "");
 
+      setCmTargetName(data.calendarTargetName ?? null);
       setCmMsg("Evento preparado com sucesso. O Google Calendar foi aberto numa nova aba.");
       onUpdated?.(updated);
 
@@ -1600,6 +1607,16 @@ export default function PedidoDetailModal({ id, token, isAdmin, colabId, colabFu
                           )}
                         </div>
 
+                        {/* Agenda de destino — quando configurada */}
+                        {order.calendarTargetName && (
+                          <div className="flex items-center gap-2 rounded-[12px] border border-violet-400/15 bg-violet-400/[0.04] px-3 py-2">
+                            <svg className="h-3.5 w-3.5 flex-shrink-0 text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                            <span className="text-[11px] text-slate-500">Agenda: <span className="font-semibold text-violet-300">{order.calendarTargetName}</span></span>
+                          </div>
+                        )}
+
                         {/* Confirmed schedule pill */}
                         {order.scheduledDate && order.calendarStatus && order.calendarStatus !== "not_scheduled" && (() => {
                           const [y, m, d] = order.scheduledDate!.split("-");
@@ -1824,6 +1841,39 @@ export default function PedidoDetailModal({ id, token, isAdmin, colabId, colabFu
                       <input type="time" value={cmEnd} onChange={(e) => setCmEnd(e.target.value)} className={calCls} />
                     </div>
                   </div>
+
+                  {/* Agenda de destino — mostra o calendário CLYON configurado */}
+                  {(() => {
+                    // Após agendamento, order já tem calendarTargetName; antes, lemos do env NEXT_PUBLIC_
+                    const targetName =
+                      order.calendarTargetName ||
+                      (typeof window !== "undefined"
+                        ? (window as any).__CLYON_CALENDAR_NAME ?? null
+                        : null);
+                    const hasTarget = !!targetName;
+                    return (
+                      <div className={`flex items-center gap-3 rounded-xl border px-4 py-3 ${hasTarget ? "border-violet-400/20 bg-violet-400/[0.05]" : "border-amber-400/20 bg-amber-400/[0.04]"}`}>
+                        <svg className={`h-4 w-4 flex-shrink-0 ${hasTarget ? "text-violet-400" : "text-amber-400"}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Agenda de destino</p>
+                          {hasTarget ? (
+                            <p className="mt-0.5 truncate text-sm font-semibold text-violet-200">{targetName}</p>
+                          ) : (
+                            <p className="mt-0.5 text-xs text-amber-400">
+                              Nenhuma agenda configurada. O Google Calendar pedira para escolher ao guardar.
+                            </p>
+                          )}
+                        </div>
+                        {hasTarget && (
+                          <span className="flex-shrink-0 rounded-full border border-violet-400/30 bg-violet-400/10 px-2 py-0.5 text-[10px] font-semibold text-violet-300">
+                            Configurado
+                          </span>
+                        )}
+                      </div>
+                    );
+                  })()}
                 </section>
 
                 {/* Cliente */}
@@ -1898,8 +1948,21 @@ export default function PedidoDetailModal({ id, token, isAdmin, colabId, colabFu
                   <p className="rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-2.5 text-xs font-semibold text-red-400">{cmError}</p>
                 )}
                 {cmMsg && (
-                  <div className="rounded-xl border border-violet-400/20 bg-violet-400/10 px-4 py-3 space-y-1.5">
-                    <p className="text-xs font-semibold text-violet-300">{cmMsg}</p>
+                  <div className="rounded-xl border border-violet-400/20 bg-violet-400/10 px-4 py-3 space-y-2">
+                    <div className="flex items-center gap-2">
+                      <svg className="h-4 w-4 flex-shrink-0 text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                      <p className="text-xs font-semibold text-violet-300">{cmMsg}</p>
+                    </div>
+                    {cmTargetName && (
+                      <div className="flex items-center gap-2 rounded-lg border border-violet-400/15 bg-violet-400/[0.06] px-3 py-2">
+                        <svg className="h-3.5 w-3.5 flex-shrink-0 text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        <span className="text-xs text-slate-400">Agenda: <span className="font-semibold text-violet-200">{cmTargetName}</span></span>
+                      </div>
+                    )}
                     {order.calendarEventUrl && (
                       <a
                         href={order.calendarEventUrl}

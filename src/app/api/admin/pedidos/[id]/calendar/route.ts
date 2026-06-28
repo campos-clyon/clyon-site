@@ -137,6 +137,10 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   const startDt = toGcalDateTime(scheduledDate, scheduledStartTime);
   const endDt = toGcalDateTime(scheduledDate, scheduledEndTime);
 
+  // ── Target calendar (CLYON org calendar) ─────────────────────────────────
+  const calendarTargetId   = process.env.CLYON_GOOGLE_CALENDAR_ID?.trim()   || null;
+  const calendarTargetName = process.env.CLYON_GOOGLE_CALENDAR_NAME?.trim() || null;
+
   const gcalParams = new URLSearchParams({
     action: "TEMPLATE",
     text: eventTitle,
@@ -145,10 +149,15 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     location,
   });
 
+  // When a specific calendar ID is configured, add cid= so Google Calendar
+  // pre-selects that calendar in the "Save to" dropdown.
+  if (calendarTargetId) {
+    gcalParams.set("cid", calendarTargetId);
+  }
+
   const calendarEventUrl = `https://calendar.google.com/calendar/render?${gcalParams.toString()}`;
 
-  // Use a stable deterministic event ID so clicking again updates rather than creates
-  // (since we use link-based approach, we store a composite key as the "event id")
+  // Stable deterministic key — updated on re-schedule
   const calendarEventId = `clyon-order-${orderId}-${scheduledDate}`;
   const isUpdate = !!order.calendarEventId;
   const newCalendarStatus: "scheduled" | "updated" = isUpdate ? "updated" : "scheduled";
@@ -162,15 +171,19 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     calendarEventUrl,
     calendarStatus: newCalendarStatus,
     calendarNotes: calendarNotes ?? null,
+    calendarTargetId,
+    calendarTargetName,
   });
 
   const updatedOrder = await getSimulatorOrderById(orderId);
 
   return NextResponse.json({
     ok: true,
-    message: isUpdate ? "Agenda atualizada com sucesso." : "Serviço adicionado à agenda com sucesso.",
+    message: isUpdate ? "Agenda atualizada com sucesso." : "Servico adicionado à agenda com sucesso.",
     calendarEventId,
     calendarEventUrl,
+    calendarTargetId,
+    calendarTargetName,
     order: updatedOrder,
   });
 }

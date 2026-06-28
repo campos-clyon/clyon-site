@@ -776,7 +776,7 @@ export async function getTodayRegistroByColaborador(colaboradorId: number) {
 
 let _simulatorOrdersEnsured = false;
 // Bump this version number any time new migrations are added so the guard re-runs
-const MIGRATION_VERSION = 5;
+const MIGRATION_VERSION = 6;
 let _migrationVersion = 0;
 
 export async function ensureSimulatorOrdersTable() {
@@ -853,6 +853,9 @@ export async function ensureSimulatorOrdersTable() {
     `ALTER TABLE simulatorOrders ADD COLUMN calendarNotes TEXT NULL DEFAULT NULL`,
     // v5 migrations — extended analysis JSON (includes externalMarketEstimate, analysisSource, confidence)
     `ALTER TABLE simulatorOrders ADD COLUMN analysisJsonExtended LONGTEXT NULL DEFAULT NULL`,
+    // v6 migrations — target Google Calendar identity (which calendar the event was sent to)
+    `ALTER TABLE simulatorOrders ADD COLUMN calendarTargetId VARCHAR(255) NULL DEFAULT NULL`,
+    `ALTER TABLE simulatorOrders ADD COLUMN calendarTargetName VARCHAR(255) NULL DEFAULT NULL`,
   ];
   for (const sql of migrations) {
     try { await pool.execute(sql); } catch (e: any) {
@@ -982,6 +985,8 @@ export async function updateSimulatorOrder(
     calendarStatus: string | null;
     calendarNotes: string | null;
     analysisJsonExtended: string | null;
+    calendarTargetId: string | null;
+    calendarTargetName: string | null;
   }>
 ) {
   await ensureSimulatorOrdersTable();

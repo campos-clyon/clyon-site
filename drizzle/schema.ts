@@ -188,6 +188,10 @@ export interface SimulatorOrder {
    * ONLY for backoffice use — never sent to the client.
    */
   analysisJsonExtended?: string | null;
+  /** Google Calendar ID of the target calendar (e.g. CLYON org calendar). Stored from CLYON_GOOGLE_CALENDAR_ID env var at scheduling time. */
+  calendarTargetId?: string | null;
+  /** Human-readable name of the target calendar (e.g. "CLYON — Agenda da Empresa"). From CLYON_GOOGLE_CALENDAR_NAME env var. */
+  calendarTargetName?: string | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -235,4 +239,6 @@ export interface InsertSimulatorOrder {
   calendarStatus?: string | null;
   calendarNotes?: string | null;
   analysisJsonExtended?: string | null;
+  calendarTargetId?: string | null;
+  calendarTargetName?: string | null;
 }
