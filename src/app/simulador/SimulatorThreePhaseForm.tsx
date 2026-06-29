@@ -20,6 +20,12 @@ import ServiceTypeCards from "./components/ServiceTypeCards";
 import EntulhoDetails from "./components/EntulhoDetails";
 import CompactOrderDetails from "./components/CompactOrderDetails";
 import { ChevronRight, ChevronLeft, CheckCircle } from "lucide-react";
+import {
+  trackSimulatorStart,
+  trackSimulatorContact,
+  trackSimulatorEstimate,
+  trackSimulatorOrderConfirmed,
+} from "@/lib/analytics";
 
 const DRAFT_KEY = "clyon_simulator_draft";
 const PHASES = ["Serviço", "Local e acesso", "Contacto e envio"] as const;
@@ -59,6 +65,8 @@ export default function SimulatorThreePhaseForm() {
     } catch (e) {
       console.error("[v0] SimulatorThreePhaseForm: ❌ Erro ao limpar localStorage", e);
     }
+    // Registar início do simulador
+    trackSimulatorStart();
   }, []);
 
   // Salvar draft no localStorage
@@ -213,6 +221,18 @@ export default function SimulatorThreePhaseForm() {
       } else {
         const result: EstimateResult = await res.json();
         setAnalysis(result);
+        // Tracking: estimativa gerada com sucesso
+        trackSimulatorEstimate(
+          formData.serviceType ?? "desconhecido",
+          result.estimatedPriceWithVat ?? result.estimatedPriceWithoutVat ?? 0,
+          formData.address?.city ?? formData.originAddress?.city,
+          {
+            estimateMin: result.estimatedPriceWithoutVat,
+            estimateMax: result.estimatedPriceWithVat,
+            difficultyLevel: result.difficultyLevel,
+            analysisSource: result.analysisSource,
+          }
+        );
       }
 
       // Auto-save: sempre guardar na BD, independentemente de Gemini ou fallback
@@ -241,6 +261,15 @@ export default function SimulatorThreePhaseForm() {
         if (saveRes.ok) {
           const saved = await saveRes.json();
           setSuccessOrderId(saved.id);
+          // Tracking: pedido confirmado/guardado
+          trackSimulatorOrderConfirmed({
+            service: formData.serviceType ?? undefined,
+            name: formData.receiver?.name ?? undefined,
+            phone: formData.receiver?.phone ?? undefined,
+            email: formData.receiver?.email ?? undefined,
+            city: formData.address?.city ?? formData.originAddress?.city,
+            simulatorData: { orderId: saved.id, serviceType: formData.serviceType },
+          });
         }
       } catch {
         // Auto-save failure não bloqueia o cliente
@@ -549,7 +578,19 @@ export default function SimulatorThreePhaseForm() {
 
                   {phase < 3 && (
                     <button
-                      onClick={() => setPhase(phase + 1)}
+                      onClick={() => {
+                        if (phase === 1) {
+                          // Avança de fase 1 (serviço) para fase 2 (local)
+                          // Nada extra — o start já foi registado no mount
+                        } else if (phase === 2) {
+                          // Avança de fase 2 (local) para fase 3 (contacto)
+                          // Registar que o utilizador chegou à fase de contacto
+                          trackSimulatorContact({
+                            service: formData.serviceType ?? undefined,
+                          });
+                        }
+                        setPhase(phase + 1);
+                      }}
                       disabled={!canProceedToPhase2 || (phase === 2 && !canProceedToPhase3)}
                       className="ml-auto flex items-center gap-2 px-6 py-2.5 text-sm font-semibold bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 disabled:bg-gray-300 text-white rounded-lg shadow-md hover:shadow-lg hover:scale-105 transition-all duration-200 active:scale-95"
                     >
