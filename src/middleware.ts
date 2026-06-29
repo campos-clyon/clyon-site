@@ -25,7 +25,13 @@ export function middleware(request: NextRequest) {
   const forwardedProto = headers.get("x-forwarded-proto") ?? nextUrl.protocol.replace(":", "");
 
   // 1. Força HTTPS e sem www (redirect to canonical domain)
-  if (host !== CANONICAL_HOST || forwardedProto !== "https") {
+  // Excluir rotas /api/ e /colaboradores/ do redirect — são chamadas internas
+  // onde o Authorization header seria perdido no redirect.
+  const isApiOrInternal =
+    nextUrl.pathname.startsWith("/api/") ||
+    nextUrl.pathname.startsWith("/colaboradores/");
+
+  if (!isApiOrInternal && (host !== CANONICAL_HOST || forwardedProto !== "https")) {
     const redirectUrl = new URL(request.url);
     redirectUrl.protocol = "https:";
     redirectUrl.host = CANONICAL_HOST;
