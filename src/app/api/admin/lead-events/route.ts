@@ -58,7 +58,8 @@ export async function GET(request: NextRequest) {
 
     const { events, totals } = await withConnection(async (conn) => {
       const [eventsRows] = await conn.execute(
-        `SELECT id, eventType, pagePath, serviceType, location, contactPreference,
+        `SELECT id, eventType, action, pagePath, label, phone, email, name,
+                serviceType, location, contactPreference,
                 utmSource, utmMedium, utmCampaign, createdAt
          FROM leadEvents ${where}
          ORDER BY createdAt DESC
@@ -77,19 +78,21 @@ export async function GET(request: NextRequest) {
 
       const [totalsRows] = await conn.execute(
         `SELECT
-          SUM(CASE WHEN eventType = 'click_whatsapp'  AND DATE(createdAt) = ? THEN 1 ELSE 0 END) AS whatsappHoje,
-          SUM(CASE WHEN eventType = 'click_call'      AND DATE(createdAt) = ? THEN 1 ELSE 0 END) AS ligarHoje,
-          SUM(CASE WHEN eventType LIKE 'click_cta%'   AND DATE(createdAt) = ? THEN 1 ELSE 0 END) AS ctaHoje,
-          SUM(CASE WHEN eventType LIKE 'form_submit%' AND DATE(createdAt) = ? THEN 1 ELSE 0 END) AS formHoje,
-          SUM(CASE WHEN eventType = 'click_email'     AND DATE(createdAt) = ? THEN 1 ELSE 0 END) AS emailHoje,
-          SUM(CASE WHEN eventType = 'click_whatsapp'  AND createdAt >= ?   THEN 1 ELSE 0 END) AS whatsappSemana,
-          SUM(CASE WHEN eventType = 'click_call'      AND createdAt >= ?   THEN 1 ELSE 0 END) AS ligarSemana,
-          SUM(CASE WHEN eventType LIKE 'click_cta%'   AND createdAt >= ?   THEN 1 ELSE 0 END) AS ctaSemana,
-          SUM(CASE WHEN eventType LIKE 'form_submit%' AND createdAt >= ?   THEN 1 ELSE 0 END) AS formSemana,
-          SUM(CASE WHEN eventType = 'click_email'     AND createdAt >= ?   THEN 1 ELSE 0 END) AS emailSemana,
+          SUM(CASE WHEN eventType = 'click_whatsapp'        AND DATE(createdAt) = ? THEN 1 ELSE 0 END) AS whatsappHoje,
+          SUM(CASE WHEN eventType = 'click_call'            AND DATE(createdAt) = ? THEN 1 ELSE 0 END) AS ligarHoje,
+          SUM(CASE WHEN eventType LIKE 'click_cta%'         AND DATE(createdAt) = ? THEN 1 ELSE 0 END) AS ctaHoje,
+          SUM(CASE WHEN eventType LIKE 'form_submit%'       AND DATE(createdAt) = ? THEN 1 ELSE 0 END) AS formHoje,
+          SUM(CASE WHEN eventType = 'click_email'           AND DATE(createdAt) = ? THEN 1 ELSE 0 END) AS emailHoje,
+          SUM(CASE WHEN eventType LIKE 'simulator_%'        AND DATE(createdAt) = ? THEN 1 ELSE 0 END) AS simuladorHoje,
+          SUM(CASE WHEN eventType = 'click_whatsapp'        AND createdAt >= ?   THEN 1 ELSE 0 END) AS whatsappSemana,
+          SUM(CASE WHEN eventType = 'click_call'            AND createdAt >= ?   THEN 1 ELSE 0 END) AS ligarSemana,
+          SUM(CASE WHEN eventType LIKE 'click_cta%'         AND createdAt >= ?   THEN 1 ELSE 0 END) AS ctaSemana,
+          SUM(CASE WHEN eventType LIKE 'form_submit%'       AND createdAt >= ?   THEN 1 ELSE 0 END) AS formSemana,
+          SUM(CASE WHEN eventType = 'click_email'           AND createdAt >= ?   THEN 1 ELSE 0 END) AS emailSemana,
+          SUM(CASE WHEN eventType LIKE 'simulator_%'        AND createdAt >= ?   THEN 1 ELSE 0 END) AS simuladorSemana,
           COUNT(*) AS total
          FROM leadEvents`,
-        [hoje, hoje, hoje, hoje, hoje, semanaStart, semanaStart, semanaStart, semanaStart, semanaStart],
+        [hoje, hoje, hoje, hoje, hoje, hoje, semanaStart, semanaStart, semanaStart, semanaStart, semanaStart, semanaStart],
       );
 
       return {

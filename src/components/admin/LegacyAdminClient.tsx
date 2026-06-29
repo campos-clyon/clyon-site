@@ -124,7 +124,12 @@ type Lead = {
 type LeadEvent = {
   id: number;
   eventType: string;
+  action?: string | null;
   pagePath?: string | null;
+  label?: string | null;
+  phone?: string | null;
+  email?: string | null;
+  name?: string | null;
   serviceType?: string | null;
   location?: string | null;
   contactPreference?: string | null;
@@ -148,11 +153,13 @@ type EventTotals = {
   ctaHoje?: number;
   formHoje?: number;
   emailHoje?: number;
+  simuladorHoje?: number;
   whatsappSemana?: number;
   ligarSemana?: number;
   ctaSemana?: number;
   formSemana?: number;
   emailSemana?: number;
+  simuladorSemana?: number;
   total?: number;
 };
 
@@ -3061,13 +3068,14 @@ export default function ColaboradorAdminClient() {
               </div>
 
               {/* Cards de eventos */}
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
                 {[
                   { label: "WhatsApp", hoje: eventTotals.whatsappHoje ?? 0, semana: eventTotals.whatsappSemana ?? 0, icon: MessageCircle },
                   { label: "Ligar", hoje: eventTotals.ligarHoje ?? 0, semana: eventTotals.ligarSemana ?? 0, icon: Phone },
                   { label: "CTA", hoje: eventTotals.ctaHoje ?? 0, semana: eventTotals.ctaSemana ?? 0, icon: MousePointerClick },
                   { label: "Forms", hoje: eventTotals.formHoje ?? 0, semana: eventTotals.formSemana ?? 0, icon: ReceiptText },
                   { label: "Email", hoje: eventTotals.emailHoje ?? 0, semana: eventTotals.emailSemana ?? 0, icon: Mail },
+                  { label: "Simulador", hoje: eventTotals.simuladorHoje ?? 0, semana: eventTotals.simuladorSemana ?? 0, icon: Sparkles },
                 ].map((stat) => {
                   const Icon = stat.icon;
                   return (
@@ -3137,10 +3145,12 @@ export default function ColaboradorAdminClient() {
                     <option value="click_whatsapp">WhatsApp</option>
                     <option value="click_call">Ligar</option>
                     <option value="click_email">Email</option>
-                    <option value="click_sms">SMS</option>
-                    <option value="click_cta_quero_contratar">Quero contratar</option>
-                    <option value="form_submit_quero_contratar">Form enviado</option>
-                    <option value="click_cta_ligar_agora">Ligar agora</option>
+                    <option value="click_cta">CTA</option>
+                    <option value="form_submit_contacto">Formulário enviado</option>
+                    <option value="simulator_start">Simulador iniciado</option>
+                    <option value="simulator_contact">Simulador contacto</option>
+                    <option value="simulator_estimate">Estimativa gerada</option>
+                    <option value="simulator_order_confirmed">Pedido confirmado</option>
                   </select>
                 )}
                 {activeLeadsTab === "leads" && (
@@ -3278,39 +3288,65 @@ export default function ColaboradorAdminClient() {
                       Nenhum evento encontrado para o período selecionado.
                     </div>
                   ) : (
-                    <table className="w-full min-w-[700px] border-collapse text-sm">
+                    <table className="w-full min-w-[800px] border-collapse text-sm">
                       <thead>
                         <tr className="border-b border-white/10 bg-white/[0.03] text-left text-[11px] uppercase tracking-wide text-slate-400">
                           <th className="px-4 py-3 font-semibold">Data/hora</th>
-                          <th className="px-4 py-3 font-semibold">Tipo de evento</th>
-                          <th className="px-4 py-3 font-semibold">Canal</th>
+                          <th className="px-4 py-3 font-semibold">Tipo</th>
+                          <th className="px-4 py-3 font-semibold">Acção</th>
+                          <th className="px-4 py-3 font-semibold">Detalhe</th>
+                          <th className="px-4 py-3 font-semibold">Página</th>
                           <th className="px-4 py-3 font-semibold">Serviço</th>
-                          <th className="px-4 py-3 font-semibold">Localidade</th>
-                          <th className="px-4 py-3 font-semibold">Origem</th>
-                          <th className="px-4 py-3 font-semibold">Campanha</th>
+                          <th className="px-4 py-3 font-semibold">Origem UTM</th>
                         </tr>
                       </thead>
                       <tbody>
-                        {leadEvents.map((ev) => (
-                          <tr key={ev.id} className="border-b border-white/5 hover:bg-white/[0.02]">
-                            <td className="px-4 py-3 text-slate-400">
-                              {new Date(ev.createdAt).toLocaleDateString("pt-PT", { day: "2-digit", month: "2-digit" })}
-                              <div className="text-[11px] text-slate-500">
-                                {new Date(ev.createdAt).toLocaleTimeString("pt-PT", { hour: "2-digit", minute: "2-digit" })}
-                              </div>
-                            </td>
-                            <td className="px-4 py-3">
-                              <span className="rounded-full border border-white/10 bg-white/[0.06] px-2.5 py-0.5 text-[11px] font-mono text-slate-200">
-                                {ev.eventType}
-                              </span>
-                            </td>
-                            <td className="px-4 py-3 text-slate-300">{ev.contactPreference || "—"}</td>
-                            <td className="px-4 py-3 text-slate-300">{ev.serviceType || "—"}</td>
-                            <td className="px-4 py-3 text-slate-300">{ev.location || "—"}</td>
-                            <td className="px-4 py-3 text-slate-400 text-xs">{ev.utmSource || "—"}</td>
-                            <td className="px-4 py-3 text-slate-400 text-xs">{ev.utmCampaign || "—"}</td>
-                          </tr>
-                        ))}
+                        {leadEvents.map((ev) => {
+                          const typeLabel: Record<string, string> = {
+                            click_whatsapp: "WhatsApp",
+                            click_call: "Ligar",
+                            click_email: "Email",
+                            click_cta: "CTA",
+                            form_submit_contacto: "Formulário",
+                            form_submit_quero_contratar: "Formulário",
+                            simulator_start: "Simulador",
+                            simulator_contact: "Simulador",
+                            simulator_estimate: "Simulador",
+                            simulator_order_confirmed: "Simulador",
+                            simulator_order_saved: "Simulador",
+                          };
+                          const typeBadgeColor: Record<string, string> = {
+                            WhatsApp: "border-emerald-500/30 bg-emerald-500/10 text-emerald-300",
+                            Ligar: "border-blue-500/30 bg-blue-500/10 text-blue-300",
+                            Email: "border-sky-500/30 bg-sky-500/10 text-sky-300",
+                            CTA: "border-amber-500/30 bg-amber-500/10 text-amber-300",
+                            Formulário: "border-cyan-500/30 bg-cyan-500/10 text-cyan-300",
+                            Simulador: "border-violet-500/30 bg-violet-500/10 text-violet-300",
+                          };
+                          const label = typeLabel[ev.eventType] ?? ev.eventType.replace(/_/g, " ");
+                          const badgeClass = typeBadgeColor[label] ?? "border-white/10 bg-white/[0.06] text-slate-200";
+                          const detalhe = ev.name ? `${ev.name}${ev.phone ? ` · ${ev.phone}` : ""}` : ev.phone ?? ev.email ?? ev.label ?? "—";
+                          return (
+                            <tr key={ev.id} className="border-b border-white/5 hover:bg-white/[0.02]">
+                              <td className="px-4 py-3 text-slate-400">
+                                {new Date(ev.createdAt).toLocaleDateString("pt-PT", { day: "2-digit", month: "2-digit" })}
+                                <div className="text-[11px] text-slate-500">
+                                  {new Date(ev.createdAt).toLocaleTimeString("pt-PT", { hour: "2-digit", minute: "2-digit" })}
+                                </div>
+                              </td>
+                              <td className="px-4 py-3">
+                                <span className={`rounded-full border px-2.5 py-0.5 text-[11px] font-semibold ${badgeClass}`}>
+                                  {label}
+                                </span>
+                              </td>
+                              <td className="px-4 py-3 text-slate-300 text-xs">{ev.action ?? "—"}</td>
+                              <td className="px-4 py-3 text-slate-300 text-xs max-w-[160px] truncate">{detalhe}</td>
+                              <td className="px-4 py-3 text-slate-400 text-xs max-w-[140px] truncate" title={ev.pagePath ?? ""}>{ev.pagePath ?? "—"}</td>
+                              <td className="px-4 py-3 text-slate-300 text-xs">{ev.serviceType ?? "—"}</td>
+                              <td className="px-4 py-3 text-slate-400 text-xs">{ev.utmSource ?? ev.utmCampaign ?? "—"}</td>
+                            </tr>
+                          );
+                        })}
                       </tbody>
                     </table>
                   )}
