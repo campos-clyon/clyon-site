@@ -495,7 +495,7 @@ export default function ColaboradorAdminClient() {
   } | null>(null);
   const [loadingImageStats, setLoadingImageStats] = useState(false);
 
-  // ── Leads state ──────────────────────────────────────────────────────────
+  // ── Leads state ─────────────��────────────────────────────────────────────
   const [leads, setLeads] = useState<Lead[]>([]);
   const [leadEvents, setLeadEvents] = useState<LeadEvent[]>([]);
   const [leadTotals, setLeadTotals] = useState<LeadTotals>({});
@@ -2000,16 +2000,21 @@ export default function ColaboradorAdminClient() {
               </div>
 
               {/* Métricas de pedidos */}
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 xl:grid-cols-8">
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-5">
+                {/* Total — mostra sempre todos os pedidos */}
+                <button
+                  type="button"
+                  onClick={() => setPedidoStatusFilter("todos")}
+                  className={`flex flex-col items-center justify-center rounded-[16px] border px-2 py-3 transition hover:scale-105 border-white/10 bg-white/[0.04] ${pedidoStatusFilter === "todos" ? "ring-2 ring-cyan-400" : ""}`}
+                >
+                  <span className="text-2xl font-bold text-slate-300">{pedidosCounts["total"] ?? 0}</span>
+                  <span className="mt-0.5 text-center text-xs text-slate-400">Total</span>
+                </button>
                 {[
-                  { label: "Total", key: "total", color: "text-slate-300", bg: "border-white/10 bg-white/[0.04]" },
                   { label: "Novos", key: "pendente", color: "text-blue-400", bg: "border-blue-400/20 bg-blue-400/10" },
-                  { label: "Atribuídos", key: "atribuido", color: "text-purple-400", bg: "border-purple-400/20 bg-purple-400/10" },
-                  { label: "Em análise", key: "em_analise", color: "text-yellow-400", bg: "border-yellow-400/20 bg-yellow-400/10" },
                   { label: "Sem assistente", key: "sem_assistente", color: "text-rose-400", bg: "border-rose-400/20 bg-rose-400/10" },
                   { label: "Aprovados", key: "aprovado", color: "text-cyan-300 font-semibold", bg: "border-cyan-400/30 bg-cyan-400/15" },
                   { label: "Confirmados", key: "confirmado", color: "text-green-400", bg: "border-green-400/20 bg-green-400/10" },
-                  { label: "Presencial", key: "presencial_recomendado", color: "text-orange-400", bg: "border-orange-400/20 bg-orange-400/10" },
                 ].map((m) => (
                   <button
                     key={m.key}
