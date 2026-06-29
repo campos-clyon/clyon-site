@@ -161,7 +161,7 @@ Retorna APENAS o JSON sem texto adicional.`;
   }
 }
 
-// ── Determinar analysisSource final ──────────────────────��───────────────────
+// ── Determinar analysisSource final ──────────────────────���───────────────────
 function resolveAnalysisSource(
   baseSource: AnalysisSource,
   externalEstimate: ExternalMarketEstimate | null,
@@ -496,17 +496,19 @@ REGRAS ABSOLUTAS
 ═══════════════════════════════════════════════════════════
 
 1. USA SEMPRE a fórmula: (combustível + pessoal + overhead) × (1 + margem) = preço s/IVA.
-2. Aplica SEMPRE os mínimos por zona — se o cálculo ficar abaixo, usa o mínimo.
+2. Aplica SEMPRE os mínimos por zona — se o cálculo ficar abaixo do mínimo, o preço final É o mínimo (não ficas com o valor calculado).
+   EXEMPLO OBRIGATÓRIO: se o cálculo der 138,56 € s/IVA e a morada é Lisboa → preço final = 203,25 € s/IVA (mínimo Lisboa 250 € c/IVA ÷ 1,23).
+   Outro exemplo: Amora/Seixal, cálculo = 120 € s/IVA → preço final = 178,86 € s/IVA (mínimo 220 € c/IVA ÷ 1,23).
 3. estimatedPriceWithoutVat, estimateMinWithoutVat e estimateMaxWithoutVat NUNCA podem ser null ou 0.
 4. Se faltarem dados críticos, dá SEMPRE um intervalo com o mínimo da zona e confidence "low".
 5. NUNCA devolveres preços 0 ou null — se dados insuficientes, usa os mínimos de zona.
 6. customerMessage SEMPRE inclui o valor estimado.
-7. No summary, mostra o cálculo passo a passo (horas → custo pessoal → combustível → overhead → total → margem → preço final).
+7. No summary, mostra o cálculo passo a passo E indica claramente se foi aplicado mínimo de zona.
 8. Retorna APENAS JSON válido — sem texto antes ou depois, sem backticks.
 
 ═══════════════════════════════════════════════════════════
 PEDIDO A ANALISAR
-═══════════════════════════════════════════════════════════
+══════════════════��════════════════════════════════════════
 
 ${formattedData}`;
 }

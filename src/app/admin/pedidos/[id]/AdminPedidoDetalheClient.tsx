@@ -168,7 +168,7 @@ const DIFFICULTY_COLOR: Record<number, string> = {
   1: "text-emerald-400", 2: "text-green-400", 3: "text-amber-400", 4: "text-orange-400", 5: "text-red-400",
 };
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+// ─── Helpers ───────────────────────────────────��──────────────────────────────
 
 function fmt(iso: string) {
   return new Date(iso).toLocaleDateString("pt-PT", {
@@ -275,21 +275,61 @@ export default function AdminPedidoDetalheClient({ id }: { id: number }) {
   const [lightbox, setLightbox] = useState<string | null>(null);
 
   function populateEdit(o: Order) {
+    // Extrair rawOrderJson como fallback para campos que podem estar null na DB
+    // mas presentes no JSON original do simulador
+    let raw: Record<string, any> = {};
+    try { raw = o.rawOrderJson ? JSON.parse(o.rawOrderJson) : {}; } catch { raw = {}; }
+
+    // Extrair estimativa para auto-preencher preço final quando ainda não definido
+    let estData: GeminiEstimate | null = null;
+    try { estData = o.estimateJson ? JSON.parse(o.estimateJson) : null; } catch { estData = null; }
+
     setEditContactName(o.contactName ?? "");
     setEditContactPhone(o.contactPhone ?? "");
     setEditContactEmail(o.contactEmail ?? "");
-    setEditServiceType(o.serviceType ?? "");
+
+    // P6: serviceType — usar rawOrderJson como fallback se DB tiver null
+    const rawServiceType = raw.serviceType ?? raw.service_type ?? "";
+    setEditServiceType(o.serviceType ?? rawServiceType);
+
     setEditDescription(o.description ?? "");
-    setEditUrgency(o.urgency ?? "");
+
+    // P3: urgency — usar rawOrderJson como fallback
+    const rawUrgency = raw.urgency ?? raw.urgencia ?? "";
+    setEditUrgency(o.urgency ?? rawUrgency);
+
     setEditAddress(o.address ?? "");
-    setEditCity(o.city ?? "");
+    setEditCity(o.city ?? raw.address?.city ?? raw.city ?? "");
     setEditPostalCode(o.postalCode ?? "");
-    setEditFloor(o.floor ?? "");
-    setEditHasElevator(o.hasElevator ?? "");
-    setEditParkingDistance(o.parkingDistance ?? "");
-    setEditPrecoFinal(o.precoFinal ?? "");
-    setEditPrecoFinalIva(o.precoFinalIva ?? "");
-    setEditMensagemCliente(o.mensagemCliente ?? "");
+    setEditFloor(o.floor ?? raw.floor ?? "");
+
+    // P4: elevador e estacionamento — usar rawOrderJson como fallback
+    const rawElevator = raw.hasElevator ?? raw.has_elevator ?? raw.elevador ?? "";
+    setEditHasElevator(o.hasElevator ?? rawElevator);
+
+    const rawParking = raw.parkingDistance ?? raw.parking_distance ?? raw.estacionamento ?? "";
+    setEditParkingDistance(o.parkingDistance ?? rawParking);
+
+    // P1: auto-preencher preço final com estimativa recomendada quando confidence é high/medium
+    const alreadyHasPrice = !!(o.precoFinal && parseFloat(o.precoFinal) > 0);
+    const conf = estData?.confidence ?? "";
+    const canAutoFill = !alreadyHasPrice && (conf === "high" || conf === "medium");
+    const recPrice = estData?.estimatedPriceWithoutVat;
+    const recPriceIva = estData?.estimatedPriceWithVat;
+
+    setEditPrecoFinal(alreadyHasPrice
+      ? o.precoFinal!
+      : canAutoFill && recPrice != null
+        ? String(recPrice.toFixed(2))
+        : o.precoFinal ?? "");
+
+    setEditPrecoFinalIva(alreadyHasPrice
+      ? (o.precoFinalIva ?? "")
+      : canAutoFill && recPriceIva != null
+        ? String(recPriceIva.toFixed(2))
+        : o.precoFinalIva ?? "");
+
+    setEditMensagemCliente(o.mensagemCliente ?? estData?.customerMessage ?? "");
     setEditNotasInternas(o.notasInternas ?? "");
     setEditStatus(o.status);
     setEditPriority(o.priority ?? "normal");
@@ -483,6 +523,16 @@ export default function AdminPedidoDetalheClient({ id }: { id: number }) {
   };
   const entulhoQtd: string | null = rawOrder.entulhoQuantidade ?? null;
   const entulhoState: string | null = rawOrder.entulhoState ?? null;
+
+  // Campos de leitura com fallback para rawOrder (para pedidos onde a DB tem null
+  // mas o simulador enviou o valor no JSON original)
+  const displayServiceType = order.serviceType ?? rawOrder.serviceType ?? rawOrder.service_type ?? null;
+  const displayUrgency     = order.urgency ?? rawOrder.urgency ?? rawOrder.urgencia ?? null;
+  const displayFloor       = order.floor ?? rawOrder.floor ?? null;
+  const displayElevator    = order.hasElevator ?? rawOrder.hasElevator ?? rawOrder.has_elevator ?? null;
+  const displayParking     = order.parkingDistance ?? rawOrder.parkingDistance ?? rawOrder.parking_distance ?? null;
+  const displayCity        = order.city ?? rawOrder.address?.city ?? rawOrder.city ?? null;
+
   const waPhone = (order.contactPhone ?? BUSINESS_PHONE).replace(/\D/g, "");
   const waMsg = encodeURIComponent(
     `Olá ${order.contactName ?? "cliente"}, a CLYON está a contactar relativamente ao seu pedido #${order.id} de ${order.serviceType ?? "serviço"}.`
@@ -648,10 +698,10 @@ export default function AdminPedidoDetalheClient({ id }: { id: number }) {
                   { label: "Pedido nº", value: `#${order.id}` },
                   { label: "Cliente", value: order.contactName },
                   { label: "Telefone", value: order.contactPhone },
-                  { label: "Serviço", value: labelOf(SERVICE_LABELS, order.serviceType) },
+                  { label: "Serviço", value: labelOf(SERVICE_LABELS, displayServiceType) },
                   { label: "Status", value: STATUS_CFG[order.status]?.label ?? order.status },
                   { label: "Prioridade", value: order.priority ?? "normal" },
-                  { label: "Urgência", value: labelOf(URGENCY_LABELS, order.urgency) ?? "Normal" },
+                  { label: "Urgência", value: labelOf(URGENCY_LABELS, displayUrgency) ?? "Normal" },
                   { label: "Assistente", value: order.assignedToName ?? "Não atribuído" },
                   { label: "Origem", value: "Simulador" },
                   { label: "Data de entrada", value: fmt(order.createdAt) },
@@ -687,10 +737,10 @@ export default function AdminPedidoDetalheClient({ id }: { id: number }) {
                 <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.15em] text-slate-600">Morada e acesso</p>
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                   {[
-                    { label: "Localidade", value: order.city },
-                    { label: "Andar", value: order.floor },
-                    { label: "Elevador", value: labelOf(ELEVATOR_LABELS, order.hasElevator) },
-                    { label: "Estacionamento", value: labelOf(PARKING_LABELS, order.parkingDistance) },
+                  { label: "Localidade", value: displayCity },
+                  { label: "Andar", value: displayFloor },
+                  { label: "Elevador", value: labelOf(ELEVATOR_LABELS, displayElevator) },
+                  { label: "Estacionamento", value: labelOf(PARKING_LABELS, displayParking) },
                   ].map((item) => (
                     <div key={item.label} className="rounded-[14px] border border-white/[0.06] bg-white/[0.02] p-3">
                       <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-slate-600">{item.label}</p>
@@ -1044,14 +1094,37 @@ export default function AdminPedidoDetalheClient({ id }: { id: number }) {
 
               {/* Valores finais editáveis */}
               {isAdmin && (
-                <div>
-                  <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.15em] text-slate-500">Valores finais (editável pelo admin)</p>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-slate-500">Valores finais (editável pelo admin)</p>
+                    {/* Indicador de auto-preenchimento */}
+                    {!order.precoFinal && est?.estimatedPriceWithoutVat && (est.confidence === "high" || est.confidence === "medium") && (
+                      <span className="rounded-full border border-amber-400/30 bg-amber-400/10 px-2.5 py-1 text-[10px] font-semibold text-amber-400">
+                        Auto-preenchido com estimativa IA — reveja antes de guardar
+                      </span>
+                    )}
+                  </div>
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <Field label="Preço final sem IVA (€)">
-                      <input type="number" step="0.01" min="0" value={editPrecoFinal} onChange={(e) => setEditPrecoFinal(e.target.value)} className={inputCls} placeholder="0.00" />
+                      <input
+                        type="number" step="0.01" min="0"
+                        value={editPrecoFinal}
+                        onChange={(e) => {
+                          setEditPrecoFinal(e.target.value);
+                          // Auto-calcular c/IVA ao editar s/IVA
+                          const v = parseFloat(e.target.value);
+                          if (!isNaN(v) && v > 0) setEditPrecoFinalIva((v * 1.23).toFixed(2));
+                        }}
+                        className={inputCls} placeholder="0.00"
+                      />
                     </Field>
                     <Field label="Preço final com IVA (€)">
-                      <input type="number" step="0.01" min="0" value={editPrecoFinalIva} onChange={(e) => setEditPrecoFinalIva(e.target.value)} className={inputCls} placeholder="0.00" />
+                      <input
+                        type="number" step="0.01" min="0"
+                        value={editPrecoFinalIva}
+                        onChange={(e) => setEditPrecoFinalIva(e.target.value)}
+                        className={inputCls} placeholder="0.00"
+                      />
                     </Field>
                   </div>
                 </div>
