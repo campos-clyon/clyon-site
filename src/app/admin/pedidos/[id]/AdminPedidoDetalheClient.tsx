@@ -381,7 +381,7 @@ export default function AdminPedidoDetalheClient({ id }: { id: number }) {
     finally { setSaving(false); }
   }
 
-  // ��── Render guards ──────────────────────────────────────────────────────────
+  // ���── Render guards ──────────────────────────────────────────────────────────
 
   if (!ready || loading) {
     return (
@@ -793,21 +793,50 @@ export default function AdminPedidoDetalheClient({ id }: { id: number }) {
                     <span className="ml-auto rounded-full border border-violet-400/30 px-2 py-0.5 text-[10px] font-semibold text-violet-400">IA</span>
                   </div>
                   <div className="space-y-4">
-                    {est.difficultyLevel && (
-                      <div className="flex items-center gap-3">
-                        <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-600 w-28">Dificuldade</p>
-                        <div className="flex items-center gap-2">
-                          <div className="flex gap-0.5">
+                    {/* Dificuldade + Equipa + Horas + Recomendação */}
+                    <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                      {est.difficultyLevel && (
+                        <div className="rounded-[14px] border border-white/[0.06] bg-white/[0.02] p-3">
+                          <p className="text-[9px] font-semibold uppercase tracking-wider text-slate-600 mb-2">Dificuldade</p>
+                          <div className="flex gap-0.5 mb-1">
                             {[1,2,3,4,5].map((n) => (
-                              <div key={n} className={`h-1.5 w-5 rounded-full ${n <= (est.difficultyLevel ?? 0) ? "bg-violet-400" : "bg-white/10"}`} />
+                              <div key={n} className={`h-1.5 w-4 rounded-full ${n <= (est.difficultyLevel ?? 0) ? "bg-violet-400" : "bg-white/10"}`} />
                             ))}
                           </div>
                           <span className={`text-xs font-semibold ${DIFFICULTY_COLOR[est.difficultyLevel] ?? "text-slate-300"}`}>
                             {DIFFICULTY_LABEL[est.difficultyLevel] ?? est.difficultyLevel}
                           </span>
                         </div>
-                      </div>
-                    )}
+                      )}
+                      {(est as any).teamSize && (
+                        <div className="rounded-[14px] border border-white/[0.06] bg-white/[0.02] p-3">
+                          <p className="text-[9px] font-semibold uppercase tracking-wider text-slate-600 mb-1">Equipa</p>
+                          <p className="text-xs font-semibold text-slate-300">{(est as any).teamSize}</p>
+                        </div>
+                      )}
+                      {(est as any).estimatedHoursText && (
+                        <div className="rounded-[14px] border border-white/[0.06] bg-white/[0.02] p-3">
+                          <p className="text-[9px] font-semibold uppercase tracking-wider text-slate-600 mb-1">Tempo estimado</p>
+                          <p className="text-xs font-semibold text-slate-300">{(est as any).estimatedHoursText}</p>
+                        </div>
+                      )}
+                      {(est as any).recommendation && (
+                        <div className="rounded-[14px] border border-white/[0.06] bg-white/[0.02] p-3">
+                          <p className="text-[9px] font-semibold uppercase tracking-wider text-slate-600 mb-1">Recomendação</p>
+                          <p className={`text-xs font-semibold ${
+                            (est as any).recommendation === "pode_aprovar" ? "text-emerald-400" :
+                            (est as any).recommendation === "visita_presencial" ? "text-red-400" :
+                            "text-amber-400"
+                          }`}>
+                            {(est as any).recommendation === "pode_aprovar" ? "Pode aprovar" :
+                             (est as any).recommendation === "pedir_fotos" ? "Pedir fotos" :
+                             (est as any).recommendation === "pedir_info" ? "Pedir info" :
+                             (est as any).recommendation === "visita_presencial" ? "Visita presencial" :
+                             (est as any).recommendation}
+                          </p>
+                        </div>
+                      )}
+                    </div>
                     {est.summary && (
                       <div>
                         <p className="text-[10px] font-semibold uppercase tracking-wider text-violet-400 mb-1.5">Resumo</p>

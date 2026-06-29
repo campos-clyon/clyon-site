@@ -86,6 +86,10 @@ type GeminiEstimate = {
   missingFields?: string[];
   customerMessage?: string;
   internalNotes?: string[];
+  // Campos comerciais novos
+  teamSize?: string;
+  estimatedHoursText?: string;
+  recommendation?: "pode_aprovar" | "pedir_fotos" | "pedir_info" | "visita_presencial" | string;
   labor?: {
     estimatedHours?: number;
     peopleCount?: number;
@@ -414,18 +418,37 @@ export default function PedidoDetailModal({ id, token, isAdmin, colabId, colabFu
     setSaveMsg("");
     setError("");
     try {
-      // Reconstituir orderData a partir dos campos guardados no pedido
+      // Reconstituir rawOrderJson para enviar contexto completo ao Gemini
+      const rawJson = order.rawOrderJson ? (() => { try { return JSON.parse(order.rawOrderJson!); } catch { return {}; } })() : {};
       const orderData = {
-        serviceType: order.serviceType ?? undefined,
-        description: order.description ?? undefined,
-        address: order.address ? { formattedAddress: order.address, city: order.city ?? "" } : undefined,
-        city: order.city ?? undefined,
-        floor: order.floor ?? undefined,
-        hasElevator: order.hasElevator ?? undefined,
-        parkingDistance: order.parkingDistance ?? undefined,
-        distanceFromBase: order.distanceKm ? { distanceKm: Number(order.distanceKm) } : undefined,
-        urgency: order.urgency ?? undefined,
+        serviceType: order.serviceType ?? rawJson.serviceType ?? undefined,
+        description: order.description ?? rawJson.description ?? undefined,
+        address: order.address
+          ? { formattedAddress: order.address, city: order.city ?? "" }
+          : rawJson.address ?? undefined,
+        city: order.city ?? rawJson.address?.city ?? undefined,
+        floor: order.floor ?? rawJson.floor ?? undefined,
+        hasElevator: order.hasElevator ?? rawJson.hasElevator ?? undefined,
+        parkingDistance: order.parkingDistance ?? rawJson.parkingDistance ?? undefined,
+        distanceFromBase: order.distanceKm
+          ? { distanceKm: Number(order.distanceKm) }
+          : rawJson.distanceFromBase ?? undefined,
+        urgency: order.urgency ?? rawJson.urgency ?? undefined,
+        // Mudança: passar origem/destino/acesso
+        originAddress: rawJson.originAddress ?? undefined,
+        destinationAddress: rawJson.destinationAddress ?? undefined,
+        originAccess: rawJson.originAccess ?? undefined,
+        destinationAccess: rawJson.destinationAccess ?? undefined,
+        movingDistance: rawJson.movingDistance ?? undefined,
+        // Entulho
+        entulhoState: rawJson.entulhoState ?? undefined,
+        entulhoQuantidade: rawJson.entulhoQuantidade ?? undefined,
+        heavyItems: rawJson.heavyItems ?? undefined,
+        files: order.filesJson
+          ? (() => { try { const f = JSON.parse(order.filesJson!); return Array.isArray(f) ? f.map((u: unknown, i: number) => ({ id: String(i), name: `foto${i}`, size: 0 })) : []; } catch { return []; } })()
+          : [],
       };
+
       const res = await fetch("/api/simulator/analyze", {
         method: "POST",
         headers: { "Content-Type": "application/json", ...authHeader },
@@ -434,11 +457,27 @@ export default function PedidoDetailModal({ id, token, isAdmin, colabId, colabFu
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || "Erro ao recalcular estimativa.");
 
-      // Guardar sempre — mesmo que seja estimativa de referência — para persistir missingFields
+      // Extrair valores numéricos para preencher campos da DB automaticamente
+      const recommended = typeof data.estimatedPriceWithoutVat === "number" ? data.estimatedPriceWithoutVat : null;
+      const minVal = typeof data.estimateMinWithoutVat === "number" ? data.estimateMinWithoutVat : recommended;
+      const maxVal = typeof data.estimateMaxWithoutVat === "number" ? data.estimateMaxWithoutVat : recommended;
+      const withVat = typeof data.estimatedPriceWithVat === "number" ? data.estimatedPriceWithVat : (recommended ? Math.round(recommended * 1.23 * 100) / 100 : null);
+
+      // Guardar estimateJson + campos DECIMAL na mesma operação
+      const patchBody: Record<string, unknown> = {
+        estimateJson: JSON.stringify(data),
+        ...(minVal !== null ? { estimateMin: String(minVal) } : {}),
+        ...(maxVal !== null ? { estimateMax: String(maxVal) } : {}),
+        ...(recommended !== null ? { estimateTotal: String(recommended) } : {}),
+        // Pré-preencher precoFinal/precoFinalIva como sugestão (admin pode editar)
+        ...(recommended !== null ? { precoFinal: String(recommended) } : {}),
+        ...(withVat !== null ? { precoFinalIva: String(withVat) } : {}),
+      };
+
       const saveRes = await fetch(`/api/admin/pedidos/${order.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json", ...authHeader },
-        body: JSON.stringify({ estimateJson: JSON.stringify(data) }),
+        body: JSON.stringify(patchBody),
       });
       if (!saveRes.ok) {
         const saveErr = await saveRes.json().catch(() => ({}));
@@ -446,6 +485,10 @@ export default function PedidoDetailModal({ id, token, isAdmin, colabId, colabFu
       }
       const updated = await saveRes.json();
       setOrder(updated.order ?? updated);
+
+      // Actualizar campos editáveis localmente para reflectir a sugestão
+      if (recommended !== null) setEditPrecoFinal(String(recommended));
+      if (withVat !== null) setEditPrecoFinalIva(String(withVat));
 
       // Mensagem contextual com base na fonte da estimativa
       const src = data.analysisSource ?? data.source ?? "";
@@ -455,6 +498,8 @@ export default function PedidoDetailModal({ id, token, isAdmin, colabId, colabFu
         setSaveMsg(`Estimativa de referência gerada. Actualize: ${missing.slice(0, 3).join(", ")}${missing.length > 3 ? " e outros" : ""}.`);
       } else if (isRef) {
         setSaveMsg("Estimativa de referência gerada — confirme antes de enviar ao cliente.");
+      } else if (recommended) {
+        setSaveMsg(`Estimativa calculada: ${recommended} € s/IVA (${withVat} € c/IVA). Pode editar antes de guardar.`);
       } else {
         setSaveMsg("Estimativa calculada com sucesso pelo Gemini.");
       }
@@ -760,7 +805,7 @@ export default function PedidoDetailModal({ id, token, isAdmin, colabId, colabFu
     }
   }
 
-  // ─── Render ────────────────────────────────────────────────────────────────
+  // ─── Render ───────────────────────────────────────────────────────────────���
 
   return (
     <div
@@ -995,7 +1040,7 @@ export default function PedidoDetailModal({ id, token, isAdmin, colabId, colabFu
               {/* ── Tab Content ── */}
               <div className="flex-1 overflow-y-auto px-6 py-6">
 
-                {/* ── Aba 1: Geral ─────────────────────────────────────────── */}
+                {/* ── Aba 1: Geral ─────────────────────���───────────────────── */}
                 {activeTab === "geral" && (() => {
                   const raw = parseRawOrder(order.rawOrderJson);
                   const isMov = isMudanca(order.serviceType);
@@ -1328,24 +1373,156 @@ export default function PedidoDetailModal({ id, token, isAdmin, colabId, colabFu
                         <textarea rows={5} value={editDescription} onChange={(e) => setEditDescription(e.target.value)} className={inputCls} placeholder="Descreva o serviço em detalhe..." />
                       </Field>
 
-                      {/* Estimativa e valores */}
+                      {/* Estimativa da IA — cartões de valores */}
                       <div>
                         <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.15em] text-slate-500">Estimativa da IA</p>
                         <div className="grid grid-cols-3 gap-3">
                           <div className="rounded-[18px] border border-white/[0.06] bg-white/[0.02] p-4">
-                            <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-slate-600">Mínimo</p>
-                            <p className="mt-1.5 text-lg font-bold text-cyan-400">{fmtEur(order.estimateMin) ?? "—"}</p>
+                            <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-slate-600">Mínimo s/IVA</p>
+                            <p className="mt-1.5 text-lg font-bold text-cyan-400">
+                              {fmtEur(order.estimateMin) ?? (est?.estimateMinWithoutVat ? `${est.estimateMinWithoutVat.toFixed(2)} €` : "—")}
+                            </p>
                           </div>
                           <div className="rounded-[18px] border border-white/[0.06] bg-white/[0.02] p-4">
-                            <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-slate-600">Máximo</p>
-                            <p className="mt-1.5 text-lg font-bold text-cyan-400">{fmtEur(order.estimateMax) ?? "—"}</p>
+                            <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-slate-600">Máximo s/IVA</p>
+                            <p className="mt-1.5 text-lg font-bold text-cyan-400">
+                              {fmtEur(order.estimateMax) ?? (est?.estimateMaxWithoutVat ? `${est.estimateMaxWithoutVat.toFixed(2)} €` : "—")}
+                            </p>
                           </div>
                           <div className="rounded-[18px] border border-cyan-400/10 bg-cyan-400/5 p-4">
-                            <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-cyan-600">Total estimado</p>
-                            <p className="mt-1.5 text-lg font-bold text-cyan-300">{fmtEur(order.estimateTotal) ?? "—"}</p>
+                            <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-cyan-600">Recomendado s/IVA</p>
+                            <p className="mt-1.5 text-lg font-bold text-cyan-300">
+                              {fmtEur(order.estimateTotal) ?? (est?.estimatedPriceWithoutVat ? `${est.estimatedPriceWithoutVat.toFixed(2)} €` : "—")}
+                            </p>
                           </div>
                         </div>
+                        {/* Valor com IVA em destaque */}
+                        {(est?.estimatedPriceWithVat || order.estimateTotal) && (
+                          <div className="mt-2 flex items-center justify-end gap-2">
+                            <span className="text-[10px] text-slate-600">com IVA (23%):</span>
+                            <span className="text-base font-bold text-cyan-400">
+                              {est?.estimatedPriceWithVat
+                                ? `${est.estimatedPriceWithVat.toFixed(2)} €`
+                                : order.estimateTotal
+                                  ? `${(parseFloat(order.estimateTotal) * 1.23).toFixed(2)} €`
+                                  : "—"}
+                            </span>
+                          </div>
+                        )}
                       </div>
+
+                      {/* Análise Gemini detalhada */}
+                      {est && (
+                        <div className="rounded-[20px] border border-violet-400/20 bg-violet-400/[0.03] p-4 space-y-3">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-bold text-violet-400 uppercase tracking-wider">Análise Gemini</span>
+                            {est.confidence && (
+                              <span className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold ${
+                                est.confidence === "high" ? "border-emerald-400/30 text-emerald-400" :
+                                est.confidence === "medium" ? "border-amber-400/30 text-amber-400" :
+                                "border-red-400/30 text-red-400"
+                              }`}>
+                                {est.confidence === "high" ? "Alta confiança" : est.confidence === "medium" ? "Confiança média" : "Baixa confiança"}
+                              </span>
+                            )}
+                            <span className="ml-auto rounded-full border border-violet-400/30 px-2 py-0.5 text-[10px] font-semibold text-violet-400">IA</span>
+                          </div>
+
+                          {/* Equipa / Horas / Dificuldade / Recomendação */}
+                          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                            {est.difficultyLevel && (
+                              <div className="rounded-[12px] border border-white/[0.06] bg-white/[0.02] p-2.5">
+                                <p className="text-[9px] font-semibold uppercase tracking-wider text-slate-600 mb-1.5">Dificuldade</p>
+                                <div className="flex gap-0.5 mb-1">
+                                  {[1,2,3,4,5].map((n) => (
+                                    <div key={n} className={`h-1 w-3.5 rounded-full ${n <= (est.difficultyLevel ?? 0) ? "bg-violet-400" : "bg-white/10"}`} />
+                                  ))}
+                                </div>
+                                <span className={`text-[10px] font-semibold ${DIFFICULTY_COLOR[est.difficultyLevel] ?? "text-slate-300"}`}>
+                                  {DIFFICULTY_LABEL[est.difficultyLevel] ?? est.difficultyLevel}
+                                </span>
+                              </div>
+                            )}
+                            {est.teamSize && (
+                              <div className="rounded-[12px] border border-white/[0.06] bg-white/[0.02] p-2.5">
+                                <p className="text-[9px] font-semibold uppercase tracking-wider text-slate-600 mb-1">Equipa</p>
+                                <p className="text-[11px] font-semibold text-slate-300">{est.teamSize}</p>
+                              </div>
+                            )}
+                            {est.estimatedHoursText && (
+                              <div className="rounded-[12px] border border-white/[0.06] bg-white/[0.02] p-2.5">
+                                <p className="text-[9px] font-semibold uppercase tracking-wider text-slate-600 mb-1">Tempo</p>
+                                <p className="text-[11px] font-semibold text-slate-300">{est.estimatedHoursText}</p>
+                              </div>
+                            )}
+                            {est.recommendation && (
+                              <div className="rounded-[12px] border border-white/[0.06] bg-white/[0.02] p-2.5">
+                                <p className="text-[9px] font-semibold uppercase tracking-wider text-slate-600 mb-1">Ação</p>
+                                <p className={`text-[11px] font-semibold ${
+                                  est.recommendation === "pode_aprovar" ? "text-emerald-400" :
+                                  est.recommendation === "visita_presencial" ? "text-red-400" :
+                                  "text-amber-400"
+                                }`}>
+                                  {est.recommendation === "pode_aprovar" ? "Pode aprovar" :
+                                   est.recommendation === "pedir_fotos" ? "Pedir fotos" :
+                                   est.recommendation === "pedir_info" ? "Pedir info" :
+                                   est.recommendation === "visita_presencial" ? "Visita presencial" :
+                                   est.recommendation}
+                                </p>
+                              </div>
+                            )}
+                          </div>
+
+                          {est.summary && (
+                            <div>
+                              <p className="text-[9px] font-semibold uppercase tracking-wider text-violet-400 mb-1">Resumo</p>
+                              <p className="text-xs leading-relaxed text-slate-300">{est.summary}</p>
+                            </div>
+                          )}
+                          {est.customerMessage && (
+                            <div>
+                              <p className="text-[9px] font-semibold uppercase tracking-wider text-cyan-500 mb-1">Mensagem sugerida ao cliente</p>
+                              <p className="text-xs leading-relaxed text-slate-300 italic">{est.customerMessage}</p>
+                            </div>
+                          )}
+                          {est.assumptions && est.assumptions.length > 0 && (
+                            <div>
+                              <p className="text-[9px] font-semibold uppercase tracking-wider text-slate-500 mb-1.5">Pressupostos</p>
+                              <ul className="space-y-0.5">
+                                {est.assumptions.map((a, i) => (
+                                  <li key={i} className="flex items-start gap-1.5 text-[11px] text-slate-400">
+                                    <span className="mt-0.5 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-emerald-400" />{a}
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+                          {est.missingFields && est.missingFields.length > 0 && (
+                            <div>
+                              <p className="text-[9px] font-semibold uppercase tracking-wider text-amber-500 mb-1.5">Campos em falta</p>
+                              <ul className="space-y-0.5">
+                                {est.missingFields.map((f, i) => (
+                                  <li key={i} className="flex items-start gap-1.5 text-[11px] text-amber-400">
+                                    <span className="mt-0.5 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-amber-400" />{f.replace(/_/g, " ")}
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+                          {est.internalNotes && est.internalNotes.length > 0 && (
+                            <div>
+                              <p className="text-[9px] font-semibold uppercase tracking-wider text-slate-600 mb-1.5">Notas internas da IA</p>
+                              <ul className="space-y-0.5">
+                                {est.internalNotes.map((n, i) => (
+                                  <li key={i} className="flex items-start gap-1.5 text-[11px] text-slate-500">
+                                    <span className="mt-0.5 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-slate-600" />{n}
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+                        </div>
+                      )}
 
                       {isAdmin && (
                         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">

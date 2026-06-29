@@ -157,6 +157,12 @@ export interface EstimateResult {
   missingFields: string[];
   customerMessage: string;
   internalNotes: string[];
+  /** Equipa estimada (ex: "2 a 3 pessoas") */
+  teamSize?: string | null;
+  /** Horas estimadas em texto (ex: "1 a 2 horas") */
+  estimatedHoursText?: string | null;
+  /** Recomendação de acção para o admin */
+  recommendation?: "pode_aprovar" | "pedir_fotos" | "pedir_info" | "visita_presencial" | null;
   /** Detalhes de mão de obra (sempre presente quando status = "estimated") */
   labor?: LaborCost;
   /** Fonte da análise — preçário CLYON tem sempre prioridade */

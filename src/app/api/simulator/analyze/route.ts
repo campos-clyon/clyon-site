@@ -449,27 +449,71 @@ function formatOrderDataForPrompt(order: OrderData): string {
   return lines.join("\n");
 }
 
-function buildAnalysisPrompt(formattedData: string, pricingRules: string): string {
-  return `Você é um analista de preços para uma empresa de serviços de transporte e limpeza chamada CLYON, com base em Fernão Ferro, Portugal.
+function buildAnalysisPrompt(formattedData: string, _pricingRules: string): string {
+  return `És o orçamentista sénior da empresa CLYON, baseada em Fernão Ferro (Seixal), Portugal. A CLYON presta serviços de recolha de móveis/monos, recolha de entulho, esvaziamento de casas/apartamentos e mudanças.
 
-Sua tarefa é analisar o pedido abaixo e retornar APENAS um JSON válido com os seguintes campos:
+A tua tarefa é calcular o PREÇO COMERCIAL FINAL que a CLYON deve cobrar ao cliente — não o custo operacional interno.
+
+═══════════════════════════════════════════════════════════
+PREÇÁRIO COMERCIAL CLYON
+═══════════════════════════════════════════════════════════
+
+## MÍNIMOS POR ZONA (serviço com carrinha + equipa)
+- Amora, Fernão Ferro, Seixal e arredores: mínimo 220 € s/IVA
+- Lisboa com acesso razoável: mínimo 250 € s/IVA
+- Lisboa com acesso difícil (sem elevador, andar alto ou estacionamento longe): mínimo 270 € s/IVA
+- Loures, Vila Franca de Xira, Alverca, Cascais, Sintra: mínimo 270 € s/IVA
+- Almada, Barreiro, Setúbal: mínimo 230 € s/IVA
+
+## ENTULHO (sacos ~50 L)
+- Ensacado: 1,90 € por saco | No chão (por ensacar): 2,20 € por saco | Misto: 2,05 € por saco
+- Distância da base: km × 2 € | Acesso difícil: +30 €
+- Andar COM elevador: +3 € por andar | Andar SEM elevador: +8 € por andar
+- Mínimo: 90 €
+
+## ITENS INDIVIDUAIS
+- Sofá / chaise longue: 80–150 € | Cama + colchão: 80–150 € | Frigorifico / arca: 50–80 €
+- Armário grande: 70–120 € | Mesa: 45–80 € | Cadeira: 20–35 € | Mono genérico: 25–50 €
+- Mínimo: 80 €
+
+## ESVAZIAMENTO
+- T1/T2 pequeno: 250–450 € | T3 médio: 350–600 € | Casa / andar grande: 450–900 €
+- Acesso difícil: +50 a +150 €
+
+## MUDANÇAS
+- Local (< 20 km): 150–300 € | Regional (20–50 km): 250–450 €
+- Acesso difícil origem ou destino: +40 a +100 €
+
+## AGRAVAMENTOS
+- Urgência hoje: +40 € | Urgência amanhã: +20 €
+- Sem elevador (andar > 2): +20 a +60 € | Estacionamento longe: +30 €
+- Desmontagem de móveis: +30 a +80 € | Carga extra / carrinha adicional: +80 a +150 €
+
+## IVA = 23% → Valor c/IVA = Valor s/IVA × 1,23
+
+═══════════════════════════════════════════════════════════
+FORMATO DE RESPOSTA (JSON puro, sem markdown, sem texto extra)
+═══════════════════════════════════════════════════════════
 
 {
   "status": "estimated" | "onsite_required" | "needs_more_info",
-  "estimatedPriceWithoutVat": número (NUNCA null ou 0),
-  "vatAmount": número (NUNCA null ou 0),
-  "estimatedPriceWithVat": número (NUNCA null ou 0),
-  "estimateMinWithoutVat": número ou null,
-  "estimateMaxWithoutVat": número ou null,
+  "estimatedPriceWithoutVat": número (valor RECOMENDADO s/IVA — NUNCA null ou 0),
+  "vatAmount": número (= estimatedPriceWithoutVat × 0.23),
+  "estimatedPriceWithVat": número (= estimatedPriceWithoutVat × 1.23),
+  "estimateMinWithoutVat": número (mínimo s/IVA — NUNCA null ou 0),
+  "estimateMaxWithoutVat": número (máximo s/IVA — NUNCA null ou 0),
   "difficultyLevel": 1-5,
   "confidence": "high" | "medium" | "low",
-  "summary": "string com resumo da análise",
-  "assumptions": ["array", "de", "pressupostos"],
-  "missingFields": ["array", "de", "campos faltantes"],
-  "customerMessage": "mensagem para o cliente",
-  "internalNotes": ["notas internas"],
+  "teamSize": "string ex: 2 a 3 pessoas",
+  "estimatedHoursText": "string ex: 1 a 2 horas",
+  "recommendation": "pode_aprovar" | "pedir_fotos" | "pedir_info" | "visita_presencial",
+  "summary": "resumo BREVE do cálculo (3-5 linhas máximo)",
+  "assumptions": ["pressuposto 1", "pressuposto 2"],
+  "missingFields": ["campo em falta 1"],
+  "customerMessage": "mensagem pronta para o cliente com o valor estimado incluído",
+  "internalNotes": ["nota interna 1"],
   "labor": {
-    "estimatedHours": número (nunca < 1),
+    "estimatedHours": número (mínimo 1),
     "peopleCount": 3,
     "hourlyRatePerPerson": 9,
     "laborCost": número
@@ -477,45 +521,21 @@ Sua tarefa é analisar o pedido abaixo e retornar APENAS um JSON válido com os 
 }
 
 ═══════════════════════════════════════════════════════════
-PREÇÁRIO ATIVO CLYON (SEMPRE USE ESTES VALORES)
+REGRAS ABSOLUTAS
 ═══════════════════════════════════════════════════════════
 
-${pricingRules}
+1. O resultado é o PREÇO FINAL DE VENDA ao cliente, não o custo operacional.
+2. estimatedPriceWithoutVat = valor recomendado s/IVA (dentro do intervalo min–max).
+3. estimateMinWithoutVat e estimateMaxWithoutVat NUNCA podem ser null ou 0.
+4. Aplica SEMPRE os mínimos por zona — mesmo que o cálculo itemizado fique abaixo.
+5. Se faltar informação crítica, dá SEMPRE um intervalo estimado com confidence "low".
+6. NUNCA devolveres preços 0 ou null — se dados insuficientes, usa mínimos da zona.
+7. customerMessage deve SEMPRE incluir o valor estimado (ex: "à volta de X € + IVA").
+8. Retorna APENAS JSON válido — sem texto antes ou depois, sem backticks.
 
 ═══════════════════════════════════════════════════════════
-INSTRUÇÕES CRÍTICAS
+PEDIDO
 ═══════════════════════════════════════════════════════════
-
-1. USA APENAS OS VALORES ACIMA — Não inventes preços
-2. ENTULHO ESPECÍFICO:
-   - Se estado="Já ensacado" → usar 2.50€/saco
-   - Se estado="No chão/Por ensacar" → usar 3.00€/saco
-   - Se estado="Misto" → aproximar 2.75€/saco (média)
-   - Fórmula: preço_por_saco × quantidade × (1 + distância_factor + acesso_factor)
-3. MUDANÇA ESPECÍFICO:
-   - Quando o serviço for Mudança, considera origem e destino separadamente
-   - Avalia andar, elevador e estacionamento nos dois locais
-   - A distância principal é o percurso entre origem e destino
-   - Se faltar morada de origem OU de destino → "needs_more_info"
-4. Se falta quantidade de sacos ou estado do entulho → "needs_more_info"
-5. Se falta zona/localidade → "needs_more_info"
-6. Se não conseguir calcular com segurança → "onsite_required" com confidence "low"
-7. IVA sempre é 23% (0.23x)
-8. Valida que os valores fazem sentido no contexto
-9. Define sempre o campo "confidence": "high" se preçário cobre bem, "medium" se há incerteza, "low" se não consegues calcular
-10. REGRA OBRIGATÓRIA — NUNCA DEVOLVER PREÇO 0:
-    - Se não conseguires aplicar diretamente o preçário CLYON, usa o teu conhecimento geral de mercado e lógica operacional para devolver uma estimativa de referência para a equipa.
-    - Essa estimativa deve ter confidence "low" e apenas para uso interno (nunca mostrar ao cliente como orçamento final).
-    - Nunca deixes estimatedPriceWithoutVat, vatAmount ou estimatedPriceWithVat como null ou 0.
-    - Se os dados forem insuficientes, usa os valores mínimos de referência:
-        recolha_moveis: 80€ a 150€ s/IVA | recolha_monos: 80€ a 160€ s/IVA
-        esvaziamento_apartamento: 250€ a 600€ s/IVA | esvaziamento_casa: 300€ a 800€ s/IVA
-        mudanca: 150€ a 350€ s/IVA | recolha_entulho: 120€ a 300€ s/IVA | outro: 100€ a 250€ s/IVA
-    - Inclui campos em falta em missingFields e pressupostos usados em assumptions.
-    - Inclui sempre labour com mínimo 1h × 3 pessoas × 9€.
-11. Quando a informação for insuficiente, devolve o intervalo mínimo e máximo em estimateMinWithoutVat e estimateMaxWithoutVat.
-
-Analise o pedido abaixo e retorne APENAS o JSON sem qualquer texto adicional:
 
 ${formattedData}`;
 }
@@ -546,6 +566,11 @@ function parseGeminiResponse(response: string): EstimateResult {
       ? parsed.confidence
       : "medium") as "high" | "medium" | "low";
 
+    const validRecommendations = ["pode_aprovar", "pedir_fotos", "pedir_info", "visita_presencial"] as const;
+    const recommendation = validRecommendations.includes(parsed.recommendation)
+      ? (parsed.recommendation as "pode_aprovar" | "pedir_fotos" | "pedir_info" | "visita_presencial")
+      : null;
+
     return {
       status: parsed.status || "estimated",
       estimatedPriceWithoutVat: parsed.estimatedPriceWithoutVat ?? null,
@@ -555,6 +580,9 @@ function parseGeminiResponse(response: string): EstimateResult {
       estimateMaxWithoutVat: typeof parsed.estimateMaxWithoutVat === "number" ? parsed.estimateMaxWithoutVat : null,
       difficultyLevel: diffLevel,
       confidence,
+      teamSize: typeof parsed.teamSize === "string" ? parsed.teamSize : null,
+      estimatedHoursText: typeof parsed.estimatedHoursText === "string" ? parsed.estimatedHoursText : null,
+      recommendation,
       summary: parsed.summary || "Análise com base nos dados fornecidos",
       assumptions: Array.isArray(parsed.assumptions) ? parsed.assumptions : [],
       missingFields: Array.isArray(parsed.missingFields) ? parsed.missingFields : [],
