@@ -8,6 +8,11 @@ import { defaultSimulatorSettings } from "@/lib/simulator-settings";
 let dbInstance: ReturnType<typeof drizzle<typeof import('../../drizzle/schema')>> | null = null;
 let poolInstance: mysql.Pool | null = null;
 
+/** Converte uma Date para string no formato MySQL DATETIME: 'YYYY-MM-DD HH:mm:ss' */
+export function toMySQLDateTime(date: Date = new Date()): string {
+  return date.toISOString().slice(0, 19).replace("T", " ");
+}
+
 export async function getPool() {
   if (!process.env.DATABASE_URL) {
     console.warn("[Database] DATABASE_URL not set");
@@ -1198,7 +1203,7 @@ export async function appendOrderHistory(
   await ensureSimulatorOrdersTable();
   const pool = await getPool();
   if (!pool) return;
-  const now = new Date().toISOString();
+  const now = toMySQLDateTime();
   const [rows] = await pool.execute("SELECT historyJson FROM simulatorOrders WHERE id = ? LIMIT 1", [orderId]) as any[];
   const existing: any[] = [];
   try { if ((rows as any[])[0]?.historyJson) existing.push(...JSON.parse((rows as any[])[0].historyJson)); } catch {}
@@ -1231,7 +1236,7 @@ export async function assignSimulatorOrder(
   const [rows] = await pool.execute("SELECT historyJson FROM simulatorOrders WHERE id = ? LIMIT 1", [orderId]) as any[];
   const existing: any[] = [];
   try { if ((rows as any[])[0]?.historyJson) existing.push(...JSON.parse((rows as any[])[0].historyJson)); } catch {}
-  existing.push({ type: "assigned", by: actor ?? null, message, createdAt: new Date().toISOString() });
+  existing.push({ type: "assigned", by: actor ?? null, message, createdAt: toMySQLDateTime() });
   
   console.log("[v0] assignSimulatorOrder: Actualizando pedido #", orderId, "com assignedToId=", assignee?.id, ", status=", newStatus);
   await pool.execute(
@@ -1248,7 +1253,7 @@ export async function approveSimulatorOrder(
   await ensureSimulatorOrdersTable();
   const pool = await getPool();
   if (!pool) return;
-  const reviewJson = JSON.stringify({ ...data, reviewedAt: new Date().toISOString() });
+  const reviewJson = JSON.stringify({ ...data, reviewedAt: toMySQLDateTime() });
   await pool.execute(
     `UPDATE simulatorOrders SET status='aprovado', precoFinal=?, precoFinalIva=?, mensagemCliente=?, notasInternas=COALESCE(?,notasInternas), reviewJson=?, updatedAt=NOW() WHERE id=?`,
     [data.precoFinal, data.precoFinalIva, data.mensagemCliente, data.notasInternas ?? null, reviewJson, orderId]

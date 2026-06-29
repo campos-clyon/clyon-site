@@ -5,6 +5,7 @@ import {
   appendOrderHistory,
   getColaboradorById,
   getPool,
+  toMySQLDateTime,
 } from "@/lib/db";
 import { verifyColaboradorAuthHeader } from "@/lib/colaborador-auth";
 
@@ -24,31 +25,20 @@ export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const authHeader = req.headers.get("authorization");
-  console.log("[v0/accept] authHeader presente:", !!authHeader, "| starts Bearer:", authHeader?.startsWith("Bearer "));
-
-  const jwt = await verifyColaboradorAuthHeader(authHeader);
-  console.log("[v0/accept] jwt verificado:", jwt ? { id: jwt.id, nome: jwt.nome, funcao: jwt.funcao } : null);
-
+  const jwt = await verifyColaboradorAuthHeader(req.headers.get("authorization"));
   if (!jwt) {
-    console.log("[v0/accept] 401 — token inválido ou ausente");
     return NextResponse.json({ ok: false, message: "Não autorizado." }, { status: 401 });
   }
 
   const { id } = await params;
   const orderId = Number(id);
-  console.log("[v0/accept] orderId:", orderId);
 
   const [order, colabFromDb] = await Promise.all([
     getSimulatorOrderById(orderId),
     getColaboradorById(jwt.id),
   ]);
 
-  console.log("[v0/accept] order:", order ? { id: order.id, status: order.status, assignedToId: order.assignedToId } : null);
-  console.log("[v0/accept] colabFromDb:", colabFromDb ? { id: colabFromDb.id, funcao: colabFromDb.funcao, active: colabFromDb.active } : null);
-
   if (!order) {
-    console.log("[v0/accept] 404 — pedido não encontrado");
     return NextResponse.json({ ok: false, message: "Pedido não encontrado." }, { status: 404 });
   }
 
@@ -64,7 +54,7 @@ export async function POST(
   const isAdmin = Number(colab.isAdmin) === 1;
   const isAssistente = colab.funcao === "assistente";
 
-  // Auto-activar canReceiveSimulatorRequests=1 para assistentes que têm 0 por defeito antigo
+  // Auto-activar canReceiveSimulatorRequests=1 para assistentes com default antigo de 0
   if (isAssistente && colabFromDb && Number(colabFromDb.canReceiveSimulatorRequests) === 0) {
     try {
       const pool = await getPool();
@@ -74,7 +64,7 @@ export async function POST(
           [colab.id]
         );
       }
-    } catch { /* silencioso — não impede o accept */ }
+    } catch { /* silencioso */ }
   }
 
   // Apenas assistentes activos e admins podem aceitar pedidos
@@ -91,44 +81,39 @@ export async function POST(
     );
   }
 
-  // Already claimed by someone else?
+  // Pedido já aceite por outra assistente?
   if (order.assignedToId && order.assignedToId !== colab.id) {
     return NextResponse.json(
-      {
-        ok: false,
-        message: `Este pedido já foi aceite por ${order.assignedToName ?? "outra assistente"}.`,
-      },
+      { ok: false, message: `Este pedido já foi aceite por ${order.assignedToName ?? "outra assistente"}.` },
       { status: 409 }
     );
   }
 
-  // Status guard — only accept "open" orders unless admin
+  // Só aceitar pedidos em fila
   const acceptableStatuses = ["sem_assistente", "pendente", "novo"];
   if (!acceptableStatuses.includes(order.status) && !isAdmin) {
     return NextResponse.json(
-      {
-        ok: false,
-        message: `Pedido com status "${order.status}" não pode ser aceite desta forma.`,
-      },
+      { ok: false, message: `Pedido com status "${order.status}" não pode ser aceite desta forma.` },
       { status: 409 }
     );
   }
 
-  const nowIso = new Date().toISOString();
-  const updatePayload = {
-    assignedToId: colab.id,
-    assignedToName: colab.nome,
-    assignedAt: nowIso as unknown as null,
-    status: "atribuido",
-    acceptedAt: nowIso,
-  };
-  console.log("[v0/accept] updatePayload:", updatePayload);
+  // Formato MySQL DATETIME: 'YYYY-MM-DD HH:mm:ss'
+  const nowMySQL = toMySQLDateTime();
+
   try {
-    await updateSimulatorOrder(orderId, updatePayload);
-    console.log("[v0/accept] updateSimulatorOrder OK");
+    await updateSimulatorOrder(orderId, {
+      assignedToId: colab.id,
+      assignedToName: colab.nome,
+      assignedAt: nowMySQL as unknown as null,
+      status: "atribuido",
+      acceptedAt: nowMySQL,
+    });
   } catch (updateErr) {
-    console.error("[v0/accept] updateSimulatorOrder ERRO:", updateErr);
-    return NextResponse.json({ ok: false, message: `Erro ao actualizar pedido: ${updateErr instanceof Error ? updateErr.message : String(updateErr)}` }, { status: 500 });
+    return NextResponse.json(
+      { ok: false, message: `Erro ao actualizar pedido: ${updateErr instanceof Error ? updateErr.message : String(updateErr)}` },
+      { status: 500 }
+    );
   }
 
   await appendOrderHistory(orderId, {
