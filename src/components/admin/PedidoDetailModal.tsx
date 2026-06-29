@@ -125,14 +125,11 @@ const SERVICE_TYPES = [
 ];
 
 const TABS = [
-  { id: "geral",      label: "Geral" },
-  { id: "cliente",    label: "Cliente" },
-  { id: "servico",    label: "Serviço" },
-  { id: "morada",     label: "Morada" },
-  { id: "estimativa", label: "Estimativa" },
-  { id: "fotos",      label: "Fotos" },
-  { id: "atribuicao", label: "Atribuição" },
-  { id: "historico",  label: "Histórico" },
+  { id: "geral",           label: "Geral" },
+  { id: "cliente_morada",  label: "Cliente e Morada" },
+  { id: "servico_fotos",   label: "Serviço e Fotos" },
+  { id: "atribuicao",      label: "Atribuição" },
+  { id: "historico",       label: "Histórico" },
 ] as const;
 
 type TabId = (typeof TABS)[number]["id"];
@@ -391,7 +388,7 @@ export default function PedidoDetailModal({ id, token, isAdmin, colabId, colabFu
 
   // Fetch lista de assistentes quando admin abre a aba de atribuição
   useEffect(() => {
-    if (!isAdmin || activeTab !== "atribuicao" || assistants.length > 0) return;
+    if (!isAdmin || (activeTab !== "atribuicao") || assistants.length > 0) return;
     fetch("/api/admin/assistentes", { headers: authHeader })
       .then((r) => r.json())
       .then((data) => {
@@ -998,171 +995,175 @@ export default function PedidoDetailModal({ id, token, isAdmin, colabId, colabFu
               {/* ── Tab Content ── */}
               <div className="flex-1 overflow-y-auto px-6 py-6">
 
-                {/* Geral */}
+                {/* ── Aba 1: Geral ─────────────────────────────────────────── */}
                 {activeTab === "geral" && (() => {
                   const raw = parseRawOrder(order.rawOrderJson);
                   const isMov = isMudanca(order.serviceType);
                   const originAddr = raw.originAddress?.formattedAddress ?? raw.originAddress?.address ?? order.address;
                   const destAddr = raw.destinationAddress?.formattedAddress ?? raw.destinationAddress?.address;
                   const movDist = raw.movingDistance?.distanceText ?? (order.distanceKm ? `${order.distanceKm} km` : null);
+                  const elevatorLabel = order.hasElevator
+                    ? (order.hasElevator === "sim" ? "Sim" : order.hasElevator === "nao" ? "Não" : order.hasElevator)
+                    : null;
+                  const parkingLabel = order.parkingDistance
+                    ? (order.parkingDistance === "porta" ? "À porta" :
+                       order.parkingDistance === "proximo" ? "Próximo (até 50m)" :
+                       order.parkingDistance === "medio" ? "Médio (50–200m)" :
+                       order.parkingDistance === "longe" ? "Longe (+200m)" : order.parkingDistance)
+                    : null;
                   return (
                   <div className="space-y-6">
-                    <h3 className="text-base font-bold text-white">Resumo geral</h3>
-                    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-                      {[
-                        { label: "Pedido nº", value: `#${order.id}` },
-                        { label: "Cliente", value: order.contactName },
-                        { label: "Telefone", value: order.contactPhone },
-                        { label: "Serviço", value: getServiceLabel(order.serviceType) },
-                        { label: "Status", value: STATUS_CFG[order.status]?.label ?? order.status },
-                        { label: "Prioridade", value: order.priority ?? "normal" },
-                        {
-                          label: "Assistente",
-                          value: order.assignedToName ?? "Fila geral",
-                        },
-                        { label: "Estimativa IA", value: fmtEur(order.estimateTotal) },
-                        { label: "Preço final s/IVA", value: fmtEur(order.precoFinal) },
-                        { label: "Preço final c/IVA", value: fmtEur(order.precoFinalIva) },
-                        { label: "Data de entrada", value: fmt(order.createdAt) },
-                        { label: "Última atualização", value: fmt(order.updatedAt) },
-                        ...(isMov && originAddr ? [{ label: "Origem", value: originAddr }] : []),
-                        ...(isMov && destAddr ? [{ label: "Destino", value: destAddr }] : []),
-                        ...(isMov && movDist ? [{ label: "Percurso", value: movDist }] : []),
-                      ].map((item) => (
-                        <div key={item.label} className="rounded-[18px] border border-white/[0.06] bg-white/[0.02] p-4">
-                          <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-slate-600">{item.label}</p>
-                          <p className="mt-1.5 text-sm font-semibold text-slate-200">{item.value ?? "—"}</p>
-                        </div>
-                      ))}
+                    {/* Resumo do pedido */}
+                    <div>
+                      <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">Resumo do pedido</p>
+                      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+                        {[
+                          { label: "Pedido nº", value: `#${order.id}` },
+                          { label: "Cliente", value: order.contactName },
+                          { label: "Telefone", value: order.contactPhone },
+                          { label: "Serviço", value: getServiceLabel(order.serviceType) },
+                          { label: "Status", value: STATUS_CFG[order.status]?.label ?? order.status },
+                          { label: "Assistente", value: order.assignedToName ?? "Fila geral" },
+                          { label: "Data de entrada", value: fmt(order.createdAt) },
+                          { label: "Última atualização", value: fmt(order.updatedAt) },
+                        ].map((item) => (
+                          <div key={item.label} className="rounded-[18px] border border-white/[0.06] bg-white/[0.02] p-4">
+                            <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-slate-600">{item.label}</p>
+                            <p className="mt-1.5 text-sm font-semibold text-slate-200">{item.value ?? "—"}</p>
+                          </div>
+                        ))}
+                      </div>
                     </div>
+
+                    {/* Morada e acesso */}
+                    <div>
+                      <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">Morada e acesso</p>
+                      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+                        {isMov ? (
+                          <>
+                            <div className="rounded-[18px] border border-white/[0.06] bg-white/[0.02] p-4 sm:col-span-2">
+                              <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-slate-600">Origem</p>
+                              <p className="mt-1.5 text-sm font-semibold text-slate-200">{originAddr ?? "—"}</p>
+                            </div>
+                            <div className="rounded-[18px] border border-white/[0.06] bg-white/[0.02] p-4 sm:col-span-2">
+                              <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-slate-600">Destino</p>
+                              <p className="mt-1.5 text-sm font-semibold text-slate-200">{destAddr ?? "—"}</p>
+                            </div>
+                            {movDist && (
+                              <div className="rounded-[18px] border border-white/[0.06] bg-white/[0.02] p-4">
+                                <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-slate-600">Percurso</p>
+                                <p className="mt-1.5 text-sm font-semibold text-slate-200">{movDist}</p>
+                              </div>
+                            )}
+                          </>
+                        ) : (
+                          <>
+                            {[
+                              { label: "Morada completa", value: order.address, span: true },
+                              { label: "Localidade", value: order.city },
+                              { label: "Código postal", value: order.postalCode },
+                              { label: "Andar", value: order.floor },
+                              { label: "Elevador", value: elevatorLabel },
+                              { label: "Estacionamento", value: parkingLabel },
+                            ].map((item) => (
+                              <div key={item.label} className={`rounded-[18px] border border-white/[0.06] bg-white/[0.02] p-4${item.span ? " sm:col-span-2" : ""}`}>
+                                <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-slate-600">{item.label}</p>
+                                <p className="mt-1.5 text-sm font-semibold text-slate-200">{item.value ?? "—"}</p>
+                              </div>
+                            ))}
+                          </>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Serviço */}
+                    <div>
+                      <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">Serviço</p>
+                      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+                        {[
+                          { label: "Tipo", value: getServiceLabel(order.serviceType) },
+                          { label: "Urgência", value: order.urgency ?? "Normal" },
+                          { label: "Estimativa IA", value: fmtEur(order.estimateTotal) },
+                          { label: "Preço final s/IVA", value: fmtEur(order.precoFinal) },
+                          { label: "Preço final c/IVA", value: fmtEur(order.precoFinalIva) },
+                          ...(order.distanceKm ? [{ label: "Distância", value: `${order.distanceKm} km` }] : []),
+                        ].map((item) => (
+                          <div key={item.label} className="rounded-[18px] border border-white/[0.06] bg-white/[0.02] p-4">
+                            <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-slate-600">{item.label}</p>
+                            <p className="mt-1.5 text-sm font-semibold text-slate-200">{item.value ?? "—"}</p>
+                          </div>
+                        ))}
+                      </div>
+                      {order.description && (
+                        <div className="mt-3 rounded-[18px] border border-white/[0.06] bg-white/[0.02] p-4">
+                          <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.15em] text-slate-600">Descrição do pedido</p>
+                          <p className="text-sm leading-relaxed text-slate-300">{order.description}</p>
+                        </div>
+                      )}
+                      {files.length > 0 && (
+                        <div className="mt-3 rounded-[18px] border border-white/[0.06] bg-white/[0.02] p-4">
+                          <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.15em] text-slate-600">Fotos anexadas ({files.length})</p>
+                          <div className="flex flex-wrap gap-2">
+                            {files.slice(0, 6).map((url, i) => {
+                              const isImg = /\.(jpe?g|png|gif|webp|avif|heic)$/i.test(url);
+                              return isImg ? (
+                                <button key={i} type="button" onClick={() => setLightbox(url)} className="h-16 w-16 overflow-hidden rounded-xl border border-white/[0.06]">
+                                  <img src={url} alt={`Foto ${i + 1}`} className="h-full w-full object-cover hover:scale-105 transition" />
+                                </button>
+                              ) : (
+                                <a key={i} href={url} target="_blank" rel="noreferrer" className="flex h-16 w-16 items-center justify-center rounded-xl border border-white/[0.06] bg-white/[0.02] text-slate-500 hover:text-slate-300 transition">
+                                  <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                                  </svg>
+                                </a>
+                              );
+                            })}
+                            {files.length > 6 && (
+                              <button type="button" onClick={() => setActiveTab("servico_fotos")} className="flex h-16 w-16 items-center justify-center rounded-xl border border-white/[0.06] bg-white/[0.02] text-xs text-slate-400 hover:bg-white/[0.05] transition">
+                                +{files.length - 6}
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
                     {/* Ações rápidas */}
                     <div className="rounded-[18px] border border-white/[0.06] bg-white/[0.02] p-4">
                       <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.15em] text-slate-600">Ações rápidas</p>
                       <div className="flex flex-wrap gap-2">
-                        <button
-                          onClick={() => handleStatusQuick("aprovado")}
-                          disabled={saving}
-                          className="flex items-center gap-1.5 rounded-xl border border-emerald-400/20 bg-emerald-400/10 px-3 py-1.5 text-xs font-semibold text-emerald-300 hover:bg-emerald-400/20 disabled:opacity-60 transition"
-                        >Aprovar orçamento</button>
-                        <button
-                          onClick={() => handleStatusQuick("precisa_info")}
-                          disabled={saving}
-                          className="flex items-center gap-1.5 rounded-xl border border-orange-400/20 bg-orange-400/10 px-3 py-1.5 text-xs font-semibold text-orange-300 hover:bg-orange-400/20 disabled:opacity-60 transition"
-                        >Pedir mais info</button>
-                        <button
-                          onClick={() => handleStatusQuick("presencial_recomendado")}
-                          disabled={saving}
-                          className="flex items-center gap-1.5 rounded-xl border border-indigo-400/20 bg-indigo-400/10 px-3 py-1.5 text-xs font-semibold text-indigo-300 hover:bg-indigo-400/20 disabled:opacity-60 transition"
-                        >Recomendar presencial</button>
+                        <button onClick={() => handleStatusQuick("aprovado")} disabled={saving}
+                          className="flex items-center gap-1.5 rounded-xl border border-emerald-400/20 bg-emerald-400/10 px-3 py-1.5 text-xs font-semibold text-emerald-300 hover:bg-emerald-400/20 disabled:opacity-60 transition">
+                          Aprovar orçamento
+                        </button>
+                        <button onClick={() => handleStatusQuick("precisa_info")} disabled={saving}
+                          className="flex items-center gap-1.5 rounded-xl border border-orange-400/20 bg-orange-400/10 px-3 py-1.5 text-xs font-semibold text-orange-300 hover:bg-orange-400/20 disabled:opacity-60 transition">
+                          Pedir mais info
+                        </button>
+                        <button onClick={() => handleStatusQuick("presencial_recomendado")} disabled={saving}
+                          className="flex items-center gap-1.5 rounded-xl border border-indigo-400/20 bg-indigo-400/10 px-3 py-1.5 text-xs font-semibold text-indigo-300 hover:bg-indigo-400/20 disabled:opacity-60 transition">
+                          Recomendar presencial
+                        </button>
                         {order.contactPhone && (
                           <a href={`https://wa.me/${waPhone}?text=${waMsg}`} target="_blank" rel="noreferrer"
-                            className="flex items-center gap-1.5 rounded-xl border border-green-400/20 bg-green-400/10 px-3 py-1.5 text-xs font-semibold text-green-300 hover:bg-green-400/20 transition"
-                          >Enviar WhatsApp</a>
+                            className="flex items-center gap-1.5 rounded-xl border border-green-400/20 bg-green-400/10 px-3 py-1.5 text-xs font-semibold text-green-300 hover:bg-green-400/20 transition">
+                            Enviar WhatsApp
+                          </a>
                         )}
                         {isAdmin && (
-                          <button
-                            onClick={() => setShowDelete(true)}
-                            className="flex items-center gap-1.5 rounded-xl border border-red-400/20 bg-red-400/10 px-3 py-1.5 text-xs font-semibold text-red-400 hover:bg-red-400/20 transition"
-                          >Excluir pedido</button>
+                          <button onClick={() => setShowDelete(true)}
+                            className="flex items-center gap-1.5 rounded-xl border border-red-400/20 bg-red-400/10 px-3 py-1.5 text-xs font-semibold text-red-400 hover:bg-red-400/20 transition">
+                            Excluir pedido
+                          </button>
                         )}
                       </div>
                     </div>
-                    {order.description && (
-                      <div className="rounded-[18px] border border-white/[0.06] bg-white/[0.02] p-4">
-                        <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.15em] text-slate-600">Descrição do pedido</p>
-                        <p className="text-sm leading-relaxed text-slate-300">{order.description}</p>
-                      </div>
-                    )}
                   </div>
                   );
                 })()}
 
-                {/* Cliente */}
-                {activeTab === "cliente" && (
-                  <div className="space-y-6">
-                    <h3 className="text-base font-bold text-white">Dados do cliente</h3>
-                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                      <Field label="Nome completo">
-                        <input type="text" value={editContactName} onChange={(e) => setEditContactName(e.target.value)} className={inputCls} placeholder="Nome do cliente" />
-                      </Field>
-                      <Field label="Telefone">
-                        <input type="tel" value={editContactPhone} onChange={(e) => setEditContactPhone(e.target.value)} className={inputCls} placeholder="+351 9XX XXX XXX" />
-                      </Field>
-                      <Field label="E-mail">
-                        <input type="email" value={editContactEmail} onChange={(e) => setEditContactEmail(e.target.value)} className={inputCls} placeholder="email@exemplo.com" />
-                      </Field>
-                      <Field label="Urgência">
-                        <select value={editUrgency} onChange={(e) => setEditUrgency(e.target.value)} className={selectCls}>
-                          <option value="" className={optionCls}>Normal</option>
-                          <option value="urgente" className={optionCls}>Urgente</option>
-                          <option value="flexivel" className={optionCls}>Flexível</option>
-                        </select>
-                      </Field>
-                    </div>
-                    <Field label="Mensagem personalizada para o cliente">
-                      <textarea rows={4} value={editMensagemCliente} onChange={(e) => setEditMensagemCliente(e.target.value)} className={inputCls} placeholder="Mensagem que será enviada ao cliente..." />
-                    </Field>
-                    <div className="flex justify-end">
-                      <button onClick={handleSave} disabled={saving} className="flex items-center gap-2 rounded-2xl bg-cyan-400 px-5 py-2.5 text-sm font-bold text-slate-950 hover:bg-cyan-300 disabled:opacity-60 transition">
-                        {saving ? "A guardar..." : "Guardar alterações"}
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                {/* Serviço */}
-                {activeTab === "servico" && (
-                  <div className="space-y-6">
-                    <h3 className="text-base font-bold text-white">Dados do serviço</h3>
-                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                      <Field label="Tipo de serviço">
-                        <select
-                          value={editServiceType}
-                          onChange={(e) => setEditServiceType(e.target.value)}
-                          className={selectCls}
-                        >
-                          <option value="" className={optionCls}>Selecionar...</option>
-                          {SERVICE_TYPES.map((s) => (
-                            <option
-                              key={s}
-                              value={s}
-                              className={optionCls}
-                              /* Seleciona se o valor normalizado bate */
-                            >{s}</option>
-                          ))}
-                        </select>
-                        {/* Nota de diagnóstico se o valor não bate com nenhuma opção */}
-                        {editServiceType && !SERVICE_TYPES.includes(editServiceType) && (
-                          <p className="mt-1 text-[10px] text-amber-400">
-                            Valor original: &quot;{order.serviceType}&quot; — normalizado para &quot;{editServiceType}&quot;
-                          </p>
-                        )}
-                      </Field>
-                      <Field label="Urgência">
-                        <select value={editUrgency} onChange={(e) => setEditUrgency(e.target.value)} className={selectCls}>
-                          <option value="" className={optionCls}>Normal</option>
-                          <option value="urgente" className={optionCls}>Urgente</option>
-                          <option value="flexivel" className={optionCls}>Flexível</option>
-                        </select>
-                      </Field>
-                    </div>
-                    <Field label="Descrição detalhada do serviço">
-                      <textarea rows={5} value={editDescription} onChange={(e) => setEditDescription(e.target.value)} className={inputCls} placeholder="Descreva o serviço em detalhe..." />
-                    </Field>
-                    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-                      <ReadonlyField label="Distância" value={order.distanceText} />
-                      <ReadonlyField label="Km" value={order.distanceKm ? `${order.distanceKm} km` : null} />
-                    </div>
-                    <div className="flex justify-end">
-                      <button onClick={handleSave} disabled={saving} className="flex items-center gap-2 rounded-2xl bg-cyan-400 px-5 py-2.5 text-sm font-bold text-slate-950 hover:bg-cyan-300 disabled:opacity-60 transition">
-                        {saving ? "A guardar..." : "Guardar alterações"}
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                {/* Morada */}
-                {activeTab === "morada" && (() => {
+                {/* ── Aba 2: Cliente e Morada ──────────────────────────────── */}
+                {activeTab === "cliente_morada" && (() => {
                   const raw = parseRawOrder(order.rawOrderJson);
                   const isMov = isMudanca(order.serviceType);
                   const originAccess = raw.originAccess ?? {};
@@ -1172,12 +1173,38 @@ export default function PedidoDetailModal({ id, token, isAdmin, colabId, colabFu
                   const movDist = raw.movingDistance ?? {};
                   const baseDist = raw.distanceFromBase ?? {};
 
-                  if (isMov) {
-                    return (
-                      <div className="space-y-8">
-                        <h3 className="text-base font-bold text-white">Morada de mudança — Origem e Destino</h3>
+                  return (
+                  <div className="space-y-8">
+                    {/* Dados do cliente */}
+                    <div className="space-y-4">
+                      <h3 className="text-base font-bold text-white">Dados do cliente</h3>
+                      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                        <Field label="Nome completo">
+                          <input type="text" value={editContactName} onChange={(e) => setEditContactName(e.target.value)} className={inputCls} placeholder="Nome do cliente" />
+                        </Field>
+                        <Field label="Telefone">
+                          <input type="tel" value={editContactPhone} onChange={(e) => setEditContactPhone(e.target.value)} className={inputCls} placeholder="+351 9XX XXX XXX" />
+                        </Field>
+                        <Field label="E-mail">
+                          <input type="email" value={editContactEmail} onChange={(e) => setEditContactEmail(e.target.value)} className={inputCls} placeholder="email@exemplo.com" />
+                        </Field>
+                        <Field label="Urgência">
+                          <select value={editUrgency} onChange={(e) => setEditUrgency(e.target.value)} className={selectCls}>
+                            <option value="" className={optionCls}>Normal</option>
+                            <option value="urgente" className={optionCls}>Urgente</option>
+                            <option value="flexivel" className={optionCls}>Flexível</option>
+                          </select>
+                        </Field>
+                      </div>
+                      <Field label="Mensagem personalizada para o cliente">
+                        <textarea rows={4} value={editMensagemCliente} onChange={(e) => setEditMensagemCliente(e.target.value)} className={inputCls} placeholder="Mensagem que será enviada ao cliente..." />
+                      </Field>
+                    </div>
 
-                        {/* Origem */}
+                    {/* Morada e acesso */}
+                    {isMov ? (
+                      <div className="space-y-6">
+                        <h3 className="text-base font-bold text-white">Morada de mudança — Origem e Destino</h3>
                         <div className="rounded-[20px] border border-cyan-400/20 bg-cyan-400/[0.03] p-5">
                           <p className="mb-4 text-xs font-bold uppercase tracking-wider text-cyan-400">Origem</p>
                           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -1195,8 +1222,6 @@ export default function PedidoDetailModal({ id, token, isAdmin, colabId, colabFu
                             )}
                           </div>
                         </div>
-
-                        {/* Destino */}
                         <div className="rounded-[20px] border border-violet-400/20 bg-violet-400/[0.03] p-5">
                           <p className="mb-4 text-xs font-bold uppercase tracking-wider text-violet-400">Destino</p>
                           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -1214,8 +1239,6 @@ export default function PedidoDetailModal({ id, token, isAdmin, colabId, colabFu
                             )}
                           </div>
                         </div>
-
-                        {/* Percurso */}
                         {(movDist.distanceText || movDist.distanceKm || order.distanceKm || baseDist.distanceText) && (
                           <div className="rounded-[20px] border border-white/[0.06] bg-white/[0.02] p-5">
                             <p className="mb-4 text-xs font-bold uppercase tracking-wider text-slate-400">Percurso</p>
@@ -1228,458 +1251,103 @@ export default function PedidoDetailModal({ id, token, isAdmin, colabId, colabFu
                           </div>
                         )}
                       </div>
-                    );
-                  }
-
-                  // Outros serviços — morada única com campos editáveis
-                  return (
-                    <div className="space-y-6">
-                      <h3 className="text-base font-bold text-white">Morada e acesso</h3>
-                      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                        <Field label="Morada completa">
-                          <input type="text" value={editAddress} onChange={(e) => setEditAddress(e.target.value)} className={inputCls} placeholder="Rua, número, andar..." />
-                        </Field>
-                        <Field label="Localidade">
-                          <input type="text" value={editCity} onChange={(e) => setEditCity(e.target.value)} className={inputCls} placeholder="Lisboa, Porto..." />
-                        </Field>
-                        <Field label="Código postal">
-                          <input type="text" value={editPostalCode} onChange={(e) => setEditPostalCode(e.target.value)} className={inputCls} placeholder="1234-567" />
-                        </Field>
-                        <Field label="Andar">
-                          <input type="text" value={editFloor} onChange={(e) => setEditFloor(e.target.value)} className={inputCls} placeholder="Ex: 3º andar" />
-                        </Field>
-                        <Field label="Elevador">
-                          <select value={editHasElevator} onChange={(e) => setEditHasElevator(e.target.value)} className={selectCls}>
-                            <option value="" className={optionCls}>Não informado</option>
-                            <option value="sim" className={optionCls}>Sim</option>
-                            <option value="nao" className={optionCls}>Não</option>
-                          </select>
-                        </Field>
-                        <Field label="Distância de estacionamento">
-                          <select value={editParkingDistance} onChange={(e) => setEditParkingDistance(e.target.value)} className={selectCls}>
-                            <option value="" className={optionCls}>Não informado</option>
-                            <option value="porta" className={optionCls}>À porta</option>
-                            <option value="proximo" className={optionCls}>Próximo (até 50m)</option>
-                            <option value="medio" className={optionCls}>Médio (50-200m)</option>
-                            <option value="longe" className={optionCls}>Longe (mais de 200m)</option>
-                          </select>
-                        </Field>
-                      </div>
-                      <div className="flex justify-end">
-                        <button onClick={handleSave} disabled={saving} className="flex items-center gap-2 rounded-2xl bg-cyan-400 px-5 py-2.5 text-sm font-bold text-slate-950 hover:bg-cyan-300 disabled:opacity-60 transition">
-                          {saving ? "A guardar..." : "Guardar alterações"}
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })()}
-
-                {/* Estimativa */}
-                {activeTab === "estimativa" && (
-                  <div className="space-y-6">
-                    {/* ── Cabeçalho + badge de referência ── */}
-                    {(() => {
-                      const estData = parseEstimate(order.estimateJson);
-                      const isRef = estData?.analysisSource === "gemini_reference" || estData?.analysisSource === "fallback_reference";
-                      const noPrice = !estData?.estimatedPriceWithoutVat || estData.estimatedPriceWithoutVat <= 0;
-                      return (
-                        <div className="flex flex-wrap items-start gap-3">
-                          <h3 className="text-base font-bold text-white flex-1">Estimativa e valores</h3>
-                          {isRef && (
-                            <span className="rounded-full border border-amber-400/40 bg-amber-400/10 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-amber-400">
-                              Estimativa de referência
-                            </span>
-                          )}
-                          {noPrice && !isRef && (
-                            <span className="rounded-full border border-red-400/30 bg-red-400/10 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-red-400">
-                              Sem estimativa
-                            </span>
-                          )}
-                        </div>
-                      );
-                    })()}
-                    {/* ── Aviso de estimativa de referência ── */}
-                    {(() => {
-                      const estData = parseEstimate(order.estimateJson);
-                      const isRef = estData?.analysisSource === "gemini_reference" || estData?.analysisSource === "fallback_reference";
-                      const noPrice = !estData?.estimatedPriceWithoutVat || estData.estimatedPriceWithoutVat <= 0;
-                      const missing: string[] = estData?.missingFields?.filter(Boolean) ?? [];
-
-                      if (noPrice && !isRef) {
-                        return (
-                          <div className="rounded-[16px] border border-red-400/25 bg-red-400/[0.06] p-5 space-y-4">
-                            {/* Header */}
-                            <div className="flex items-start gap-3">
-                              <div className="mt-0.5 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-xl border border-red-400/30 bg-red-400/10">
-                                <svg className="h-4 w-4 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-                              </div>
-                              <div>
-                                <p className="text-sm font-bold text-red-300">Este pedido não tem estimativa</p>
-                                <p className="mt-0.5 text-xs leading-relaxed text-slate-400">
-                                  A análise automática não produziu um valor. Clique em <strong className="text-slate-200">Pedir estimativa ao Gemini</strong> para tentar novamente.
-                                </p>
-                              </div>
-                            </div>
-
-                            {/* Campos em falta — se o Gemini indicou */}
-                            {missing.length > 0 && (
-                              <div className="rounded-xl border border-amber-400/20 bg-amber-400/[0.05] px-4 py-3">
-                                <p className="mb-2 text-[10px] font-bold uppercase tracking-wider text-amber-400">
-                                  Informação em falta — actualize antes de tentar novamente
-                                </p>
-                                <ul className="space-y-1.5">
-                                  {missing.map((f, i) => (
-                                    <li key={i} className="flex items-center gap-2 text-xs text-amber-300">
-                                      <svg className="h-3.5 w-3.5 flex-shrink-0 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
-                                      </svg>
-                                      {f.replace(/_/g, " ")}
-                                    </li>
-                                  ))}
-                                </ul>
-                              </div>
-                            )}
-
-                            {/* Botao de acção */}
-                            <button
-                              onClick={handleRecalcularEstimativa}
-                              disabled={recalculating}
-                              className="flex w-full items-center justify-center gap-2 rounded-xl border border-red-400/30 bg-red-400/10 py-2.5 text-sm font-bold text-red-300 transition hover:bg-red-400/20 disabled:opacity-60"
-                            >
-                              {recalculating ? (
-                                <>
-                                  <svg className="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                                  </svg>
-                                  A pedir estimativa ao Gemini...
-                                </>
-                              ) : (
-                                <>
-                                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                                  </svg>
-                                  Pedir estimativa ao Gemini
-                                </>
-                              )}
-                            </button>
-                          </div>
-                        );
-                      }
-
-                      if (!isRef) return null;
-
-                      return (
-                        <div className="rounded-[16px] border border-amber-400/20 bg-amber-400/[0.04] p-5 space-y-4">
-                          <div className="flex items-start gap-3">
-                            <div className="mt-0.5 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-xl border border-amber-400/30 bg-amber-400/10">
-                              <svg className="h-4 w-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                              </svg>
-                            </div>
-                            <div>
-                              <p className="text-sm font-bold text-amber-300">Estimativa de referência — apenas uso interno</p>
-                              <p className="mt-0.5 text-xs leading-relaxed text-slate-400">
-                                O preçário CLYON não foi totalmente aplicado. Confirme o valor antes de enviar ao cliente ou tente novamente com mais dados.
-                              </p>
-                            </div>
-                          </div>
-
-                          {/* Campos em falta da estimativa de referência */}
-                          {missing.length > 0 && (
-                            <div className="rounded-xl border border-amber-400/20 bg-amber-400/[0.05] px-4 py-3">
-                              <p className="mb-2 text-[10px] font-bold uppercase tracking-wider text-amber-400">
-                                Dados em falta para melhor estimativa
-                              </p>
-                              <ul className="space-y-1.5">
-                                {missing.map((f, i) => (
-                                  <li key={i} className="flex items-center gap-2 text-xs text-amber-300">
-                                    <svg className="h-3.5 w-3.5 flex-shrink-0 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
-                                    </svg>
-                                    {f.replace(/_/g, " ")}
-                                  </li>
-                                ))}
-                              </ul>
-                            </div>
-                          )}
-
-                          <button
-                            onClick={handleRecalcularEstimativa}
-                            disabled={recalculating}
-                            className="flex w-full items-center justify-center gap-2 rounded-xl border border-amber-400/30 bg-amber-400/10 py-2.5 text-sm font-bold text-amber-300 transition hover:bg-amber-400/20 disabled:opacity-60"
-                          >
-                            {recalculating ? (
-                              <>
-                                <svg className="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                                </svg>
-                                A pedir estimativa ao Gemini...
-                              </>
-                            ) : (
-                              <>
-                                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                                </svg>
-                                Tentar novamente com o Gemini
-                              </>
-                            )}
-                          </button>
-                        </div>
-                      );
-                    })()}
-                    <div>
-                      <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.15em] text-slate-500">Estimativa da IA</p>
-                      <div className="grid grid-cols-3 gap-3">
-                        <div className="rounded-[18px] border border-white/[0.06] bg-white/[0.02] p-4">
-                          <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-slate-600">Mínimo</p>
-                          <p className="mt-1.5 text-lg font-bold text-cyan-400">{fmtEur(order.estimateMin) ?? "—"}</p>
-                        </div>
-                        <div className="rounded-[18px] border border-white/[0.06] bg-white/[0.02] p-4">
-                          <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-slate-600">Máximo</p>
-                          <p className="mt-1.5 text-lg font-bold text-cyan-400">{fmtEur(order.estimateMax) ?? "—"}</p>
-                        </div>
-                        <div className="rounded-[18px] border border-cyan-400/10 bg-cyan-400/5 p-4">
-                          <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-cyan-600">Total estimado</p>
-                          <p className="mt-1.5 text-lg font-bold text-cyan-300">{fmtEur(order.estimateTotal) ?? "—"}</p>
-                        </div>
-                      </div>
-                    </div>
-                    {est && (
-                      <div className="rounded-[24px] border border-violet-400/20 bg-violet-400/[0.03] p-5">
-                        <div className="mb-4 flex items-center gap-2">
-                          <span className="text-xs font-bold uppercase tracking-wider text-violet-400">Análise Gemini</span>
-                          <span className="ml-auto rounded-full border border-violet-400/30 px-2 py-0.5 text-[10px] font-semibold text-violet-400">IA</span>
-                        </div>
-                        <div className="space-y-4">
-                          {est.difficultyLevel != null && (
-                            <div className="flex items-center gap-3">
-                              <p className="w-28 text-[10px] font-semibold uppercase tracking-wider text-slate-600">Dificuldade</p>
-                              <div className="flex items-center gap-2">
-                                <div className="flex gap-0.5">
-                                  {[1,2,3,4,5].map((n) => (
-                                    <div key={n} className={`h-1.5 w-5 rounded-full ${n <= (est.difficultyLevel ?? 0) ? "bg-violet-400" : "bg-white/10"}`} />
-                                  ))}
-                                </div>
-                                <span className={`text-xs font-semibold ${DIFFICULTY_COLOR[est.difficultyLevel] ?? "text-slate-300"}`}>
-                                  {DIFFICULTY_LABEL[est.difficultyLevel] ?? est.difficultyLevel}
-                                </span>
-                              </div>
-                            </div>
-                          )}
-                          {/* Breakdown: mão de obra + IVA */}
-                          {(est.estimatedPriceWithoutVat != null || est.labor) && (
-                            <div className="rounded-[16px] border border-white/[0.06] bg-white/[0.02] p-4 space-y-2">
-                              <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 mb-3">Breakdown de valores</p>
-                              {est.labor && (
-                                <div className="flex items-center justify-between text-xs text-slate-400">
-                                  <span>Mão de obra ({est.labor.estimatedHours}h × {est.labor.peopleCount}p × {est.labor.hourlyRatePerPerson}€/h)</span>
-                                  <span className="font-semibold text-slate-300">{est.labor.laborCost?.toFixed(2)}€</span>
-                                </div>
-                              )}
-                              {est.estimatedPriceWithoutVat != null && (
-                                <div className="flex items-center justify-between text-xs text-slate-400 pt-1 border-t border-white/[0.04]">
-                                  <span>Total sem IVA</span>
-                                  <span className="font-semibold text-slate-300">{est.estimatedPriceWithoutVat.toFixed(2)}€</span>
-                                </div>
-                              )}
-                              {est.vatAmount != null && (
-                                <div className="flex items-center justify-between text-xs text-slate-400">
-                                  <span>IVA 23%</span>
-                                  <span className="font-semibold text-slate-300">{est.vatAmount.toFixed(2)}€</span>
-                                </div>
-                              )}
-                              {est.estimatedPriceWithVat != null && (
-                                <div className="flex items-center justify-between text-sm font-bold text-slate-200 pt-1 border-t border-white/[0.04]">
-                                  <span>Total com IVA</span>
-                                  <span className="text-cyan-300">{est.estimatedPriceWithVat.toFixed(2)}€</span>
-                                </div>
-                              )}
-                            </div>
-                          )}
-                          {est.summary && (
-                            <div>
-                              <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-violet-400">Resumo</p>
-                              <p className="text-sm leading-relaxed text-slate-300">{est.summary}</p>
-                            </div>
-                          )}
-                          {est.customerMessage && (
-                            <div>
-                              <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-cyan-500">Mensagem sugerida ao cliente</p>
-                              <p className="text-sm leading-relaxed text-slate-300">{est.customerMessage}</p>
-                            </div>
-                          )}
-                          {est.assumptions && est.assumptions.length > 0 && (
-                            <div>
-                              <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-slate-500">Pressupostos</p>
-                              <ul className="space-y-1">
-                                {est.assumptions.map((a, i) => (
-                                  <li key={i} className="flex items-start gap-2 text-xs text-slate-400">
-                                    <span className="mt-0.5 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-emerald-400" />{a}
-                                  </li>
-                                ))}
-                              </ul>
-                            </div>
-                          )}
-                          {est.missingFields && est.missingFields.length > 0 && (
-                            <div>
-                              <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-amber-500">Campos em falta</p>
-                              <ul className="space-y-1">
-                                {est.missingFields.map((f, i) => (
-                                  <li key={i} className="flex items-start gap-2 text-xs text-amber-400">
-                                    <span className="mt-0.5 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-amber-400" />{f.replace(/_/g, " ")}
-                                  </li>
-                                ))}
-                              </ul>
-                            </div>
-                          )}
-                          {est.internalNotes && est.internalNotes.length > 0 && (
-                            <div>
-                              <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-slate-600">Notas internas da IA</p>
-                              <ul className="space-y-1">
-                                {est.internalNotes.map((n, i) => (
-                                  <li key={i} className="flex items-start gap-2 text-xs text-slate-500">
-                                    <span className="mt-0.5 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-slate-600" />{n}
-                                  </li>
-                                ))}
-                              </ul>
-                            </div>
-                          )}
+                    ) : (
+                      <div className="space-y-4">
+                        <h3 className="text-base font-bold text-white">Morada e acesso</h3>
+                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                          <Field label="Morada completa">
+                            <input type="text" value={editAddress} onChange={(e) => setEditAddress(e.target.value)} className={inputCls} placeholder="Rua, número, andar..." />
+                          </Field>
+                          <Field label="Localidade">
+                            <input type="text" value={editCity} onChange={(e) => setEditCity(e.target.value)} className={inputCls} placeholder="Lisboa, Porto..." />
+                          </Field>
+                          <Field label="Código postal">
+                            <input type="text" value={editPostalCode} onChange={(e) => setEditPostalCode(e.target.value)} className={inputCls} placeholder="1234-567" />
+                          </Field>
+                          <Field label="Andar">
+                            <input type="text" value={editFloor} onChange={(e) => setEditFloor(e.target.value)} className={inputCls} placeholder="Ex: 3º andar" />
+                          </Field>
+                          <Field label="Elevador">
+                            <select value={editHasElevator} onChange={(e) => setEditHasElevator(e.target.value)} className={selectCls}>
+                              <option value="" className={optionCls}>Não informado</option>
+                              <option value="sim" className={optionCls}>Sim</option>
+                              <option value="nao" className={optionCls}>Não</option>
+                            </select>
+                          </Field>
+                          <Field label="Distância de estacionamento">
+                            <select value={editParkingDistance} onChange={(e) => setEditParkingDistance(e.target.value)} className={selectCls}>
+                              <option value="" className={optionCls}>Não informado</option>
+                              <option value="porta" className={optionCls}>À porta</option>
+                              <option value="proximo" className={optionCls}>Próximo (até 50m)</option>
+                              <option value="medio" className={optionCls}>Médio (50-200m)</option>
+                              <option value="longe" className={optionCls}>Longe (mais de 200m)</option>
+                            </select>
+                          </Field>
                         </div>
                       </div>
                     )}
-                    {/* ── Referência externa de mercado — apenas backoffice ── */}
-                    {(() => {
-                      if (!order.analysisJsonExtended) return null;
-                      let ext: { externalMarketEstimate?: any; analysisSource?: string; confidence?: string } | null = null;
-                      try { ext = JSON.parse(order.analysisJsonExtended); } catch { return null; }
-                      const eme = ext?.externalMarketEstimate;
-                      if (!eme) return null;
-                      const fmtVal = (v: number | null | undefined) =>
-                        v != null ? `${v.toFixed(2).replace(".", ",")}€` : "—";
-                      const confLabel: Record<string, string> = { high: "Alta", medium: "Média", low: "Baixa" };
-                      const confColor: Record<string, string> = {
-                        high: "text-emerald-400 border-emerald-400/30 bg-emerald-400/10",
-                        medium: "text-amber-400 border-amber-400/30 bg-amber-400/10",
-                        low: "text-red-400 border-red-400/30 bg-red-400/10",
-                      };
-                      const confCls = confColor[eme.confidence ?? "low"] ?? confColor.low;
-                      const srcLabel: Record<string, string> = {
-                        clyon_pricing: "Preçário CLYON",
-                        clyon_pricing_plus_web_reference: "Preçário CLYON + referência web",
-                        web_reference_only: "Referência web (sem preçário)",
-                        needs_human_review: "Requer revisão humana",
-                        gemini_reference: "Estimativa Gemini (referência interna)",
-                        fallback_reference: "Estimativa de referência automática",
-                        local_fast_estimate: "Cálculo local rápido",
-                        timeout_fallback: "Fallback por timeout",
-                      };
-                      const searchedAt = eme.searchedAt
-                        ? new Date(eme.searchedAt).toLocaleString("pt-PT", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" })
-                        : null;
-                      return (
-                        <div className="rounded-[24px] border border-amber-400/20 bg-amber-400/[0.03] p-5 space-y-4">
-                          <div className="flex items-center justify-between">
-                            <span className="text-xs font-bold uppercase tracking-wider text-amber-400">
-                              Referencia externa de mercado
-                            </span>
-                            <div className="flex items-center gap-2">
-                              {eme.confidence && (
-                                <span className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold ${confCls}`}>
-                                  Confiança {confLabel[eme.confidence] ?? eme.confidence}
-                                </span>
-                              )}
-                              <span className="rounded-full border border-amber-400/20 bg-amber-400/10 px-2 py-0.5 text-[10px] font-semibold text-amber-400">
-                                Interno
-                              </span>
-                            </div>
-                          </div>
 
-                          {/* Source badge */}
-                          {ext?.analysisSource && srcLabel[ext.analysisSource] && (
-                            <p className="text-[11px] text-slate-500">
-                              Fonte: <span className="text-slate-400">{srcLabel[ext.analysisSource]}</span>
+                    <div className="flex justify-end">
+                      <button onClick={handleSave} disabled={saving} className="flex items-center gap-2 rounded-2xl bg-cyan-400 px-5 py-2.5 text-sm font-bold text-slate-950 hover:bg-cyan-300 disabled:opacity-60 transition">
+                        {saving ? "A guardar..." : "Guardar alterações"}
+                      </button>
+                    </div>
+                  </div>
+                  );
+                })()}
+
+                {/* ── Aba 3: Serviço e Fotos ───────────────────────────────── */}
+                {activeTab === "servico_fotos" && (
+                  <div className="space-y-8">
+                    {/* Serviço */}
+                    <div className="space-y-4">
+                      <h3 className="text-base font-bold text-white">Dados do serviço</h3>
+                      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                        <Field label="Tipo de serviço">
+                          <select value={editServiceType} onChange={(e) => setEditServiceType(e.target.value)} className={selectCls}>
+                            <option value="" className={optionCls}>Selecionar...</option>
+                            {SERVICE_TYPES.map((s) => (
+                              <option key={s} value={s} className={optionCls}>{s}</option>
+                            ))}
+                          </select>
+                          {editServiceType && !SERVICE_TYPES.includes(editServiceType) && (
+                            <p className="mt-1 text-[10px] text-amber-400">
+                              Valor original: &quot;{order.serviceType}&quot; — normalizado para &quot;{editServiceType}&quot;
                             </p>
                           )}
+                        </Field>
+                        <Field label="Urgência">
+                          <select value={editUrgency} onChange={(e) => setEditUrgency(e.target.value)} className={selectCls}>
+                            <option value="" className={optionCls}>Normal</option>
+                            <option value="urgente" className={optionCls}>Urgente</option>
+                            <option value="flexivel" className={optionCls}>Flexível</option>
+                          </select>
+                        </Field>
+                      </div>
+                      <Field label="Descrição detalhada do serviço">
+                        <textarea rows={5} value={editDescription} onChange={(e) => setEditDescription(e.target.value)} className={inputCls} placeholder="Descreva o serviço em detalhe..." />
+                      </Field>
 
-                          {/* Price range */}
-                          <div className="grid grid-cols-3 gap-3">
-                            <div className="rounded-[16px] border border-amber-400/10 bg-amber-400/[0.04] p-3">
-                              <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-amber-700">Mínimo s/ IVA</p>
-                              <p className="mt-1 text-base font-bold text-amber-300">{fmtVal(eme.minWithoutVat)}</p>
-                            </div>
-                            <div className="rounded-[16px] border border-amber-400/10 bg-amber-400/[0.04] p-3">
-                              <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-amber-700">Máximo s/ IVA</p>
-                              <p className="mt-1 text-base font-bold text-amber-300">{fmtVal(eme.maxWithoutVat)}</p>
-                            </div>
-                            <div className="rounded-[16px] border border-amber-400/15 bg-amber-400/[0.07] p-3">
-                              <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-amber-600">Sugestão s/ IVA</p>
-                              <p className="mt-1 text-base font-bold text-amber-200">{fmtVal(eme.suggestedWithoutVat)}</p>
-                            </div>
+                      {/* Estimativa e valores */}
+                      <div>
+                        <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.15em] text-slate-500">Estimativa da IA</p>
+                        <div className="grid grid-cols-3 gap-3">
+                          <div className="rounded-[18px] border border-white/[0.06] bg-white/[0.02] p-4">
+                            <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-slate-600">Mínimo</p>
+                            <p className="mt-1.5 text-lg font-bold text-cyan-400">{fmtEur(order.estimateMin) ?? "—"}</p>
                           </div>
-
-                          {/* Reasoning */}
-                          {eme.reasoning && (
-                            <div>
-                              <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-amber-600">Raciocínio</p>
-                              <p className="text-xs leading-relaxed text-slate-400">{eme.reasoning}</p>
-                            </div>
-                          )}
-
-                          {/* Sources */}
-                          {Array.isArray(eme.sources) && eme.sources.length > 0 && (
-                            <div>
-                              <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-amber-600">
-                                Fontes consultadas ({eme.sources.length})
-                              </p>
-                              <ul className="space-y-1.5">
-                                {eme.sources.map((s: any, i: number) => (
-                                  <li key={i} className="flex items-start gap-2">
-                                    <span className="mt-1 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-amber-500" />
-                                    <div>
-                                      {s.url ? (
-                                        <a
-                                          href={s.url}
-                                          target="_blank"
-                                          rel="noreferrer"
-                                          className="text-xs font-medium text-amber-300 hover:text-amber-200 hover:underline"
-                                        >
-                                          {s.title || s.url}
-                                        </a>
-                                      ) : (
-                                        <span className="text-xs font-medium text-amber-300">{s.title}</span>
-                                      )}
-                                      {s.snippet && (
-                                        <p className="mt-0.5 text-[11px] text-slate-500">{s.snippet}</p>
-                                      )}
-                                    </div>
-                                  </li>
-                                ))}
-                              </ul>
-                            </div>
-                          )}
-
-                          {/* Timestamp */}
-                          {searchedAt && (
-                            <p className="text-[11px] text-slate-600">Pesquisa realizada em: {searchedAt}</p>
-                          )}
-
-                          {/* Disclaimer */}
-                          <div className="rounded-[12px] border border-amber-400/15 bg-amber-400/[0.04] px-4 py-2.5">
-                            <p className="text-[11px] leading-relaxed text-amber-700">
-                              Esta referencia e apenas apoio interno. O valor final deve ser confirmado pela equipa CLYON com base no precario oficial.
-                            </p>
+                          <div className="rounded-[18px] border border-white/[0.06] bg-white/[0.02] p-4">
+                            <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-slate-600">Máximo</p>
+                            <p className="mt-1.5 text-lg font-bold text-cyan-400">{fmtEur(order.estimateMax) ?? "—"}</p>
+                          </div>
+                          <div className="rounded-[18px] border border-cyan-400/10 bg-cyan-400/5 p-4">
+                            <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-cyan-600">Total estimado</p>
+                            <p className="mt-1.5 text-lg font-bold text-cyan-300">{fmtEur(order.estimateTotal) ?? "—"}</p>
                           </div>
                         </div>
-                      );
-                    })()}
+                      </div>
 
-                    {isAdmin && (
-                      <div>
-                        <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.15em] text-slate-500">Valores finais (editável pelo admin)</p>
+                      {isAdmin && (
                         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                           <Field label="Preço final sem IVA (€)">
                             <input type="number" step="0.01" min="0" value={editPrecoFinal} onChange={(e) => setEditPrecoFinal(e.target.value)} className={inputCls} placeholder="0.00" />
@@ -1688,84 +1356,74 @@ export default function PedidoDetailModal({ id, token, isAdmin, colabId, colabFu
                             <input type="number" step="0.01" min="0" value={editPrecoFinalIva} onChange={(e) => setEditPrecoFinalIva(e.target.value)} className={inputCls} placeholder="0.00" />
                           </Field>
                         </div>
+                      )}
+
+                      <Field label="Notas internas sobre o serviço">
+                        <textarea rows={4} value={editNotasInternas} onChange={(e) => setEditNotasInternas(e.target.value)} className={inputCls} placeholder="Notas internas (não visíveis pelo cliente)..." />
+                      </Field>
+
+                      <div className="flex flex-wrap justify-end gap-2">
+                        <button onClick={handleRecalcularEstimativa} disabled={recalculating || saving}
+                          className="flex items-center gap-2 rounded-2xl border border-violet-400/30 bg-violet-400/10 px-5 py-2.5 text-sm font-semibold text-violet-300 hover:bg-violet-400/20 disabled:opacity-60 transition">
+                          {recalculating ? "A recalcular..." : "Recalcular estimativa"}
+                        </button>
+                        <button onClick={() => handleStatusQuick("aprovado")} disabled={saving}
+                          className="flex items-center gap-2 rounded-2xl border border-emerald-400/30 bg-emerald-400/10 px-5 py-2.5 text-sm font-semibold text-emerald-300 hover:bg-emerald-400/20 disabled:opacity-60 transition">
+                          Aprovar orçamento
+                        </button>
+                        <button onClick={handleSave} disabled={saving}
+                          className="flex items-center gap-2 rounded-2xl bg-cyan-400 px-5 py-2.5 text-sm font-bold text-slate-950 hover:bg-cyan-300 disabled:opacity-60 transition">
+                          {saving ? "A guardar..." : "Guardar alterações"}
+                        </button>
                       </div>
-                    )}
-                    <Field label="Notas internas sobre o orçamento">
-                      <textarea rows={4} value={editNotasInternas} onChange={(e) => setEditNotasInternas(e.target.value)} className={inputCls} placeholder="Notas internas (não visíveis pelo cliente)..." />
-                    </Field>
-                    <div className="flex flex-wrap justify-end gap-2">
-                      <button
-                        onClick={handleRecalcularEstimativa}
-                        disabled={recalculating || saving}
-                        className="flex items-center gap-2 rounded-2xl border border-violet-400/30 bg-violet-400/10 px-5 py-2.5 text-sm font-semibold text-violet-300 hover:bg-violet-400/20 disabled:opacity-60 transition"
-                      >
-                        {recalculating ? (
-                          <>
-                            <svg className="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                            </svg>
-                            A recalcular...
-                          </>
-                        ) : "Recalcular estimativa"}
-                      </button>
-                      <button onClick={() => handleStatusQuick("aprovado")} disabled={saving}
-                        className="flex items-center gap-2 rounded-2xl border border-emerald-400/30 bg-emerald-400/10 px-5 py-2.5 text-sm font-semibold text-emerald-300 hover:bg-emerald-400/20 disabled:opacity-60 transition">
-                        Aprovar orçamento
-                      </button>
-                      <button onClick={handleSave} disabled={saving}
-                        className="flex items-center gap-2 rounded-2xl bg-cyan-400 px-5 py-2.5 text-sm font-bold text-slate-950 hover:bg-cyan-300 disabled:opacity-60 transition">
-                        {saving ? "A guardar..." : "Guardar valores"}
-                      </button>
+                    </div>
+
+                    {/* Fotos */}
+                    <div className="space-y-4">
+                      <h3 className="text-base font-bold text-white">Fotos e ficheiros</h3>
+                      {files.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center rounded-[20px] border border-dashed border-white/10 py-16 text-center">
+                          <svg className="mb-3 h-10 w-10 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                          </svg>
+                          <p className="text-sm text-slate-500">Nenhuma foto enviada pelo cliente.</p>
+                        </div>
+                      ) : (
+                        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
+                          {files.map((url, i) => {
+                            const isImg = /\.(jpe?g|png|gif|webp|avif|heic)$/i.test(url);
+                            const isVid = /\.(mp4|mov|webm|avi)$/i.test(url);
+                            return (
+                              <div key={i} className="group relative overflow-hidden rounded-[16px] border border-white/[0.06] bg-white/[0.02] aspect-square">
+                                {isImg ? (
+                                  <>
+                                    <img src={url} alt={`Ficheiro ${i + 1}`} className="h-full w-full object-cover transition group-hover:scale-105 cursor-pointer" onClick={() => setLightbox(url)} />
+                                    <div className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition cursor-pointer" onClick={() => setLightbox(url)}>
+                                      <svg className="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                      </svg>
+                                    </div>
+                                  </>
+                                ) : isVid ? (
+                                  <video src={url} className="h-full w-full object-cover" controls />
+                                ) : (
+                                  <a href={url} target="_blank" rel="noreferrer" className="flex h-full w-full flex-col items-center justify-center gap-2 p-4 text-center hover:bg-white/[0.04] transition">
+                                    <svg className="h-8 w-8 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                                    </svg>
+                                    <span className="text-[10px] text-slate-400 truncate w-full">Ficheiro {i + 1}</span>
+                                  </a>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}
 
-                {/* Fotos */}
-                {activeTab === "fotos" && (
-                  <div className="space-y-6">
-                    <h3 className="text-base font-bold text-white">Fotos e ficheiros</h3>
-                    {files.length === 0 ? (
-                      <div className="flex flex-col items-center justify-center rounded-[20px] border border-dashed border-white/10 py-16 text-center">
-                        <svg className="mb-3 h-10 w-10 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                        </svg>
-                        <p className="text-sm text-slate-500">Nenhum ficheiro enviado pelo cliente.</p>
-                      </div>
-                    ) : (
-                      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
-                        {files.map((url, i) => {
-                          const isImg = /\.(jpe?g|png|gif|webp|avif|heic)$/i.test(url);
-                          const isVid = /\.(mp4|mov|webm|avi)$/i.test(url);
-                          return (
-                            <div key={i} className="group relative overflow-hidden rounded-[16px] border border-white/[0.06] bg-white/[0.02] aspect-square">
-                              {isImg ? (
-                                <>
-                                  <img src={url} alt={`Ficheiro ${i + 1}`} className="h-full w-full object-cover transition group-hover:scale-105 cursor-pointer" onClick={() => setLightbox(url)} />
-                                  <div className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition cursor-pointer" onClick={() => setLightbox(url)}>
-                                    <svg className="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                    </svg>
-                                  </div>
-                                </>
-                              ) : isVid ? (
-                                <video src={url} className="h-full w-full object-cover" controls />
-                              ) : (
-                                <a href={url} target="_blank" rel="noreferrer" className="flex h-full w-full flex-col items-center justify-center gap-2 p-4 text-center hover:bg-white/[0.04] transition">
-                                  <svg className="h-8 w-8 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                                  </svg>
-                                  <span className="text-[10px] text-slate-400 truncate w-full">Ficheiro {i + 1}</span>
-                                </a>
-                              )}
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
-                )}
 
                 {/* Atribuição */}
                 {activeTab === "atribuicao" && (
