@@ -27,8 +27,8 @@ export async function POST(req: NextRequest) {
     // manualmente via POST /api/admin/pedidos/[id]/accept.
 
     const row: InsertSimulatorOrder = {
-      serviceType: order.serviceType ?? null,
-      description: order.description ?? null,
+      serviceType: order.serviceType || null,
+      description: order.description || null,
       filesJson: order.files?.length
         ? JSON.stringify(
             order.files.map((f: Record<string, unknown>) => ({
@@ -41,21 +41,31 @@ export async function POST(req: NextRequest) {
         order.serviceType === "mudanca"
           ? (order.originAddress?.formattedAddress ?? order.address?.formattedAddress ?? null)
           : (order.address?.formattedAddress ?? null),
-      city: order.city ?? order.address?.city ?? order.originAddress?.city ?? null,
+      city: order.city || order.address?.city || order.originAddress?.city || null,
       // postalCode: não existe como coluna separada na DB — guardado em rawOrderJson
-      floor: order.serviceType === "mudanca"
-        ? (order.originAccess?.floor ?? order.floor ?? null)
-        : (order.floor ?? null),
-      hasElevator: order.serviceType === "mudanca"
-        ? (order.originAccess?.hasElevator ?? order.hasElevator ?? null)
-        : (order.hasElevator ?? null),
-      parkingDistance: order.serviceType === "mudanca"
-        ? (order.originAccess?.parkingDistance ?? order.parkingDistance ?? null)
-        : (order.parkingDistance ?? null),
+      floor: (() => {
+        const v = order.serviceType === "mudanca"
+          ? (order.originAccess?.floor ?? order.floor)
+          : order.floor;
+        return v || null;
+      })(),
+      // Converter "" para null — alguns clientes submetem string vazia quando não preenchido
+      hasElevator: (() => {
+        const v = order.serviceType === "mudanca"
+          ? (order.originAccess?.hasElevator ?? order.hasElevator)
+          : order.hasElevator;
+        return v || null;
+      })(),
+      parkingDistance: (() => {
+        const v = order.serviceType === "mudanca"
+          ? (order.originAccess?.parkingDistance ?? order.parkingDistance)
+          : order.parkingDistance;
+        return v || null;
+      })(),
       contactName: order.receiver?.name ?? null,
       contactPhone: order.receiver?.phone ?? null,
       contactEmail: order.receiver?.email ?? null,
-      urgency: order.urgency ?? null,
+      urgency: order.urgency || null,
       estimateMin: estimate?.estimatedPriceWithoutVat?.toString() ?? null,
       estimateMax: estimate?.estimatedPriceWithVat?.toString() ?? null,
       estimateTotal: estimate?.estimatedPriceWithVat?.toString() ?? null,

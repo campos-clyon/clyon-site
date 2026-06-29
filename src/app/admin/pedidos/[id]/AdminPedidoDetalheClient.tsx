@@ -261,31 +261,31 @@ export default function AdminPedidoDetalheClient({ id }: { id: number }) {
     let estData: GeminiEstimate | null = null;
     try { estData = o.estimateJson ? JSON.parse(o.estimateJson) : null; } catch { estData = null; }
 
-    setEditContactName(o.contactName ?? "");
-    setEditContactPhone(o.contactPhone ?? "");
-    setEditContactEmail(o.contactEmail ?? "");
+    setEditContactName(o.contactName || "");
+    setEditContactPhone(o.contactPhone || "");
+    setEditContactEmail(o.contactEmail || "");
 
-    // P6: serviceType — usar rawOrderJson como fallback se DB tiver null
-    const rawServiceType = raw.serviceType ?? raw.service_type ?? "";
-    setEditServiceType(o.serviceType ?? rawServiceType);
+    // P6: serviceType — usar rawOrderJson como fallback se DB tiver null ou ""
+    setEditServiceType(o.serviceType || raw.serviceType || raw.service_type || "");
 
-    setEditDescription(o.description ?? "");
+    setEditDescription(o.description || "");
 
     // P3: urgency — usar rawOrderJson como fallback
-    const rawUrgency = raw.urgency ?? raw.urgencia ?? "";
-    setEditUrgency(o.urgency ?? rawUrgency);
+    setEditUrgency(o.urgency || raw.urgency || raw.urgencia || "");
 
-    setEditAddress(o.address ?? "");
-    setEditCity(o.city ?? raw.address?.city ?? raw.city ?? "");
-    setEditPostalCode(o.postalCode ?? raw.address?.postalCode ?? raw.postalCode ?? "");
-    setEditFloor(o.floor ?? raw.floor ?? "");
+    setEditAddress(o.address || "");
+    setEditCity(o.city || raw.address?.city || raw.city || "");
+    setEditPostalCode(o.postalCode || raw.address?.postalCode || raw.postalCode || "");
+    setEditFloor(o.floor || raw.floor || "");
 
     // P4: elevador e estacionamento — usar rawOrderJson como fallback
-    const rawElevator = raw.hasElevator ?? raw.has_elevator ?? raw.elevador ?? "";
-    setEditHasElevator(o.hasElevator ?? rawElevator);
+    // Importante: usar || em vez de ?? para tratar string vazia "" como ausente
+    // (alguns pedidos antigos têm "" em vez de null na coluna da DB)
+    const rawElevator = raw.hasElevator || raw.has_elevator || raw.elevador || "";
+    setEditHasElevator(o.hasElevator || rawElevator);
 
-    const rawParking = raw.parkingDistance ?? raw.parking_distance ?? raw.estacionamento ?? "";
-    setEditParkingDistance(o.parkingDistance ?? rawParking);
+    const rawParking = raw.parkingDistance || raw.parking_distance || raw.estacionamento || "";
+    setEditParkingDistance(o.parkingDistance || rawParking);
 
     // P1: auto-preencher preço final com estimativa recomendada quando confidence é high/medium
     const alreadyHasPrice = !!(o.precoFinal && parseFloat(o.precoFinal) > 0);
@@ -491,14 +491,15 @@ export default function AdminPedidoDetalheClient({ id }: { id: number }) {
   const entulhoQtd: string | null = rawOrder.entulhoQuantidade ?? null;
   const entulhoState: string | null = rawOrder.entulhoState ?? null;
 
-  // Campos de leitura com fallback para rawOrder (para pedidos onde a DB tem null
-  // mas o simulador enviou o valor no JSON original)
-  const displayServiceType = order.serviceType ?? rawOrder.serviceType ?? rawOrder.service_type ?? null;
-  const displayUrgency     = order.urgency ?? rawOrder.urgency ?? rawOrder.urgencia ?? null;
-  const displayFloor       = order.floor ?? rawOrder.floor ?? null;
-  const displayElevator    = order.hasElevator ?? rawOrder.hasElevator ?? rawOrder.has_elevator ?? null;
-  const displayParking     = order.parkingDistance ?? rawOrder.parkingDistance ?? rawOrder.parking_distance ?? null;
-  const displayCity        = order.city ?? rawOrder.address?.city ?? rawOrder.city ?? null;
+  // Campos de leitura com fallback para rawOrder.
+  // Usar || em vez de ?? para também tratar string vazia "" como ausente
+  // (pedidos antigos podem ter "" em vez de null nas colunas da DB)
+  const displayServiceType = order.serviceType || rawOrder.serviceType || rawOrder.service_type || null;
+  const displayUrgency     = order.urgency || rawOrder.urgency || rawOrder.urgencia || null;
+  const displayFloor       = order.floor || rawOrder.floor || null;
+  const displayElevator    = order.hasElevator || rawOrder.hasElevator || rawOrder.has_elevator || null;
+  const displayParking     = order.parkingDistance || rawOrder.parkingDistance || rawOrder.parking_distance || null;
+  const displayCity        = order.city || rawOrder.address?.city || rawOrder.city || null;
 
   const waPhone = (order.contactPhone ?? BUSINESS_PHONE).replace(/\D/g, "");
   const waMsg = encodeURIComponent(
