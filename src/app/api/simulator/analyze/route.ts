@@ -161,7 +161,7 @@ Retorna APENAS o JSON sem texto adicional.`;
   }
 }
 
-// ── Determinar analysisSource final ──────────────────────────────────────────
+// ── Determinar analysisSource final ──────────────────────��───────────────────
 function resolveAnalysisSource(
   baseSource: AnalysisSource,
   externalEstimate: ExternalMarketEstimate | null,
@@ -449,50 +449,21 @@ function formatOrderDataForPrompt(order: OrderData): string {
   return lines.join("\n");
 }
 
-function buildAnalysisPrompt(formattedData: string, _pricingRules: string): string {
-  return `És o orçamentista sénior da empresa CLYON, baseada em Fernão Ferro (Seixal), Portugal. A CLYON presta serviços de recolha de móveis/monos, recolha de entulho, esvaziamento de casas/apartamentos e mudanças.
+function buildAnalysisPrompt(formattedData: string, pricingRules: string): string {
+  return `És o orçamentista sénior da empresa CLYON, baseada em Fernão Ferro (Seixal), Portugal.
+A CLYON presta serviços de recolha de móveis/monos, recolha de entulho, esvaziamento de casas/apartamentos e mudanças.
 
-A tua tarefa é calcular o PREÇO COMERCIAL FINAL que a CLYON deve cobrar ao cliente — não o custo operacional interno.
-
-═══════════════════════════════════════════════════════════
-PREÇÁRIO COMERCIAL CLYON
-═══════════════════════════════════════════════════════════
-
-## MÍNIMOS POR ZONA (serviço com carrinha + equipa)
-- Amora, Fernão Ferro, Seixal e arredores: mínimo 220 € s/IVA
-- Lisboa com acesso razoável: mínimo 250 € s/IVA
-- Lisboa com acesso difícil (sem elevador, andar alto ou estacionamento longe): mínimo 270 € s/IVA
-- Loures, Vila Franca de Xira, Alverca, Cascais, Sintra: mínimo 270 € s/IVA
-- Almada, Barreiro, Setúbal: mínimo 230 € s/IVA
-
-## ENTULHO (sacos ~50 L)
-- Ensacado: 1,90 € por saco | No chão (por ensacar): 2,20 € por saco | Misto: 2,05 € por saco
-- Distância da base: km × 2 € | Acesso difícil: +30 €
-- Andar COM elevador: +3 € por andar | Andar SEM elevador: +8 € por andar
-- Mínimo: 90 €
-
-## ITENS INDIVIDUAIS
-- Sofá / chaise longue: 80–150 € | Cama + colchão: 80–150 € | Frigorifico / arca: 50–80 €
-- Armário grande: 70–120 € | Mesa: 45–80 € | Cadeira: 20–35 € | Mono genérico: 25–50 €
-- Mínimo: 80 €
-
-## ESVAZIAMENTO
-- T1/T2 pequeno: 250–450 € | T3 médio: 350–600 € | Casa / andar grande: 450–900 €
-- Acesso difícil: +50 a +150 €
-
-## MUDANÇAS
-- Local (< 20 km): 150–300 € | Regional (20–50 km): 250–450 €
-- Acesso difícil origem ou destino: +40 a +100 €
-
-## AGRAVAMENTOS
-- Urgência hoje: +40 € | Urgência amanhã: +20 €
-- Sem elevador (andar > 2): +20 a +60 € | Estacionamento longe: +30 €
-- Desmontagem de móveis: +30 a +80 € | Carga extra / carrinha adicional: +80 a +150 €
-
-## IVA = 23% → Valor c/IVA = Valor s/IVA × 1,23
+A tua tarefa é calcular o PREÇO COMERCIAL FINAL que a CLYON vai cobrar ao cliente,
+usando obrigatoriamente a estrutura de custos reais abaixo.
 
 ═══════════════════════════════════════════════════════════
-FORMATO DE RESPOSTA (JSON puro, sem markdown, sem texto extra)
+ESTRUTURA DE CUSTOS E REGRAS (valores actuais do backoffice)
+═══════════════════════════════════════════════════════════
+
+${pricingRules}
+
+═══════════════════════════════════════════════════════════
+FORMATO DE RESPOSTA (JSON puro — sem markdown, sem texto extra)
 ═══════════════════════════════════════════════════════════
 
 {
@@ -504,19 +475,19 @@ FORMATO DE RESPOSTA (JSON puro, sem markdown, sem texto extra)
   "estimateMaxWithoutVat": número (máximo s/IVA — NUNCA null ou 0),
   "difficultyLevel": 1-5,
   "confidence": "high" | "medium" | "low",
-  "teamSize": "string ex: 2 a 3 pessoas",
-  "estimatedHoursText": "string ex: 1 a 2 horas",
+  "teamSize": "string ex: 3 pessoas",
+  "estimatedHoursText": "string ex: 2 horas",
   "recommendation": "pode_aprovar" | "pedir_fotos" | "pedir_info" | "visita_presencial",
-  "summary": "resumo BREVE do cálculo (3-5 linhas máximo)",
+  "summary": "resumo BREVE do cálculo mostrando: horas estimadas, custo combustível, custo pessoal, overhead, total custo, margem aplicada, preço final s/IVA",
   "assumptions": ["pressuposto 1", "pressuposto 2"],
   "missingFields": ["campo em falta 1"],
-  "customerMessage": "mensagem pronta para o cliente com o valor estimado incluído",
-  "internalNotes": ["nota interna 1"],
+  "customerMessage": "mensagem pronta para o cliente COM o valor estimado incluído (ex: à volta de X € + IVA)",
+  "internalNotes": ["nota interna para a equipa"],
   "labor": {
     "estimatedHours": número (mínimo 1),
-    "peopleCount": 3,
-    "hourlyRatePerPerson": 9,
-    "laborCost": número
+    "peopleCount": número de pessoas da equipa,
+    "hourlyRatePerPerson": custo €/h por pessoa,
+    "laborCost": horas × pessoas × €/h
   }
 }
 
@@ -524,17 +495,17 @@ FORMATO DE RESPOSTA (JSON puro, sem markdown, sem texto extra)
 REGRAS ABSOLUTAS
 ═══════════════════════════════════════════════════════════
 
-1. O resultado é o PREÇO FINAL DE VENDA ao cliente, não o custo operacional.
-2. estimatedPriceWithoutVat = valor recomendado s/IVA (dentro do intervalo min–max).
-3. estimateMinWithoutVat e estimateMaxWithoutVat NUNCA podem ser null ou 0.
-4. Aplica SEMPRE os mínimos por zona — mesmo que o cálculo itemizado fique abaixo.
-5. Se faltar informação crítica, dá SEMPRE um intervalo estimado com confidence "low".
-6. NUNCA devolveres preços 0 ou null — se dados insuficientes, usa mínimos da zona.
-7. customerMessage deve SEMPRE incluir o valor estimado (ex: "à volta de X € + IVA").
+1. USA SEMPRE a fórmula: (combustível + pessoal + overhead) × (1 + margem) = preço s/IVA.
+2. Aplica SEMPRE os mínimos por zona — se o cálculo ficar abaixo, usa o mínimo.
+3. estimatedPriceWithoutVat, estimateMinWithoutVat e estimateMaxWithoutVat NUNCA podem ser null ou 0.
+4. Se faltarem dados críticos, dá SEMPRE um intervalo com o mínimo da zona e confidence "low".
+5. NUNCA devolveres preços 0 ou null — se dados insuficientes, usa os mínimos de zona.
+6. customerMessage SEMPRE inclui o valor estimado.
+7. No summary, mostra o cálculo passo a passo (horas → custo pessoal → combustível → overhead → total → margem → preço final).
 8. Retorna APENAS JSON válido — sem texto antes ou depois, sem backticks.
 
 ═══════════════════════════════════════════════════════════
-PEDIDO
+PEDIDO A ANALISAR
 ═══════════════════════════════════════════════════════════
 
 ${formattedData}`;

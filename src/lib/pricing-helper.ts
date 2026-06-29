@@ -50,94 +50,112 @@ export async function getActivePricingMap(): Promise<SimulatorSettingsMap> {
 }
 
 /**
- * Formata as regras de preço em texto legível para o Gemini
+ * Formata as regras de preço (com fórmula de custo real) em texto legível para o Gemini.
+ * Lê os valores configuráveis da DB para que o Gemini use sempre os valores actuais.
  */
 function formatPricingRulesForGemini(settingsMap: SimulatorSettingsMap): string {
-  return `PREÇÁRIO ATUAL CLYON (Junho 2026):
+  const custoKm       = settingsMap.custo_km          ?? 0.33;
+  const custoHoraPess = settingsMap.custo_hora_pessoa  ?? 9;
+  const numPessoas    = settingsMap.num_pessoas_equipa ?? 3;
+  const overhead      = settingsMap.overhead_por_servico ?? 15.30;
+  const margem        = settingsMap.margem_lucro       ?? 0.40;
+  const margemPct     = (margem * 100).toFixed(0);
+  const fatorMargem   = (1 + margem).toFixed(2);
+  const custoHoraEquipa = custoHoraPess * numPessoas;
 
-ENTULHO:
-- Saco já ensacado: ${settingsMap.entulho_saco_ensacado}€ por saco
-- Saco no chão/por ensacar: ${settingsMap.entulho_saco_chao}€ por saco
-- Distância: ${settingsMap.entulho_distancia_km}€ por km
+  return `ESTRUTURA DE CUSTOS REAIS CLYON (valores actuais do backoffice):
 
-MÓVEIS/MONOS:
-- Item pequeno (<1m): ${settingsMap.moveis_item_pequeno}€
-- Item médio (1-2m): ${settingsMap.moveis_item_medio}€
-- Item grande (>2m): ${settingsMap.moveis_item_grande}€
-- Distância móveis: ${settingsMap.moveis_distancia_km}€ por km
-- Base por carga: ${settingsMap.moveis_carga_base}€
+FÓRMULA UNIVERSAL OBRIGATÓRIA:
+  custo_combustivel  = distancia_ida_volta_km × ${custoKm.toFixed(2)} €/km
+  custo_pessoal      = horas_estimadas × ${numPessoas} pessoas × ${custoHoraPess} €/h = horas × ${custoHoraEquipa} €/h
+  overhead_fixo      = ${overhead.toFixed(2)} € por serviço
+  custo_total        = custo_combustivel + custo_pessoal + overhead_fixo
+  preco_sem_iva      = custo_total × ${fatorMargem}  (margem ${margemPct}% de lucro sobre custo total)
+  preco_com_iva      = preco_sem_iva × 1.23
 
-ACESSOS:
-- Apartamento com elevador: ${settingsMap.apartamento_com_elevador_por_andar}€ por andar
-- Apartamento sem elevador: ${settingsMap.apartamento_sem_elevador_por_andar}€ por andar
-- Acesso difícil: +${settingsMap.acesso_dificil_extra}€
+DISTÂNCIAS:
+  Recolhas/esvaziamento: distância base→cliente × 2 (ida + volta)
+  Mudança: distância origem→destino (sem volta à base)
 
-MUDANÇAS:
-- Distância: ${settingsMap.mudancas_distancia_km}€ por km
+HORAS ESTIMADAS POR TIPO DE SERVIÇO:
 
-OUTROS:
-- Hora base: ${settingsMap.hora_base}€/hora
-- Multiplicador entulho: ${settingsMap.entulho_multiplicador}x
-- Multiplicador mudanças: ${settingsMap.mudancas_multiplicador}x
+RECOLHA / MONOS / ESVAZIAMENTO (1 a 5 itens = por item):
+  - 30 min por item base
+  - Sem elevador: × 1.5 no tempo total
+  - Elevador pequeno: × 1.15 no tempo total
+  - Andar > 2º sem elevador: +10 min por andar adicional
+  - Estacionamento difícil: +20 min
+  - Acesso difícil / desmontagem: +30 min
 
-REGRA OBRIGATÓRIA PARA ENTULHO:
-Usar APENAS os preços acima.
-Fórmula: (quantidade de sacos × preço_saco) + (distância_km × ${settingsMap.entulho_distancia_km}) + acrescimos_acesso
-Nunca inventar valores.
-Se faltar quantidade de sacos, devolver status "needs_more_info".
+RECOLHA / ESVAZIAMENTO (carga completa ≥ 6 itens):
+  - Base: 4h
+  - Sem elevador: 6h (× 1.5)
+  - Elevador pequeno: 4.5h
+  - Acesso difícil: +1h
 
-MÃO DE OBRA (OBRIGATÓRIA em todos os serviços):
-- Equipa fixa: 3 pessoas
-- Valor hora por pessoa: 9€
-- Mínimo: 1 hora
-- Fórmula: horas_estimadas × 3 × 9€
+ENTULHO (tabela por sacos):
+  - 1 a 10 sacos: 1h
+  - 11 a 30 sacos: 1.5h
+  - 31 a 80 sacos: 2.5h
+  - 81 a 150 sacos: 4h (1 carga)
+  - 151 a 240 sacos: 6h (2 cargas)
+  - >240 sacos: calcular proporcionalmente
+  - Entulho no chão (não ensacado): × 1.3 no tempo
+  - Acesso difícil: +30 min
 
-Guia de horas:
-- Trabalho simples (1 sofá, R/C, acesso fácil): 1h
-- Trabalho médio (vários móveis, 1º-2º andar): 1.5h a 2h
-- Trabalho complexo (mudança, muitos itens, sem elevador, acesso difícil): 3h ou mais
-- Entulho até 30 sacos: 1h; 31-80 sacos: 1.5h; 81-150 sacos: 2.5h; >150 sacos: 3.5h
+MUDANÇA:
+  - Base: 7h
+  - Sem elevador na origem (andar > 2): +1h
+  - Sem elevador no destino (andar > 2): +1h
+  - Acesso difícil por local: +30 min
+  - Percurso acima de 30 km: +30 min
 
-A mão de obra deve ser somada ANTES de calcular o IVA:
-  total_sem_iva = itens + distância + acesso + mão_de_obra
-  iva = total_sem_iva × 0.23
-  total_com_iva = total_sem_iva + iva
+MÍNIMOS POR ZONA (aplica sempre — se o cálculo ficar abaixo, usa o mínimo):
+  - Amora / Seixal / Fernão Ferro: 220 € s/IVA
+  - Almada / Barreiro / Setúbal: 230 € s/IVA
+  - Lisboa acesso normal: 250 € s/IVA
+  - Lisboa acesso difícil / Sintra / Cascais / Loures / VFX: 270 € s/IVA
+  - Mínimo entulho: 90 € s/IVA
+  - Mínimo mudança: 150 € s/IVA
 
-Deves incluir no JSON os campos:
-  "labor": { "estimatedHours": X, "peopleCount": 3, "hourlyRatePerPerson": 9, "laborCost": X }`;
+AGRAVAMENTOS (adicionais ao preço final s/IVA):
+  - Urgência hoje: +40 €
+  - Urgência amanhã: +20 €
+  - Estacionamento difícil (taxa fixa): +15 €
+  - Desmontagem simples: +30 €
+  - Desmontagem complexa: +80 €
+
+IVA: 23% → preco_com_iva = preco_sem_iva × 1.23
+
+CAMPO LABOR OBRIGATÓRIO NO JSON:
+  "labor": {
+    "estimatedHours": número de horas estimadas,
+    "peopleCount": ${numPessoas},
+    "hourlyRatePerPerson": ${custoHoraPess},
+    "laborCost": horas × ${custoHoraEquipa}
+  }`;
 }
 
 /**
- * Devolve as regras padrão (fallback)
+ * Devolve as regras padrão com os valores default (fallback quando DB indisponível)
  */
 function getDefaultPricingRules(): string {
-  return `PREÇÁRIO CLYON (defaults):
+  // Criar um mapa de defaults e reutilizar o formatador
+  const { createSimulatorSettingsMap } = require("./simulator-settings");
+  try {
+    const defaultMap = createSimulatorSettingsMap([]);
+    return formatPricingRulesForGemini(defaultMap);
+  } catch {
+    // Fallback de último recurso — texto literal com defaults
+    return `ESTRUTURA DE CUSTOS REAIS CLYON (valores default):
 
-ENTULHO:
-- Saco já ensacado: 1.90€ por saco
-- Saco no chão/por ensacar: 2.20€ por saco
-- Distância: 2€ por km
+FÓRMULA: custo_combustivel (distancia × 0.33 €/km) + custo_pessoal (horas × 3p × 9 €/h) + overhead (15.30 €) → × 1.40 (40% margem) = preço s/IVA
+IVA: 23%
 
-MÓVEIS/MONOS:
-- Item pequeno: 5€
-- Item médio: 7€
-- Item grande: 13€
-- Distância móveis: 2.5€ por km
-
-ACESSOS:
-- Apartamento com elevador: 3€ por andar
-- Apartamento sem elevador: 6€ por andar
-- Acesso difícil: +30€
-
-REGRA ENTULHO:
-Usar APENAS os preços acima.
-Fórmula: (quantidade de sacos × preço_saco) + (distância_km × 2) + acrescimos
-
-MÃO DE OBRA (OBRIGATÓRIA):
-- Equipa fixa: 3 pessoas | Valor hora: 9€ | Mínimo: 1h
-- Fórmula: horas_estimadas × 3 × 9€
-- Simples: 1h | Médio: 1.5-2h | Complexo: 3h+
-- Somar ANTES do IVA. Incluir campo "labor" no JSON.`;
+HORAS: Recolha 1-5 itens: 0.5h/item | Carga completa: 4h | Entulho 1-10 sacos: 1h, 11-30: 1.5h, 31-80: 2.5h, 81-150: 4h | Mudança: 7h base
+MÍNIMOS: Local 220€ | Almada/Barreiro 230€ | Lisboa 250€ | Lisboa difícil/Loures/Sintra 270€ | Entulho 90€ | Mudança 150€
+AGRAVAMENTOS: Urgência hoje +40€ | amanhã +20€ | Estacionamento difícil +15€`;
+  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -346,64 +364,86 @@ const LABOR_HOURLY_RATE = 9 as const;
 const LABOR_MIN_HOURS = 1;
 
 /**
- * Estima horas de trabalho com base no tipo de serviço e condições de acesso.
+ * Estima horas de trabalho segundo as regras reais da CLYON (documento de custos).
  * Nunca devolve menos de LABOR_MIN_HOURS (1h).
+ *
+ * MUDANÇA         — base 7h + acesso origen/destino + percurso
+ * ENTULHO         — tabela de sacos (1-10→1h, 11-30→1.5h, 31-80→2.5h,
+ *                   81-150→4h, 151-240→6h, >240 proporcional)
+ *                   + no chão: +30% | acesso difícil: +0.5h
+ * RECOLHA/MONO/   — por item (30 min/item) OU carga completa (≥6 itens → 4h)
+ * ESVAZIAMENTO    — escala por andar/elevador/estacionamento
  */
 export function estimateLaborHours(input: FastEstimateInput): number {
   let hours = LABOR_MIN_HOURS;
-
   const svc = input.serviceType;
 
   if (svc === "mudanca") {
-    // Mudança: base 2h + acesso origem/destino
-    hours = 2;
+    // Base: 7 horas (conforme documento de custos)
+    hours = 7;
     const origFloor = floorNumber(input.originAccess?.floor);
     const destFloor = floorNumber(input.destinationAccess?.floor);
     const origNoElev = input.originAccess?.hasElevator === "no";
     const destNoElev = input.destinationAccess?.hasElevator === "no";
-    if (origFloor >= 3 && origNoElev) hours += 1;
-    if (destFloor >= 3 && destNoElev) hours += 1;
-    if (input.originAccess?.difficultAccess || input.destinationAccess?.difficultAccess) hours += 0.5;
+    // Sem elevador acima do 2º andar: +1h em cada local
+    if (origFloor > 2 && origNoElev) hours += 1;
+    if (destFloor > 2 && destNoElev) hours += 1;
+    // Acesso difícil: +30 min por local
+    if (input.originAccess?.difficultAccess) hours += 0.5;
+    if (input.destinationAccess?.difficultAccess) hours += 0.5;
+    // Percurso acima de 30 km: +30 min
     const distKm = input.movingDistance?.distanceKm ?? 0;
     if (distKm > 30) hours += 0.5;
 
   } else if (svc === "recolha_entulho") {
-    // Entulho: baseado na quantidade de sacos
+    // Tabela de sacos — cada saco adicional demora menos (não linear)
     const qtd = parseInt((input.entulhoQuantidade ?? "").replace(/[^\d]/g, ""), 10) || 0;
-    if (qtd <= 30) hours = 1;
-    else if (qtd <= 80) hours = 1.5;
-    else if (qtd <= 150) hours = 2.5;
-    else hours = 3.5;
-    // Entulho no chão — precisa ensacar (+0.5h)
-    if (input.entulhoState === "chao" || input.entulhoState === "misto") hours += 0.5;
+    if (qtd <= 10)       hours = 1;
+    else if (qtd <= 30)  hours = 1.5;
+    else if (qtd <= 80)  hours = 2.5;
+    else if (qtd <= 150) hours = 4;
+    else if (qtd <= 240) hours = 6;
+    else                 hours = 6 + Math.ceil((qtd - 240) / 80) * 2; // proporcional
+    // Entulho no chão: +30% no tempo
+    if (input.entulhoState === "chao" || input.entulhoState === "misto") {
+      hours = Math.round(hours * 1.3 * 2) / 2;
+    }
+    // Acesso difícil: +30 min
+    if (input.parkingDistance === "difficult" || input.needsDismantling) hours += 0.5;
 
   } else {
-    // Recolha de móveis/monos/outro
+    // Recolha móveis / monos / esvaziamento / outro
     const floor = floorNumber(input.floor);
     const noElev = input.hasElevator === "no";
+    const smallElev = input.hasElevator === "small";
     const itemCount = input.heavyItems?.length ?? 0;
+    const isFull = svc === "esvaziamento_casa" || svc === "esvaziamento_apartamento" || itemCount >= 6;
 
-    // Base: 1h para 1-2 itens, +0.5h por cada 2 itens adicionais
-    if (itemCount <= 2) {
-      hours = 1;
-    } else if (itemCount <= 4) {
-      hours = 1.5;
+    if (isFull) {
+      // Carga completa: base 4h
+      hours = 4;
+      if (noElev)       hours = 6;      // sem elevador: 4h × 1.5
+      else if (smallElev) hours = 4.5;  // elevador pequeno
+      if (input.parkingDistance === "difficult" || input.needsDismantling) hours += 1; // acesso difícil
     } else {
-      hours = 2;
+      // Por item (1 a 5 itens): 30 min/item = 0.5h/item
+      hours = Math.max(0.5, (itemCount || 1) * 0.5);
+      // Sem elevador: +50% no tempo total
+      if (noElev) hours = hours * 1.5;
+      // Elevador pequeno: +15% no tempo total
+      else if (smallElev) hours = hours * 1.15;
+      // Andar acima do 2º sem elevador: +10 min por andar adicional
+      if (noElev && floor > 2) hours += (floor - 2) * (10 / 60);
+      // Estacionamento difícil: +20 min
+      if (input.parkingDistance === "difficult") hours += 20 / 60;
+      // Acesso difícil / desmontagem: +30 min
+      if (input.needsDismantling === "medium") hours += 0.5;
+      else if (input.needsDismantling === "complex" || input.needsDismantling === "true" || input.needsDismantling === true) hours += 0.5;
     }
-
-    // Acesso por andar
-    if (floor >= 3) hours += 0.5;
-    if (noElev && floor >= 3) hours += 0.5;
-    if (input.parkingDistance === "difficult") hours += 0.5;
-
-    // Desmontagem
-    if (input.needsDismantling === "medium") hours += 0.5;
-    else if (input.needsDismantling === "complex" || input.needsDismantling === "true" || input.needsDismantling === true) hours += 1;
   }
 
-  // Garantir mínimo de 1h
-  return Math.max(LABOR_MIN_HOURS, Math.round(hours * 2) / 2); // arredondar a 0.5h
+  // Arredondar a 0.5h e garantir mínimo de 1h
+  return Math.max(LABOR_MIN_HOURS, Math.round(hours * 2) / 2);
 }
 
 /**
@@ -420,168 +460,153 @@ export function calculateLaborCost(hours: number): LaborCost {
   };
 }
 
+/**
+ * Determina a distância de ida e volta (em km) para o cálculo de combustível.
+ * - Recolhas/esvaziamento: base → cliente → base (ida + volta)
+ * - Mudança: origem → destino (sem volta à base — não é necessário)
+ */
+function getDistanceForFuel(input: FastEstimateInput): number {
+  if (input.serviceType === "mudanca") {
+    return input.movingDistance?.distanceKm ?? 0;
+  }
+  const oneWay = input.distanceFromBase?.distanceKm ?? 0;
+  return oneWay * 2; // ida e volta
+}
+
+/**
+ * Aplica mínimos comerciais por zona ao preço final sem IVA.
+ * Retorna o preço com mínimo aplicado e nota de pressuposto se ajustado.
+ */
+function applyZoneMinimum(
+  priceWithoutVat: number,
+  city: string,
+  floor: string | undefined,
+  hasElevator: string | undefined,
+  parkingDistance: string | undefined,
+  svc: string | undefined
+): { price: number; note: string | null } {
+  // Mínimos não se aplicam a entulho (tem o seu próprio mínimo de 90€ s/IVA)
+  if (svc === "recolha_entulho") {
+    if (priceWithoutVat < 90) return { price: 90, note: "Mínimo de entulho aplicado: 90 € s/IVA" };
+    return { price: priceWithoutVat, note: null };
+  }
+  if (svc === "mudanca" && priceWithoutVat < 150) {
+    return { price: 150, note: "Mínimo de mudança aplicado: 150 € s/IVA" };
+  }
+
+  const c = city.toLowerCase();
+  const isLisboa = c.includes("lisboa") || c.includes("lisbon");
+  const isLoures = c.includes("loures") || c.includes("alverca") || c.includes("vila franca") || c.includes("cascais") || c.includes("sintra");
+  const isAlmada = c.includes("almada") || c.includes("barreiro") || c.includes("setúbal") || c.includes("setubal");
+  const isLocal = c.includes("amora") || c.includes("seixal") || c.includes("fernão ferro") || c.includes("fernao ferro") || c.includes("corroios");
+
+  const floorN = floorNumber(floor);
+  const noElev = hasElevator === "no";
+  const hardParking = parkingDistance === "difficult";
+  const isDifficultAccess = (floorN > 2 && noElev) || hardParking;
+
+  let minimum = 220; // default: zona local
+  if (isLocal)        minimum = 220;
+  else if (isAlmada)  minimum = 230;
+  else if (isLisboa)  minimum = isDifficultAccess ? 270 : 250;
+  else if (isLoures)  minimum = 270;
+  else                minimum = 240; // zona genérica não mapeada
+
+  if (priceWithoutVat < minimum) {
+    return { price: minimum, note: `Mínimo de zona aplicado (${city || "zona"}): ${minimum} € s/IVA` };
+  }
+  return { price: priceWithoutVat, note: null };
+}
+
 export async function calculateFastEstimate(input: FastEstimateInput): Promise<FastEstimateResult> {
   const pricing = await getActivePricingMap();
 
+  // ── Parâmetros reais da estrutura de custos (da DB) ─────────────────────────
+  const custoKm       = pricing.custo_km          ?? 0.33;   // €/km
+  const custoHoraPess = pricing.custo_hora_pessoa  ?? 9;     // €/hora/pessoa
+  const numPessoas    = pricing.num_pessoas_equipa ?? 3;     // pessoas na equipa
+  const overhead      = pricing.overhead_por_servico ?? 15.30; // €/serviço
+  const margem        = pricing.margem_lucro       ?? 0.40;  // 40%
+
   const missing: string[] = [];
   const assumptions: string[] = [];
-  const notes: string[] = ["Estimativa rápida local (sem Gemini)"];
+  const notes: string[] = ["Estimativa rápida local — fórmula de custo real CLYON + 40% margem"];
 
-  let basePrice = 0;
-
-  // ── Entulho ─────────────────────────────────────────────────────────────────
+  // ── 1. Horas estimadas ───────────────────────────────────────────────────────
   if (input.serviceType === "recolha_entulho") {
-    const quantStr = input.entulhoQuantidade ?? "";
-    const qtd = parseInt(quantStr.replace(/[^\d]/g, ""), 10);
-    if (!qtd || isNaN(qtd)) {
-      missing.push("quantidade de sacos de entulho");
-    } else {
-      const state = input.entulhoState;
-      const priceSaco =
-        state === "ensacado"
-          ? (pricing.entulho_saco_ensacado ?? 1.9)
-          : state === "chao"
-          ? (pricing.entulho_saco_chao ?? 2.2)
-          : state === "misto"
-          ? ((pricing.entulho_saco_ensacado ?? 1.9) + (pricing.entulho_saco_chao ?? 2.2)) / 2
-          : (pricing.entulho_saco_ensacado ?? 1.9);
-
-      basePrice += qtd * priceSaco;
-      assumptions.push(`${qtd} sacos × ${priceSaco.toFixed(2)}€/saco`);
-
-      const distKm = input.distanceFromBase?.distanceKm ?? 0;
-      if (distKm > 0) {
-        const distCost = distKm * (pricing.entulho_distancia_km ?? 2);
-        basePrice += distCost;
-        assumptions.push(`${distKm} km × ${pricing.entulho_distancia_km ?? 2}€/km`);
-      }
-
-      const acc = accessExtra(input.floor, input.hasElevator, !!input.needsDismantling, pricing);
-      basePrice += acc.cost;
-      assumptions.push(...acc.notes);
-    }
-
-  // ── Mudança ──────────────────────────────────────────────────────────────────
-  } else if (input.serviceType === "mudanca") {
-    const distKm = input.movingDistance?.distanceKm ?? 0;
-    if (distKm > 0) {
-      const distCost = distKm * (pricing.mudancas_distancia_km ?? 2);
-      basePrice += distCost;
-      assumptions.push(`Percurso ${distKm} km × ${pricing.mudancas_distancia_km ?? 2}€/km`);
-    } else {
-      assumptions.push("Percurso não calculado, estimativa baseada em acesso");
-    }
-
-    // Acesso na origem
-    const orig = accessExtra(
-      input.originAccess?.floor,
-      input.originAccess?.hasElevator,
-      input.originAccess?.difficultAccess,
-      pricing
-    );
-    basePrice += orig.cost;
-    if (orig.notes.length) assumptions.push(...orig.notes.map((n) => `Origem: ${n}`));
-
-    // Acesso no destino
-    const dest = accessExtra(
-      input.destinationAccess?.floor,
-      input.destinationAccess?.hasElevator,
-      input.destinationAccess?.difficultAccess,
-      pricing
-    );
-    basePrice += dest.cost;
-    if (dest.notes.length) assumptions.push(...dest.notes.map((n) => `Destino: ${n}`));
-
-    // Base mínima para mudança
-    const baseMin = 80;
-    if (basePrice < baseMin) {
-      assumptions.push(`Valor mínimo de mudança aplicado: ${baseMin}€`);
-      basePrice = baseMin;
-    }
-
-  // ── Outros serviços (recolha de móveis, monos, esvaziamento, etc.) ──────────
-  } else {
-    const distKm = input.distanceFromBase?.distanceKm ?? 0;
-    const pricePerKm = pricing.moveis_distancia_km ?? 2.5;
-    const cargaBase = pricing.moveis_carga_base ?? 2; // base operacional mínima
-
-    // Custo por item — usa heavyItems quando disponível
-    let itemsCost = 0;
-    const itemsCountBySize = { pequeno: 0, medio: 0, grande: 0 };
-
-    if (input.heavyItems && input.heavyItems.length > 0) {
-      for (const item of input.heavyItems) {
-        const size = classifyItem(item);
-        itemsCountBySize[size]++;
-        const price =
-          size === "grande"
-            ? (pricing.moveis_item_grande ?? 13)
-            : size === "medio"
-            ? (pricing.moveis_item_medio ?? 7)
-            : (pricing.moveis_item_pequeno ?? 5);
-        itemsCost += price;
-        assumptions.push(`${item}: ${price}€ (item ${size})`);
-      }
-    } else {
-      // Sem lista de itens — estimar a partir da descrição ou usar mínimo
-      itemsCost = cargaBase;
-      assumptions.push(`Sem itens especificados — base mínima: ${cargaBase}€`);
-    }
-
-    // Custo de distância
-    const distCost = distKm * pricePerKm;
-    if (distKm > 0) {
-      assumptions.push(`Distância: ${distKm} km × ${pricePerKm}€/km = ${distCost.toFixed(2)}€`);
-    }
-
-    basePrice = itemsCost + distCost;
-
-    // Custo de acesso
-    const acc = accessExtra(
-      input.floor,
-      input.hasElevator,
-      input.needsDismantling === "complex" || input.needsDismantling === true,
-      pricing
-    );
-    basePrice += acc.cost;
-    assumptions.push(...acc.notes);
-
-    notes.push(
-      `Itens: ${itemsCost.toFixed(2)}€ (G:${itemsCountBySize.grande} M:${itemsCountBySize.medio} P:${itemsCountBySize.pequeno}), dist: ${distCost.toFixed(2)}€, acesso: ${acc.cost.toFixed(2)}€`
-    );
+    const qtdStr = input.entulhoQuantidade ?? "";
+    const qtd = parseInt(qtdStr.replace(/[^\d]/g, ""), 10);
+    if (!qtd || isNaN(qtd)) missing.push("quantidade de sacos de entulho");
   }
 
-  // ── Determinar status — NUNCA devolver preço 0 ou null ──────────────────────
-  // Se faltarem dados OU o preço calculado for 0, usar a estimativa de referência
-  if (missing.length > 0 || basePrice <= 0) {
+  const laborHours = estimateLaborHours(input);
+  const labor = calculateLaborCost(laborHours);
+
+  // ── 2. Custo de combustível (ida + volta ou percurso de mudança) ─────────────
+  const distKmFuel = getDistanceForFuel(input);
+  const custoCombustivel = Math.round(distKmFuel * custoKm * 100) / 100;
+  if (distKmFuel > 0) {
+    assumptions.push(`Combustível: ${distKmFuel} km × ${custoKm.toFixed(2)} €/km = ${custoCombustivel.toFixed(2)} €`);
+  } else {
+    assumptions.push("Distância não calculada — combustível estimado a 0 €");
+    missing.push("distância da base");
+  }
+
+  // ── 3. Custo de pessoal ──────────────────────────────────────────────────────
+  const custoPessoal = Math.round(laborHours * numPessoas * custoHoraPess * 100) / 100;
+  assumptions.push(
+    `Pessoal: ${laborHours}h × ${numPessoas} pessoas × ${custoHoraPess} €/h = ${custoPessoal.toFixed(2)} €`
+  );
+
+  // ── 4. Overhead fixo por serviço ─────────────────────────────────────────────
+  assumptions.push(`Overhead fixo: ${overhead.toFixed(2)} €`);
+
+  // ── 5. Custo total + margem de lucro ─────────────────────────────────────────
+  const custoTotal = custoCombustivel + custoPessoal + overhead;
+  const precoSemIva = Math.round(custoTotal * (1 + margem) * 100) / 100;
+  notes.push(
+    `Custo total: combustível ${custoCombustivel}€ + pessoal ${custoPessoal}€ + overhead ${overhead}€ = ${custoTotal.toFixed(2)}€ → ×${(1 + margem).toFixed(2)} (margem ${(margem * 100).toFixed(0)}%) = ${precoSemIva}€ s/IVA`
+  );
+
+  // ── 6. Agravamentos adicionais (taxas fixas do documento) ────────────────────
+  let extras = 0;
+  const urgency = (input as any).urgency ?? "";
+  if (urgency === "today")    { extras += 40; assumptions.push("Urgência hoje: +40 €"); }
+  if (urgency === "tomorrow") { extras += 20; assumptions.push("Urgência amanhã: +20 €"); }
+  if (input.parkingDistance === "difficult") { extras += 15; assumptions.push("Estacionamento difícil (taxa fixa): +15 €"); }
+
+  // ── 7. Fallback se dados insuficientes ───────────────────────────────────────
+  if (missing.length > 0 && precoSemIva <= 0) {
     const ref = buildReferenceEstimate(input);
     return {
       ...ref,
-      // Preservar pressupostos do cálculo local (úteis para a equipa)
       assumptions: [...assumptions, ...ref.assumptions],
       missingFields: [...missing, ...ref.missingFields],
       internalNotes: [
         ...notes,
-        missing.length > 0
-          ? `Dados em falta: ${missing.join(", ")} — aplicada estimativa de referência.`
-          : "Preço calculado = 0 — aplicada estimativa de referência.",
+        `Dados em falta: ${missing.join(", ")} — aplicada estimativa de referência.`,
         ...ref.internalNotes,
       ],
     };
   }
 
-  // ── Mão de obra ─────────────────────────────────────────────────────────────
-  const laborHours = estimateLaborHours(input);
-  const labor = calculateLaborCost(laborHours);
-  basePrice = Math.round((basePrice + labor.laborCost) * 100) / 100;
-  assumptions.push(
-    `Mão de obra: ${labor.estimatedHours}h × ${labor.peopleCount} pessoas × ${labor.hourlyRatePerPerson}€/h = ${labor.laborCost}€`
+  // ── 8. Aplicar mínimos de zona ───────────────────────────────────────────────
+  const city = (input as any).address?.city ?? (input as any).city ?? "";
+  const { price: precoComMinimo, note: minNote } = applyZoneMinimum(
+    precoSemIva + extras,
+    city,
+    input.floor,
+    input.hasElevator,
+    input.parkingDistance,
+    input.serviceType
   );
-  notes.push(`Labor: ${labor.estimatedHours}h, ${labor.peopleCount}p, ${labor.hourlyRatePerPerson}€/h → ${labor.laborCost}€`);
+  if (minNote) assumptions.push(minNote);
 
+  // ── 9. IVA e resultado final ─────────────────────────────────────────────────
   const vatRate = 0.23;
-  const vat = Math.round(basePrice * vatRate * 100) / 100;
-  const withVat = Math.round((basePrice + vat) * 100) / 100;
+  const finalSemIva = Math.round(precoComMinimo * 100) / 100;
+  const vat = Math.round(finalSemIva * vatRate * 100) / 100;
+  const withVat = Math.round((finalSemIva + vat) * 100) / 100;
 
   // Dificuldade estimada
   const totalFloors =
@@ -591,25 +616,27 @@ export async function calculateFastEstimate(input: FastEstimateInput): Promise<F
   const diff: 1 | 2 | 3 | 4 | 5 =
     totalFloors >= 6 ? 4 : totalFloors >= 4 ? 3 : totalFloors >= 2 ? 2 : 1;
 
-  const roundedBase = Math.round(basePrice * 100) / 100;
+  // Intervalo ±10% para mostrar min/max no backoffice
+  const minVal = Math.round(finalSemIva * 0.90 * 100) / 100;
+  const maxVal = Math.round(finalSemIva * 1.10 * 100) / 100;
+
   return {
     ok: true,
     source: "local_fast_estimate",
-    status: "estimated",
-    estimatedPriceWithoutVat: roundedBase,
+    status: missing.length > 0 ? "needs_more_info" : "estimated",
+    estimatedPriceWithoutVat: finalSemIva,
     vatAmount: vat,
     estimatedPriceWithVat: withVat,
-    // Min/max com ±15% para mostrar intervalo no backoffice
-    estimateMinWithoutVat: Math.round(roundedBase * 0.85 * 100) / 100,
-    estimateMaxWithoutVat: Math.round(roundedBase * 1.15 * 100) / 100,
+    estimateMinWithoutVat: minVal,
+    estimateMaxWithoutVat: maxVal,
     labor,
     difficultyLevel: diff,
-    confidence: "medium" as const,
-    summary: `Estimativa rápida calculada com base no preçário atual CLYON.`,
+    confidence: missing.length > 0 ? "low" : distKmFuel > 0 ? "high" : "medium",
+    summary: `Estimativa calculada com fórmula de custo real CLYON: combustível + pessoal + overhead × ${(1 + margem).toFixed(2)} (margem ${(margem * 100).toFixed(0)}%).`,
     assumptions,
-    missingFields: [],
-    customerMessage: `Inclui estimativa de mão de obra: ${labor.estimatedHours}h com equipa de ${labor.peopleCount} pessoas.`,
-    internalNotes: [...notes, `Total s/IVA: ${roundedBase.toFixed(2)}€, IVA 23%: ${vat}€, Total: ${withVat}€`],
+    missingFields: missing,
+    customerMessage: `Estimativa de referência: à volta de ${finalSemIva.toFixed(2)} € + IVA (${withVat.toFixed(2)} € c/IVA). Inclui equipa de ${numPessoas} pessoas, ${laborHours}h de trabalho.`,
+    internalNotes: [...notes, `Total s/IVA: ${finalSemIva}€ | IVA 23%: ${vat}€ | Total c/IVA: ${withVat}€`],
     analysisSource: "local_fast_estimate",
   };
 }

@@ -14,7 +14,15 @@ export type SimulatorSettingKey =
   | "acesso_dificil_extra"
   | "hora_base"
   | "entulho_multiplicador"
-  | "mudancas_multiplicador";
+  | "mudancas_multiplicador"
+  // Estrutura de custos reais (fórmula comercial)
+  | "custo_km"
+  | "custo_hora_pessoa"
+  | "num_pessoas_equipa"
+  | "overhead_por_servico"
+  | "margem_lucro"
+  | "diesel_preco"
+  | "km_por_litro";
 
 export type SimulatorSettingDefinition = {
   key: SimulatorSettingKey;
@@ -153,6 +161,63 @@ export const defaultSimulatorSettings: SimulatorSettingDefinition[] = [
     category: "mudancas",
     unit: "multiplier",
     value: 1.4,
+  },
+  // ── Estrutura de custos reais (fórmula comercial com margem) ──────────────
+  {
+    key: "custo_km",
+    label: "Custo por km (combustível)",
+    description: "Custo real por km: veículo 1.3, 1L cada 6 km, diesel 2€/L → 0,33€/km.",
+    category: "geral",
+    unit: "eur",
+    value: 0.33,
+  },
+  {
+    key: "custo_hora_pessoa",
+    label: "Custo por hora por pessoa",
+    description: "Custo interno de cada membro da equipa por hora.",
+    category: "geral",
+    unit: "eur",
+    value: 9,
+  },
+  {
+    key: "num_pessoas_equipa",
+    label: "Número de pessoas na equipa",
+    description: "Equipa fixa: motorista + ajudante + 3ª unidade (veículo).",
+    category: "geral",
+    unit: "multiplier",
+    value: 3,
+  },
+  {
+    key: "overhead_por_servico",
+    label: "Overhead por serviço",
+    description: "Custos fixos mensais (~1.591€/mês ÷ 104 serviços/mês) = 15,30€ por serviço.",
+    category: "geral",
+    unit: "eur",
+    value: 15.30,
+  },
+  {
+    key: "margem_lucro",
+    label: "Margem de lucro (%)",
+    description: "Percentagem de lucro obrigatória sobre o custo total. 0.40 = 40%.",
+    category: "geral",
+    unit: "multiplier",
+    value: 0.40,
+  },
+  {
+    key: "diesel_preco",
+    label: "Preço do diesel (€/litro)",
+    description: "Preço fixo do diesel usado para calcular custo de combustível.",
+    category: "geral",
+    unit: "eur",
+    value: 2.00,
+  },
+  {
+    key: "km_por_litro",
+    label: "Km por litro do veículo",
+    description: "Consumo do veículo: 1 litro a cada X km. Motor 1.3 = 6 km/litro.",
+    category: "geral",
+    unit: "multiplier",
+    value: 6,
   },
 ];
 
