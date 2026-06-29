@@ -1,24 +1,28 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createLeadEvent } from "@/lib/db";
 
-const VALID_EVENT_TYPES = new Set([
-  "click_cta_quero_contratar",
-  "click_whatsapp",
-  "click_call",
-  "click_email",
-  "click_sms",
-  "click_cta_pedir_orcamento",
-  "click_cta_ligar_agora",
-  "form_submit_quero_contratar",
-]);
-
 // POST /api/leads/events — registar evento de tracking de contacto
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const {
-      eventType, pagePath, pageUrl, serviceType,
-      location, contactPreference, utmSource, utmMedium, utmCampaign, gclid,
+      eventType,
+      action,
+      pagePath,
+      pageUrl,
+      label,
+      phone,
+      email,
+      name,
+      serviceType,
+      location,
+      message,
+      simulatorData,
+      contactPreference,
+      utmSource,
+      utmMedium,
+      utmCampaign,
+      gclid,
     } = body;
 
     if (!eventType || typeof eventType !== "string") {
@@ -27,25 +31,19 @@ export async function POST(request: NextRequest) {
 
     const sanitizedType = String(eventType).slice(0, 80);
 
-    // Aceitar qualquer eventType que comece por prefixos válidos, ou que esteja na lista
-    const isValid =
-      VALID_EVENT_TYPES.has(sanitizedType) ||
-      sanitizedType.startsWith("click_") ||
-      sanitizedType.startsWith("form_");
-
-    if (!isValid) {
-      console.warn("[api/leads/events] Tipo de evento não reconhecido:", sanitizedType);
-      // Gravar mesmo assim — não bloquear o cliente
-    }
-
-    console.log("[api/leads/events] POST recebido:", sanitizedType, "path:", pagePath);
-
     await createLeadEvent({
       eventType: sanitizedType,
+      action: action ? String(action).slice(0, 160) : null,
       pagePath: pagePath ? String(pagePath).slice(0, 255) : null,
       pageUrl: pageUrl ? String(pageUrl).slice(0, 500) : null,
+      label: label ? String(label).slice(0, 160) : null,
+      phone: phone ? String(phone).slice(0, 30) : null,
+      email: email ? String(email).slice(0, 320) : null,
+      name: name ? String(name).slice(0, 160) : null,
       serviceType: serviceType ? String(serviceType).slice(0, 80) : null,
       location: location ? String(location).slice(0, 120) : null,
+      message: message ? String(message) : null,
+      simulatorData: simulatorData ? (typeof simulatorData === "string" ? simulatorData : JSON.stringify(simulatorData)) : null,
       contactPreference: contactPreference ? String(contactPreference).slice(0, 30) : null,
       utmSource: utmSource ? String(utmSource).slice(0, 120) : null,
       utmMedium: utmMedium ? String(utmMedium).slice(0, 120) : null,
@@ -56,7 +54,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("[api/leads/events] POST error:", error);
-    // Retornar 200 para não bloquear o utilizador — evento de tracking não deve causar erro visível
+    // Retornar 200 para não bloquear o utilizador
     return NextResponse.json({ success: true });
   }
 }

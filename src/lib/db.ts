@@ -712,29 +712,75 @@ export async function updateLeadStatus(id: number, status: string, notasInternas
   });
 }
 
+let _leadEventsExtended = false;
+
+/**
+ * Garante que leadEvents tem as colunas alargadas (action, label, phone, email, name, message, simulatorData).
+ * Seguro para correr múltiplas vezes — usa IF NOT EXISTS via information_schema.
+ */
+async function ensureLeadEventsExtended(): Promise<void> {
+  if (_leadEventsExtended) return;
+  const pool = await getPool();
+  if (!pool) return;
+  const newCols: Array<{ name: string; sql: string }> = [
+    { name: "action",       sql: "ALTER TABLE leadEvents ADD COLUMN action VARCHAR(160) DEFAULT NULL" },
+    { name: "label",        sql: "ALTER TABLE leadEvents ADD COLUMN label VARCHAR(160) DEFAULT NULL" },
+    { name: "phone",        sql: "ALTER TABLE leadEvents ADD COLUMN phone VARCHAR(30) DEFAULT NULL" },
+    { name: "email",        sql: "ALTER TABLE leadEvents ADD COLUMN email VARCHAR(320) DEFAULT NULL" },
+    { name: "name",         sql: "ALTER TABLE leadEvents ADD COLUMN name VARCHAR(160) DEFAULT NULL" },
+    { name: "message",      sql: "ALTER TABLE leadEvents ADD COLUMN message TEXT DEFAULT NULL" },
+    { name: "simulatorData",sql: "ALTER TABLE leadEvents ADD COLUMN simulatorData JSON DEFAULT NULL" },
+  ];
+  for (const col of newCols) {
+    const exists = await hasColumn("leadEvents", col.name);
+    if (!exists) {
+      try { await pool.execute(col.sql); } catch {}
+    }
+  }
+  _leadEventsExtended = true;
+}
+
 export async function createLeadEvent(data: {
   eventType: string;
+  action?: string | null;
   pagePath?: string | null;
   pageUrl?: string | null;
+  label?: string | null;
+  phone?: string | null;
+  email?: string | null;
+  name?: string | null;
   serviceType?: string | null;
   location?: string | null;
+  message?: string | null;
+  simulatorData?: string | null;
   contactPreference?: string | null;
   utmSource?: string | null;
   utmMedium?: string | null;
   utmCampaign?: string | null;
   gclid?: string | null;
 }) {
+  await ensureLeadEventsExtended();
   try {
     await withConnection(async (conn) => {
       await conn.execute(
-        `INSERT INTO leadEvents (eventType, pagePath, pageUrl, serviceType, location, contactPreference, utmSource, utmMedium, utmCampaign, gclid)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO leadEvents
+           (eventType, action, pagePath, pageUrl, label, phone, email, name,
+            serviceType, location, message, simulatorData,
+            contactPreference, utmSource, utmMedium, utmCampaign, gclid)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           String(data.eventType).slice(0, 80),
+          data.action ? String(data.action).slice(0, 160) : null,
           data.pagePath ?? null,
           data.pageUrl ?? null,
+          data.label ? String(data.label).slice(0, 160) : null,
+          data.phone ? String(data.phone).slice(0, 30) : null,
+          data.email ? String(data.email).slice(0, 320) : null,
+          data.name ? String(data.name).slice(0, 160) : null,
           data.serviceType ?? null,
           data.location ?? null,
+          data.message ?? null,
+          data.simulatorData ?? null,
           data.contactPreference ?? null,
           data.utmSource ?? null,
           data.utmMedium ?? null,
