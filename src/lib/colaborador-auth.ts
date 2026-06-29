@@ -26,7 +26,9 @@ export async function verifyColaboradorToken(token?: string | null) {
   try {
     const { payload } = await jose.jwtVerify(token, getColaboradorSecretKey());
     return payload as unknown as ColaboradorTokenPayload;
-  } catch {
+  } catch (err) {
+    const errMsg = err instanceof Error ? err.message : String(err);
+    console.log("[v0/auth] jose.jwtVerify falhou:", errMsg, "| token preview:", token?.substring(0, 20));
     return null;
   }
 }
