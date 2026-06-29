@@ -1022,7 +1022,7 @@ export async function updateSimulatorOrder(
     parkingDistance: string | null;
     urgency: string | null;
     rawOrderJson: string | null;
-    acceptedAt: Date | null;
+    acceptedAt: Date | string | null;
     scheduledDate: string | null;
     scheduledStartTime: string | null;
     scheduledEndTime: string | null;

@@ -32,7 +32,7 @@ export async function POST(
   const { id } = await params;
   const orderId = Number(id);
 
-  const [order, colab] = await Promise.all([
+  const [order, colabFromDb] = await Promise.all([
     getSimulatorOrderById(orderId),
     getColaboradorById(jwt.id),
   ]);
@@ -40,11 +40,18 @@ export async function POST(
   if (!order) {
     return NextResponse.json({ ok: false, message: "Pedido não encontrado." }, { status: 404 });
   }
-  if (!colab) {
-    return NextResponse.json({ ok: false, message: "Colaborador não encontrado." }, { status: 404 });
-  }
 
-  const isAdmin = colab.isAdmin === 1;
+  // Fallback: se DB lookup falhar, usar dados do JWT (funcao e isAdmin estão no token)
+  const colab = colabFromDb ?? {
+    id: jwt.id,
+    nome: jwt.nome,
+    funcao: jwt.funcao ?? null,
+    isAdmin: jwt.isAdmin ?? 0,
+    active: 1,
+    canReceiveSimulatorRequests: jwt.funcao === "assistente" ? 1 : 0,
+  };
+
+  const isAdmin = Number(colab.isAdmin) === 1;
   const isAssistente = colab.funcao === "assistente";
 
   // Permission checks for non-admins
@@ -55,15 +62,17 @@ export async function POST(
         { status: 403 }
       );
     }
-    if (!colab.active || colab.active === 0) {
+    if (colab.active != null && Number(colab.active) === 0) {
       return NextResponse.json(
         { ok: false, message: "A sua conta está inativa." },
         { status: 403 }
       );
     }
-    if (!colab.canReceiveSimulatorRequests || colab.canReceiveSimulatorRequests === 0) {
+    // Se veio da DB e canReceiveSimulatorRequests=0, bloquear.
+    // Se veio do JWT fallback (colabFromDb era null), permitir para assistentes.
+    if (colabFromDb && (colabFromDb.canReceiveSimulatorRequests == null || Number(colabFromDb.canReceiveSimulatorRequests) === 0)) {
       return NextResponse.json(
-        { ok: false, message: "Não tem permissão para aceitar pedidos do simulador." },
+        { ok: false, message: "Não tem permissão para aceitar pedidos do simulador. Contacte o administrador." },
         { status: 403 }
       );
     }
@@ -92,13 +101,14 @@ export async function POST(
     );
   }
 
+  const nowIso = new Date().toISOString();
   await updateSimulatorOrder(orderId, {
     assignedToId: colab.id,
     assignedToName: colab.nome,
-    assignedAt: new Date().toISOString() as unknown as null,
+    assignedAt: nowIso as unknown as null,
     status: "atribuido",
-    acceptedAt: new Date() as unknown as null,
-  } as Parameters<typeof updateSimulatorOrder>[1]);
+    acceptedAt: nowIso,
+  });
 
   await appendOrderHistory(orderId, {
     type: "accepted",
