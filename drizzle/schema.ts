@@ -42,7 +42,7 @@ export const colaboradores = mysqlTable('colaboradores', {
   commissionFixedAmount: decimal('commissionFixedAmount', { precision: 8, scale: 2 }),
   commissionNotes: text('commissionNotes'),
   // Flags operacionais
-  canReceiveSimulatorRequests: tinyint('canReceiveSimulatorRequests').default(0),
+  canReceiveSimulatorRequests: tinyint('canReceiveSimulatorRequests').default(1),
   participatesInTimeTracking: tinyint('participatesInTimeTracking').default(1),
   active: tinyint('active').notNull().default(1),
   createdAt: timestamp('createdAt').defaultNow().notNull(),

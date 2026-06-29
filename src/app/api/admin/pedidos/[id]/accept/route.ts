@@ -4,6 +4,7 @@ import {
   updateSimulatorOrder,
   appendOrderHistory,
   getColaboradorById,
+  getPool,
 } from "@/lib/db";
 import { verifyColaboradorAuthHeader } from "@/lib/colaborador-auth";
 
@@ -12,13 +13,12 @@ export const runtime = "nodejs";
 /**
  * POST /api/admin/pedidos/[id]/accept
  *
- * Permite a uma assistente aceitar um pedido da fila geral (assignedToId IS NULL).
+ * Permite a uma assistente aceitar um pedido da fila geral.
  * Regras:
  *   - JWT válido obrigatório.
- *   - Colaborador tem de ser assistente com active=1 e canReceiveSimulatorRequests=1.
+ *   - Colaborador tem de ser assistente activo OU admin.
  *   - O pedido deve estar sem assistente ou já atribuído ao mesmo colaborador.
- *   - Admin geral (isAdmin=1) pode forçar sem verificar canReceiveSimulatorRequests.
- *   - Se outro assistente já aceitou, devolve 409 com mensagem amigável.
+ *   - Se outro assistente já aceitou, devolve 409.
  */
 export async function POST(
   req: NextRequest,
@@ -37,51 +37,47 @@ export async function POST(
     getColaboradorById(jwt.id),
   ]);
 
-  console.log("[v0/accept] jwt:", { id: jwt.id, nome: jwt.nome, funcao: jwt.funcao, isAdmin: jwt.isAdmin });
-  console.log("[v0/accept] colabFromDb:", colabFromDb ? { id: colabFromDb.id, funcao: colabFromDb.funcao, active: colabFromDb.active, canReceive: colabFromDb.canReceiveSimulatorRequests, isAdmin: colabFromDb.isAdmin } : null);
-  console.log("[v0/accept] order:", order ? { id: order.id, status: order.status, assignedToId: order.assignedToId } : null);
-
   if (!order) {
     return NextResponse.json({ ok: false, message: "Pedido não encontrado." }, { status: 404 });
   }
 
-  // Fallback: se DB lookup falhar, usar dados do JWT (funcao e isAdmin estão no token)
+  // Usar dados da DB se disponíveis; caso contrário usar JWT como fallback
   const colab = colabFromDb ?? {
     id: jwt.id,
     nome: jwt.nome,
     funcao: jwt.funcao ?? null,
     isAdmin: jwt.isAdmin ?? 0,
-    active: 1,
-    canReceiveSimulatorRequests: jwt.funcao === "assistente" ? 1 : 0,
+    active: 1 as number | null,
   };
 
   const isAdmin = Number(colab.isAdmin) === 1;
   const isAssistente = colab.funcao === "assistente";
 
-  console.log("[v0/accept] colab final:", { id: colab.id, funcao: colab.funcao, isAdmin, isAssistente, active: colab.active, canReceive: (colab as any).canReceiveSimulatorRequests });
+  // Auto-activar canReceiveSimulatorRequests=1 para assistentes que têm 0 por defeito antigo
+  if (isAssistente && colabFromDb && Number(colabFromDb.canReceiveSimulatorRequests) === 0) {
+    try {
+      const pool = await getPool();
+      if (pool) {
+        await pool.execute(
+          `UPDATE colaboradores SET canReceiveSimulatorRequests = 1 WHERE id = ? AND funcao = 'assistente'`,
+          [colab.id]
+        );
+      }
+    } catch { /* silencioso — não impede o accept */ }
+  }
 
-  // Permission checks for non-admins
-  if (!isAdmin) {
-    if (!isAssistente) {
-      return NextResponse.json(
-        { ok: false, message: "Apenas assistentes podem aceitar pedidos." },
-        { status: 403 }
-      );
-    }
-    if (colab.active != null && Number(colab.active) === 0) {
-      return NextResponse.json(
-        { ok: false, message: "A sua conta está inativa." },
-        { status: 403 }
-      );
-    }
-    // Se veio da DB e canReceiveSimulatorRequests=0, bloquear.
-    // Se veio do JWT fallback (colabFromDb era null), permitir para assistentes.
-    if (colabFromDb && (colabFromDb.canReceiveSimulatorRequests == null || Number(colabFromDb.canReceiveSimulatorRequests) === 0)) {
-      return NextResponse.json(
-        { ok: false, message: "Não tem permissão para aceitar pedidos do simulador. Contacte o administrador." },
-        { status: 403 }
-      );
-    }
+  // Apenas assistentes activos e admins podem aceitar pedidos
+  if (!isAdmin && !isAssistente) {
+    return NextResponse.json(
+      { ok: false, message: "Apenas assistentes podem aceitar pedidos." },
+      { status: 403 }
+    );
+  }
+  if (!isAdmin && colab.active != null && Number(colab.active) === 0) {
+    return NextResponse.json(
+      { ok: false, message: "A sua conta está inativa." },
+      { status: 403 }
+    );
   }
 
   // Already claimed by someone else?
