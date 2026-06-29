@@ -41,6 +41,8 @@ type Order = {
   estimateMin?: string | null;
   estimateMax?: string | null;
   estimateJson?: string | null;
+  analysisJsonExtended?: string | null;
+  rawOrderJson?: string | null;
   distanceKm?: string | null;
   distanceText?: string | null;
   status: OrderStatus;
@@ -64,12 +66,16 @@ type GeminiEstimate = {
   estimatedPriceWithoutVat?: number | null;
   vatAmount?: number | null;
   estimatedPriceWithVat?: number | null;
+  estimateMinWithoutVat?: number | null;
+  estimateMaxWithoutVat?: number | null;
   difficultyLevel?: number;
   summary?: string;
   assumptions?: string[];
   missingFields?: string[];
   customerMessage?: string;
   internalNotes?: string[];
+  analysisSource?: string;
+  confidence?: string;
 };
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -96,15 +102,51 @@ const ALL_STATUSES: OrderStatus[] = [
   "confirmado", "em_execucao", "concluido", "cancelado",
 ];
 
-const SERVICE_TYPES = [
-  "Recolha de móveis",
-  "Recolha de monos",
-  "Recolha de entulho",
-  "Esvaziamento de casa",
-  "Esvaziamento de apartamento",
-  "Mudança",
-  "Outro",
+const SERVICE_TYPES: { value: string; label: string }[] = [
+  { value: "recolha_moveis",           label: "Recolha de móveis" },
+  { value: "recolha_monos",            label: "Recolha de monos" },
+  { value: "recolha_entulho",          label: "Recolha de entulho" },
+  { value: "esvaziamento_casa",        label: "Esvaziamento de casa" },
+  { value: "esvaziamento_apartamento", label: "Esvaziamento de apartamento" },
+  { value: "mudanca",                  label: "Mudança" },
+  { value: "outro",                    label: "Outro" },
 ];
+
+// Helpers de tradução de valores internos → PT
+const ELEVATOR_LABELS: Record<string, string> = {
+  yes:     "Sim, funciona",
+  small:   "Sim, pequeno",
+  no:      "Não tem",
+  unknown: "Não sei",
+  sim:     "Sim",
+  nao:     "Não",
+};
+const PARKING_LABELS: Record<string, string> = {
+  door:      "Mesmo à porta",
+  under_20m: "Sim, até 20 metros",
+  over_30m:  "Mais de 30 metros",
+  difficult: "Estacionamento difícil",
+  porta:     "À porta",
+  proximo:   "Próximo (até 50m)",
+  medio:     "Médio (50-200m)",
+  longe:     "Longe (mais de 200m)",
+};
+const URGENCY_LABELS: Record<string, string> = {
+  today:     "Hoje",
+  tomorrow:  "Amanhã",
+  this_week: "Esta semana",
+  flexible:  "Flexível",
+  normal:    "Normal",
+  urgente:   "Urgente",
+  flexivel:  "Flexível",
+};
+const SERVICE_LABELS: Record<string, string> = Object.fromEntries(
+  SERVICE_TYPES.map((s) => [s.value, s.label])
+);
+function labelOf(map: Record<string, string>, val?: string | null) {
+  if (!val) return null;
+  return map[val] ?? val;
+}
 
 const TABS = [
   { id: "geral",     label: "Geral" },
@@ -381,7 +423,7 @@ export default function AdminPedidoDetalheClient({ id }: { id: number }) {
     finally { setSaving(false); }
   }
 
-  // ���── Render guards ──────────────────────────────────────────────────────────
+  // ����── Render guards ──────────────────────────────────────────────────────────
 
   if (!ready || loading) {
     return (
@@ -420,6 +462,27 @@ export default function AdminPedidoDetalheClient({ id }: { id: number }) {
   const est = parseEstimate(order.estimateJson);
   const history = parseHistory(order.historyJson);
   const files = parseFiles(order.filesJson);
+  // Dados brutos do formulário (para campos como entulhoQuantidade)
+  const rawOrder: Record<string, any> = (() => {
+    try { return order.rawOrderJson ? JSON.parse(order.rawOrderJson) : {}; } catch { return {}; }
+  })();
+  // Dados da análise alargada (analysisSource, confidence, etc.)
+  const analysisExt: Record<string, any> = (() => {
+    try { return order.analysisJsonExtended ? JSON.parse(order.analysisJsonExtended) : {}; } catch { return {}; }
+  })();
+  const analysisSource: string = analysisExt.analysisSource ?? est?.analysisSource ?? "";
+  const ANALYSIS_SOURCE_LABELS: Record<string, { label: string; color: string }> = {
+    clyon_pricing:                   { label: "Preçário CLYON (Gemini)", color: "text-cyan-400 border-cyan-400/30 bg-cyan-400/10" },
+    clyon_pricing_plus_web_reference: { label: "Preçário + Web", color: "text-teal-400 border-teal-400/30 bg-teal-400/10" },
+    web_reference_only:              { label: "Apenas web", color: "text-blue-400 border-blue-400/30 bg-blue-400/10" },
+    needs_human_review:              { label: "Revisão humana necessária", color: "text-amber-400 border-amber-400/30 bg-amber-400/10" },
+    gemini_reference:                { label: "Referência Gemini (preço 0)", color: "text-orange-400 border-orange-400/30 bg-orange-400/10" },
+    fallback_reference:              { label: "Referência interna (fallback)", color: "text-orange-400 border-orange-400/30 bg-orange-400/10" },
+    timeout_fallback:                { label: "Timeout Gemini — Estimativa local", color: "text-red-400 border-red-400/30 bg-red-400/10" },
+    local_fast_estimate:             { label: "Estimativa local (sem Gemini)", color: "text-slate-400 border-slate-400/30 bg-slate-400/10" },
+  };
+  const entulhoQtd: string | null = rawOrder.entulhoQuantidade ?? null;
+  const entulhoState: string | null = rawOrder.entulhoState ?? null;
   const waPhone = (order.contactPhone ?? BUSINESS_PHONE).replace(/\D/g, "");
   const waMsg = encodeURIComponent(
     `Olá ${order.contactName ?? "cliente"}, a CLYON está a contactar relativamente ao seu pedido #${order.id} de ${order.serviceType ?? "serviço"}.`
@@ -585,14 +648,12 @@ export default function AdminPedidoDetalheClient({ id }: { id: number }) {
                   { label: "Pedido nº", value: `#${order.id}` },
                   { label: "Cliente", value: order.contactName },
                   { label: "Telefone", value: order.contactPhone },
-                  { label: "Serviço", value: order.serviceType },
+                  { label: "Serviço", value: labelOf(SERVICE_LABELS, order.serviceType) },
                   { label: "Status", value: STATUS_CFG[order.status]?.label ?? order.status },
                   { label: "Prioridade", value: order.priority ?? "normal" },
+                  { label: "Urgência", value: labelOf(URGENCY_LABELS, order.urgency) ?? "Normal" },
                   { label: "Assistente", value: order.assignedToName ?? "Não atribuído" },
                   { label: "Origem", value: "Simulador" },
-                  { label: "Estimativa IA", value: fmtEur(order.estimateTotal) },
-                  { label: "Preço final s/IVA", value: fmtEur(order.precoFinal) },
-                  { label: "Preço final c/IVA", value: fmtEur(order.precoFinalIva) },
                   { label: "Data de entrada", value: fmt(order.createdAt) },
                 ].map((item) => (
                   <div key={item.label} className="rounded-[20px] border border-white/[0.06] bg-white/[0.02] p-4">
@@ -600,6 +661,43 @@ export default function AdminPedidoDetalheClient({ id }: { id: number }) {
                     <p className="mt-1.5 text-sm font-semibold text-slate-200">{item.value ?? "—"}</p>
                   </div>
                 ))}
+              </div>
+
+              {/* Estimativa IA: Mínimo / Máximo / Recomendado + Preço final */}
+              <div className="rounded-[20px] border border-white/[0.06] bg-white/[0.02] p-4">
+                <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.15em] text-slate-600">Estimativa IA</p>
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+                  {[
+                    { label: "Mínimo s/IVA", value: fmtEur(order.estimateMin) },
+                    { label: "Máximo s/IVA", value: fmtEur(order.estimateMax) },
+                    { label: "Recomendado s/IVA", value: fmtEur(order.estimateTotal), highlight: true },
+                    { label: "Preço final s/IVA", value: fmtEur(order.precoFinal) },
+                    { label: "Preço final c/IVA", value: fmtEur(order.precoFinalIva) },
+                  ].map((item) => (
+                    <div key={item.label} className={`rounded-[14px] border p-3 ${item.highlight ? "border-cyan-400/20 bg-cyan-400/5" : "border-white/[0.06] bg-white/[0.02]"}`}>
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-slate-600">{item.label}</p>
+                      <p className={`mt-1 text-sm font-bold ${item.highlight ? "text-cyan-300" : "text-slate-200"}`}>{item.value ?? "—"}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Morada e acesso — versão só leitura */}
+              <div className="rounded-[20px] border border-white/[0.06] bg-white/[0.02] p-4">
+                <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.15em] text-slate-600">Morada e acesso</p>
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                  {[
+                    { label: "Localidade", value: order.city },
+                    { label: "Andar", value: order.floor },
+                    { label: "Elevador", value: labelOf(ELEVATOR_LABELS, order.hasElevator) },
+                    { label: "Estacionamento", value: labelOf(PARKING_LABELS, order.parkingDistance) },
+                  ].map((item) => (
+                    <div key={item.label} className="rounded-[14px] border border-white/[0.06] bg-white/[0.02] p-3">
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-slate-600">{item.label}</p>
+                      <p className="mt-1 text-sm font-semibold text-slate-300">{item.value ?? "—"}</p>
+                    </div>
+                  ))}
+                </div>
               </div>
 
               {/* Quick actions */}
@@ -668,8 +766,10 @@ export default function AdminPedidoDetalheClient({ id }: { id: number }) {
                 <Field label="Urgência">
                   <select value={editUrgency} onChange={(e) => setEditUrgency(e.target.value)} className={selectCls}>
                     <option value="" className={optionCls}>Normal</option>
-                    <option value="urgente" className={optionCls}>Urgente</option>
-                    <option value="flexivel" className={optionCls}>Flexível</option>
+                    <option value="today" className={optionCls}>Hoje</option>
+                    <option value="tomorrow" className={optionCls}>Amanhã</option>
+                    <option value="this_week" className={optionCls}>Esta semana</option>
+                    <option value="flexible" className={optionCls}>Flexível</option>
                   </select>
                 </Field>
               </div>
@@ -692,14 +792,16 @@ export default function AdminPedidoDetalheClient({ id }: { id: number }) {
                 <Field label="Tipo de serviço">
                   <select value={editServiceType} onChange={(e) => setEditServiceType(e.target.value)} className={selectCls}>
                     <option value="" className={optionCls}>Selecionar...</option>
-                    {SERVICE_TYPES.map((s) => <option key={s} value={s} className={optionCls}>{s}</option>)}
+                    {SERVICE_TYPES.map((s) => <option key={s.value} value={s.value} className={optionCls}>{s.label}</option>)}
                   </select>
                 </Field>
                 <Field label="Urgência">
                   <select value={editUrgency} onChange={(e) => setEditUrgency(e.target.value)} className={selectCls}>
                     <option value="" className={optionCls}>Normal</option>
-                    <option value="urgente" className={optionCls}>Urgente</option>
-                    <option value="flexivel" className={optionCls}>Flexível</option>
+                    <option value="today" className={optionCls}>Hoje</option>
+                    <option value="tomorrow" className={optionCls}>Amanhã</option>
+                    <option value="this_week" className={optionCls}>Esta semana</option>
+                    <option value="flexible" className={optionCls}>Flexível</option>
                   </select>
                 </Field>
               </div>
@@ -739,17 +841,19 @@ export default function AdminPedidoDetalheClient({ id }: { id: number }) {
                 <Field label="Elevador">
                   <select value={editHasElevator} onChange={(e) => setEditHasElevator(e.target.value)} className={selectCls}>
                     <option value="" className={optionCls}>Não informado</option>
-                    <option value="sim" className={optionCls}>Sim</option>
-                    <option value="nao" className={optionCls}>Não</option>
+                    <option value="yes" className={optionCls}>Sim, funciona</option>
+                    <option value="small" className={optionCls}>Sim, pequeno</option>
+                    <option value="no" className={optionCls}>Não tem</option>
+                    <option value="unknown" className={optionCls}>Não sei</option>
                   </select>
                 </Field>
-                <Field label="Distância de estacionamento">
+                <Field label="Estacionamento">
                   <select value={editParkingDistance} onChange={(e) => setEditParkingDistance(e.target.value)} className={selectCls}>
                     <option value="" className={optionCls}>Não informado</option>
-                    <option value="porta" className={optionCls}>À porta</option>
-                    <option value="proximo" className={optionCls}>Próximo (até 50m)</option>
-                    <option value="medio" className={optionCls}>Médio (50-200m)</option>
-                    <option value="longe" className={optionCls}>Longe (mais de 200m)</option>
+                    <option value="door" className={optionCls}>Mesmo à porta</option>
+                    <option value="under_20m" className={optionCls}>Sim, até 20 metros</option>
+                    <option value="over_30m" className={optionCls}>Mais de 30 metros</option>
+                    <option value="difficult" className={optionCls}>Estacionamento difícil</option>
                   </select>
                 </Field>
               </div>

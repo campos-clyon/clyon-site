@@ -86,6 +86,8 @@ export interface OrderData {
   // Campos específicos para entulho
   entulhoState?: "ensacado" | "chao" | "misto" | "unknown";
   entulhoQuantidade?: string;
+  entulhoQuantidadeEnsacados?: string;   // misto: sacos já ensacados
+  entulhoQuantidadePorEnsacar?: string;  // misto: sacos por ensacar
   // Campos específicos para mudança (dois endereços)
   originAddress?: AddressData;
   originAddressValue?: string;

@@ -47,6 +47,7 @@ export default function SimulatorThreePhaseForm() {
   const [successAssignedTo, setSuccessAssignedTo] = useState<{ id: number; name: string } | null>(null);
   const [addressValue, setAddressValue] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [phase2Attempted, setPhase2Attempted] = useState(false);
 
   const ANALYZE_STEP_LABELS = [
     "Analisar pedido",
@@ -180,7 +181,8 @@ export default function SimulatorThreePhaseForm() {
     stepTimers.push(setTimeout(() => setAnalyzeStep(2), 1200));
     stepTimers.push(setTimeout(() => setAnalyzeStep(3), 2400));
 
-    // ── Hard 4s client timeout: se API ainda não respondeu, forçar fallback UI
+    // ── Hard 7s client timeout: se API ainda não respondeu, forçar fallback UI
+    // (7s > 4s Gemini timeout + overhead de resposta do servidor)
     let hardTimeoutFired = false;
     const hardTimer = setTimeout(() => {
       hardTimeoutFired = true;
@@ -197,10 +199,10 @@ export default function SimulatorThreePhaseForm() {
         assumptions: [],
         missingFields: [],
         customerMessage: "A equipa CLYON irá confirmar os dados e entrar em contacto em breve.",
-        internalNotes: ["Timeout no cliente (4s) — análise do servidor ainda em curso."],
+        internalNotes: ["Timeout no cliente (7s) — análise do servidor ainda em curso."],
         analysisSource: "timeout_fallback",
       });
-    }, 4000);
+    }, 7000);
 
     try {
       const res = await fetch("/api/simulator/analyze", {
@@ -213,45 +215,52 @@ export default function SimulatorThreePhaseForm() {
       stepTimers.forEach(clearTimeout);
       clearTimeout(hardTimer);
 
-      if (hardTimeoutFired) {
-        // Hard timeout já mostrou o card — continuar só para auto-save
-      } else if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error((err as Record<string, string>).error || "Erro ao analisar pedido");
+      // Ler o resultado da API uma única vez (usado tanto para UI como para auto-save)
+      let apiResult: EstimateResult | null = null;
+      if (!res.ok) {
+        if (!hardTimeoutFired) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error((err as Record<string, string>).error || "Erro ao analisar pedido");
+        }
       } else {
-        const result: EstimateResult = await res.json();
-        setAnalysis(result);
-        // Tracking: estimativa gerada com sucesso
-        trackSimulatorEstimate(
-          formData.serviceType ?? "desconhecido",
-          result.estimatedPriceWithVat ?? result.estimatedPriceWithoutVat ?? 0,
-          formData.address?.city ?? formData.originAddress?.city,
-          {
-            estimateMin: result.estimatedPriceWithoutVat,
-            estimateMax: result.estimatedPriceWithVat,
-            difficultyLevel: result.difficultyLevel,
-            analysisSource: result.analysisSource,
-          }
-        );
+        apiResult = await res.json() as EstimateResult;
+        if (!hardTimeoutFired) {
+          // Actualizar UI apenas se o hard timeout ainda não disparou
+          setAnalysis(apiResult);
+          trackSimulatorEstimate(
+            formData.serviceType ?? "desconhecido",
+            apiResult.estimatedPriceWithVat ?? apiResult.estimatedPriceWithoutVat ?? 0,
+            formData.address?.city ?? formData.originAddress?.city,
+            {
+              estimateMin: apiResult.estimatedPriceWithoutVat,
+              estimateMax: apiResult.estimatedPriceWithVat,
+              difficultyLevel: apiResult.difficultyLevel,
+              analysisSource: apiResult.analysisSource,
+            }
+          );
+        }
+        // Se hard timeout disparou mas API respondeu com preços reais,
+        // actualizar silenciosamente o estado (backoffice verá valores correctos)
+        if (hardTimeoutFired && apiResult.estimatedPriceWithoutVat) {
+          setAnalysis(apiResult);
+        }
       }
 
-      // Auto-save: sempre guardar na BD, independentemente de Gemini ou fallback
+      // Auto-save: sempre guardar na BD — usar resultado real da API quando disponível
       try {
-        const currentAnalysis = hardTimeoutFired
-          ? {
-              status: "estimated" as const,
-              estimatedPriceWithoutVat: null,
-              vatAmount: null,
-              estimatedPriceWithVat: null,
-              difficultyLevel: 2 as const,
-              summary: "Timeout — aguarda análise da equipa",
-              assumptions: [],
-              missingFields: [],
-              customerMessage: "",
-              internalNotes: ["Timeout cliente 4s"],
-              analysisSource: "timeout_fallback" as const,
-            }
-          : analysis;
+        const currentAnalysis: EstimateResult = apiResult ?? {
+          status: "estimated" as const,
+          estimatedPriceWithoutVat: null,
+          vatAmount: null,
+          estimatedPriceWithVat: null,
+          difficultyLevel: 2 as const,
+          summary: "Timeout — aguarda análise da equipa",
+          assumptions: [],
+          missingFields: [],
+          customerMessage: "",
+          internalNotes: ["Timeout cliente 7s — API não respondeu a tempo"],
+          analysisSource: "timeout_fallback" as const,
+        };
 
         const saveRes = await fetch("/api/simulador/pedido", {
           method: "POST",
@@ -535,6 +544,7 @@ export default function SimulatorThreePhaseForm() {
                   onMovingDistanceCalculated={handleMovingDistanceCalculated}
                   updateOriginAccess={updateOriginAccess}
                   updateDestinationAccess={updateDestinationAccess}
+                  showValidationErrors={phase2Attempted}
                 />
               )}
 
@@ -581,17 +591,20 @@ export default function SimulatorThreePhaseForm() {
                       onClick={() => {
                         if (phase === 1) {
                           // Avança de fase 1 (serviço) para fase 2 (local)
-                          // Nada extra — o start já foi registado no mount
                         } else if (phase === 2) {
-                          // Avança de fase 2 (local) para fase 3 (contacto)
-                          // Registar que o utilizador chegou à fase de contacto
+                          // Marcar tentativa para mostrar erros de validação
+                          if (!canProceedToPhase3) {
+                            setPhase2Attempted(true);
+                            return;
+                          }
+                          setPhase2Attempted(false);
                           trackSimulatorContact({
                             service: formData.serviceType ?? undefined,
                           });
                         }
                         setPhase(phase + 1);
                       }}
-                      disabled={!canProceedToPhase2 || (phase === 2 && !canProceedToPhase3)}
+                      disabled={!canProceedToPhase2}
                       className="ml-auto flex items-center gap-2 px-6 py-2.5 text-sm font-semibold bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 disabled:bg-gray-300 text-white rounded-lg shadow-md hover:shadow-lg hover:scale-105 transition-all duration-200 active:scale-95"
                     >
                       Seguinte
@@ -676,8 +689,21 @@ function Phase1Service({
         <EntulhoDetails
           state={formData.entulhoState}
           quantity={formData.entulhoQuantidade}
+          quantidadeEnsacados={formData.entulhoQuantidadeEnsacados}
+          quantidadePorEnsacar={formData.entulhoQuantidadePorEnsacar}
           onStateChange={(state) => updateField("entulhoState", state)}
           onQuantityChange={(quantity) => updateField("entulhoQuantidade", quantity)}
+          onQuantidadeEnsacadosChange={(q) => {
+            updateField("entulhoQuantidadeEnsacados", q);
+            // Combinar misto: total = ensacados + por ensacar
+            const total = (parseInt(q) || 0) + (parseInt(formData.entulhoQuantidadePorEnsacar ?? "0") || 0);
+            if (total > 0) updateField("entulhoQuantidade", String(total));
+          }}
+          onQuantidadePorEnsacarChange={(q) => {
+            updateField("entulhoQuantidadePorEnsacar", q);
+            const total = (parseInt(formData.entulhoQuantidadeEnsacados ?? "0") || 0) + (parseInt(q) || 0);
+            if (total > 0) updateField("entulhoQuantidade", String(total));
+          }}
         />
       )}
 
@@ -793,6 +819,7 @@ function Phase2Location({
   onMovingDistanceCalculated,
   updateOriginAccess,
   updateDestinationAccess,
+  showValidationErrors,
 }: {
   formData: FormState;
   addressValue: string;
@@ -805,6 +832,7 @@ function Phase2Location({
   onMovingDistanceCalculated: (distance: MovingDistance, status: DistanceStatus) => void;
   updateOriginAccess: (field: keyof MovingAccess, value: unknown) => void;
   updateDestinationAccess: (field: keyof MovingAccess, value: unknown) => void;
+  showValidationErrors?: boolean;
 }) {
   const isMudanca = formData.serviceType === "mudanca";
 
@@ -1017,17 +1045,46 @@ function Phase2Location({
   }
 
   // ── Outros serviços: layout original ────────────────────────────────────
+  const missingAddress = showValidationErrors && !formData.address?.formattedAddress;
+  const missingFloor = showValidationErrors && !formData.floor;
+  const missingElevator = showValidationErrors && formData.floor && formData.floor !== "rés-do-chão" && !formData.hasElevator;
+  const missingParking = showValidationErrors && !formData.parkingDistance;
+
+  // Calcular lista de campos em falta para mostrar mensagem única
+  const missingFields: string[] = [];
+  if (!formData.address?.formattedAddress) missingFields.push("Morada");
+  if (!formData.floor) missingFields.push("Andar");
+  if (formData.floor && formData.floor !== "rés-do-chão" && !formData.hasElevator) missingFields.push("Elevador");
+  if (!formData.parkingDistance) missingFields.push("Estacionamento");
+
+  const errorBorderCls = "border-2 border-red-400 focus:ring-red-400 focus:border-red-400";
+
   return (
     <div className="space-y-6">
       <h2 className="text-2xl font-bold text-gray-900">Morada e condições de acesso</h2>
 
-      <AddressAutocomplete
-        value={addressValue}
-        onChange={setAddressValue}
-        onSelect={onAddressSelect}
-        onDistanceCalculated={onDistanceCalculated}
-        placeholder="Escreva a rua, número e localidade..."
-      />
+      {/* Validation summary */}
+      {showValidationErrors && missingFields.length > 0 && (
+        <div className="rounded-xl bg-red-50 border border-red-200 px-4 py-3">
+          <p className="text-sm font-semibold text-red-800 mb-1">Campos obrigatórios por preencher:</p>
+          <ul className="list-disc list-inside space-y-0.5">
+            {missingFields.map((f) => (
+              <li key={f} className="text-sm text-red-700">{f}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      <div>
+        <AddressAutocomplete
+          value={addressValue}
+          onChange={setAddressValue}
+          onSelect={onAddressSelect}
+          onDistanceCalculated={onDistanceCalculated}
+          placeholder="Escreva a rua, número e localidade..."
+        />
+        {missingAddress && <p className="text-xs text-red-600 mt-1">Morada obrigatória</p>}
+      </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-2">
@@ -1041,7 +1098,7 @@ function Phase2Location({
                 updateField("hasElevator", "");
               }
             }}
-            className={calcSelectCls}
+            className={`${calcSelectCls} ${missingFloor ? errorBorderCls : ""}`}
           >
             <option value="">Seleccione...</option>
             <option value="rés-do-chão">Rés-do-chão</option>
@@ -1058,7 +1115,7 @@ function Phase2Location({
             <select
               value={formData.hasElevator || ""}
               onChange={(e) => updateField("hasElevator", e.target.value)}
-              className={calcSelectCls}
+              className={`${calcSelectCls} ${missingElevator ? errorBorderCls : ""}`}
             >
               <option value="">Seleccione...</option>
               <option value="yes">Sim, funciona</option>
@@ -1066,6 +1123,7 @@ function Phase2Location({
               <option value="no">Não tem</option>
               <option value="unknown">Não sei</option>
             </select>
+            {missingElevator && <p className="text-xs text-red-600 mt-1">Elevador obrigatório</p>}
           </div>
         )}
       </div>
@@ -1075,7 +1133,7 @@ function Phase2Location({
         <select
           value={formData.parkingDistance || ""}
           onChange={(e) => updateField("parkingDistance", e.target.value)}
-          className={calcSelectCls}
+          className={`${calcSelectCls} ${missingParking ? errorBorderCls : ""}`}
         >
           <option value="">Seleccione...</option>
           <option value="door">Sim, mesmo à porta</option>
@@ -1083,6 +1141,7 @@ function Phase2Location({
           <option value="over_30m">Mais de 30 metros</option>
           <option value="difficult">Estacionamento difícil</option>
         </select>
+        {missingParking && <p className="text-xs text-red-600 mt-1">Estacionamento obrigatório</p>}
       </div>
 
       <div className="space-y-2">
