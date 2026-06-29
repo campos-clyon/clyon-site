@@ -2169,19 +2169,30 @@ export default function ColaboradorAdminClient() {
                                       className="rounded-[10px] border border-emerald-400/30 bg-emerald-400/10 px-3 py-1.5 text-xs font-semibold text-emerald-300 hover:bg-emerald-400/20 transition"
                                       onClick={async (e) => {
                                         e.stopPropagation();
+                                        console.log("[v0] Aceitar clicado | pedidoId:", p.id, "| token existe:", !!token, "| endpoint:", `/api/admin/pedidos/${p.id}/accept`);
+                                        if (!token) {
+                                          alert("Sessão expirada. Por favor, faça login novamente.");
+                                          return;
+                                        }
                                         try {
                                           const r = await fetch(`/api/admin/pedidos/${p.id}/accept`, {
                                             method: "POST",
                                             headers: { Authorization: `Bearer ${token}` },
                                           });
-                                          const data = await r.json();
+                                          let data: { ok?: boolean; message?: string; order?: SimulatorOrder } = {};
+                                          try { data = await r.json(); } catch { /* body vazio */ }
+                                          console.log("[v0] Aceitar resposta | status:", r.status, "| ok:", r.ok, "| data:", data);
                                           if (r.ok && data?.ok) {
                                             const updated = data.order ?? { ...p, assignedToId: colabId, assignedToName: adminNome, status: "atribuido" };
                                             setPedidos((prev) => prev.map((x) => x.id === p.id ? { ...x, ...updated } : x));
+                                            await carregarPedidos(token, pedidoStatusFilter, pedidoSearchDebounced);
                                           } else {
-                                            alert(data?.message ?? "Erro ao aceitar pedido.");
+                                            alert(`Erro ${r.status}: ${data?.message ?? "Não foi possível aceitar o pedido."}`);
                                           }
-                                        } catch {}
+                                        } catch (err) {
+                                          console.error("[v0] Aceitar fetch erro:", err);
+                                          alert(`Erro de rede: ${err instanceof Error ? err.message : String(err)}`);
+                                        }
                                       }}
                                     >
                                       Aceitar

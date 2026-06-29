@@ -24,20 +24,31 @@ export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const jwt = await verifyColaboradorAuthHeader(req.headers.get("authorization"));
+  const authHeader = req.headers.get("authorization");
+  console.log("[v0/accept] authHeader presente:", !!authHeader, "| starts Bearer:", authHeader?.startsWith("Bearer "));
+
+  const jwt = await verifyColaboradorAuthHeader(authHeader);
+  console.log("[v0/accept] jwt verificado:", jwt ? { id: jwt.id, nome: jwt.nome, funcao: jwt.funcao } : null);
+
   if (!jwt) {
+    console.log("[v0/accept] 401 — token inválido ou ausente");
     return NextResponse.json({ ok: false, message: "Não autorizado." }, { status: 401 });
   }
 
   const { id } = await params;
   const orderId = Number(id);
+  console.log("[v0/accept] orderId:", orderId);
 
   const [order, colabFromDb] = await Promise.all([
     getSimulatorOrderById(orderId),
     getColaboradorById(jwt.id),
   ]);
 
+  console.log("[v0/accept] order:", order ? { id: order.id, status: order.status, assignedToId: order.assignedToId } : null);
+  console.log("[v0/accept] colabFromDb:", colabFromDb ? { id: colabFromDb.id, funcao: colabFromDb.funcao, active: colabFromDb.active } : null);
+
   if (!order) {
+    console.log("[v0/accept] 404 — pedido não encontrado");
     return NextResponse.json({ ok: false, message: "Pedido não encontrado." }, { status: 404 });
   }
 
@@ -104,13 +115,21 @@ export async function POST(
   }
 
   const nowIso = new Date().toISOString();
-  await updateSimulatorOrder(orderId, {
+  const updatePayload = {
     assignedToId: colab.id,
     assignedToName: colab.nome,
     assignedAt: nowIso as unknown as null,
     status: "atribuido",
     acceptedAt: nowIso,
-  });
+  };
+  console.log("[v0/accept] updatePayload:", updatePayload);
+  try {
+    await updateSimulatorOrder(orderId, updatePayload);
+    console.log("[v0/accept] updateSimulatorOrder OK");
+  } catch (updateErr) {
+    console.error("[v0/accept] updateSimulatorOrder ERRO:", updateErr);
+    return NextResponse.json({ ok: false, message: `Erro ao actualizar pedido: ${updateErr instanceof Error ? updateErr.message : String(updateErr)}` }, { status: 500 });
+  }
 
   await appendOrderHistory(orderId, {
     type: "accepted",
