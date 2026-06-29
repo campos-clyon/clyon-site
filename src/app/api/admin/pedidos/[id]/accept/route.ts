@@ -37,6 +37,10 @@ export async function POST(
     getColaboradorById(jwt.id),
   ]);
 
+  console.log("[v0/accept] jwt:", { id: jwt.id, nome: jwt.nome, funcao: jwt.funcao, isAdmin: jwt.isAdmin });
+  console.log("[v0/accept] colabFromDb:", colabFromDb ? { id: colabFromDb.id, funcao: colabFromDb.funcao, active: colabFromDb.active, canReceive: colabFromDb.canReceiveSimulatorRequests, isAdmin: colabFromDb.isAdmin } : null);
+  console.log("[v0/accept] order:", order ? { id: order.id, status: order.status, assignedToId: order.assignedToId } : null);
+
   if (!order) {
     return NextResponse.json({ ok: false, message: "Pedido não encontrado." }, { status: 404 });
   }
@@ -53,6 +57,8 @@ export async function POST(
 
   const isAdmin = Number(colab.isAdmin) === 1;
   const isAssistente = colab.funcao === "assistente";
+
+  console.log("[v0/accept] colab final:", { id: colab.id, funcao: colab.funcao, isAdmin, isAssistente, active: colab.active, canReceive: (colab as any).canReceiveSimulatorRequests });
 
   // Permission checks for non-admins
   if (!isAdmin) {
