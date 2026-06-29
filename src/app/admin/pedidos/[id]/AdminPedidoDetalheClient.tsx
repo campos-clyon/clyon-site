@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { BUSINESS_PHONE } from "@/lib/seo-data";
+import { translate, tElevator, tParking, tUrgency, tService, FIELD_TRANSLATIONS } from "@/lib/translations";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -112,41 +113,17 @@ const SERVICE_TYPES: { value: string; label: string }[] = [
   { value: "outro",                    label: "Outro" },
 ];
 
-// Helpers de tradução de valores internos → PT
-const ELEVATOR_LABELS: Record<string, string> = {
-  yes:     "Sim, funciona",
-  small:   "Sim, pequeno",
-  no:      "Não tem",
-  unknown: "Não sei",
-  sim:     "Sim",
-  nao:     "Não",
+// Aliases de compatibilidade — delegar para traduções centralizadas
+const ANALYSIS_SOURCE_LABELS: Record<string, { label: string; color: string }> = {
+  clyon_pricing:                    { label: "Preçário CLYON (Gemini)", color: "text-cyan-400 border-cyan-400/30 bg-cyan-400/10" },
+  clyon_pricing_plus_web_reference: { label: "Preçário + Web",          color: "text-teal-400 border-teal-400/30 bg-teal-400/10" },
+  web_reference_only:               { label: "Apenas web",              color: "text-blue-400 border-blue-400/30 bg-blue-400/10" },
+  needs_human_review:               { label: "Revisão humana necessária", color: "text-amber-400 border-amber-400/30 bg-amber-400/10" },
+  gemini_reference:                 { label: "Referência Gemini (preço 0)", color: "text-orange-400 border-orange-400/30 bg-orange-400/10" },
+  fallback_reference:               { label: "Referência interna (fallback)", color: "text-orange-400 border-orange-400/30 bg-orange-400/10" },
+  timeout_fallback:                 { label: "Timeout Gemini — Estimativa local", color: "text-red-400 border-red-400/30 bg-red-400/10" },
+  local_fast_estimate:              { label: "Estimativa local (sem Gemini)", color: "text-slate-400 border-slate-400/30 bg-slate-400/10" },
 };
-const PARKING_LABELS: Record<string, string> = {
-  door:      "Mesmo à porta",
-  under_20m: "Sim, até 20 metros",
-  over_30m:  "Mais de 30 metros",
-  difficult: "Estacionamento difícil",
-  porta:     "À porta",
-  proximo:   "Próximo (até 50m)",
-  medio:     "Médio (50-200m)",
-  longe:     "Longe (mais de 200m)",
-};
-const URGENCY_LABELS: Record<string, string> = {
-  today:     "Hoje",
-  tomorrow:  "Amanhã",
-  this_week: "Esta semana",
-  flexible:  "Flexível",
-  normal:    "Normal",
-  urgente:   "Urgente",
-  flexivel:  "Flexível",
-};
-const SERVICE_LABELS: Record<string, string> = Object.fromEntries(
-  SERVICE_TYPES.map((s) => [s.value, s.label])
-);
-function labelOf(map: Record<string, string>, val?: string | null) {
-  if (!val) return null;
-  return map[val] ?? val;
-}
 
 const TABS = [
   { id: "geral",     label: "Geral" },
@@ -300,7 +277,7 @@ export default function AdminPedidoDetalheClient({ id }: { id: number }) {
 
     setEditAddress(o.address ?? "");
     setEditCity(o.city ?? raw.address?.city ?? raw.city ?? "");
-    setEditPostalCode(o.postalCode ?? "");
+    setEditPostalCode(o.postalCode ?? raw.address?.postalCode ?? raw.postalCode ?? "");
     setEditFloor(o.floor ?? raw.floor ?? "");
 
     // P4: elevador e estacionamento — usar rawOrderJson como fallback
@@ -511,16 +488,6 @@ export default function AdminPedidoDetalheClient({ id }: { id: number }) {
     try { return order.analysisJsonExtended ? JSON.parse(order.analysisJsonExtended) : {}; } catch { return {}; }
   })();
   const analysisSource: string = analysisExt.analysisSource ?? est?.analysisSource ?? "";
-  const ANALYSIS_SOURCE_LABELS: Record<string, { label: string; color: string }> = {
-    clyon_pricing:                   { label: "Preçário CLYON (Gemini)", color: "text-cyan-400 border-cyan-400/30 bg-cyan-400/10" },
-    clyon_pricing_plus_web_reference: { label: "Preçário + Web", color: "text-teal-400 border-teal-400/30 bg-teal-400/10" },
-    web_reference_only:              { label: "Apenas web", color: "text-blue-400 border-blue-400/30 bg-blue-400/10" },
-    needs_human_review:              { label: "Revisão humana necessária", color: "text-amber-400 border-amber-400/30 bg-amber-400/10" },
-    gemini_reference:                { label: "Referência Gemini (preço 0)", color: "text-orange-400 border-orange-400/30 bg-orange-400/10" },
-    fallback_reference:              { label: "Referência interna (fallback)", color: "text-orange-400 border-orange-400/30 bg-orange-400/10" },
-    timeout_fallback:                { label: "Timeout Gemini — Estimativa local", color: "text-red-400 border-red-400/30 bg-red-400/10" },
-    local_fast_estimate:             { label: "Estimativa local (sem Gemini)", color: "text-slate-400 border-slate-400/30 bg-slate-400/10" },
-  };
   const entulhoQtd: string | null = rawOrder.entulhoQuantidade ?? null;
   const entulhoState: string | null = rawOrder.entulhoState ?? null;
 
@@ -535,7 +502,7 @@ export default function AdminPedidoDetalheClient({ id }: { id: number }) {
 
   const waPhone = (order.contactPhone ?? BUSINESS_PHONE).replace(/\D/g, "");
   const waMsg = encodeURIComponent(
-    `Olá ${order.contactName ?? "cliente"}, a CLYON está a contactar relativamente ao seu pedido #${order.id} de ${order.serviceType ?? "serviço"}.`
+    `Olá ${order.contactName ?? "cliente"}, a CLYON está a contactar relativamente ao seu pedido #${order.id} de ${tService(displayServiceType) ?? "serviço"}.`
   );
 
   // ─── JSX ───────────────────────────────────────────────────────────────────
@@ -698,10 +665,10 @@ export default function AdminPedidoDetalheClient({ id }: { id: number }) {
                   { label: "Pedido nº", value: `#${order.id}` },
                   { label: "Cliente", value: order.contactName },
                   { label: "Telefone", value: order.contactPhone },
-                  { label: "Serviço", value: labelOf(SERVICE_LABELS, displayServiceType) },
+                  { label: "Serviço", value: tService(displayServiceType) },
                   { label: "Status", value: STATUS_CFG[order.status]?.label ?? order.status },
                   { label: "Prioridade", value: order.priority ?? "normal" },
-                  { label: "Urgência", value: labelOf(URGENCY_LABELS, displayUrgency) ?? "Normal" },
+                  { label: "Urgência", value: tUrgency(displayUrgency) },
                   { label: "Assistente", value: order.assignedToName ?? "Não atribuído" },
                   { label: "Origem", value: "Simulador" },
                   { label: "Data de entrada", value: fmt(order.createdAt) },
@@ -739,8 +706,8 @@ export default function AdminPedidoDetalheClient({ id }: { id: number }) {
                   {[
                   { label: "Localidade", value: displayCity },
                   { label: "Andar", value: displayFloor },
-                  { label: "Elevador", value: labelOf(ELEVATOR_LABELS, displayElevator) },
-                  { label: "Estacionamento", value: labelOf(PARKING_LABELS, displayParking) },
+                  { label: "Elevador", value: tElevator(displayElevator) },
+                  { label: "Estacionamento", value: tParking(displayParking) },
                   ].map((item) => (
                     <div key={item.label} className="rounded-[14px] border border-white/[0.06] bg-white/[0.02] p-3">
                       <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-slate-600">{item.label}</p>

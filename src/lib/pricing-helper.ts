@@ -319,6 +319,58 @@ export function buildReferenceEstimate(input: FastEstimateInput): FastEstimateRe
 }
 
 /**
+ * Tenta extrair o número de itens a partir da descrição em texto livre.
+ * Usado quando heavyItems não está populado (pedidos via chat ou texto livre).
+ * Devolve null se não conseguir determinar com confiança.
+ *
+ * Estratégia:
+ *  1. Detectar palavras de quantidade explícitas: "3 sofás", "uma mesa e duas cadeiras"
+ *  2. Contar ocorrências de palavras-chave de mobiliário
+ *  3. Se menciona "carga completa", "tudo", "casa", "quarto" → devolver 6 (carga completa)
+ */
+export function countItemsFromDescription(description: string): number | null {
+  if (!description) return null;
+  const d = description.toLowerCase();
+
+  // Carga completa explícita
+  const fullLoadKw = ["carga completa", "tudo", "toda a casa", "todo o apartamento", "quarto inteiro", "sala inteira", "escritório inteiro"];
+  if (fullLoadKw.some((kw) => d.includes(kw))) return 6; // força mínimo de zona
+
+  // Tentar extrair números + items: "3 sofás", "2 mesas", etc.
+  const numWords: Record<string, number> = {
+    "uma": 1, "um": 1, "dois": 2, "duas": 2, "três": 3, "tres": 3,
+    "quatro": 4, "cinco": 5, "seis": 6, "sete": 7, "oito": 8,
+    "nove": 9, "dez": 10,
+  };
+  // Primeiro: dígitos seguidos de item (ex: "3 sofás")
+  const digitMatches = [...d.matchAll(/(\d+)\s+(sofá|sofa|cama|mesa|cadeira|armário|armario|roupeiro|frigorífico|frigorifico|móvel|movel|mono|item|peça|peca|estante|secretária|secretaria|aparador|vitrine|caixa|saco|poltrona)/gi)];
+  if (digitMatches.length > 0) {
+    const total = digitMatches.reduce((acc, m) => acc + parseInt(m[1], 10), 0);
+    return total;
+  }
+
+  // Segundo: palavras numéricas seguidas de item
+  let total = 0;
+  for (const [word, num] of Object.entries(numWords)) {
+    const re = new RegExp(`\\b${word}\\s+(sofá|sofa|cama|mesa|cadeira|armário|armario|roupeiro|frigorífico|frigorifico|móvel|movel|mono|estante|secretária|secretaria|aparador|vitrine|caixa|saco|poltrona)`, "i");
+    if (re.test(d)) total += num;
+  }
+  if (total > 0) return total;
+
+  // Terceiro: contar palavras-chave de mobiliário únicas na descrição
+  const itemKw = [
+    "sofá", "sofa", "cama", "mesa", "cadeira", "armário", "armario",
+    "roupeiro", "frigorífico", "frigorifico", "estante", "secretária",
+    "secretaria", "aparador", "vitrine", "poltrona", "móvel", "movel",
+    "frigorífico", "micro-ondas", "microondas", "máquina", "maquina",
+  ];
+  const found = itemKw.filter((kw) => d.includes(kw));
+  if (found.length > 0) return found.length; // heurística conservadora: 1 item por keyword
+
+  return null; // não conseguiu determinar
+}
+
+/**
  * Classifica um item descrito em texto como "pequeno", "medio" ou "grande".
  * Heurística baseada em palavras-chave comuns em pedidos CLYON.
  */
@@ -531,16 +583,18 @@ function applyZoneMinimum(
     return { price: priceWithoutVat, note: null };
   }
 
-  // Itens soltos (1–5 itens): NÃO aplicar mínimo de zona
-  // Usar apenas mínimo por item: 48,78 € s/IVA ≈ 60 € c/IVA
-  const isLooseItems = !isFullLoad && (svc === "recolha_moveis" || svc === "recolha_monos") && itemCount > 0 && itemCount < 6;
+  // Itens soltos (1–5 itens, ou itemCount desconhecido=0): NÃO aplicar mínimo de zona
+  // Para recolha_moveis/monos sem carga completa, usar apenas mínimo por item: 48,78€ s/IVA
+  // itemCount=0 significa "desconhecido" — tratar como 1 item (conservador, não infla o preço)
+  const isLooseItems = !isFullLoad && (svc === "recolha_moveis" || svc === "recolha_monos") && itemCount < 6;
   if (isLooseItems) {
+    const effectiveCount = Math.max(1, itemCount); // 0 → 1 item como mínimo
     const perItemMin = 48.78; // ~60 € c/IVA por item
-    const itemMin = Math.round(itemCount * perItemMin * 100) / 100;
+    const itemMin = Math.round(effectiveCount * perItemMin * 100) / 100;
     if (priceWithoutVat < itemMin) {
       return {
         price: itemMin,
-        note: `Mínimo por item aplicado: ${itemCount} item(s) × 48,78 € = ${itemMin.toFixed(2)} € s/IVA`,
+        note: `Mínimo por item aplicado: ${effectiveCount} item(s) × 48,78 € = ${itemMin.toFixed(2)} € s/IVA`,
       };
     }
     return { price: priceWithoutVat, note: null };
@@ -645,7 +699,19 @@ export async function calculateFastEstimate(input: FastEstimateInput): Promise<F
 
   // ── 8. Aplicar mínimos de zona ───────────────────────────────────────────────
   const city = (input as any).address?.city ?? (input as any).city ?? "";
-  const itemCount = input.heavyItems?.length ?? 0;
+
+  // Determinar itemCount: usar heavyItems se disponível, senão extrair da descrição
+  const heavyItemCount = input.heavyItems?.length ?? 0;
+  const descriptionItemCount = heavyItemCount === 0
+    ? countItemsFromDescription(input.description ?? "")
+    : null;
+  // Se não conseguimos determinar para recolha_moveis/monos, assumir 1 item (itens soltos)
+  // NÃO assumir carga completa por defeito — isso inflaciona o preço incorrectamente
+  const itemCount =
+    heavyItemCount > 0
+      ? heavyItemCount
+      : (descriptionItemCount !== null ? descriptionItemCount : 1);
+
   const isFull =
     input.serviceType === "esvaziamento_casa" ||
     input.serviceType === "esvaziamento_apartamento" ||

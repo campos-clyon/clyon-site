@@ -42,6 +42,7 @@ export async function POST(req: NextRequest) {
           ? (order.originAddress?.formattedAddress ?? order.address?.formattedAddress ?? null)
           : (order.address?.formattedAddress ?? null),
       city: order.city ?? order.address?.city ?? order.originAddress?.city ?? null,
+      // postalCode: não existe como coluna separada na DB — guardado em rawOrderJson
       floor: order.serviceType === "mudanca"
         ? (order.originAccess?.floor ?? order.floor ?? null)
         : (order.floor ?? null),
