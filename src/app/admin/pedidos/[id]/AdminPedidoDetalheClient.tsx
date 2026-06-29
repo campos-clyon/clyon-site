@@ -868,23 +868,69 @@ export default function AdminPedidoDetalheClient({ id }: { id: number }) {
           {/* ── Aba Estimativa ── */}
           {activeTab === "estimativa" && (
             <div className="space-y-6">
-              <h2 className="text-lg font-bold text-white">Estimativa e valores</h2>
+              <div className="flex flex-wrap items-center gap-3">
+                <h2 className="text-lg font-bold text-white">Estimativa e valores</h2>
+                {/* Badge: fonte da análise */}
+                {analysisSource && (() => {
+                  const cfg = ANALYSIS_SOURCE_LABELS[analysisSource];
+                  return (
+                    <span className={`rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider ${cfg?.color ?? "text-slate-400 border-slate-400/30 bg-slate-400/10"}`}>
+                      {cfg?.label ?? analysisSource}
+                    </span>
+                  );
+                })()}
+                {/* Badge: confiança da estimativa */}
+                {(est?.confidence ?? analysisExt.confidence) && (() => {
+                  const conf = est?.confidence ?? analysisExt.confidence;
+                  const confCfg: Record<string, string> = {
+                    high:   "text-emerald-400 border-emerald-400/30 bg-emerald-400/10",
+                    medium: "text-amber-400 border-amber-400/30 bg-amber-400/10",
+                    low:    "text-red-400 border-red-400/30 bg-red-400/10",
+                  };
+                  const confLabels: Record<string, string> = { high: "Confiança alta", medium: "Confiança média", low: "Confiança baixa" };
+                  return (
+                    <span className={`rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider ${confCfg[conf as string] ?? "text-slate-400 border-slate-400/30 bg-slate-400/10"}`}>
+                      {confLabels[conf as string] ?? conf}
+                    </span>
+                  );
+                })()}
+              </div>
+
+              {/* Entulho info (se aplicável) */}
+              {entulhoQtd && (
+                <div className="rounded-[20px] border border-white/[0.06] bg-white/[0.02] p-4 flex items-center gap-6">
+                  <div>
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-slate-600">Nº de sacos</p>
+                    <p className="mt-1 text-sm font-bold text-slate-200">{entulhoQtd}</p>
+                  </div>
+                  {entulhoState && (
+                    <div>
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-slate-600">Estado</p>
+                      <p className="mt-1 text-sm font-semibold text-slate-300 capitalize">{entulhoState === "chao" ? "No chão" : entulhoState === "misto" ? "Misto" : "Ensacado"}</p>
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Valores IA */}
               <div>
                 <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.15em] text-slate-500">Estimativa da IA</p>
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                   <div className="rounded-[20px] border border-white/[0.06] bg-white/[0.02] p-4">
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-slate-600">Mínimo</p>
-                    <p className="mt-1.5 text-lg font-bold text-cyan-400">{fmtEur(order.estimateMin) ?? "—"}</p>
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-slate-600">Mínimo s/IVA</p>
+                    <p className="mt-1.5 text-lg font-bold text-cyan-400">{fmtEur(order.estimateMin ?? (est?.estimateMinWithoutVat != null ? String(est.estimateMinWithoutVat) : null)) ?? "—"}</p>
                   </div>
                   <div className="rounded-[20px] border border-white/[0.06] bg-white/[0.02] p-4">
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-slate-600">Máximo</p>
-                    <p className="mt-1.5 text-lg font-bold text-cyan-400">{fmtEur(order.estimateMax) ?? "—"}</p>
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-slate-600">Máximo s/IVA</p>
+                    <p className="mt-1.5 text-lg font-bold text-cyan-400">{fmtEur(order.estimateMax ?? (est?.estimateMaxWithoutVat != null ? String(est.estimateMaxWithoutVat) : null)) ?? "—"}</p>
                   </div>
                   <div className="rounded-[20px] border border-cyan-400/10 bg-cyan-400/5 p-4">
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-cyan-600">Total estimado</p>
-                    <p className="mt-1.5 text-lg font-bold text-cyan-300">{fmtEur(order.estimateTotal) ?? "—"}</p>
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-cyan-600">Recomendado s/IVA</p>
+                    <p className="mt-1.5 text-lg font-bold text-cyan-300">{fmtEur(order.estimateTotal ?? (est?.estimatedPriceWithoutVat != null ? String(est.estimatedPriceWithoutVat) : null)) ?? "—"}</p>
+                  </div>
+                  <div className="rounded-[20px] border border-white/[0.06] bg-white/[0.02] p-4">
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-slate-600">Total c/IVA</p>
+                    <p className="mt-1.5 text-lg font-bold text-slate-200">{est?.estimatedPriceWithVat != null ? fmtEur(String(est.estimatedPriceWithVat)) : "—"}</p>
                   </div>
                 </div>
               </div>
@@ -893,7 +939,7 @@ export default function AdminPedidoDetalheClient({ id }: { id: number }) {
               {est && (
                 <div className="rounded-[24px] border border-violet-400/20 bg-violet-400/[0.03] p-5">
                   <div className="flex items-center gap-2 mb-4">
-                    <span className="text-xs font-bold text-violet-400 uppercase tracking-wider">Análise Gemini</span>
+                    <span className="text-xs font-bold text-violet-400 uppercase tracking-wider">Detalhe da análise</span>
                     <span className="ml-auto rounded-full border border-violet-400/30 px-2 py-0.5 text-[10px] font-semibold text-violet-400">IA</span>
                   </div>
                   <div className="space-y-4">
