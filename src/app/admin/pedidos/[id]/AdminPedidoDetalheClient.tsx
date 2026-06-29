@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { BUSINESS_PHONE } from "@/lib/seo-data";
-import { translate, tElevator, tParking, tUrgency, tService, FIELD_TRANSLATIONS } from "@/lib/translations";
+import { translate, tElevator, tParking, tUrgency, tService, tFloor, FIELD_TRANSLATIONS } from "@/lib/translations";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -278,13 +278,18 @@ export default function AdminPedidoDetalheClient({ id }: { id: number }) {
     setEditPostalCode(o.postalCode || raw.address?.postalCode || raw.postalCode || "");
     setEditFloor(o.floor || raw.floor || "");
 
-    // P4: elevador e estacionamento — usar rawOrderJson como fallback
-    // Importante: usar || em vez de ?? para tratar string vazia "" como ausente
-    // (alguns pedidos antigos têm "" em vez de null na coluna da DB)
-    const rawElevator = raw.hasElevator || raw.has_elevator || raw.elevador || "";
+    // P4: elevador e estacionamento — fallback abrangente para todos os possíveis
+    // nomes de campo no rawOrderJson (camelCase, snake_case, PT, acessos aninhados)
+    const rawElevator =
+      raw.hasElevator || raw.has_elevator || raw.elevador ||
+      raw.elevator || raw.access?.elevator || raw.access?.hasElevator ||
+      raw.originAccess?.hasElevator || "";
     setEditHasElevator(o.hasElevator || rawElevator);
 
-    const rawParking = raw.parkingDistance || raw.parking_distance || raw.estacionamento || "";
+    const rawParking =
+      raw.parkingDistance || raw.parking_distance || raw.estacionamento ||
+      raw.parking || raw.parkingInfo || raw.access?.parking ||
+      raw.access?.parkingDistance || raw.originAccess?.parkingDistance || "";
     setEditParkingDistance(o.parkingDistance || rawParking);
 
     // P1: auto-preencher preço final com estimativa recomendada quando confidence é high/medium
@@ -496,9 +501,15 @@ export default function AdminPedidoDetalheClient({ id }: { id: number }) {
   // (pedidos antigos podem ter "" em vez de null nas colunas da DB)
   const displayServiceType = order.serviceType || rawOrder.serviceType || rawOrder.service_type || null;
   const displayUrgency     = order.urgency || rawOrder.urgency || rawOrder.urgencia || null;
-  const displayFloor       = order.floor || rawOrder.floor || null;
-  const displayElevator    = order.hasElevator || rawOrder.hasElevator || rawOrder.has_elevator || null;
-  const displayParking     = order.parkingDistance || rawOrder.parkingDistance || rawOrder.parking_distance || null;
+  const displayFloor       = order.floor || rawOrder.floor || rawOrder.andar || null;
+  const displayElevator    =
+    order.hasElevator || rawOrder.hasElevator || rawOrder.has_elevator ||
+    rawOrder.elevator || rawOrder.access?.elevator || rawOrder.access?.hasElevator ||
+    rawOrder.originAccess?.hasElevator || null;
+  const displayParking     =
+    order.parkingDistance || rawOrder.parkingDistance || rawOrder.parking_distance ||
+    rawOrder.parking || rawOrder.parkingInfo || rawOrder.access?.parking ||
+    rawOrder.access?.parkingDistance || rawOrder.originAccess?.parkingDistance || null;
   const displayCity        = order.city || rawOrder.address?.city || rawOrder.city || null;
 
   const waPhone = (order.contactPhone ?? BUSINESS_PHONE).replace(/\D/g, "");
@@ -706,7 +717,7 @@ export default function AdminPedidoDetalheClient({ id }: { id: number }) {
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                   {[
                   { label: "Localidade", value: displayCity },
-                  { label: "Andar", value: displayFloor },
+                  { label: "Andar", value: tFloor(displayFloor) || displayFloor || "—" },
                   { label: "Elevador", value: tElevator(displayElevator) },
                   { label: "Estacionamento", value: tParking(displayParking) },
                   ].map((item) => (

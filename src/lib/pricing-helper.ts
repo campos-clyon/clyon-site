@@ -332,40 +332,57 @@ export function countItemsFromDescription(description: string): number | null {
   if (!description) return null;
   const d = description.toLowerCase();
 
-  // Carga completa explícita
+  // Carga completa explícita → mínimo de zona
   const fullLoadKw = ["carga completa", "tudo", "toda a casa", "todo o apartamento", "quarto inteiro", "sala inteira", "escritório inteiro"];
-  if (fullLoadKw.some((kw) => d.includes(kw))) return 6; // força mínimo de zona
+  if (fullLoadKw.some((kw) => d.includes(kw))) return 6;
 
-  // Tentar extrair números + items: "3 sofás", "2 mesas", etc.
-  const numWords: Record<string, number> = {
-    "uma": 1, "um": 1, "dois": 2, "duas": 2, "três": 3, "tres": 3,
-    "quatro": 4, "cinco": 5, "seis": 6, "sete": 7, "oito": 8,
-    "nove": 9, "dez": 10,
-  };
-  // Primeiro: dígitos seguidos de item (ex: "3 sofás")
-  const digitMatches = [...d.matchAll(/(\d+)\s+(sofá|sofa|cama|mesa|cadeira|armário|armario|roupeiro|frigorífico|frigorifico|móvel|movel|mono|item|peça|peca|estante|secretária|secretaria|aparador|vitrine|caixa|saco|poltrona)/gi)];
-  if (digitMatches.length > 0) {
-    const total = digitMatches.reduce((acc, m) => acc + parseInt(m[1], 10), 0);
-    return total;
-  }
-
-  // Segundo: palavras numéricas seguidas de item
-  let total = 0;
-  for (const [word, num] of Object.entries(numWords)) {
-    const re = new RegExp(`\\b${word}\\s+(sofá|sofa|cama|mesa|cadeira|armário|armario|roupeiro|frigorífico|frigorifico|móvel|movel|mono|estante|secretária|secretaria|aparador|vitrine|caixa|saco|poltrona)`, "i");
-    if (re.test(d)) total += num;
-  }
-  if (total > 0) return total;
-
-  // Terceiro: contar palavras-chave de mobiliário únicas na descrição
-  const itemKw = [
-    "sofá", "sofa", "cama", "mesa", "cadeira", "armário", "armario",
-    "roupeiro", "frigorífico", "frigorifico", "estante", "secretária",
-    "secretaria", "aparador", "vitrine", "poltrona", "móvel", "movel",
-    "frigorífico", "micro-ondas", "microondas", "máquina", "maquina",
+  // Keywords de itens de mobiliário/eletrodomésticos
+  const itemKeywords = [
+    "sofá", "sofa", "frigorifico", "frigorífico", "arca", "mesa",
+    "cadeira", "cama", "colchão", "colchao", "roupeiro", "armário", "armario",
+    "estante", "televisão", "televisao", "televisor", "tv", "maquina", "máquina",
+    "microondas", "forno", "computador", "secretária", "secretaria",
+    "cadeirão", "cadeirao", "banco", "prateleira", "cómoda", "comoda",
+    "beliche", "berço", "berco", "bicicleta", "mono", "móvel", "movel",
+    "eletrodoméstico", "electrodomestico", "aparador", "vitrine", "poltrona",
   ];
-  const found = itemKw.filter((kw) => d.includes(kw));
-  if (found.length > 0) return found.length; // heurística conservadora: 1 item por keyword
+
+  // ESTRATÉGIA 1: dígitos seguidos de item (ex: "3 sofás", "1 frigorifico")
+  const digitMatches = [
+    ...d.matchAll(new RegExp(`(\\d+)\\s+(${itemKeywords.join("|")})`, "gi")),
+  ];
+  if (digitMatches.length > 0) {
+    return digitMatches.reduce((acc, m) => acc + parseInt(m[1], 10), 0);
+  }
+
+  // ESTRATÉGIA 2: contar quantas vezes cada palavra numérica aparece ANTES de
+  // qualquer keyword de item (não agrupado — "um X, um Y" = 2)
+  const numWords: Record<string, number> = {
+    "um ": 1, "uma ": 1, "dois ": 2, "duas ": 2,
+    "três ": 3, "tres ": 3, "quatro ": 4, "cinco ": 5,
+    "seis ": 6, "sete ": 7, "oito ": 8, "nove ": 9, "dez ": 10,
+  };
+  // Verificar se a descrição contém pelo menos um item keyword
+  const hasItems = itemKeywords.some((kw) => d.includes(kw));
+  if (hasItems) {
+    // Contar todas as ocorrências de palavras numéricas na frase
+    let total = 0;
+    let foundAny = false;
+    for (const [word, num] of Object.entries(numWords)) {
+      // Contar ocorrências sem word-boundary para aceitar início de frase
+      const regex = new RegExp(word.trim(), "gi");
+      const matches = d.match(regex);
+      if (matches) {
+        total += matches.length * num;
+        foundAny = true;
+      }
+    }
+    if (foundAny && total > 0) return total;
+
+    // Se tem keywords mas sem numerais → contar keywords únicas encontradas
+    const uniqueFound = [...new Set(itemKeywords.filter((kw) => d.includes(kw)))];
+    if (uniqueFound.length > 0) return uniqueFound.length;
+  }
 
   return null; // não conseguiu determinar
 }
