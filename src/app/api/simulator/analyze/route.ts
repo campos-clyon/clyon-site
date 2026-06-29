@@ -161,7 +161,7 @@ Retorna APENAS o JSON sem texto adicional.`;
   }
 }
 
-// ── Determinar analysisSource final ──────────────────────���───────────────────
+// ── Determinar analysisSource final ──────────────────────����───────────────────
 function resolveAnalysisSource(
   baseSource: AnalysisSource,
   externalEstimate: ExternalMarketEstimate | null,
@@ -496,14 +496,22 @@ REGRAS ABSOLUTAS
 ═══════════════════════════════════════════════════════════
 
 1. USA SEMPRE a fórmula: (combustível + pessoal + overhead) × (1 + margem) = preço s/IVA.
-2. Aplica SEMPRE os mínimos por zona — se o cálculo ficar abaixo do mínimo, o preço final É o mínimo (não ficas com o valor calculado).
-   EXEMPLO OBRIGATÓRIO: se o cálculo der 138,56 € s/IVA e a morada é Lisboa → preço final = 203,25 € s/IVA (mínimo Lisboa 250 € c/IVA ÷ 1,23).
-   Outro exemplo: Amora/Seixal, cálculo = 120 € s/IVA → preço final = 178,86 € s/IVA (mínimo 220 € c/IVA ÷ 1,23).
+2. MÍNIMOS — REGRAS DIFERENTES POR TIPO DE SERVIÇO:
+   a) ITENS SOLTOS (1–5 itens — recolha de móveis/monos): NÃO aplicar mínimo de zona.
+      Usar preço real calculado pela fórmula. Mínimo por item: ~48,78 € s/IVA (60 € c/IVA).
+      EXEMPLO CORRETO: Mesa e cadeiras (2 itens), 2º andar, elevador pequeno, Lisboa → 100 a 130 € c/IVA (NÃO 270 €!)
+      EXEMPLO CORRETO: 1 frigorífico, rés-do-chão, estacionamento à porta → 50 a 80 € c/IVA
+      Para múltiplos itens soltos: aplica desconto de eficiência (~60% do custo por item adicional).
+   b) CARGA COMPLETA (≥6 itens), ESVAZIAMENTO: aplicar mínimo de zona.
+      Lisboa 250 € s/IVA (acesso difícil: 270 €) | Almada/Barreiro 230 € | Amora/Seixal 220 €
+      EXEMPLO: Esvaziamento Lisboa, cálculo = 180 € s/IVA → preço final = 250 € s/IVA (mínimo zona).
+   c) ENTULHO: mínimo fixo 90 € s/IVA — sem mínimo de zona.
+   d) MUDANÇA: mínimo fixo 150 € s/IVA — sem mínimo de zona.
 3. estimatedPriceWithoutVat, estimateMinWithoutVat e estimateMaxWithoutVat NUNCA podem ser null ou 0.
-4. Se faltarem dados críticos, dá SEMPRE um intervalo com o mínimo da zona e confidence "low".
-5. NUNCA devolveres preços 0 ou null — se dados insuficientes, usa os mínimos de zona.
+4. Se faltarem dados críticos, dá SEMPRE um intervalo razoável com confidence "low".
+5. NUNCA devolveres preços 0 ou null.
 6. customerMessage SEMPRE inclui o valor estimado.
-7. No summary, mostra o cálculo passo a passo E indica claramente se foi aplicado mínimo de zona.
+7. No summary, mostra o cálculo passo a passo E indica se foi ou não aplicado mínimo.
 8. Retorna APENAS JSON válido — sem texto antes ou depois, sem backticks.
 
 ═══════════════════════════════════════════════════════════

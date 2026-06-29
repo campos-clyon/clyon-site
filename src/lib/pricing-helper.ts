@@ -110,13 +110,33 @@ MUDANÇA:
   - Acesso difícil por local: +30 min
   - Percurso acima de 30 km: +30 min
 
-MÍNIMOS POR ZONA (aplica sempre — se o cálculo ficar abaixo, usa o mínimo):
+MÍNIMOS — REGRAS DIFERENTES POR TIPO DE SERVIÇO:
+
+ITENS SOLTOS (1 a 5 itens — recolha de móveis / monos):
+  NÃO aplicar mínimo de zona. Calcular pela fórmula real.
+  Mínimo por item: 48,78 € s/IVA (~60 € c/IVA) por item individual.
+  EXEMPLOS DE PREÇOS COM IVA:
+    1 frigorifico ou arca:          50 a 80 € c/IVA
+    1 sofá ou chaise longue:        80 a 120 € c/IVA
+    1 cama com colchão:             80 a 120 € c/IVA
+    1 armário grande:               70 a 100 € c/IVA
+    1 mesa:                         45 a 70 € c/IVA
+    1 cadeira:                      20 a 35 € c/IVA
+    1 mono pequeno genérico:        25 a 50 € c/IVA
+    1 eletrodoméstico médio:        30 a 50 € c/IVA
+  DESCONTO DE EFICIÊNCIA: para múltiplos itens soltos, NÃO somar linearmente.
+    2 mesas + cadeiras num 2º andar Lisboa: 100 a 130 € c/IVA (NÃO 270 €!)
+    A equipa já está no local — cada item adicional custa ~60% do primeiro.
+
+CARGA COMPLETA (≥6 itens), ESVAZIAMENTO DE CASA/APARTAMENTO:
+  Aplicar mínimos de zona:
   - Amora / Seixal / Fernão Ferro: 220 € s/IVA
   - Almada / Barreiro / Setúbal: 230 € s/IVA
   - Lisboa acesso normal: 250 € s/IVA
   - Lisboa acesso difícil / Sintra / Cascais / Loures / VFX: 270 € s/IVA
-  - Mínimo entulho: 90 € s/IVA
-  - Mínimo mudança: 150 € s/IVA
+
+ENTULHO: mínimo fixo 90 € s/IVA — sem mínimo de zona
+MUDANÇA: mínimo fixo 150 € s/IVA — sem mínimo de zona
 
 AGRAVAMENTOS (adicionais ao preço final s/IVA):
   - Urgência hoje: +40 €
@@ -153,7 +173,12 @@ FÓRMULA: custo_combustivel (distancia × 0.33 €/km) + custo_pessoal (horas ×
 IVA: 23%
 
 HORAS: Recolha 1-5 itens: 0.5h/item | Carga completa: 4h | Entulho 1-10 sacos: 1h, 11-30: 1.5h, 31-80: 2.5h, 81-150: 4h | Mudança: 7h base
-MÍNIMOS: Local 220€ | Almada/Barreiro 230€ | Lisboa 250€ | Lisboa difícil/Loures/Sintra 270€ | Entulho 90€ | Mudança 150€
+
+MÍNIMOS (REGRA CRÍTICA):
+  ITENS SOLTOS (1-5 itens): SEM mínimo de zona. Preço real pela fórmula. Mínimo 48,78€ s/IVA por item.
+    Exemplos c/IVA: 1 frigorifico 50-80€ | 1 sofá 80-120€ | 1 mesa 45-70€ | 2 mesas+cadeiras Lisboa 100-130€ (NÃO 270€)
+  CARGA COMPLETA (≥6 itens) / ESVAZIAMENTO: mínimo de zona — Local 220€ | Almada 230€ | Lisboa 250€ | Lisboa difícil/Loures 270€
+  ENTULHO: mínimo 90€ s/IVA (sem zona) | MUDANÇA: mínimo 150€ s/IVA (sem zona)
 AGRAVAMENTOS: Urgência hoje +40€ | amanhã +20€ | Estacionamento difícil +15€`;
   }
 }
@@ -476,6 +501,13 @@ function getDistanceForFuel(input: FastEstimateInput): number {
 /**
  * Aplica mínimos comerciais por zona ao preço final sem IVA.
  * Retorna o preço com mínimo aplicado e nota de pressuposto se ajustado.
+ *
+ * Regra de negócio:
+ *   - Entulho: mínimo fixo 90 € s/IVA (sem mínimo de zona)
+ *   - Mudança: mínimo fixo 150 € s/IVA (sem mínimo de zona)
+ *   - Itens soltos (1–5 itens): mínimo 48,78 € s/IVA por item (~60 € c/IVA)
+ *     SEM aplicar mínimo de zona — o preço é o real calculado pela fórmula
+ *   - Carga completa (≥6 itens), esvaziamento: aplicar mínimo de zona
  */
 function applyZoneMinimum(
   priceWithoutVat: number,
@@ -483,17 +515,38 @@ function applyZoneMinimum(
   floor: string | undefined,
   hasElevator: string | undefined,
   parkingDistance: string | undefined,
-  svc: string | undefined
+  svc: string | undefined,
+  itemCount: number = 0,
+  isFullLoad: boolean = false,
 ): { price: number; note: string | null } {
-  // Mínimos não se aplicam a entulho (tem o seu próprio mínimo de 90€ s/IVA)
+  // Entulho: mínimo fixo próprio, sem mínimo de zona
   if (svc === "recolha_entulho") {
     if (priceWithoutVat < 90) return { price: 90, note: "Mínimo de entulho aplicado: 90 € s/IVA" };
     return { price: priceWithoutVat, note: null };
   }
-  if (svc === "mudanca" && priceWithoutVat < 150) {
-    return { price: 150, note: "Mínimo de mudança aplicado: 150 € s/IVA" };
+
+  // Mudança: mínimo fixo, sem mínimo de zona
+  if (svc === "mudanca") {
+    if (priceWithoutVat < 150) return { price: 150, note: "Mínimo de mudança aplicado: 150 € s/IVA" };
+    return { price: priceWithoutVat, note: null };
   }
 
+  // Itens soltos (1–5 itens): NÃO aplicar mínimo de zona
+  // Usar apenas mínimo por item: 48,78 € s/IVA ≈ 60 € c/IVA
+  const isLooseItems = !isFullLoad && (svc === "recolha_moveis" || svc === "recolha_monos") && itemCount > 0 && itemCount < 6;
+  if (isLooseItems) {
+    const perItemMin = 48.78; // ~60 € c/IVA por item
+    const itemMin = Math.round(itemCount * perItemMin * 100) / 100;
+    if (priceWithoutVat < itemMin) {
+      return {
+        price: itemMin,
+        note: `Mínimo por item aplicado: ${itemCount} item(s) × 48,78 € = ${itemMin.toFixed(2)} € s/IVA`,
+      };
+    }
+    return { price: priceWithoutVat, note: null };
+  }
+
+  // Carga completa / esvaziamento: aplicar mínimo de zona
   const c = city.toLowerCase();
   const isLisboa = c.includes("lisboa") || c.includes("lisbon");
   const isLoures = c.includes("loures") || c.includes("alverca") || c.includes("vila franca") || c.includes("cascais") || c.includes("sintra");
@@ -592,13 +645,20 @@ export async function calculateFastEstimate(input: FastEstimateInput): Promise<F
 
   // ── 8. Aplicar mínimos de zona ───────────────────────────────────────────────
   const city = (input as any).address?.city ?? (input as any).city ?? "";
+  const itemCount = input.heavyItems?.length ?? 0;
+  const isFull =
+    input.serviceType === "esvaziamento_casa" ||
+    input.serviceType === "esvaziamento_apartamento" ||
+    itemCount >= 6;
   const { price: precoComMinimo, note: minNote } = applyZoneMinimum(
     precoSemIva + extras,
     city,
     input.floor,
     input.hasElevator,
     input.parkingDistance,
-    input.serviceType
+    input.serviceType,
+    itemCount,
+    isFull,
   );
   if (minNote) assumptions.push(minNote);
 
