@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { approveSimulatorOrder, getSimulatorOrderById } from "@/lib/db";
+import { approveSimulatorOrder, getSimulatorOrderById, setOrcamentoToken } from "@/lib/db";
 import { verifyColaboradorAuthHeader } from "@/lib/colaborador-auth";
+import { sendOrcamentoEmail } from "@/lib/email-orcamento";
 
 export const runtime = "nodejs";
 
@@ -29,5 +30,22 @@ export async function POST(req: NextRequest) {
   });
 
   const order = await getSimulatorOrderById(Number(id));
+
+  // Enviar email de orçamento ao cliente (assíncrono — não bloqueia a resposta)
+  if (order?.contactEmail) {
+    const token = await setOrcamentoToken(Number(id));
+    sendOrcamentoEmail({
+      to:              order.contactEmail,
+      clienteName:     order.contactName ?? "Cliente",
+      serviceType:     order.serviceType ?? null,
+      address:         order.address ?? null,
+      description:     order.description ?? null,
+      precoFinalIva:   Number((order as any).precoFinalIva ?? precoFinalIva),
+      dataAgendada:    (order as any).scheduledDate ?? (order as any).dataAgendada ?? null,
+      token,
+      orderId:         Number(id),
+    }).catch(() => {});
+  }
+
   return NextResponse.json({ ok: true, order });
 }

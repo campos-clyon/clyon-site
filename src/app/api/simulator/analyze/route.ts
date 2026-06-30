@@ -207,15 +207,20 @@ export async function POST(req: NextRequest) {
   // ── 1. Estimativa rápida local (sempre calculada, < 50ms) ────────────────
   const fastEstimate = await calculateFastEstimate(order as never);
 
-  // ── 2. Remover ficheiros pesados antes de enviar ao Gemini ───────────────
+  // ── 2. Preparar ficheiros para Gemini ────────────────────────────────────
+  // Preservar previewUrl e base64 das IMAGENS para análise multimodal.
+  // Vídeos e ficheiros não-imagem são excluídos (Gemini só suporta imagens no SDK de API).
   const orderForGemini: OrderData = {
     ...order,
     files: order.files?.map((f) => ({
-      id: f.id,
-      name: f.name,
-      size: f.size,
-      type: f.type,
-      mimeType: f.mimeType,
+      id:         f.id,
+      name:       f.name,
+      size:       f.size,
+      type:       f.type,
+      mimeType:   f.mimeType,
+      // Preservar URL e base64 apenas para imagens — vídeos omitidos
+      previewUrl: f.type === "image" ? (f.previewUrl ?? undefined) : undefined,
+      base64:     f.type === "image" ? (f.base64 ?? undefined)     : undefined,
     })) ?? [],
   };
 
@@ -247,13 +252,59 @@ export async function POST(req: NextRequest) {
     const resolvedItemCount = fastEstimate.itemCount ?? 1;
     const resolvedIsFullLoad = fastEstimate.isFullLoad ?? false;
     const formattedData = formatOrderDataForPrompt(orderForGemini, resolvedItemCount, resolvedIsFullLoad);
-    const prompt = buildAnalysisPrompt(formattedData, pricingRules);
+    // hasPhotos: indica ao Gemini que deve analisar as imagens multimodais em conjunto
+    const hasPhotos = (orderForGemini.files ?? []).some(
+      (f) => f.type === "image" && (f.base64 || f.previewUrl)
+    );
+    const prompt = buildAnalysisPrompt(formattedData, pricingRules, hasPhotos);
 
     const client = new GoogleGenerativeAI(apiKey);
     const model = client.getGenerativeModel({ model: modelName });
 
+    // ── Construir partes de imagem para análise multimodal ────────────────
+    // Converte URLs do Vercel Blob em inlineData (base64) para o Gemini.
+    // Máximo de 5 imagens, cada uma com timeout de 2s para não atrasar em excesso.
+    // Se uma imagem falhar, é ignorada silenciosamente.
+    const imageFiles = (orderForGemini.files ?? []).filter(
+      (f) => f.type === "image" && (f.base64 || f.previewUrl)
+    ).slice(0, 5);
+
+    type ImagePart = { inlineData: { mimeType: string; data: string } };
+    const imageParts: ImagePart[] = [];
+
+    for (const f of imageFiles) {
+      try {
+        if (f.base64) {
+          // base64 já disponível no cliente
+          const mimeType = f.mimeType ?? "image/jpeg";
+          const data = f.base64.replace(/^data:[^;]+;base64,/, "");
+          if (data.length > 0) imageParts.push({ inlineData: { mimeType, data } });
+        } else if (f.previewUrl) {
+          // Fetch da URL do Vercel Blob com timeout de 2s
+          const imgRes = await Promise.race([
+            fetch(f.previewUrl),
+            new Promise<never>((_, rej) => setTimeout(() => rej(new Error("IMG_TIMEOUT")), 2000)),
+          ]);
+          if (imgRes.ok) {
+            const buf = await imgRes.arrayBuffer();
+            const data = Buffer.from(buf).toString("base64");
+            const mimeType = imgRes.headers.get("content-type") ?? f.mimeType ?? "image/jpeg";
+            if (data.length > 0) imageParts.push({ inlineData: { mimeType, data } });
+          }
+        }
+      } catch {
+        // Imagem ignorada — não afecta o cálculo de preço
+      }
+    }
+
+    // Construir conteúdo: imagens primeiro (contexto visual), depois o prompt de texto
+    // Se não houver imagens, envia apenas o prompt (comportamento original)
+    const geminiContent = imageParts.length > 0
+      ? [...imageParts, { text: prompt }]
+      : prompt;
+
     const geminiResult = await Promise.race([
-      model.generateContent(prompt),
+      model.generateContent(geminiContent),
       new Promise<never>((_, reject) =>
         setTimeout(() => reject(new Error("GEMINI_TIMEOUT")), GEMINI_TIMEOUT_MS)
       ),
@@ -262,6 +313,17 @@ export async function POST(req: NextRequest) {
     const responseText = (geminiResult as Awaited<ReturnType<typeof model.generateContent>>).response.text();
     analysis = parseGeminiResponse(responseText);
     baseSource = "clyon_pricing";
+
+    // Registar na análise se foram usadas fotos (para rastreabilidade interna)
+    if (imageParts.length > 0) {
+      analysis = {
+        ...analysis,
+        internalNotes: [
+          ...(analysis.internalNotes ?? []),
+          `Análise multimodal: ${imageParts.length} foto(s) enviadas ao Gemini para ajuste visual de volume/itens.`,
+        ],
+      };
+    }
 
     // Zero-price guard: se o Gemini devolveu preço 0 ou null, aplicar fallback de referência
     const geminiPrice = analysis.estimatedPriceWithoutVat;
@@ -358,7 +420,7 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  // ── 5. Determinar fonte e confiança finais ───────────────��────────────────
+  // ── 5. Determinar fonte e confiança finais ───────────────���────────────────
   const analysisSource = resolveAnalysisSource(baseSource, externalMarketEstimate, analysis);
 
   // Confiança: propagar o que o Gemini definiu, ou inferir
@@ -491,7 +553,7 @@ function formatOrderDataForPrompt(order: OrderData, resolvedItemCount: number, i
   return lines.join("\n");
 }
 
-function buildAnalysisPrompt(formattedData: string, pricingRules: string): string {
+function buildAnalysisPrompt(formattedData: string, pricingRules: string, hasPhotos = false): string {
   return `És o orçamentista sénior da empresa CLYON, baseada em Fernão Ferro (Seixal), Portugal.
 A CLYON presta serviços de recolha de móveis/monos, recolha de entulho, esvaziamento de casas/apartamentos e mudanças.
 
@@ -558,7 +620,25 @@ REGRAS ABSOLUTAS
 6. customerMessage SEMPRE inclui o valor estimado.
 7. No summary, mostra o cálculo passo a passo E indica se foi ou não aplicado mínimo.
 8. Retorna APENAS JSON válido — sem texto antes ou depois, sem backticks.
+${hasPhotos ? `
+═══════════════════════════════════════════════════════════
+ANÁLISE DE FOTOS (IMAGENS ENVIADAS ACIMA)
+═══════════════════════════════════════════════════════════
 
+As imagens acima foram enviadas pelo cliente e mostram o espaço/itens a remover ou transportar.
+INSTRUÇÕES PARA ANÁLISE VISUAL:
+a) Conta os itens visíveis nas fotos e compara com o valor pré-calculado em "CONTAGEM DE ITENS".
+b) Se as fotos revelam MAIS itens do que o valor pré-calculado, adiciona a diferença ao preço.
+   Ex: texto diz "alguns móveis" (pré-calc = 3) mas fotos mostram claramente 6 peças → usa 6.
+c) Se as fotos confirmam ou mostram MENOS itens, mantém o valor pré-calculado (não reduzires).
+d) Avalia o volume/peso aparente: grandes electrodomésticos, materiais pesados ou volumosos
+   que não foram mencionados na descrição devem ser reflectidos no preço.
+e) Avalia o estado de acesso: escadas visíveis, corredores estreitos, pisos altos sem elevador.
+f) Adiciona em "internalNotes" uma frase como:
+   "Análise visual das fotos: X itens contados visualmente vs Y estimado pelo texto. [Ajuste/Sem ajuste]."
+   NUNCA mostres esta nota ao cliente — é apenas para uso interno da equipa.
+g) Se as fotos não forem relevantes para o cálculo, ignora-as e usa apenas o texto.
+` : ""}
 ═══════════════════════════════════════════════════════════
 PEDIDO A ANALISAR
 ═══════════════════════════════════════════════════════════

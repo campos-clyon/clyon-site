@@ -6,6 +6,8 @@ import {
   calculateOrderPriority,
 } from "@/lib/db";
 import type { InsertSimulatorOrder } from "../../../../../drizzle/schema";
+import { notifyNewOrder } from "@/lib/whatsapp";
+import { SITE_URL } from "@/lib/seo-data";
 
 export const runtime = "nodejs";
 
@@ -123,6 +125,18 @@ export async function POST(req: NextRequest) {
       type: "created",
       by: null,
       message: `Pedido criado via simulador. Fila geral (sem assistente). Serviço: ${order.serviceType ?? "—"}. Prioridade: ${priority}.`,
+    });
+
+    // Notificação WhatsApp — assíncrona, não bloqueia a resposta ao cliente.
+    // Se falhar, o pedido já está guardado e o erro apenas fica no log.
+    notifyNewOrder({
+      id,
+      contactName:     row.contactName ?? null,
+      serviceType:     row.serviceType ?? null,
+      city:            row.city ?? null,
+      address:         row.address ?? null,
+      estimateWithVat: row.estimateMax ?? row.estimateTotal ?? null,
+      backofficeUrl:   `${SITE_URL}/admin/pedidos/${id}`,
     });
 
     return NextResponse.json({

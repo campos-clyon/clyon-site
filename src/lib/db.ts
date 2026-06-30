@@ -908,6 +908,12 @@ export async function ensureSimulatorOrdersTable() {
     // v6 migrations — target Google Calendar identity (which calendar the event was sent to)
     `ALTER TABLE simulatorOrders ADD COLUMN calendarTargetId VARCHAR(255) NULL DEFAULT NULL`,
     `ALTER TABLE simulatorOrders ADD COLUMN calendarTargetName VARCHAR(255) NULL DEFAULT NULL`,
+    // v7 migrations — token de orçamento para página pública de confirmação pelo cliente
+    `ALTER TABLE simulatorOrders ADD COLUMN orcamentoToken VARCHAR(64) NULL DEFAULT NULL`,
+    `ALTER TABLE simulatorOrders ADD COLUMN confirmadoPeloCliente TINYINT(1) NULL DEFAULT 0`,
+    `ALTER TABLE simulatorOrders ADD COLUMN confirmadoEm TIMESTAMP NULL DEFAULT NULL`,
+    `ALTER TABLE simulatorOrders ADD COLUMN canceladoPeloCliente TINYINT(1) NULL DEFAULT 0`,
+    `ALTER TABLE simulatorOrders ADD COLUMN canceladoPeloClienteEm TIMESTAMP NULL DEFAULT NULL`,
   ];
   for (const sql of migrations) {
     try { await pool.execute(sql); } catch (e: any) {
@@ -1344,6 +1350,82 @@ export function canEditRequest(
 
 export function canManageUsers(user: { isAdmin: number }): boolean {
   return !!user.isAdmin;
+}
+
+// ─── Orçamento token ─────────────────────────────────────────────────────────
+
+/**
+ * Gera (ou reutiliza) um token único para a página de orçamento do cliente.
+ * Retorna o token criado/existente.
+ */
+export async function setOrcamentoToken(orderId: number): Promise<string> {
+  await ensureSimulatorOrdersTable();
+  const pool = await getPool();
+  if (!pool) throw new Error("Database not available");
+  // Reutilizar token existente se já houver
+  const [[existing]] = await pool.execute(
+    "SELECT orcamentoToken FROM simulatorOrders WHERE id = ? LIMIT 1",
+    [orderId]
+  ) as any[];
+  if (existing?.orcamentoToken) return existing.orcamentoToken as string;
+  const { randomBytes } = await import("crypto");
+  const token = randomBytes(32).toString("hex");
+  await pool.execute(
+    "UPDATE simulatorOrders SET orcamentoToken = ? WHERE id = ?",
+    [token, orderId]
+  );
+  return token;
+}
+
+export async function getOrderByToken(token: string): Promise<SimulatorOrder | null> {
+  await ensureSimulatorOrdersTable();
+  const pool = await getPool();
+  if (!pool) return null;
+  const [rows] = await pool.execute(
+    "SELECT * FROM simulatorOrders WHERE orcamentoToken = ? LIMIT 1",
+    [token]
+  ) as any[];
+  return (rows as SimulatorOrder[])[0] ?? null;
+}
+
+export async function confirmarOrcamento(token: string): Promise<{ ok: boolean; error?: string }> {
+  await ensureSimulatorOrdersTable();
+  const pool = await getPool();
+  if (!pool) return { ok: false, error: "Database not available" };
+  const order = await getOrderByToken(token);
+  if (!order) return { ok: false, error: "Pedido não encontrado." };
+  if ((order as any).canceladoPeloCliente) return { ok: false, error: "Este pedido já foi cancelado." };
+  if ((order as any).confirmadoPeloCliente) return { ok: true }; // idempotente
+  await pool.execute(
+    "UPDATE simulatorOrders SET confirmadoPeloCliente = 1, confirmadoEm = NOW(), status = 'confirmado', updatedAt = NOW() WHERE orcamentoToken = ?",
+    [token]
+  );
+  await appendOrderHistory(order.id, {
+    type: "client_confirmed",
+    by: null,
+    message: "Cliente confirmou o orçamento através da página de confirmação.",
+  });
+  return { ok: true };
+}
+
+export async function cancelarOrcamentoPeloCliente(token: string): Promise<{ ok: boolean; error?: string }> {
+  await ensureSimulatorOrdersTable();
+  const pool = await getPool();
+  if (!pool) return { ok: false, error: "Database not available" };
+  const order = await getOrderByToken(token);
+  if (!order) return { ok: false, error: "Pedido não encontrado." };
+  if ((order as any).canceladoPeloCliente) return { ok: true }; // idempotente
+  if ((order as any).confirmadoPeloCliente) return { ok: false, error: "O pedido já foi confirmado e não pode ser cancelado aqui. Por favor contacte a CLYON directamente." };
+  await pool.execute(
+    "UPDATE simulatorOrders SET canceladoPeloCliente = 1, canceladoPeloClienteEm = NOW(), status = 'cancelado', updatedAt = NOW() WHERE orcamentoToken = ?",
+    [token]
+  );
+  await appendOrderHistory(order.id, {
+    type: "client_cancelled",
+    by: null,
+    message: "Cliente cancelou o pedido através da página de confirmação.",
+  });
+  return { ok: true };
 }
 
 // ─── SimulatorOrders END ──────────────────────────────────────────────────────
