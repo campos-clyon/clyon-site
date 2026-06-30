@@ -3,10 +3,13 @@
  *
  * Fluxo:
  *   1. Colaborador clica "Entrar com Google" em /colaboradores/entrar
- *   2. Google redireciona de volta com o email autenticado
- *   3. O callback signIn verifica se o email existe na tabela `colaboradores` (ativo=1)
- *   4. Se não existir → retorna URL de erro → redireciona para /colaboradores/entrar?erro=nao_autorizado
- *   5. Se existir → sessão criada → redireciona para /colaboradores/dashboard
+ *   2. O callback signIn retorna true para qualquer conta Google (sem verificação de DB aqui)
+ *   3. Após o redirect de regresso, EntrarForm.tsx faz fetch a /api/colaboradores/verify-email
+ *   4. Se o email não estiver na tabela colaboradores → signOut + erro=nao_autorizado
+ *   5. Se estiver → redireciona para /colaboradores/admin
+ *
+ * Esta abordagem evita que o handler de colaboradores bloqueie logins de clientes
+ * que usam o handler separado /api/auth/cliente/[...nextauth] (auth-cliente.ts).
  *
  * Variáveis de ambiente necessárias (adicionar no Vercel → Settings → Vars):
  *   NEXTAUTH_SECRET      — openssl rand -base64 32
@@ -17,7 +20,7 @@
 
 import NextAuth, { type NextAuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
-import { getPool } from "@/lib/db";
+// getPool não é necessário aqui — verificação de colaborador movida para /api/colaboradores/verify-email
 
 export const authOptions: NextAuthOptions = {
   secret: process.env.NEXTAUTH_SECRET,
@@ -30,31 +33,12 @@ export const authOptions: NextAuthOptions = {
   ],
 
   callbacks: {
-    async signIn({ user, account: _account, profile: _profile, email: _email, credentials: _credentials }) {
-      // Este handler serve APENAS colaboradores (/api/auth/[...nextauth]).
-      // O handler de clientes está em /api/auth/cliente/[...nextauth] (auth-cliente.ts).
-      const email = user.email;
-      if (!email) return false;
-
-      try {
-        const pool = await getPool();
-        if (!pool) {
-          console.error("[auth] Pool MySQL não disponível — bloqueando login de colaborador");
-          return false;
-        }
-        const [rows] = await pool.execute(
-          "SELECT id FROM colaboradores WHERE email = ? AND ativo = 1 LIMIT 1",
-          [email],
-        ) as [Array<{ id: number }>, unknown];
-
-        if (rows.length === 0) {
-          return "/colaboradores/entrar?erro=nao_autorizado";
-        }
-        return true;
-      } catch (err) {
-        console.error("[auth] Erro ao verificar colaborador no signIn:", err);
-        return false;
-      }
+    async signIn() {
+      // Permitir qualquer login Google neste handler.
+      // A verificação de autorização de colaborador é feita em EntrarForm.tsx
+      // via fetch a /api/colaboradores/verify-email após o redirect do OAuth,
+      // evitando que este callback bloqueie logins de clientes no handler separado.
+      return true;
     },
 
     async session({ session, token }) {

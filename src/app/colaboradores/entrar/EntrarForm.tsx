@@ -1,7 +1,8 @@
 "use client";
 
-import { signIn } from "next-auth/react";
-import { Shield, LogIn, AlertCircle } from "lucide-react";
+import { useEffect, useState } from "react";
+import { signIn, signOut, useSession } from "next-auth/react";
+import { Shield, LogIn, AlertCircle, Loader2 } from "lucide-react";
 
 interface EntrarFormProps {
   erro?: string;
@@ -16,11 +17,56 @@ const ERRO_MESSAGES: Record<string, string> = {
 };
 
 export default function EntrarForm({ erro }: EntrarFormProps) {
+  const { data: session, status } = useSession();
+  const [verificando, setVerificando] = useState(false);
   const erroMsg = erro ? (ERRO_MESSAGES[erro] ?? ERRO_MESSAGES.Default) : null;
 
+  // Após login Google bem-sucedido, verificar se o email está autorizado
+  useEffect(() => {
+    if (status !== "authenticated" || !session?.user?.email) return;
+
+    const verificarEmail = async () => {
+      setVerificando(true);
+      try {
+        const res = await fetch("/api/colaboradores/verify-email", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: session.user!.email }),
+        });
+        const data = await res.json() as { authorized?: boolean };
+
+        if (!data.authorized) {
+          // Email não autorizado: terminar sessão e mostrar erro
+          await signOut({ callbackUrl: "/colaboradores/entrar?erro=nao_autorizado" });
+        } else {
+          // Autorizado: redirecionar para o painel de admin
+          window.location.href = "/colaboradores/admin";
+        }
+      } catch {
+        await signOut({ callbackUrl: "/colaboradores/entrar?erro=Default" });
+      } finally {
+        setVerificando(false);
+      }
+    };
+
+    void verificarEmail();
+  }, [status, session]);
+
   const handleGoogleSignIn = () => {
-    signIn("google", { callbackUrl: "/colaboradores/dashboard" });
+    signIn("google", { callbackUrl: "/colaboradores/entrar" });
   };
+
+  // Estado de carregamento enquanto verifica autorização
+  if (status === "loading" || verificando) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background px-4">
+        <div className="flex flex-col items-center gap-3 text-muted-foreground">
+          <Loader2 className="w-6 h-6 animate-spin" />
+          <p className="text-sm">{verificando ? "A verificar autorização..." : "A carregar..."}</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background px-4">

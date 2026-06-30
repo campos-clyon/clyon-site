@@ -75,48 +75,48 @@ export default function ColaboradorLoginClient() {
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100">
       <div className="mx-auto grid min-h-screen max-w-6xl items-center gap-10 px-4 py-10 sm:px-6 lg:grid-cols-[1fr_1fr] lg:px-8">
-        {/* Painel de marca / valor */}
-        <div className="relative hidden overflow-hidden rounded-[28px] border border-slate-800 bg-gradient-to-br from-slate-900 via-slate-950 to-slate-900 p-9 lg:flex lg:flex-col lg:justify-between lg:self-stretch">
+        {/* Painel de marca / valor — 10% mais compacto */}
+        <div className="relative hidden overflow-hidden rounded-[26px] border border-slate-800 bg-gradient-to-br from-slate-900 via-slate-950 to-slate-900 p-8 lg:flex lg:flex-col lg:justify-between lg:self-stretch">
           {/* brilho de acento */}
           <div
             aria-hidden
-            className="pointer-events-none absolute -right-24 -top-24 h-60 w-60 rounded-full bg-cyan-500/20 blur-3xl"
+            className="pointer-events-none absolute -right-24 -top-24 h-52 w-52 rounded-full bg-cyan-500/20 blur-3xl"
           />
           <div
             aria-hidden
-            className="pointer-events-none absolute -bottom-32 -left-16 h-60 w-60 rounded-full bg-cyan-400/10 blur-3xl"
+            className="pointer-events-none absolute -bottom-32 -left-16 h-52 w-52 rounded-full bg-cyan-400/10 blur-3xl"
           />
 
           <div className="relative">
-            <div className="inline-flex items-center gap-2 rounded-full border border-cyan-400/30 bg-cyan-400/10 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.28em] text-cyan-300">
-              <ShieldCheck className="h-3.5 w-3.5" />
+            <div className="inline-flex items-center gap-1.5 rounded-full border border-cyan-400/30 bg-cyan-400/10 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.28em] text-cyan-300">
+              <ShieldCheck className="h-3 w-3" />
               Portal interno
             </div>
-            <h1 className="mt-6 max-w-[12ch] text-balance text-4xl font-bold leading-[1.05] tracking-tight text-white">
+            <h1 className="mt-5 max-w-[12ch] text-balance text-[2.1rem] font-bold leading-[1.05] tracking-tight text-white">
               Entrada segura para a equipa CLYON.
             </h1>
-            <p className="mt-4 max-w-md text-pretty text-sm leading-relaxed text-slate-400">
+            <p className="mt-3.5 max-w-md text-pretty text-[13px] leading-relaxed text-slate-400">
               Aceda ao painel de colaborador para registos, consulta e gestão interna.
               Esta área não é indexada e é reservada à operação da equipa.
             </p>
           </div>
 
-          <ul className="relative mt-8 space-y-3">
-            <li className="flex items-center gap-3 text-sm text-slate-300">
-              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-800/80 text-cyan-300">
-                <Users className="h-4 w-4" />
+          <ul className="relative mt-7 space-y-2.5">
+            <li className="flex items-center gap-2.5 text-[13px] text-slate-300">
+              <span className="flex h-7 w-7 items-center justify-center rounded-md bg-slate-800/80 text-cyan-300">
+                <Users className="h-3.5 w-3.5" />
               </span>
               Gestão de equipa e funções operacionais
             </li>
-            <li className="flex items-center gap-3 text-sm text-slate-300">
-              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-800/80 text-cyan-300">
-                <Clock className="h-4 w-4" />
+            <li className="flex items-center gap-2.5 text-[13px] text-slate-300">
+              <span className="flex h-7 w-7 items-center justify-center rounded-md bg-slate-800/80 text-cyan-300">
+                <Clock className="h-3.5 w-3.5" />
               </span>
               Registo de horários e turnos em tempo real
             </li>
-            <li className="flex items-center gap-3 text-sm text-slate-300">
-              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-800/80 text-cyan-300">
-                <LockKeyhole className="h-4 w-4" />
+            <li className="flex items-center gap-2.5 text-[13px] text-slate-300">
+              <span className="flex h-7 w-7 items-center justify-center rounded-md bg-slate-800/80 text-cyan-300">
+                <LockKeyhole className="h-3.5 w-3.5" />
               </span>
               Acesso protegido e credenciais encriptadas
             </li>
