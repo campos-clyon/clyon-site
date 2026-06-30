@@ -100,7 +100,7 @@ type SimulatorSetting = {
   description?: string | null;
 };
 
-type AdminSection = "overview" | "pedidos" | "operacao" | "leads" | "site";
+type AdminSection = "overview" | "pedidos" | "operacao" | "leads" | "site" | "equipa" | "pagamentos" | "configs";
 type OperacaoTab = "equipa" | "horarios" | "pagamentos" | "funcoes";
 
 type Lead = {
@@ -175,18 +175,22 @@ const adminNavItems: Array<{
   icon: ComponentType<{ className?: string }>;
 }> = [
   { id: "overview", icon: LayoutDashboard },
-  { id: "pedidos", icon: FileText },
-  { id: "operacao", icon: Briefcase },
-  { id: "leads", icon: TrendingUp },
-  { id: "site", icon: Settings2 },
+  { id: "pedidos",   icon: FileText },
+  { id: "leads",     icon: TrendingUp },
+  { id: "equipa",    icon: Users },
+  { id: "pagamentos", icon: Wallet },
+  { id: "configs",   icon: Settings2 },
 ];
 
 const sectionLabels: Record<AdminSection, string> = {
-  overview: "Início",
-  pedidos: "Pedidos",
-  operacao: "Operação",
-  leads: "Leads",
-  site: "Configurações",
+  overview:   "Início",
+  pedidos:    "Pedidos",
+  operacao:   "Operação",   // mantido internamente (aliases apontam para ele)
+  leads:      "Leads",
+  site:       "Configurações",
+  equipa:     "Equipa",
+  pagamentos: "Pagamentos",
+  configs:    "Configs",
 };
 
 const siteModules = [
@@ -605,6 +609,9 @@ export default function ColaboradorAdminClient() {
     const sectionParam = searchParams.get("section") as AdminSection | null;
     if (sectionParam && adminNavItems.some(item => item.id === sectionParam)) {
       setActiveSection(sectionParam);
+      // Sincronizar a sub-tab de operação com o item de nav escolhido
+      if (sectionParam === "equipa") setOperacaoTab("equipa");
+      if (sectionParam === "pagamentos") setOperacaoTab("pagamentos");
     }
 
     // Admin geral carrega dados da equipa e configurações; assistente começa directamente nos pedidos
@@ -1538,7 +1545,12 @@ export default function ColaboradorAdminClient() {
                     <button
                       key={item.id}
                       type="button"
-                      onClick={() => setActiveSection(item.id)}
+                      onClick={() => {
+                        setActiveSection(item.id);
+                        // Sincronizar a sub-tab de operação com o item de nav escolhido
+                        if (item.id === "equipa") setOperacaoTab("equipa");
+                        if (item.id === "pagamentos") setOperacaoTab("pagamentos");
+                      }}
                       className={`flex items-center gap-2 rounded-[14px] px-4 py-2.5 text-sm font-medium transition ${
                         active
                           ? "bg-sky-500 text-white shadow-md"
@@ -1906,9 +1918,9 @@ export default function ColaboradorAdminClient() {
                   {/* Ações rápidas */}
                   <ActionCard title="Ações rápidas" description="Atalhos operacionais." compact>
                     <QuickAction icon={CalendarClock} label="Abrir histórico e horários" onClick={() => { setOperacaoTab("horarios"); setActiveSection("operacao"); }} />
-                    <QuickAction icon={Users} label="Ver colaboradores" onClick={() => { setOperacaoTab("equipa"); setActiveSection("operacao"); }} />
+                    <QuickAction icon={Users} label="Ver colaboradores" onClick={() => { setOperacaoTab("equipa"); setActiveSection("equipa"); }} />
                     <QuickAction icon={TrendingUp} label="Ver leads e contactos" onClick={() => setActiveSection("leads")} />
-                    <QuickAction icon={Settings2} label="Configurações" onClick={() => setActiveSection("site")} />
+                    <QuickAction icon={Settings2} label="Configurações" onClick={() => setActiveSection("configs")} />
                   </ActionCard>
                 </div>
               </section>
@@ -2244,16 +2256,16 @@ export default function ColaboradorAdminClient() {
           )}
 
 
-          {activeSection === "operacao" && (
+          {(activeSection === "operacao" || activeSection === "equipa" || activeSection === "pagamentos") && (
             <section className="space-y-4 rounded-[28px] border border-slate-700/60 bg-slate-900/80 p-5 shadow-[0_8px_32px_rgba(0,0,0,0.28)]">
               {/* Header e sub-navegação da Operação */}
               <div className="flex flex-col gap-4">
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-[0.22em] text-sky-400">
-                    Operação
+                    {operacaoTab === "equipa" || operacaoTab === "pagamentos" ? sectionLabels[activeSection] || "Operação" : "Operação"}
                   </p>
                   <h2 className="mt-1 text-2xl font-semibold text-white">
-                    {operacaoTab === "equipa" ? "Equipa" : operacaoTab === "horarios" ? "Horários e registos" : operacaoTab === "pagamentos" ? "Pagamentos" : "Funções e comissões"}
+                    {operacaoTab === "equipa" ? "Equipa" : operacaoTab === "horarios" ? "Horários e registos" : operacaoTab === "pagamentos" ? "Pagamentos" : "Funções"}
                   </h2>
                   <p className="mt-1 text-sm text-slate-400">
                     {operacaoTab === "equipa" ? "Gestão de colaboradores: assistentes, motoristas e ajudantes." : operacaoTab === "horarios" ? "Valide entradas, saídas, pausas e valores da equipa." : operacaoTab === "pagamentos" ? "Ganhos fixos por trabalho atribuído no período seleccionado." : "Funções e valores padrão por tipo de colaborador."}
@@ -2267,7 +2279,13 @@ export default function ColaboradorAdminClient() {
                       <button
                         key={tab}
                         type="button"
-                        onClick={() => setOperacaoTab(tab)}
+                        onClick={() => {
+                          setOperacaoTab(tab);
+                          // Reflectir na nav de topo: equipa e pagamentos têm item próprio
+                          if (tab === "equipa") setActiveSection("equipa");
+                          else if (tab === "pagamentos") setActiveSection("pagamentos");
+                          else setActiveSection("operacao");
+                        }}
                         className={`rounded-[10px] px-4 py-2 text-sm font-medium transition ${
                           operacaoTab === tab
                             ? "bg-sky-500 text-white shadow-sm"
@@ -3355,7 +3373,7 @@ export default function ColaboradorAdminClient() {
           )}
           {/* ══════════════════════════════════════════════════════════════ */}
 
-          {activeSection === "site" && (
+          {(activeSection === "site" || activeSection === "configs") && (
             <section className="space-y-4 rounded-[28px] border border-cyan-300/16 bg-[linear-gradient(180deg,rgba(9,25,40,0.94)_0%,rgba(11,30,47,0.92)_100%)] p-5 shadow-[0_20px_70px_rgba(3,10,18,0.22)]">
               <div className="flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
                 <div>
