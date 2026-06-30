@@ -131,16 +131,20 @@ export default function AddressAutocomplete({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [googleLoaded]);
 
-  // ── Fechar dropdown ao clicar fora ────────────────────────────────────────
+  // ── Fechar dropdown ao tocar/clicar fora ─────────────────────────────────
   useEffect(() => {
-    const handleOutside = (e: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node) &&
-          inputRef.current && !inputRef.current.contains(e.target as Node)) {
+    const handleOutside = (e: Event) => {
+      const target = e.target as Node;
+      if (
+        dropdownRef.current && !dropdownRef.current.contains(target) &&
+        inputRef.current && !inputRef.current.contains(target)
+      ) {
         setShowDropdown(false);
       }
     };
-    document.addEventListener("mousedown", handleOutside);
-    return () => document.removeEventListener("mousedown", handleOutside);
+    // pointerdown cobre mouse e touch em todos os browsers modernos
+    document.addEventListener("pointerdown", handleOutside);
+    return () => document.removeEventListener("pointerdown", handleOutside);
   }, []);
 
   // ── Nominatim: buscar sugestões ───────────────────────────────────────────
@@ -390,7 +394,16 @@ export default function AddressAutocomplete({
           value={value}
           onChange={handleInputChange}
           onFocus={() => {
+            // Reabrir dropdown ao voltar a focar o campo (mobile: após teclado fechar)
             if (!googleLoaded && suggestions.length > 0) setShowDropdown(true);
+          }}
+          onInput={(e) => {
+            // Garantir compatibilidade com IMEs e teclados Android que não disparam onChange
+            const v = (e.target as HTMLInputElement).value;
+            if (!googleLoaded && v !== value) {
+              if (debounceRef.current) clearTimeout(debounceRef.current);
+              debounceRef.current = setTimeout(() => fetchNominatim(v), 350);
+            }
           }}
           placeholder={placeholder}
           autoComplete="off"
@@ -419,7 +432,7 @@ export default function AddressAutocomplete({
         {!googleLoaded && showDropdown && suggestions.length > 0 && (
           <div
             ref={dropdownRef}
-            className="absolute z-50 top-full mt-1 w-full bg-white border border-[#E2E8F0] rounded-xl shadow-lg overflow-hidden"
+            className="absolute z-[9999] top-full mt-1 w-full bg-white border border-[#E2E8F0] rounded-xl shadow-xl overflow-hidden"
           >
             {suggestions.map((item) => {
               const parts = item.display_name.split(", ");
@@ -429,11 +442,12 @@ export default function AddressAutocomplete({
                 <button
                   key={item.place_id}
                   type="button"
-                  onMouseDown={(e) => {
-                    e.preventDefault(); // evitar blur no input antes do click
+                  onPointerDown={(e) => {
+                    // Prevenir blur no input antes da seleção — funciona em mouse e touch
+                    e.preventDefault();
                     handleNominatimSelect(item);
                   }}
-                  className="w-full flex items-start gap-2.5 px-3 py-2.5 hover:bg-[#F8FAFC] transition-colors text-left border-b border-[#F1F5F9] last:border-0"
+                  className="w-full flex items-start gap-2.5 px-3 py-3 min-h-[44px] hover:bg-[#F8FAFC] active:bg-[#EFF8FF] transition-colors text-left border-b border-[#F1F5F9] last:border-0"
                 >
                   <svg className="w-3.5 h-3.5 text-[#94A3B8] mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
