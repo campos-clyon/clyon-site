@@ -678,17 +678,48 @@ export async function updateRegistroHoras(
 // ─── Leads helpers ───────────────────────────────────────────────────────────
 
 let _leadsExtended = false;
-async function ensureLeadsExtended(): Promise<void> {
+export async function ensureLeadsExtended(): Promise<void> {
   if (_leadsExtended) return;
   const pool = await getPool();
   if (!pool) return;
-  // Adicionar colunas origem e canal se ainda não existirem (seguro de correr múltiplas vezes)
+
+  // Garantir que a tabela existe antes de qualquer ALTER TABLE ou SELECT
+  await pool.execute(`
+    CREATE TABLE IF NOT EXISTS leads (
+      id                  INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+      nome                VARCHAR(120) NOT NULL DEFAULT '',
+      telefone            VARCHAR(40)  NOT NULL DEFAULT '',
+      email               VARCHAR(120) NOT NULL DEFAULT '',
+      localidade          VARCHAR(120) NOT NULL DEFAULT '',
+      tipoServico         VARCHAR(80)  NOT NULL DEFAULT '',
+      preferenciaContacto VARCHAR(40)  NOT NULL DEFAULT '',
+      mensagem            TEXT         NULL,
+      pagePath            VARCHAR(255) NULL,
+      pageUrl             VARCHAR(512) NULL,
+      utmSource           VARCHAR(120) NULL,
+      utmMedium           VARCHAR(120) NULL,
+      utmCampaign         VARCHAR(120) NULL,
+      gclid               VARCHAR(200) NULL,
+      origem              VARCHAR(120) NULL,
+      canal               VARCHAR(60)  NULL,
+      status              VARCHAR(40)  NOT NULL DEFAULT 'novo',
+      notasInternas       TEXT         NULL,
+      createdAt           DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updatedAt           DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  `);
+
+  // Adicionar colunas opcionais caso a tabela existisse anteriormente sem elas
   for (const sql of [
     `ALTER TABLE leads ADD COLUMN IF NOT EXISTS origem VARCHAR(120) NULL DEFAULT NULL`,
     `ALTER TABLE leads ADD COLUMN IF NOT EXISTS canal  VARCHAR(60)  NULL DEFAULT NULL`,
+    `ALTER TABLE leads ADD COLUMN IF NOT EXISTS status VARCHAR(40) NOT NULL DEFAULT 'novo'`,
+    `ALTER TABLE leads ADD COLUMN IF NOT EXISTS notasInternas TEXT NULL`,
+    `ALTER TABLE leads ADD COLUMN IF NOT EXISTS updatedAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP`,
   ]) {
     try { await pool.execute(sql); } catch { /* coluna já existe */ }
   }
+
   _leadsExtended = true;
 }
 

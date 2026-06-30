@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyColaboradorAuthHeader } from "@/lib/colaborador-auth";
-import { withConnection } from "@/lib/db";
+import { withConnection, ensureLeadsExtended } from "@/lib/db";
 
 export const runtime = "nodejs";
 
@@ -40,6 +40,9 @@ function getPeriodStart(periodo: string): string {
 export async function GET(request: NextRequest) {
   const auth = await requireAdmin(request);
   if (auth.error) return auth.error;
+
+  // Garantir que a tabela leads existe (e tem todas as colunas) antes de qualquer query
+  try { await ensureLeadsExtended(); } catch { /* log mas continua */ }
 
   try {
     const { searchParams } = new URL(request.url);
