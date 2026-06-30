@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { upsertWandersonAdmin, ensureColaboradoresSchema, ensureSimulatorSettingsTable, ensureGalleryMediaTable, ensureSimulatorOrdersTable, getEffectiveRole, getPool } from "@/lib/db";
+import { upsertWandersonAdmin, ensureColaboradoresSchema, ensureSimulatorSettingsTable, resetSimulatorTableEnsuredFlag, ensureGalleryMediaTable, ensureSimulatorOrdersTable, getEffectiveRole, getPool } from "@/lib/db";
 
 export const runtime = "nodejs";
 
@@ -43,8 +43,11 @@ export async function POST(req: NextRequest) {
     await ensureSimulatorOrdersTable();
     console.log("[v0] admin/setup: ✓ Tabela simulatorOrders e colunas garantidas");
 
+    // Forçar re-seed dos defaults mesmo que a tabela já exista, para propagar
+    // alterações de valor (ex: custo_km 0.33→0.50, overhead 15.30→17.00)
+    resetSimulatorTableEnsuredFlag();
     await ensureSimulatorSettingsTable();
-    console.log("[v0] admin/setup: ✓ Tabela simulatorSettings garantida");
+    console.log("[v0] admin/setup: ✓ Tabela simulatorSettings garantida e defaults actualizados");
 
     await ensureGalleryMediaTable();
     console.log("[v0] admin/setup: ✓ Tabela galleryMedia garantida");
@@ -98,7 +101,7 @@ export async function POST(req: NextRequest) {
       migrations: [
         "Schema colaboradores",
         "Tabela simulatorOrders (postalCode, city, parkingDistance, priority, ...)",
-        "Tabela simulatorSettings",
+        "Tabela simulatorSettings (defaults actualizados: custo_km=0.50, overhead=17.00)",
         "Tabela galleryMedia",
         "Configuração de funções",
         "Admin WANDERSON",

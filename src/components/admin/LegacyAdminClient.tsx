@@ -3410,6 +3410,28 @@ export default function ColaboradorAdminClient() {
               <ActionCard
                 title="Valores do simulador"
                 description="Todos os valores do simulador estão visíveis abaixo, separados por categoria operacional para facilitar a gestão."
+                headerExtra={
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      try {
+                        const res = await fetch("/api/admin/settings/reseed", {
+                          method: "POST",
+                          headers: { Authorization: `Bearer ${token}` },
+                        });
+                        const data = await res.json();
+                        if (!res.ok) throw new Error(data.error || "Erro desconhecido");
+                        await carregarSimulatorSettings(token);
+                        setError("");
+                      } catch (e) {
+                        setError(e instanceof Error ? e.message : "Erro ao repor defaults.");
+                      }
+                    }}
+                    className="rounded-[12px] border border-slate-600 bg-slate-800/60 px-4 py-2 text-xs text-slate-300 transition hover:border-cyan-400/40 hover:text-cyan-300"
+                  >
+                    Repor defaults
+                  </button>
+                }
               >
                 {loadingSimulatorSettings ? (
                   <div className="rounded-2xl border border-dashed border-white/10 px-5 py-10 text-sm text-slate-400">
@@ -4156,17 +4178,24 @@ function ActionCard({
   description,
   children,
   compact = false,
+  headerExtra,
 }: {
   title: string;
   description: string;
   children: ReactNode;
   compact?: boolean;
+  headerExtra?: ReactNode;
 }) {
   return (
     <Card className="rounded-[26px] border-cyan-300/14 bg-[linear-gradient(180deg,rgba(12,34,52,0.96)_0%,rgba(9,27,43,0.94)_100%)] text-white shadow-[0_18px_60px_rgba(15,23,42,0.2)]">
       <CardHeader className={compact ? "pb-3" : "pb-4"}>
-        <CardTitle className="text-[1.35rem] text-white">{title}</CardTitle>
-        <CardDescription className="text-slate-300">{description}</CardDescription>
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <CardTitle className="text-[1.35rem] text-white">{title}</CardTitle>
+            <CardDescription className="text-slate-300">{description}</CardDescription>
+          </div>
+          {headerExtra && <div className="shrink-0">{headerExtra}</div>}
+        </div>
       </CardHeader>
       <CardContent className="space-y-4">{children}</CardContent>
     </Card>

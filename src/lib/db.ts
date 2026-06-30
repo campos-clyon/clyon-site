@@ -65,30 +65,38 @@ export async function withConnection<T>(
 let simulatorTableEnsured = false;
 let galleryMediaTableEnsured = false;
 
-export async function ensureSimulatorSettingsTable() {
-  if (simulatorTableEnsured) return;
+/** Permite ao setup forçar um re-seed dos defaults mesmo que a tabela já tenha sido inicializada. */
+export function resetSimulatorTableEnsuredFlag() {
+  simulatorTableEnsured = false;
+}
 
+export async function ensureSimulatorSettingsTable() {
   const pool = await getPool();
   if (!pool) throw new Error("Database not available");
 
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS simulatorSettings (
-      \`key\` varchar(120) NOT NULL PRIMARY KEY,
-      label varchar(160) NOT NULL,
-      category varchar(40) NOT NULL,
-      unit varchar(24) NOT NULL,
-      value decimal(10,2) NOT NULL,
-      description text NULL,
-      createdAt timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-      updatedAt timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-    )
-  `);
-
-  simulatorTableEnsured = true;
+  // CREATE TABLE apenas se não existir (idempotente, rápido após a primeira vez)
+  if (!simulatorTableEnsured) {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS simulatorSettings (
+        \`key\` varchar(120) NOT NULL PRIMARY KEY,
+        label varchar(160) NOT NULL,
+        category varchar(40) NOT NULL,
+        unit varchar(24) NOT NULL,
+        value decimal(10,2) NOT NULL,
+        description text NULL,
+        createdAt timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updatedAt timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+      )
+    `);
+    simulatorTableEnsured = true;
+  }
 
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
+  // Upsert de defaults: corre SEMPRE para que alterações de código (ex: custo_km,
+  // overhead_por_servico) se propaguem à DB sem necessidade de intervenção manual.
+  // O admin pode sempre sobrescrever via UI — upsertSimulatorSetting usa a mesma lógica.
   for (const setting of defaultSimulatorSettings) {
     await db
       .insert(simulatorSettings)
@@ -106,6 +114,7 @@ export async function ensureSimulatorSettingsTable() {
           category: setting.category,
           unit: setting.unit,
           description: setting.description,
+          value: setting.value.toFixed(2),
         },
       });
   }
@@ -253,7 +262,7 @@ export async function replaceGalleryMediaItems(
   }
 }
 
-// ─── User helpers ─────────────────────────────────────���─────────────────────
+// ─── User helpers ─────────────────────────────────────����─────────────────────
 
 export async function upsertUser(values: InsertUser) {
   const db = await getDb();
