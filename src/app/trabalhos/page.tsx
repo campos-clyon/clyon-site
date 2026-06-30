@@ -2,6 +2,8 @@ import Link from "next/link";
 import Image from "next/image";
 import { ArrowRight, ArrowUpRight, MessageSquareQuote, Sparkles } from "lucide-react";
 import { getShowcaseProjects, phaseLabel } from "@/lib/work-gallery";
+import { listTrabalhos } from "@/lib/db";
+import TrabalhosGallery from "./TrabalhosGallery";
 
 export const revalidate = 300;
 
@@ -43,7 +45,10 @@ const stats = [
 ];
 
 export default async function TrabalhosPage() {
-  const showcaseProjects = await getShowcaseProjects();
+  const [showcaseProjects, trabalhos] = await Promise.all([
+    getShowcaseProjects(),
+    listTrabalhos({ publicadoOnly: true }),
+  ]);
 
   return (
     <div className="min-h-screen bg-white">
@@ -94,6 +99,29 @@ export default async function TrabalhosPage() {
           </div>
         </div>
       </section>
+
+      {/* ── Galeria dinâmica (admin → /admin/trabalhos) ── */}
+      {trabalhos.length > 0 && (
+        <section className="bg-slate-50 py-16 lg:py-20">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div className="mb-10 flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+              <div>
+                <p className="text-sm font-semibold uppercase tracking-[0.22em] text-[#0077B6]">
+                  Portfólio
+                </p>
+                <h2 className="mt-3 text-4xl font-bold text-slate-950 text-balance">
+                  Trabalhos realizados.
+                </h2>
+              </div>
+              <p className="max-w-md text-base leading-7 text-slate-600">
+                {trabalhos.length} {trabalhos.length === 1 ? "trabalho publicado" : "trabalhos publicados"} &mdash;
+                filtra por tipo de serviço.
+              </p>
+            </div>
+            <TrabalhosGallery trabalhos={trabalhos} />
+          </div>
+        </section>
+      )}
 
       <section className="bg-white py-16 lg:py-20">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">

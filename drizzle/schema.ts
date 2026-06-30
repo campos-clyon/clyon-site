@@ -101,6 +101,33 @@ export type InsertSimulatorSetting = typeof simulatorSettings.$inferInsert;
 export type GalleryMedia = typeof galleryMedia.$inferSelect;
 export type InsertGalleryMedia = typeof galleryMedia.$inferInsert;
 
+// ─── Trabalhos Realizados ─────────────────────────────────────────────────────
+
+export const trabalhosRealizados = mysqlTable("trabalhos_realizados", {
+  id:           int("id").autoincrement().primaryKey(),
+  fotosJson:    text("fotosJson").notNull(),          // JSON array de URLs
+  tipoServico:  varchar("tipoServico", { length: 64 }).notNull(),
+  localidade:   varchar("localidade", { length: 120 }).notNull(),
+  descricao:    text("descricao"),
+  publicado:    tinyint("publicado").notNull().default(0),
+  createdAt:    timestamp("createdAt").defaultNow().notNull(),
+  updatedAt:    timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type TrabalhoRealizado    = typeof trabalhosRealizados.$inferSelect;
+export type InsertTrabalhoRealizado = typeof trabalhosRealizados.$inferInsert;
+
+export interface TrabalhoRealizadoData {
+  id:          number;
+  fotos:       string[];
+  tipoServico: string;
+  localidade:  string;
+  descricao:   string | null;
+  publicado:   boolean;
+  createdAt:   Date;
+  updatedAt:   Date;
+}
+
 // ─── SimulatorOrders (gerido com raw SQL — só os tipos aqui) ─────────────────
 
 export type OrderStatus =

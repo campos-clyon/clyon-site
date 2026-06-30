@@ -1,8 +1,9 @@
 import { drizzle } from "drizzle-orm/mysql2";
 import mysql from "mysql2/promise";
 import { eq, desc, inArray } from "drizzle-orm";
-import { users, colaboradores, registrosHoras, simulatorSettings, galleryMedia } from "../../drizzle/schema";
-import type { InsertUser, InsertSimulatorOrder, SimulatorOrder } from "../../drizzle/schema";
+import { users, colaboradores, registrosHoras, simulatorSettings, galleryMedia, trabalhosRealizados } from "../../drizzle/schema";
+import type { InsertUser, InsertSimulatorOrder, SimulatorOrder, TrabalhoRealizadoData } from "../../drizzle/schema";
+export type { TrabalhoRealizadoData };
 import { defaultSimulatorSettings } from "@/lib/simulator-settings";
 
 let dbInstance: ReturnType<typeof drizzle<typeof import('../../drizzle/schema')>> | null = null;
@@ -1345,4 +1346,109 @@ export function canManageUsers(user: { isAdmin: number }): boolean {
   return !!user.isAdmin;
 }
 
-// ─── SimulatorOrders END ───────────────────────────────────────���──────────────
+// ─── SimulatorOrders END ──────────────────────────────────────────────────────
+
+// ─── Trabalhos Realizados ─────────────────────────────────────────────────────
+
+let trabalhosTableEnsured = false;
+
+export async function ensureTrabalhosTable(): Promise<void> {
+  if (trabalhosTableEnsured) return;
+  const pool = await getPool();
+  if (!pool) throw new Error("Database not available");
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS trabalhos_realizados (
+      id           INT AUTO_INCREMENT PRIMARY KEY,
+      fotosJson    TEXT NOT NULL,
+      tipoServico  VARCHAR(64) NOT NULL,
+      localidade   VARCHAR(120) NOT NULL,
+      descricao    TEXT NULL,
+      publicado    TINYINT(1) NOT NULL DEFAULT 0,
+      createdAt    TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updatedAt    TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    )
+  `);
+  trabalhosTableEnsured = true;
+}
+
+function rowToTrabalho(row: typeof trabalhosRealizados.$inferSelect): TrabalhoRealizadoData {
+  let fotos: string[] = [];
+  try { fotos = JSON.parse(row.fotosJson || "[]"); } catch {}
+  return {
+    id:          row.id,
+    fotos,
+    tipoServico: row.tipoServico,
+    localidade:  row.localidade,
+    descricao:   row.descricao ?? null,
+    publicado:   Boolean(row.publicado),
+    createdAt:   row.createdAt,
+    updatedAt:   row.updatedAt,
+  };
+}
+
+export async function listTrabalhos(opts?: { publicadoOnly?: boolean }): Promise<TrabalhoRealizadoData[]> {
+  await ensureTrabalhosTable();
+  const db = await getDb();
+  if (!db) return [];
+  const rows = opts?.publicadoOnly
+    ? await db.select().from(trabalhosRealizados).where(eq(trabalhosRealizados.publicado, 1)).orderBy(desc(trabalhosRealizados.createdAt))
+    : await db.select().from(trabalhosRealizados).orderBy(desc(trabalhosRealizados.createdAt));
+  return rows.map(rowToTrabalho);
+}
+
+export async function getTrabalho(id: number): Promise<TrabalhoRealizadoData | null> {
+  await ensureTrabalhosTable();
+  const db = await getDb();
+  if (!db) return null;
+  const rows = await db.select().from(trabalhosRealizados).where(eq(trabalhosRealizados.id, id));
+  return rows[0] ? rowToTrabalho(rows[0]) : null;
+}
+
+export async function createTrabalho(data: {
+  fotos: string[];
+  tipoServico: string;
+  localidade: string;
+  descricao?: string | null;
+  publicado?: boolean;
+}): Promise<number> {
+  await ensureTrabalhosTable();
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const result = await db.insert(trabalhosRealizados).values({
+    fotosJson:   JSON.stringify(data.fotos),
+    tipoServico: data.tipoServico,
+    localidade:  data.localidade,
+    descricao:   data.descricao ?? null,
+    publicado:   data.publicado ? 1 : 0,
+  });
+  return (result as any)[0]?.insertId ?? 0;
+}
+
+export async function updateTrabalho(id: number, data: {
+  fotos?: string[];
+  tipoServico?: string;
+  localidade?: string;
+  descricao?: string | null;
+  publicado?: boolean;
+}): Promise<void> {
+  await ensureTrabalhosTable();
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const patch: Record<string, unknown> = {};
+  if (data.fotos !== undefined)       patch.fotosJson   = JSON.stringify(data.fotos);
+  if (data.tipoServico !== undefined)  patch.tipoServico = data.tipoServico;
+  if (data.localidade !== undefined)   patch.localidade  = data.localidade;
+  if ("descricao" in data)             patch.descricao   = data.descricao ?? null;
+  if (data.publicado !== undefined)    patch.publicado   = data.publicado ? 1 : 0;
+  if (Object.keys(patch).length === 0) return;
+  await db.update(trabalhosRealizados).set(patch as any).where(eq(trabalhosRealizados.id, id));
+}
+
+export async function deleteTrabalho(id: number): Promise<void> {
+  await ensureTrabalhosTable();
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.delete(trabalhosRealizados).where(eq(trabalhosRealizados.id, id));
+}
+
+// ─── Trabalhos END ────────────────────────────────────────────────────────────
