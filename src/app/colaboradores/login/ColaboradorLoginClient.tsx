@@ -2,9 +2,6 @@
 
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
-// Nota: não usamos signIn() do next-auth/react aqui porque o SessionProvider
-// raiz usa basePath="/api/auth/cliente" (para clientes). Para colaboradores
-// precisamos de apontar directamente para o handler /api/auth/[...nextauth].
 import { ArrowRight, Eye, EyeOff, LockKeyhole, ShieldCheck, Users, Clock, Check } from "lucide-react";
 
 export default function ColaboradorLoginClient() {
@@ -77,49 +74,49 @@ export default function ColaboradorLoginClient() {
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100">
-      <div className="mx-auto grid min-h-screen max-w-7xl items-center gap-12 px-4 py-12 sm:px-6 lg:grid-cols-[1fr_1fr] lg:px-8">
+      <div className="mx-auto grid min-h-screen max-w-6xl items-center gap-10 px-4 py-10 sm:px-6 lg:grid-cols-[1fr_1fr] lg:px-8">
         {/* Painel de marca / valor */}
-        <div className="relative hidden overflow-hidden rounded-[36px] border border-slate-800 bg-gradient-to-br from-slate-900 via-slate-950 to-slate-900 p-12 lg:flex lg:flex-col lg:justify-between lg:self-stretch">
+        <div className="relative hidden overflow-hidden rounded-[28px] border border-slate-800 bg-gradient-to-br from-slate-900 via-slate-950 to-slate-900 p-9 lg:flex lg:flex-col lg:justify-between lg:self-stretch">
           {/* brilho de acento */}
           <div
             aria-hidden
-            className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-cyan-500/20 blur-3xl"
+            className="pointer-events-none absolute -right-24 -top-24 h-60 w-60 rounded-full bg-cyan-500/20 blur-3xl"
           />
           <div
             aria-hidden
-            className="pointer-events-none absolute -bottom-32 -left-16 h-72 w-72 rounded-full bg-cyan-400/10 blur-3xl"
+            className="pointer-events-none absolute -bottom-32 -left-16 h-60 w-60 rounded-full bg-cyan-400/10 blur-3xl"
           />
 
           <div className="relative">
-            <div className="inline-flex items-center gap-2 rounded-full border border-cyan-400/30 bg-cyan-400/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.28em] text-cyan-300">
-              <ShieldCheck className="h-4 w-4" />
+            <div className="inline-flex items-center gap-2 rounded-full border border-cyan-400/30 bg-cyan-400/10 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.28em] text-cyan-300">
+              <ShieldCheck className="h-3.5 w-3.5" />
               Portal interno
             </div>
-            <h1 className="mt-8 max-w-[12ch] text-balance text-5xl font-bold leading-[1.05] tracking-tight text-white">
+            <h1 className="mt-6 max-w-[12ch] text-balance text-4xl font-bold leading-[1.05] tracking-tight text-white">
               Entrada segura para a equipa CLYON.
             </h1>
-            <p className="mt-6 max-w-md text-pretty text-base leading-relaxed text-slate-400">
+            <p className="mt-4 max-w-md text-pretty text-sm leading-relaxed text-slate-400">
               Aceda ao painel de colaborador para registos, consulta e gestão interna.
               Esta área não é indexada e é reservada à operação da equipa.
             </p>
           </div>
 
-          <ul className="relative mt-10 space-y-4">
+          <ul className="relative mt-8 space-y-3">
             <li className="flex items-center gap-3 text-sm text-slate-300">
-              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-800/80 text-cyan-300">
-                <Users className="h-5 w-5" />
+              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-800/80 text-cyan-300">
+                <Users className="h-4 w-4" />
               </span>
               Gestão de equipa e funções operacionais
             </li>
             <li className="flex items-center gap-3 text-sm text-slate-300">
-              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-800/80 text-cyan-300">
-                <Clock className="h-5 w-5" />
+              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-800/80 text-cyan-300">
+                <Clock className="h-4 w-4" />
               </span>
               Registo de horários e turnos em tempo real
             </li>
             <li className="flex items-center gap-3 text-sm text-slate-300">
-              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-800/80 text-cyan-300">
-                <LockKeyhole className="h-5 w-5" />
+              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-800/80 text-cyan-300">
+                <LockKeyhole className="h-4 w-4" />
               </span>
               Acesso protegido e credenciais encriptadas
             </li>
@@ -127,26 +124,26 @@ export default function ColaboradorLoginClient() {
         </div>
 
         {/* Cartão de login */}
-        <div className="mx-auto w-full max-w-md">
+        <div className="mx-auto w-full max-w-sm">
           {/* badge interno só para mobile */}
-          <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-cyan-400/30 bg-cyan-400/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.28em] text-cyan-300 lg:hidden">
-            <ShieldCheck className="h-4 w-4" />
+          <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-cyan-400/30 bg-cyan-400/10 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.28em] text-cyan-300 lg:hidden">
+            <ShieldCheck className="h-3.5 w-3.5" />
             Portal interno
           </div>
 
-          <div className="rounded-[32px] border border-slate-800 bg-slate-900/60 p-8 shadow-[0_40px_120px_-40px_rgba(8,145,178,0.45)] backdrop-blur sm:p-10">
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-cyan-500/15 text-cyan-300">
-              <LockKeyhole className="h-6 w-6" />
+          <div className="rounded-[26px] border border-slate-800 bg-slate-900/60 p-7 shadow-[0_40px_120px_-40px_rgba(8,145,178,0.45)] backdrop-blur sm:p-8">
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-cyan-500/15 text-cyan-300">
+              <LockKeyhole className="h-5 w-5" />
             </div>
 
-            <h2 className="mt-6 text-3xl font-bold text-white">Portal do colaborador</h2>
-            <p className="mt-3 text-base leading-relaxed text-slate-400">
+            <h2 className="mt-5 text-2xl font-bold text-white">Portal do colaborador</h2>
+            <p className="mt-2 text-sm leading-relaxed text-slate-400">
               Entre com as suas credenciais para aceder ao sistema interno.
             </p>
 
-            <form className="mt-8 space-y-5" onSubmit={handleSubmit}>
+            <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
               <div>
-                <label htmlFor="nome" className="mb-2 block text-sm font-semibold text-slate-200">
+                <label htmlFor="nome" className="mb-1.5 block text-xs font-semibold text-slate-200">
                   Nome
                 </label>
                 <input
@@ -154,14 +151,14 @@ export default function ColaboradorLoginClient() {
                   type="text"
                   value={nome}
                   onChange={(event) => setNome(event.target.value)}
-                  className="h-14 w-full rounded-2xl border border-slate-700 bg-slate-950/60 px-4 text-base text-white outline-none transition placeholder:text-slate-500 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20"
+                  className="h-11 w-full rounded-xl border border-slate-700 bg-slate-950/60 px-3.5 text-sm text-white outline-none transition placeholder:text-slate-500 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20"
                   placeholder="Digite o seu nome"
                   autoComplete="username"
                 />
               </div>
 
               <div>
-                <label htmlFor="senha" className="mb-2 block text-sm font-semibold text-slate-200">
+                <label htmlFor="senha" className="mb-1.5 block text-xs font-semibold text-slate-200">
                   Palavra-passe
                 </label>
                 <div className="relative">
@@ -170,17 +167,17 @@ export default function ColaboradorLoginClient() {
                     type={mostrarSenha ? "text" : "password"}
                     value={senha}
                     onChange={(event) => setSenha(event.target.value)}
-                    className="h-14 w-full rounded-2xl border border-slate-700 bg-slate-950/60 px-4 pr-14 text-base text-white outline-none transition placeholder:text-slate-500 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20"
+                    className="h-11 w-full rounded-xl border border-slate-700 bg-slate-950/60 px-3.5 pr-11 text-sm text-white outline-none transition placeholder:text-slate-500 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20"
                     placeholder="Digite a sua palavra-passe"
                     autoComplete="current-password"
                   />
                   <button
                     type="button"
                     onClick={() => setMostrarSenha((value) => !value)}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 transition hover:text-cyan-300"
+                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-500 transition hover:text-cyan-300"
                     aria-label={mostrarSenha ? "Ocultar palavra-passe" : "Mostrar palavra-passe"}
                   >
-                    {mostrarSenha ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                    {mostrarSenha ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
                 </div>
               </div>
@@ -189,19 +186,19 @@ export default function ColaboradorLoginClient() {
               <button
                 type="button"
                 onClick={() => setRememberMe((v) => !v)}
-                className="flex w-full items-center gap-3 text-left"
+                className="flex w-full items-center gap-2.5 text-left"
                 aria-pressed={rememberMe}
               >
                 <span
-                  className={`flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-md border transition ${
+                  className={`flex h-4 w-4 flex-shrink-0 items-center justify-center rounded border transition ${
                     rememberMe
                       ? "border-cyan-400 bg-cyan-500"
                       : "border-slate-600 bg-slate-800"
                   }`}
                 >
-                  {rememberMe && <Check className="h-3 w-3 text-slate-950" strokeWidth={3} />}
+                  {rememberMe && <Check className="h-2.5 w-2.5 text-slate-950" strokeWidth={3} />}
                 </span>
-                <span className="text-sm text-slate-300">
+                <span className="text-xs text-slate-300">
                   Manter sessão activa{" "}
                   <span className="text-slate-500">(30 dias)</span>
                 </span>
@@ -210,7 +207,7 @@ export default function ColaboradorLoginClient() {
               {error && (
                 <div
                   role="alert"
-                  className="rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm font-medium text-red-300"
+                  className="rounded-xl border border-red-500/30 bg-red-500/10 px-3.5 py-2.5 text-xs font-medium text-red-300"
                 >
                   {error}
                 </div>
@@ -219,62 +216,15 @@ export default function ColaboradorLoginClient() {
               <button
                 type="submit"
                 disabled={loading}
-                className="inline-flex h-14 w-full items-center justify-center rounded-2xl bg-cyan-500 px-6 text-base font-semibold text-slate-950 shadow-[0_18px_40px_-18px_rgba(6,182,212,0.8)] transition hover:-translate-y-0.5 hover:bg-cyan-400 disabled:cursor-not-allowed disabled:opacity-70"
+                className="inline-flex h-11 w-full items-center justify-center rounded-xl bg-cyan-500 px-5 text-sm font-semibold text-slate-950 shadow-[0_14px_32px_-14px_rgba(6,182,212,0.8)] transition hover:-translate-y-0.5 hover:bg-cyan-400 disabled:cursor-not-allowed disabled:opacity-70"
               >
                 {loading ? "A entrar..." : "Entrar"}
                 {!loading && <ArrowRight className="ml-2 h-4 w-4" />}
               </button>
-
-              {/* Separador */}
-              <div className="relative flex items-center gap-3 py-1">
-                <div className="h-px flex-1 bg-slate-700" />
-                <span className="text-xs font-medium text-slate-500">ou</span>
-                <div className="h-px flex-1 bg-slate-700" />
-              </div>
-
-              {/* Botão Google */}
-              <button
-                type="button"
-                onClick={() => {
-                  // Aponta directamente para o handler de colaboradores (/api/auth)
-                  // com callbackUrl para o painel de admin após login bem-sucedido.
-                  const params = new URLSearchParams({
-                    callbackUrl: "/colaboradores/admin",
-                  });
-                  window.location.href = `/api/auth/signin/google?${params.toString()}`;
-                }}
-                className="inline-flex h-14 w-full items-center justify-center gap-3 rounded-2xl border border-slate-700 bg-slate-800 px-6 text-base font-semibold text-slate-100 transition hover:border-slate-600 hover:bg-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/40"
-              >
-                {/* Google "G" SVG oficial */}
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 24 24"
-                  aria-hidden="true"
-                  className="h-5 w-5 flex-shrink-0"
-                >
-                  <path
-                    fill="#4285F4"
-                    d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                  />
-                  <path
-                    fill="#34A853"
-                    d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                  />
-                  <path
-                    fill="#FBBC05"
-                    d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"
-                  />
-                  <path
-                    fill="#EA4335"
-                    d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-                  />
-                </svg>
-                Continuar com Google
-              </button>
             </form>
 
-            <p className="mt-6 flex items-center justify-center gap-2 text-center text-xs text-slate-500">
-              <LockKeyhole className="h-3.5 w-3.5" />
+            <p className="mt-5 flex items-center justify-center gap-2 text-center text-xs text-slate-500">
+              <LockKeyhole className="h-3 w-3" />
               Ligação segura e encriptada
             </p>
           </div>
