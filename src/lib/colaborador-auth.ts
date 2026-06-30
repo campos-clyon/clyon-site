@@ -8,23 +8,21 @@ export type ColaboradorTokenPayload = {
   funcao?: string;
 };
 
-// JWT_SECRET DEVE ter >= 32 caracteres para HS256 (jose requer isto).
-// Gerar com: openssl rand -base64 32
-// Adicionar como variável de ambiente JWT_SECRET no Vercel.
-if (!process.env.JWT_SECRET) {
-  throw new Error(
-    "[colaborador-auth] JWT_SECRET não está definido. " +
-    "Adicione JWT_SECRET às variáveis de ambiente (openssl rand -base64 32).",
-  );
-}
-const JWT_SECRET = process.env.JWT_SECRET;
-
 /**
  * Fonte única de verdade para o segredo JWT dos colaboradores.
- * Garante que assinatura (login) e verificação usam exatamente a mesma chave.
+ * A verificação é lazy (em runtime) para não falhar durante o build do Next.js,
+ * quando as variáveis de ambiente de runtime ainda não estão disponíveis.
+ * Gerar com: openssl rand -base64 32
  */
 export function getColaboradorSecretKey() {
-  return new TextEncoder().encode(JWT_SECRET);
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+    throw new Error(
+      "[colaborador-auth] JWT_SECRET não está definido. " +
+      "Adicione JWT_SECRET às variáveis de ambiente (openssl rand -base64 32).",
+    );
+  }
+  return new TextEncoder().encode(secret);
 }
 
 export async function verifyColaboradorToken(token?: string | null) {
