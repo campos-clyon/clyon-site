@@ -42,17 +42,17 @@ export default function VisaoGeral({ user, googleAvatar, orders, onSection }: Pr
   return (
     <div className="space-y-8">
       {/* Card de boas-vindas */}
-      <div className="flex items-center gap-5 rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
+      <div className="flex items-center gap-5 overflow-hidden rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
         <UserAvatar
           src={avatar}
           name={nome}
           size={72}
-          className="ring-2 ring-[#00B4D8]/20"
+          className="shrink-0 ring-2 ring-[#00B4D8]/20"
         />
-        <div>
+        <div className="min-w-0 flex-1">
           <p className="text-xs font-medium text-slate-400">Bem-vindo de volta</p>
           <h2 className="text-2xl font-bold text-slate-900">{primeiroNome}</h2>
-          <p className="mt-0.5 text-sm text-slate-500">{user.email}</p>
+          <p className="mt-0.5 truncate text-sm text-slate-500" title={user.email}>{user.email}</p>
           <p className="mt-0.5 text-xs text-slate-400">
             Membro desde {formatDate(user.createdAt)}
           </p>
