@@ -22,9 +22,9 @@ export default function ContaCliente({ nome, email, avatar }: Props) {
   const [user,    setUser]    = useState<UserProfile | null>(null);
   const [orders,  setOrders]  = useState<Order[]>([]);
 
-  // Carregar perfil do utilizador
+  // Carregar perfil do utilizador — cache: no-store garante dados frescos após reload
   useEffect(() => {
-    fetch("/api/users/me")
+    fetch("/api/users/me", { cache: "no-store" })
       .then((r) => r.json())
       .then((d: { user?: UserProfile }) => { if (d.user) setUser(d.user); })
       .catch(() => { /* falha silenciosa */ });
