@@ -358,7 +358,7 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  // ── 5. Determinar fonte e confiança finais ────────────────────────────────
+  // ── 5. Determinar fonte e confiança finais ───────────────��────────────────
   const analysisSource = resolveAnalysisSource(baseSource, externalMarketEstimate, analysis);
 
   // Confiança: propagar o que o Gemini definiu, ou inferir
@@ -542,12 +542,12 @@ REGRAS ABSOLUTAS
 0. NÚMERO DE ITENS: usa SEMPRE o valor em "CONTAGEM DE ITENS (PRÉ-CALCULADA)" acima — está correto e já contabiliza todos os itens mencionados na descrição. NUNCA contes os itens tu mesmo a partir do texto livre nem assumas 1 item quando o valor pré-calculado é maior. Um pedido com 3 ou 4 itens TEM de ser cobrado como 3 ou 4 itens, nunca como 1.
 1. USA SEMPRE a fórmula: (combustível + pessoal + overhead) × (1 + margem) = preço s/IVA.
 2. MÍNIMOS — REGRAS DIFERENTES POR TIPO DE SERVIÇO:
-   a) ITENS SOLTOS (1–5 itens — recolha de móveis/monos): NÃO aplicar mínimo de zona.
+   a) ITENS SOLTOS (1–7 itens — recolha de móveis/monos): NÃO aplicar mínimo de zona.
       Usar preço real calculado pela fórmula. Mínimo por item: ~48,78 € s/IVA (60 € c/IVA).
       EXEMPLO CORRETO: Mesa e cadeiras (2 itens), 2º andar, elevador pequeno, Lisboa → 100 a 130 € c/IVA (NÃO 270 €!)
       EXEMPLO CORRETO: 1 frigorífico, rés-do-chão, estacionamento à porta → 50 a 80 € c/IVA
       Para múltiplos itens soltos: aplica desconto de eficiência (~60% do custo por item adicional).
-   b) CARGA COMPLETA (≥6 itens), ESVAZIAMENTO: aplicar mínimo de zona.
+   b) CARGA COMPLETA (≥8 itens), ESVAZIAMENTO: aplicar mínimo de zona.
       Lisboa 250 € s/IVA (acesso difícil: 270 €) | Almada/Barreiro 230 € | Amora/Seixal 220 €
       EXEMPLO: Esvaziamento Lisboa, cálculo = 180 € s/IVA → preço final = 250 € s/IVA (mínimo zona).
    c) ENTULHO: mínimo fixo 90 € s/IVA — sem mínimo de zona.

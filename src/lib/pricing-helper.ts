@@ -79,7 +79,7 @@ DISTÂNCIAS:
 
 HORAS ESTIMADAS POR TIPO DE SERVIÇO:
 
-RECOLHA / MONOS / ESVAZIAMENTO (1 a 5 itens = por item):
+RECOLHA / MONOS / ESVAZIAMENTO (1 a 7 itens = por item):
   - 30 min por item base
   - Sem elevador: × 1.5 no tempo total
   - Elevador pequeno: × 1.15 no tempo total
@@ -112,7 +112,7 @@ MUDANÇA:
 
 MÍNIMOS — REGRAS DIFERENTES POR TIPO DE SERVIÇO:
 
-ITENS SOLTOS (1 a 5 itens — recolha de móveis / monos):
+ITENS SOLTOS (1 a 7 itens — recolha de móveis / monos):
   NÃO aplicar mínimo de zona. Calcular pela fórmula real.
   Mínimo por item: 48,78 € s/IVA (~60 € c/IVA) por item individual.
   EXEMPLOS DE PREÇOS COM IVA:
@@ -128,7 +128,7 @@ ITENS SOLTOS (1 a 5 itens — recolha de móveis / monos):
     2 mesas + cadeiras num 2º andar Lisboa: 100 a 130 € c/IVA (NÃO 270 €!)
     A equipa já está no local — cada item adicional custa ~60% do primeiro.
 
-CARGA COMPLETA (≥6 itens), ESVAZIAMENTO DE CASA/APARTAMENTO:
+CARGA COMPLETA (≥8 itens), ESVAZIAMENTO DE CASA/APARTAMENTO:
   Aplicar mínimos de zona:
   - Amora / Seixal / Fernão Ferro: 220 € s/IVA
   - Almada / Barreiro / Setúbal: 230 € s/IVA
@@ -172,12 +172,12 @@ function getDefaultPricingRules(): string {
 FÓRMULA: custo_combustivel (distancia × 0.33 €/km) + custo_pessoal (horas × 3p × 9 €/h) + overhead (15.30 €) → × 1.40 (40% margem) = preço s/IVA
 IVA: 23%
 
-HORAS: Recolha 1-5 itens: 0.5h/item | Carga completa: 4h | Entulho 1-10 sacos: 1h, 11-30: 1.5h, 31-80: 2.5h, 81-150: 4h | Mudança: 7h base
+HORAS: Recolha 1-7 itens: 0.5h/item | Carga completa: 4h | Entulho 1-10 sacos: 1h, 11-30: 1.5h, 31-80: 2.5h, 81-150: 4h | Mudança: 7h base
 
 MÍNIMOS (REGRA CRÍTICA):
-  ITENS SOLTOS (1-5 itens): SEM mínimo de zona. Preço real pela fórmula. Mínimo 48,78€ s/IVA por item.
+  ITENS SOLTOS (1-7 itens): SEM mínimo de zona. Preço real pela fórmula. Mínimo 48,78€ s/IVA por item.
     Exemplos c/IVA: 1 frigorifico 50-80€ | 1 sofá 80-120€ | 1 mesa 45-70€ | 2 mesas+cadeiras Lisboa 100-130€ (NÃO 270€)
-  CARGA COMPLETA (≥6 itens) / ESVAZIAMENTO: mínimo de zona — Local 220€ | Almada 230€ | Lisboa 250€ | Lisboa difícil/Loures 270€
+  CARGA COMPLETA (≥8 itens) / ESVAZIAMENTO: mínimo de zona — Local 220€ | Almada 230€ | Lisboa 250€ | Lisboa difícil/Loures 270€
   ENTULHO: mínimo 90€ s/IVA (sem zona) | MUDANÇA: mínimo 150€ s/IVA (sem zona)
 AGRAVAMENTOS: Urgência hoje +40€ | amanhã +20€ | Estacionamento difícil +15€`;
   }
@@ -403,11 +403,11 @@ export function countItemsFromDescription(description: string): number | null {
 /**
  * Limite de itens a partir do qual o pedido passa a ser tratado como "carga
  * completa" (4h base + mínimo de zona) em vez de cobrado item a item.
- * Regra de negócio actual da CLYON (ver contexto do projecto): 1 a 5 itens
- * cobra por item, 6 ou mais é carga completa. Ponto único de configuração —
- * alterar aqui se a empresa decidir mudar o limite (ex: para 8).
+ * Regra de negócio actual da CLYON: 1 a 7 itens cobra por item,
+ * 8 ou mais é carga completa. Ponto único de configuração —
+ * alterar aqui se a empresa decidir mudar o limite.
  */
-export const FULL_LOAD_ITEM_THRESHOLD = 6;
+export const FULL_LOAD_ITEM_THRESHOLD = 8;
 
 /**
  * Determina o número de itens de forma determinística — fonte ÚNICA de
@@ -504,7 +504,7 @@ const LABOR_MIN_HOURS = 1;
  * ENTULHO         — tabela de sacos (1-10→1h, 11-30→1.5h, 31-80→2.5h,
  *                   81-150→4h, 151-240→6h, >240 proporcional)
  *                   + no chão: +30% | acesso difícil: +0.5h
- * RECOLHA/MONO/   — por item (30 min/item) OU carga completa (≥6 itens → 4h)
+ * RECOLHA/MONO/   — por item (30 min/item) OU carga completa (≥8 itens → 4h)
  * ESVAZIAMENTO    — escala por andar/elevador/estacionamento
  */
 export function estimateLaborHours(input: FastEstimateInput): number {
@@ -560,7 +560,7 @@ export function estimateLaborHours(input: FastEstimateInput): number {
       else if (smallElev) hours = 4.5;  // elevador pequeno
       if (input.parkingDistance === "difficult" || input.needsDismantling) hours += 1; // acesso difícil
     } else {
-      // Por item (1 a 5 itens): 30 min/item = 0.5h/item
+      // Por item (1 a 7 itens): 30 min/item = 0.5h/item
       hours = Math.max(0.5, itemCount * 0.5);
       // Sem elevador: +50% no tempo total
       if (noElev) hours = hours * 1.5;
@@ -614,9 +614,9 @@ function getDistanceForFuel(input: FastEstimateInput): number {
  * Regra de negócio:
  *   - Entulho: mínimo fixo 90 € s/IVA (sem mínimo de zona)
  *   - Mudança: mínimo fixo 150 € s/IVA (sem mínimo de zona)
- *   - Itens soltos (1–5 itens): mínimo 48,78 € s/IVA por item (~60 € c/IVA)
+ *   - Itens soltos (1–7 itens): mínimo 48,78 € s/IVA por item (~60 € c/IVA)
  *     SEM aplicar mínimo de zona — o preço é o real calculado pela fórmula
- *   - Carga completa (≥6 itens), esvaziamento: aplicar mínimo de zona
+ *   - Carga completa (≥8 itens), esvaziamento: aplicar mínimo de zona
  */
 function applyZoneMinimum(
   priceWithoutVat: number,
