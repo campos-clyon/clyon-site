@@ -1205,6 +1205,14 @@ export default function AdminPedidoDetalheClient({ id }: { id: number }) {
                 <ReadonlyField label="Atribuído em" value={order.assignedAt ? fmt(order.assignedAt) : null} />
                 <ReadonlyField label="Última atualização" value={fmt(order.updatedAt)} />
                 <ReadonlyField label="Criado em" value={fmt(order.createdAt)} />
+                {order.assignedToName && (
+                  <ReadonlyField
+                    label="Pagamento ao assistente"
+                    value={(order as any).valorPagoAssistente != null
+                      ? `${parseFloat(String((order as any).valorPagoAssistente)).toFixed(2)} € (fixo por trabalho)`
+                      : "7,00 € (fixo por trabalho)"}
+                  />
+                )}
               </div>
               <Field label="Notas internas (visíveis apenas no backoffice)">
                 <textarea rows={4} value={editNotasInternas} onChange={(e) => setEditNotasInternas(e.target.value)} className={inputCls} placeholder="Notas para o equipa..." />

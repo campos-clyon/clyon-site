@@ -253,7 +253,7 @@ export async function replaceGalleryMediaItems(
   }
 }
 
-// ─── User helpers ───────────────────────────────────────────────────────────
+// ─── User helpers ─────────────────────────────────────��─────────────────────
 
 export async function upsertUser(values: InsertUser) {
   const db = await getDb();
@@ -914,6 +914,8 @@ export async function ensureSimulatorOrdersTable() {
     `ALTER TABLE simulatorOrders ADD COLUMN confirmadoEm TIMESTAMP NULL DEFAULT NULL`,
     `ALTER TABLE simulatorOrders ADD COLUMN canceladoPeloCliente TINYINT(1) NULL DEFAULT 0`,
     `ALTER TABLE simulatorOrders ADD COLUMN canceladoPeloClienteEm TIMESTAMP NULL DEFAULT NULL`,
+    // v8 migrations — pagamento fixo por trabalho (snapshot do valor em vigor no momento da atribuição)
+    `ALTER TABLE simulatorOrders ADD COLUMN valorPagoAssistente DECIMAL(8,2) NULL DEFAULT NULL`,
   ];
   for (const sql of migrations) {
     try { await pool.execute(sql); } catch (e: any) {
@@ -1223,13 +1225,10 @@ export async function assignSimulatorOrder(
   assignee: { id: number; nome: string } | null,
   actor: { id: number; nome: string; role: string } | null
 ): Promise<void> {
-  console.log("[v0] assignSimulatorOrder: Iniciando para pedido #", orderId, "assignee=", assignee ? `${assignee.nome}(id=${assignee.id})` : "null");
   await ensureSimulatorOrdersTable();
   const pool = await getPool();
-  if (!pool) {
-    console.error("[v0] assignSimulatorOrder: ❌ Pool indisponível!");
-    return;
-  }
+  if (!pool) return;
+
   const newStatus = assignee ? "atribuido" : "pendente";
   const isAuto = actor === null;
   const message = assignee
@@ -1239,18 +1238,30 @@ export async function assignSimulatorOrder(
     : actor
       ? `Atribuição removida por ${actor.nome}.`
       : "Pedido sem assistente atribuído.";
-  
+
+  // Obter snapshot do valor de pagamento actual para este trabalho.
+  // Guardado no pedido no momento da atribuição para evitar recalcular retroativamente
+  // se o valor global for alterado mais tarde.
+  let valorPagoAssistente: number | null = null;
+  if (assignee) {
+    try {
+      const settings = await getSimulatorSettings();
+      const entry = settings.find((s) => s.key === "pagamento_assistente_por_trabalho");
+      valorPagoAssistente = entry ? parseFloat(String(entry.value)) : 7.00;
+    } catch {
+      valorPagoAssistente = 7.00; // fallback
+    }
+  }
+
   const [rows] = await pool.execute("SELECT historyJson FROM simulatorOrders WHERE id = ? LIMIT 1", [orderId]) as any[];
   const existing: any[] = [];
   try { if ((rows as any[])[0]?.historyJson) existing.push(...JSON.parse((rows as any[])[0].historyJson)); } catch {}
   existing.push({ type: "assigned", by: actor ?? null, message, createdAt: toMySQLDateTime() });
-  
-  console.log("[v0] assignSimulatorOrder: Actualizando pedido #", orderId, "com assignedToId=", assignee?.id, ", status=", newStatus);
+
   await pool.execute(
-    `UPDATE simulatorOrders SET assignedToId=?, assignedToName=?, assignedAt=?, status=?, historyJson=?, updatedAt=NOW() WHERE id=?`,
-    [assignee?.id ?? null, assignee?.nome ?? null, assignee ? new Date() : null, newStatus, JSON.stringify(existing), orderId]
+    `UPDATE simulatorOrders SET assignedToId=?, assignedToName=?, assignedAt=?, status=?, historyJson=?, valorPagoAssistente=?, updatedAt=NOW() WHERE id=?`,
+    [assignee?.id ?? null, assignee?.nome ?? null, assignee ? new Date() : null, newStatus, JSON.stringify(existing), valorPagoAssistente, orderId]
   );
-  console.log("[v0] assignSimulatorOrder: ✓ Pedido #", orderId, " actualizado com sucesso");
 }
 
 export async function approveSimulatorOrder(
@@ -1429,6 +1440,84 @@ export async function cancelarOrcamentoPeloCliente(token: string): Promise<{ ok:
 }
 
 // ─── SimulatorOrders END ──────────────────────────────────────────────────────
+
+// ─── Pagamentos de Assistentes ────────────────────────────────────────────────
+
+export interface PagamentoAssistente {
+  assistenteId: number;
+  assistenteNome: string;
+  totalTrabalhos: number;
+  totalEuros: number;
+  /** Detalhe por trabalho atribuído no período */
+  trabalhos: Array<{
+    pedidoId: number;
+    assignedAt: string;
+    valorPago: number;
+    serviceType: string | null;
+    city: string | null;
+  }>;
+}
+
+export async function getPagamentosAssistente(opts: {
+  from: Date;
+  to: Date;
+  assistenteId?: number;
+}): Promise<PagamentoAssistente[]> {
+  await ensureSimulatorOrdersTable();
+  const pool = await getPool();
+  if (!pool) return [];
+
+  // Query única: todos os pedidos atribuídos no período com assistente e valor snapshot
+  const [rows] = await pool.execute(
+    `SELECT
+       assignedToId,
+       assignedToName,
+       id            AS pedidoId,
+       assignedAt,
+       COALESCE(valorPagoAssistente, 7.00) AS valorPago,
+       serviceType,
+       city
+     FROM simulatorOrders
+     WHERE assignedToId IS NOT NULL
+       AND assignedAt >= ?
+       AND assignedAt <= ?
+       ${opts.assistenteId ? "AND assignedToId = ?" : ""}
+     ORDER BY assignedToId, assignedAt DESC`,
+    opts.assistenteId
+      ? [opts.from, opts.to, opts.assistenteId]
+      : [opts.from, opts.to]
+  ) as any[];
+
+  const rowList = rows as any[];
+
+  // Agrupar por assistente
+  const map = new Map<number, PagamentoAssistente>();
+  for (const r of rowList) {
+    const id = Number(r.assignedToId);
+    if (!map.has(id)) {
+      map.set(id, {
+        assistenteId:   id,
+        assistenteNome: r.assignedToName ?? `Assistente ${id}`,
+        totalTrabalhos: 0,
+        totalEuros:     0,
+        trabalhos:      [],
+      });
+    }
+    const entry = map.get(id)!;
+    const valor = parseFloat(String(r.valorPago ?? 7));
+    entry.totalTrabalhos += 1;
+    entry.totalEuros     += valor;
+    entry.trabalhos.push({
+      pedidoId:    Number(r.pedidoId),
+      assignedAt:  r.assignedAt instanceof Date ? r.assignedAt.toISOString() : String(r.assignedAt),
+      valorPago:   valor,
+      serviceType: r.serviceType ?? null,
+      city:        r.city ?? null,
+    });
+  }
+
+  return Array.from(map.values()).sort((a, b) => b.totalEuros - a.totalEuros);
+}
 
 // ─── Trabalhos Realizados ─────────────────────────────────────────────────────
 

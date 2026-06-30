@@ -6,7 +6,7 @@ import { useAdminAuth } from "@/hooks/useAdminAuth";
 type Assistant = {
   id: number;
   nome: string;
-  funcao: "motorista" | "ajudante" | "admin";
+  funcao: "motorista" | "ajudante" | "admin" | "assistente";
   valorHora: string;
   isAdmin: number;
   activePedidos: number;
@@ -34,9 +34,10 @@ function AssistentModal({
   const isEdit = !!assistant;
   const [nome, setNome] = useState(assistant?.nome ?? "");
   const [senha, setSenha] = useState("");
-  const [funcao, setFuncao] = useState<"motorista" | "ajudante" | "admin">(assistant?.funcao ?? "ajudante");
+  const [funcao, setFuncao] = useState<"motorista" | "ajudante" | "admin" | "assistente">(assistant?.funcao ?? "ajudante");
   const [valorHora, setValorHora] = useState(assistant?.valorHora ?? "8.00");
   const [isAdmin, setIsAdmin] = useState(assistant?.isAdmin === 1);
+  const isAssistente = funcao === "assistente";
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
@@ -106,25 +107,36 @@ function AssistentModal({
               <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">Função</label>
               <select
                 value={funcao}
-                onChange={(e) => setFuncao(e.target.value as "motorista" | "ajudante" | "admin")}
+                onChange={(e) => setFuncao(e.target.value as "motorista" | "ajudante" | "admin" | "assistente")}
                 className="w-full rounded-2xl border border-white/10 bg-[#0A1220] px-4 py-2.5 text-sm text-white focus:border-cyan-400/40 focus:outline-none transition"
               >
                 <option value="motorista">Motorista</option>
                 <option value="ajudante">Ajudante</option>
                 <option value="admin">Admin</option>
+                <option value="assistente">Assistente</option>
               </select>
             </div>
-            <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">Valor/hora (€)</label>
-              <input
-                type="number"
-                step="0.01"
-                min="0"
-                value={valorHora}
-                onChange={(e) => setValorHora(e.target.value)}
-                className="w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-2.5 text-sm text-white focus:border-cyan-400/40 focus:outline-none transition"
-              />
-            </div>
+            {!isAssistente && (
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">Valor/hora (€)</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={valorHora}
+                  onChange={(e) => setValorHora(e.target.value)}
+                  className="w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-2.5 text-sm text-white focus:border-cyan-400/40 focus:outline-none transition"
+                />
+              </div>
+            )}
+            {isAssistente && (
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">Modelo de pagamento</label>
+                <div className="w-full rounded-2xl border border-[#00B4D8]/20 bg-[#00B4D8]/[0.05] px-4 py-2.5 text-sm text-[#00B4D8]">
+                  Pagamento fixo por trabalho (configurável em Definições)
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="flex items-center gap-3">
@@ -265,7 +277,13 @@ export default function AdminAssistentesClient() {
                     <span className="rounded-full border border-cyan-400/30 bg-cyan-400/10 px-2 py-0.5 text-[10px] font-bold text-cyan-400">Admin</span>
                   ) : null}
                 </div>
-                <p className="mt-0.5 text-xs text-slate-500 capitalize">{FUNCAO_LABELS[a.funcao] ?? a.funcao} · {a.valorHora}€/h</p>
+                <p className="mt-0.5 text-xs text-slate-500 capitalize">
+                  {FUNCAO_LABELS[a.funcao] ?? a.funcao}
+                  {a.funcao === "assistente"
+                    ? <span className="text-[#00B4D8]/70"> · Pag. por trabalho</span>
+                    : <> · {a.valorHora}€/h</>
+                  }
+                </p>
                 <p className="mt-1 text-[11px] text-sky-400/80">
                   {a.activePedidos > 0 ? `${a.activePedidos} pedido${a.activePedidos !== 1 ? "s" : ""} activo${a.activePedidos !== 1 ? "s" : ""}` : "Sem pedidos activos"}
                 </p>

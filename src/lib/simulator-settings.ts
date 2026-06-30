@@ -22,7 +22,8 @@ export type SimulatorSettingKey =
   | "overhead_por_servico"
   | "margem_lucro"
   | "diesel_preco"
-  | "km_por_litro";
+  | "km_por_litro"
+  | "pagamento_assistente_por_trabalho";
 
 export type SimulatorSettingDefinition = {
   key: SimulatorSettingKey;
@@ -218,6 +219,14 @@ export const defaultSimulatorSettings: SimulatorSettingDefinition[] = [
     category: "geral",
     unit: "multiplier",
     value: 6,
+  },
+  {
+    key: "pagamento_assistente_por_trabalho",
+    label: "Pagamento por trabalho (€/assistente)",
+    description: "Valor fixo pago a cada assistente por trabalho agendado/atribuído. Cada assistente recebe este valor individualmente (ex: 2 assistentes = 2 × valor).",
+    category: "geral",
+    unit: "eur",
+    value: 7.00,
   },
 ];
 
