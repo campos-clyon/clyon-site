@@ -30,14 +30,16 @@ export const authOptions: NextAuthOptions = {
   ],
 
   callbacks: {
-    async signIn({ user }) {
+    async signIn({ user, account: _account, profile: _profile, email: _email, credentials: _credentials }) {
+      // Este handler serve APENAS colaboradores (/api/auth/[...nextauth]).
+      // O handler de clientes está em /api/auth/cliente/[...nextauth] (auth-cliente.ts).
       const email = user.email;
       if (!email) return false;
 
       try {
         const pool = await getPool();
         if (!pool) {
-          console.error("[auth] Pool MySQL não disponível — bloqueando login");
+          console.error("[auth] Pool MySQL não disponível — bloqueando login de colaborador");
           return false;
         }
         const [rows] = await pool.execute(
@@ -46,7 +48,6 @@ export const authOptions: NextAuthOptions = {
         ) as [Array<{ id: number }>, unknown];
 
         if (rows.length === 0) {
-          // Email não autorizado → redirecionar para página de erro
           return "/colaboradores/entrar?erro=nao_autorizado";
         }
         return true;
@@ -61,6 +62,13 @@ export const authOptions: NextAuthOptions = {
         (session.user as { id?: string }).id = token.sub;
       }
       return session;
+    },
+
+    async redirect({ url, baseUrl }) {
+      // Após login bem-sucedido de colaborador → ir para /colaboradores/admin
+      if (url.startsWith(baseUrl)) return url;
+      if (url.startsWith("/")) return `${baseUrl}${url}`;
+      return `${baseUrl}/colaboradores/admin`;
     },
   },
 

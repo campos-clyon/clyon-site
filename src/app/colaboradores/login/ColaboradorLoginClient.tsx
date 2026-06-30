@@ -2,7 +2,9 @@
 
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
-import { signIn } from "next-auth/react";
+// Nota: não usamos signIn() do next-auth/react aqui porque o SessionProvider
+// raiz usa basePath="/api/auth/cliente" (para clientes). Para colaboradores
+// precisamos de apontar directamente para o handler /api/auth/[...nextauth].
 import { ArrowRight, Eye, EyeOff, LockKeyhole, ShieldCheck, Users, Clock, Check } from "lucide-react";
 
 export default function ColaboradorLoginClient() {
@@ -233,9 +235,14 @@ export default function ColaboradorLoginClient() {
               {/* Botão Google */}
               <button
                 type="button"
-                onClick={() =>
-                  signIn("google", { callbackUrl: "/colaboradores/dashboard" })
-                }
+                onClick={() => {
+                  // Aponta directamente para o handler de colaboradores (/api/auth)
+                  // com callbackUrl para o painel de admin após login bem-sucedido.
+                  const params = new URLSearchParams({
+                    callbackUrl: "/colaboradores/admin",
+                  });
+                  window.location.href = `/api/auth/signin/google?${params.toString()}`;
+                }}
                 className="inline-flex h-14 w-full items-center justify-center gap-3 rounded-2xl border border-slate-700 bg-slate-800 px-6 text-base font-semibold text-slate-100 transition hover:border-slate-600 hover:bg-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/40"
               >
                 {/* Google "G" SVG oficial */}

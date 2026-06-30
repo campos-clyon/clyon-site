@@ -56,6 +56,7 @@ function EntrarForm() {
         <button
           type="button"
           onClick={() =>
+            // signIn usa automaticamente basePath="/api/auth/cliente" do SessionProvider raiz
             signIn("google", { callbackUrl: "/conta" })
           }
           className="inline-flex h-14 w-full items-center justify-center gap-3 rounded-2xl border border-slate-200 bg-white px-6 text-base font-semibold text-slate-800 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500/40"
