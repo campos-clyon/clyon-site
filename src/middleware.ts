@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { getToken } from "next-auth/jwt";
 
 const CANONICAL_HOST = "clyon.pt";
 
@@ -19,8 +20,21 @@ const WEAK_MUDANCAS_CITIES = [
   "costa-da-caparica",
 ];
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const { nextUrl, headers } = request;
+
+  // Proteger /conta — requer sessão de cliente Google
+  if (nextUrl.pathname.startsWith("/conta")) {
+    const token = await getToken({
+      req: request,
+      secret: process.env.NEXTAUTH_SECRET,
+    });
+    if (!token) {
+      const loginUrl = new URL("/entrar", request.url);
+      loginUrl.searchParams.set("callbackUrl", nextUrl.pathname);
+      return NextResponse.redirect(loginUrl);
+    }
+  }
   const host = headers.get("host") ?? nextUrl.host;
   const forwardedProto = headers.get("x-forwarded-proto") ?? nextUrl.protocol.replace(":", "");
 
@@ -141,6 +155,9 @@ export function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
+    // Rotas protegidas por autenticação de cliente
+    "/conta/:path*",
+    // Todas as outras rotas (excluindo assets estáticos)
     "/((?!_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml|site.webmanifest).*)",
   ],
 };

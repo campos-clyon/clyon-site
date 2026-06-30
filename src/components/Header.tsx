@@ -19,7 +19,11 @@ import {
   Zap,
   ArrowRight,
   Clock,
+  User,
+  LogOut,
+  ClipboardList,
 } from "lucide-react";
+import { useSession, signOut } from "next-auth/react";
 
 import { trackWhatsAppClick } from "@/lib/analytics";
 import { trackContactEvent } from "@/lib/track-contact";
@@ -95,8 +99,12 @@ export default function Header() {
   const [solucoesOpen, setSolucoesOpen] = useState(false);
   const [mobileAccordionOpen, setMobileAccordionOpen] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
+  const [contaOpen, setContaOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
+  const contaRef = useRef<HTMLDivElement>(null);
+
+  const { data: session } = useSession();
 
   const whatsappNumber = BUSINESS_PHONE.replace(/[^\d]/g, "");
   const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent("Olá! Gostava de pedir um orçamento à CLYON.")}`;
@@ -116,6 +124,16 @@ export default function Header() {
 
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  useEffect(() => {
+    function handleContaOutside(event: MouseEvent) {
+      if (contaRef.current && !contaRef.current.contains(event.target as Node)) {
+        setContaOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleContaOutside);
+    return () => document.removeEventListener("mousedown", handleContaOutside);
   }, []);
 
   return (
@@ -189,6 +207,68 @@ export default function Header() {
           >
             Quero contratar
           </button>
+
+          {/* Botão conta / entrar */}
+          {session?.user ? (
+            <div className="relative" ref={contaRef}>
+              <button
+                type="button"
+                onClick={() => setContaOpen(!contaOpen)}
+                className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full border-2 border-cyan-200 bg-cyan-50 transition hover:border-cyan-400"
+                aria-label="Menu da conta"
+              >
+                {session.user.image ? (
+                  <Image
+                    src={session.user.image}
+                    alt={session.user.name ?? "Conta"}
+                    width={36}
+                    height={36}
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <span className="text-sm font-bold text-cyan-700">
+                    {(session.user.name ?? session.user.email ?? "?").charAt(0).toUpperCase()}
+                  </span>
+                )}
+              </button>
+              {contaOpen && (
+                <div className="absolute right-0 top-full mt-2 w-48 rounded-2xl border border-slate-100 bg-white py-1.5 shadow-xl">
+                  <div className="border-b border-slate-100 px-4 pb-2 pt-1.5">
+                    <p className="truncate text-xs font-semibold text-slate-800">
+                      {session.user.name}
+                    </p>
+                    <p className="truncate text-xs text-slate-400">
+                      {session.user.email}
+                    </p>
+                  </div>
+                  <Link
+                    href="/conta"
+                    onClick={() => setContaOpen(false)}
+                    className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-700 transition hover:bg-slate-50 hover:text-cyan-700"
+                  >
+                    <ClipboardList className="h-4 w-4" />
+                    A minha conta
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={() => { setContaOpen(false); signOut({ callbackUrl: "/" }); }}
+                    className="flex w-full items-center gap-2.5 px-4 py-2.5 text-sm text-slate-500 transition hover:bg-slate-50 hover:text-red-600"
+                  >
+                    <LogOut className="h-4 w-4" />
+                    Sair
+                  </button>
+                </div>
+              )}
+            </div>
+          ) : (
+            <Link
+              href="/entrar"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-600 transition hover:border-slate-300 hover:text-cyan-700"
+            >
+              <User className="h-4 w-4" />
+              Entrar
+            </Link>
+          )}
         </div>
 
         {/* Mobile menu button */}
@@ -359,6 +439,36 @@ export default function Header() {
               >
                 Quero contratar
               </button>
+              {/* Conta mobile */}
+              {session?.user ? (
+                <>
+                  <Link
+                    href="/conta"
+                    onClick={() => setMenuOpen(false)}
+                    className="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3.5 text-base font-semibold text-slate-700 transition hover:border-slate-300"
+                  >
+                    <ClipboardList className="h-5 w-5 text-cyan-600" />
+                    A minha conta
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={() => { setMenuOpen(false); signOut({ callbackUrl: "/" }); }}
+                    className="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-100 px-4 py-3 text-sm text-slate-500 transition hover:text-red-600"
+                  >
+                    <LogOut className="h-4 w-4" />
+                    Sair da conta
+                  </button>
+                </>
+              ) : (
+                <Link
+                  href="/entrar"
+                  onClick={() => setMenuOpen(false)}
+                  className="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3.5 text-base font-semibold text-slate-700 transition hover:border-slate-300"
+                >
+                  <User className="h-5 w-5 text-slate-500" />
+                  Entrar / Criar conta
+                </Link>
+              )}
             </div>
           </nav>
         </div>
