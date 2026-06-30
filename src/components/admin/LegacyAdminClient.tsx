@@ -5,6 +5,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { clearColaboradorStorage, getColaboradorItem } from "@/lib/colaborador-storage";
 import PedidoDetailModal from "@/components/admin/PedidoDetailModal";
+import PagamentosPanel from "@/components/admin/PagamentosPanel";
 import {
   AlertTriangle,
   ArrowRight,
@@ -1356,12 +1357,8 @@ export default function ColaboradorAdminClient() {
       };
 
       if (isAssistente) {
-        payload.paymentModel = "commission";
+        payload.paymentModel = "fixed_per_job";
         payload.valorHora = null;
-        payload.commissionType = novoCommissionType;
-        payload.commissionPercent = novoCommissionPercent ? parseFloat(novoCommissionPercent) : null;
-        payload.commissionFixedAmount = novoCommissionFixed ? parseFloat(novoCommissionFixed) : null;
-        payload.commissionNotes = novoCommissionNotes || null;
         payload.canReceiveSimulatorRequests = 1;
         payload.participatesInTimeTracking = 0;
       } else if (isAdminFuncao) {
@@ -2253,7 +2250,7 @@ export default function ColaboradorAdminClient() {
                     {operacaoTab === "equipa" ? "Equipa" : operacaoTab === "horarios" ? "Horários e registos" : operacaoTab === "pagamentos" ? "Pagamentos" : "Funções e comissões"}
                   </h2>
                   <p className="mt-1 text-sm text-slate-400">
-                    {operacaoTab === "equipa" ? "Gestão de colaboradores: assistentes, motoristas e ajudantes." : operacaoTab === "horarios" ? "Valide entradas, saídas, pausas e valores da equipa." : operacaoTab === "pagamentos" ? "Resumo de pagamentos por horas e comissões pendentes." : "Regras de comissão e valores padrão por função."}
+                    {operacaoTab === "equipa" ? "Gestão de colaboradores: assistentes, motoristas e ajudantes." : operacaoTab === "horarios" ? "Valide entradas, saídas, pausas e valores da equipa." : operacaoTab === "pagamentos" ? "Ganhos fixos por trabalho atribuído no período seleccionado." : "Funções e valores padrão por tipo de colaborador."}
                   </p>
                 </div>
                 {/* Sub-tabs */}
@@ -2619,7 +2616,7 @@ export default function ColaboradorAdminClient() {
                       <div className="flex flex-wrap gap-2">
                         {(["assistente", "motorista", "ajudante", "admin"] as Array<Colaborador["funcao"]>).map((funcao) => {
                           const descricoes: Record<Colaborador["funcao"], string> = {
-                            assistente: "Recebe pedidos do simulador, comissão por pedido fechado",
+                            assistente: "Recebe pedidos do simulador, pagamento fixo por trabalho atribuído",
                             motorista: "Operação, horários, valor por hora ou diária",
                             ajudante: "Operação, horários, valor por hora ou diária",
                             admin: "Acesso total ao backoffice",
@@ -2642,7 +2639,7 @@ export default function ColaboradorAdminClient() {
                         })}
                       </div>
                       <p className="mt-2 text-xs text-slate-500">
-                        {novoFuncao === "assistente" && "Assistentes recebem pedidos do simulador e podem ganhar comissão por pedido fechado."}
+                        {novoFuncao === "assistente" && "Assistentes recebem pedidos do simulador. O pagamento é fixo por trabalho atribuído (configurável em Definições)."}
                         {novoFuncao === "motorista" && "Motoristas participam na operação e podem receber por hora ou diária."}
                         {novoFuncao === "ajudante" && "Ajudantes participam na operação e podem receber por hora ou diária."}
                         {novoFuncao === "admin" && "Administradores têm acesso total ao backoffice."}
@@ -2703,52 +2700,12 @@ export default function ColaboradorAdminClient() {
                     )}
 
                     {novoFuncao === "assistente" && (
-                      <div className="space-y-4 rounded-[16px] border border-sky-500/20 bg-sky-500/5 p-4">
-                        <p className="text-xs font-semibold uppercase tracking-widest text-sky-400">Modelo de comissão</p>
-                        <div className="grid gap-4 md:grid-cols-2">
-                          <Field label="Tipo de comissão">
-                            <select
-                              value={novoCommissionType}
-                              onChange={(e) => setNovoCommissionType(e.target.value as typeof novoCommissionType)}
-                              className="h-11 w-full rounded-[12px] border border-slate-700 bg-slate-800 px-3 text-sm text-white outline-none focus:border-sky-500 [color-scheme:dark]"
-                            >
-                              <option value="gross_percent">Percentagem sobre valor fechado</option>
-                              <option value="profit_percent">Percentagem sobre lucro</option>
-                              <option value="fixed_per_closed_request">Valor fixo por pedido fechado</option>
-                              <option value="none">Sem comissão (por agora)</option>
-                            </select>
-                          </Field>
-                          {(novoCommissionType === "gross_percent" || novoCommissionType === "profit_percent") && (
-                            <Field label="Percentagem (%)">
-                              <input
-                                type="number" step="0.1" min="0" max="100"
-                                value={novoCommissionPercent}
-                                onChange={(e) => setNovoCommissionPercent(e.target.value)}
-                                className="h-11 w-full rounded-[12px] border border-slate-700 bg-slate-800/60 px-4 text-white outline-none transition focus:border-sky-500 placeholder:text-slate-500"
-                                placeholder="Ex.: 5"
-                              />
-                            </Field>
-                          )}
-                          {novoCommissionType === "fixed_per_closed_request" && (
-                            <Field label="Valor fixo por pedido (€)">
-                              <input
-                                type="number" step="0.01" min="0"
-                                value={novoCommissionFixed}
-                                onChange={(e) => setNovoCommissionFixed(e.target.value)}
-                                className="h-11 w-full rounded-[12px] border border-slate-700 bg-slate-800/60 px-4 text-white outline-none transition focus:border-sky-500 placeholder:text-slate-500"
-                                placeholder="Ex.: 15.00"
-                              />
-                            </Field>
-                          )}
-                        </div>
-                        <Field label="Observações internas — opcional">
-                          <input
-                            value={novoCommissionNotes}
-                            onChange={(e) => setNovoCommissionNotes(e.target.value)}
-                            className="h-11 w-full rounded-[12px] border border-slate-700 bg-slate-800/60 px-4 text-white outline-none transition focus:border-sky-500 placeholder:text-slate-500"
-                            placeholder="Ex.: Comissão paga apenas quando o pedido for confirmado"
-                          />
-                        </Field>
+                      <div className="rounded-[16px] border border-sky-500/20 bg-sky-500/5 p-4">
+                        <p className="text-xs font-semibold uppercase tracking-widest text-sky-400 mb-2">Modelo de pagamento</p>
+                        <p className="text-sm text-slate-400">
+                          Pagamento fixo por trabalho atribuído. O valor por trabalho é configurável globalmente em{" "}
+                          <span className="font-semibold text-sky-300">Definições → Pagamento assistente por trabalho</span>.
+                        </p>
                       </div>
                     )}
 
@@ -2998,19 +2955,15 @@ export default function ColaboradorAdminClient() {
 
               {/* Sub-aba Pagamentos */}
               {operacaoTab === "pagamentos" && (
-              <div className="rounded-[18px] border border-slate-700/50 bg-slate-800/40 p-6 text-center">
-                <Wallet className="mx-auto mb-3 h-10 w-10 text-slate-500" />
-                <p className="text-base font-semibold text-slate-300">Pagamentos — em construção</p>
-                <p className="mt-1 text-sm text-slate-500">Esta área apresentará os pagamentos pendentes por hora e comissão.</p>
-              </div>
+                <PagamentosPanel authHeader={token ? { Authorization: `Bearer ${token}` } : {}} />
               )}
 
               {/* Sub-aba Funções */}
               {operacaoTab === "funcoes" && (
               <div className="rounded-[18px] border border-slate-700/50 bg-slate-800/40 p-6 text-center">
                 <Settings2 className="mx-auto mb-3 h-10 w-10 text-slate-500" />
-                <p className="text-base font-semibold text-slate-300">Funções e comissões — em construção</p>
-                <p className="mt-1 text-sm text-slate-500">Esta área permitirá definir regras de comissão e valores padrão por função.</p>
+                <p className="text-base font-semibold text-slate-300">Funções — em construção</p>
+                <p className="mt-1 text-sm text-slate-500">Esta área permitirá definir valores padrão por tipo de função.</p>
               </div>
               )}
 
