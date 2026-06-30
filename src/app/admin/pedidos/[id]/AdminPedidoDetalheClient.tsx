@@ -679,7 +679,7 @@ export default function AdminPedidoDetalheClient({ id }: { id: number }) {
                   { label: "Telefone", value: order.contactPhone },
                   { label: "Serviço", value: tService(displayServiceType) },
                   { label: "Status", value: STATUS_CFG[order.status]?.label ?? order.status },
-                  { label: "Prioridade", value: order.priority ?? "normal" },
+                  { label: "Prioridade", value: FIELD_TRANSLATIONS.priority?.[order.priority ?? "normal"] ?? order.priority ?? "Normal" },
                   { label: "Urgência", value: tUrgency(displayUrgency) },
                   { label: "Assistente", value: order.assignedToName ?? "Não atribuído" },
                   { label: "Origem", value: "Simulador" },

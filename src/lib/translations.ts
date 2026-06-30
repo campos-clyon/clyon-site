@@ -32,6 +32,7 @@ export const FIELD_TRANSLATIONS: Record<string, Record<string, string>> = {
     this_week: "Esta semana",
     flexible:  "Flexível",
     normal:    "Normal",
+    no:        "Sem urgência",
     // legado
     urgente:  "Urgente",
     flexivel: "Flexível",
@@ -81,6 +82,13 @@ export const FIELD_TRANSLATIONS: Record<string, Record<string, string>> = {
     alta:    "Alta",
     urgente: "Urgente",
   },
+  needsDismantling: {
+    no:      "Não precisa",
+    simple:  "Simples",
+    medium:  "Média",
+    complex: "Complexa",
+    unknown: "Não informado",
+  },
 };
 
 /**
@@ -99,10 +107,11 @@ export function translate(
 /**
  * Atalhos para os campos mais usados no backoffice.
  */
-export const tElevator   = (v?: string | null) => translate("elevator",    v);
-export const tParking    = (v?: string | null) => translate("parking",     v);
-export const tUrgency    = (v?: string | null) => translate("urgency",     v);
-export const tService    = (v?: string | null) => translate("serviceType", v);
-export const tFloor      = (v?: string | null) => translate("floor",       v);
-export const tEntulho    = (v?: string | null) => translate("entulhoState", v);
-export const tPriority   = (v?: string | null) => translate("priority",    v);
+export const tElevator        = (v?: string | null) => translate("elevator",         v);
+export const tParking         = (v?: string | null) => translate("parking",          v);
+export const tUrgency         = (v?: string | null) => translate("urgency",          v);
+export const tService         = (v?: string | null) => translate("serviceType",      v);
+export const tFloor           = (v?: string | null) => translate("floor",            v);
+export const tEntulho         = (v?: string | null) => translate("entulhoState",     v);
+export const tPriority        = (v?: string | null) => translate("priority",         v);
+export const tNeedsDismantling = (v?: string | null) => translate("needsDismantling", v);

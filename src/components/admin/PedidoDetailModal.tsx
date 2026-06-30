@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { BUSINESS_PHONE } from "@/lib/seo-data";
+import { tElevator, tParking, tUrgency, tService, tEntulho } from "@/lib/translations";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -123,9 +124,14 @@ const ALL_STATUSES: OrderStatus[] = [
   "confirmado", "em_execucao", "concluido", "cancelado",
 ];
 
-const SERVICE_TYPES = [
-  "Recolha de móveis", "Recolha de monos", "Recolha de entulho",
-  "Esvaziamento de casa", "Esvaziamento de apartamento", "Mudança", "Outro",
+const SERVICE_TYPES: { value: string; label: string }[] = [
+  { value: "recolha_moveis",           label: "Recolha de móveis" },
+  { value: "recolha_monos",            label: "Recolha de monos" },
+  { value: "recolha_entulho",          label: "Recolha de entulho" },
+  { value: "esvaziamento_casa",        label: "Esvaziamento de casa" },
+  { value: "esvaziamento_apartamento", label: "Esvaziamento de apartamento" },
+  { value: "mudanca",                  label: "Mudança" },
+  { value: "outro",                    label: "Outro" },
 ];
 
 const TABS = [
@@ -181,26 +187,37 @@ function parseFiles(json?: string | null): string[] {
 }
 
 /**
- * Normaliza o serviceType para um valor interno consistente.
- * Aceita variantes: mudanca, Mudança, Mudanca, mudança, moving → "Mudança"
+ * Normaliza o serviceType para o valor interno canónico.
+ * Aceita variantes: "Mudança", "mudança", "moving", "Mudanca" → "mudanca"
  */
 function normalizeServiceType(value?: string | null): string {
   if (!value) return "";
   const v = value.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-  if (v === "mudanca" || v === "moving" || v === "mudanca") return "Mudança";
-  // Capitalizar primeira letra para correspondência com SERVICE_TYPES
-  return value.trim();
+  // Normalizar variantes de mudança para o valor interno
+  if (v === "mudanca" || v === "moving" || v === "mudança") return "mudanca";
+  // Normalizar labels legados para valores internos
+  const labelToValue: Record<string, string> = {
+    "recolha de moveis":            "recolha_moveis",
+    "recolha de monos":             "recolha_monos",
+    "recolha de entulho":           "recolha_entulho",
+    "esvaziamento de casa":         "esvaziamento_casa",
+    "esvaziamento de apartamento":  "esvaziamento_apartamento",
+    "outro servico":                "outro",
+    "outro serviço":                "outro",
+  };
+  return labelToValue[v] ?? value.trim();
 }
 
-/** Devolve o label a mostrar para um serviceType */
+/** Devolve o label PT a mostrar para um serviceType interno */
 function getServiceLabel(value?: string | null): string {
   if (!value) return "—";
-  return normalizeServiceType(value) || value;
+  const found = SERVICE_TYPES.find((s) => s.value === normalizeServiceType(value));
+  return found?.label ?? value;
 }
 
-/** Verifica se o serviceType é Mudança */
+/** Verifica se o serviceType é mudança */
 function isMudanca(value?: string | null): boolean {
-  return normalizeServiceType(value) === "Mudança";
+  return normalizeServiceType(value) === "mudanca";
 }
 
 /** Faz parse do rawOrderJson guardado pelo simulador */
@@ -347,6 +364,7 @@ export default function PedidoDetailModal({ id, token, isAdmin, colabId, colabFu
     setEditContactName(o.contactName ?? "");
     setEditContactPhone(o.contactPhone ?? "");
     setEditContactEmail(o.contactEmail ?? "");
+    // normalizeServiceType retorna o valor interno canónico (ex: "mudanca", "recolha_moveis")
     setEditServiceType(normalizeServiceType(o.serviceType));
     setEditDescription(o.description ?? "");
     setEditUrgency(o.urgency ?? "");
@@ -1047,15 +1065,8 @@ export default function PedidoDetailModal({ id, token, isAdmin, colabId, colabFu
                   const originAddr = raw.originAddress?.formattedAddress ?? raw.originAddress?.address ?? order.address;
                   const destAddr = raw.destinationAddress?.formattedAddress ?? raw.destinationAddress?.address;
                   const movDist = raw.movingDistance?.distanceText ?? (order.distanceKm ? `${order.distanceKm} km` : null);
-                  const elevatorLabel = order.hasElevator
-                    ? (order.hasElevator === "sim" ? "Sim" : order.hasElevator === "nao" ? "Não" : order.hasElevator)
-                    : null;
-                  const parkingLabel = order.parkingDistance
-                    ? (order.parkingDistance === "porta" ? "À porta" :
-                       order.parkingDistance === "proximo" ? "Próximo (até 50m)" :
-                       order.parkingDistance === "medio" ? "Médio (50–200m)" :
-                       order.parkingDistance === "longe" ? "Longe (+200m)" : order.parkingDistance)
-                    : null;
+                  const elevatorLabel = order.hasElevator ? tElevator(order.hasElevator) : null;
+                  const parkingLabel = order.parkingDistance ? tParking(order.parkingDistance) : null;
                   return (
                   <div className="space-y-6">
                     {/* Resumo do pedido */}
@@ -1127,7 +1138,7 @@ export default function PedidoDetailModal({ id, token, isAdmin, colabId, colabFu
                       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
                         {[
                           { label: "Tipo", value: getServiceLabel(order.serviceType) },
-                          { label: "Urgência", value: order.urgency ?? "Normal" },
+                          { label: "Urgência", value: tUrgency(order.urgency) },
                           { label: "Estimativa IA", value: fmtEur(order.estimateTotal) },
                           { label: "Preço final s/IVA", value: fmtEur(order.precoFinal) },
                           { label: "Preço final c/IVA", value: fmtEur(order.precoFinalIva) },
@@ -1236,8 +1247,10 @@ export default function PedidoDetailModal({ id, token, isAdmin, colabId, colabFu
                         <Field label="Urgência">
                           <select value={editUrgency} onChange={(e) => setEditUrgency(e.target.value)} className={selectCls}>
                             <option value="" className={optionCls}>Normal</option>
-                            <option value="urgente" className={optionCls}>Urgente</option>
-                            <option value="flexivel" className={optionCls}>Flexível</option>
+                            <option value="today" className={optionCls}>Hoje</option>
+                            <option value="tomorrow" className={optionCls}>Amanhã</option>
+                            <option value="this_week" className={optionCls}>Esta semana</option>
+                            <option value="flexible" className={optionCls}>Flexível</option>
                           </select>
                         </Field>
                       </div>
@@ -1257,8 +1270,8 @@ export default function PedidoDetailModal({ id, token, isAdmin, colabId, colabFu
                             <ReadonlyField label="Localidade" value={originAddr.city ?? order.city} />
                             <ReadonlyField label="Código postal" value={originAddr.postalCode ?? order.postalCode} />
                             <ReadonlyField label="Andar" value={originAccess.floor ?? order.floor} />
-                            <ReadonlyField label="Elevador" value={originAccess.hasElevator ?? order.hasElevator} />
-                            <ReadonlyField label="Estacionamento" value={originAccess.parkingDistance ?? order.parkingDistance} />
+                            <ReadonlyField label="Elevador" value={tElevator(originAccess.hasElevator ?? order.hasElevator)} />
+                            <ReadonlyField label="Estacionamento" value={tParking(originAccess.parkingDistance ?? order.parkingDistance)} />
                             <ReadonlyField label="Acesso difícil" value={originAccess.difficultAccess ? "Sim" : originAccess.difficultAccess === false ? "Não" : null} />
                             {originAccess.observations && (
                               <div className="sm:col-span-2">
@@ -1274,8 +1287,8 @@ export default function PedidoDetailModal({ id, token, isAdmin, colabId, colabFu
                             <ReadonlyField label="Localidade" value={destAddr.city} />
                             <ReadonlyField label="Código postal" value={destAddr.postalCode} />
                             <ReadonlyField label="Andar" value={destAccess.floor} />
-                            <ReadonlyField label="Elevador" value={destAccess.hasElevator} />
-                            <ReadonlyField label="Estacionamento" value={destAccess.parkingDistance} />
+                            <ReadonlyField label="Elevador" value={tElevator(destAccess.hasElevator)} />
+                            <ReadonlyField label="Estacionamento" value={tParking(destAccess.parkingDistance)} />
                             <ReadonlyField label="Acesso difícil" value={destAccess.difficultAccess ? "Sim" : destAccess.difficultAccess === false ? "Não" : null} />
                             {destAccess.observations && (
                               <div className="sm:col-span-2">
@@ -1352,26 +1365,51 @@ export default function PedidoDetailModal({ id, token, isAdmin, colabId, colabFu
                           <select value={editServiceType} onChange={(e) => setEditServiceType(e.target.value)} className={selectCls}>
                             <option value="" className={optionCls}>Selecionar...</option>
                             {SERVICE_TYPES.map((s) => (
-                              <option key={s} value={s} className={optionCls}>{s}</option>
+                              <option key={s.value} value={s.value} className={optionCls}>{s.label}</option>
                             ))}
                           </select>
-                          {editServiceType && !SERVICE_TYPES.includes(editServiceType) && (
+                          {editServiceType && !SERVICE_TYPES.some((s) => s.value === editServiceType) && (
                             <p className="mt-1 text-[10px] text-amber-400">
-                              Valor original: &quot;{order.serviceType}&quot; — normalizado para &quot;{editServiceType}&quot;
+                              Valor original: &quot;{order.serviceType}&quot; — não reconhecido
                             </p>
                           )}
                         </Field>
                         <Field label="Urgência">
                           <select value={editUrgency} onChange={(e) => setEditUrgency(e.target.value)} className={selectCls}>
                             <option value="" className={optionCls}>Normal</option>
-                            <option value="urgente" className={optionCls}>Urgente</option>
-                            <option value="flexivel" className={optionCls}>Flexível</option>
+                            <option value="today" className={optionCls}>Hoje</option>
+                            <option value="tomorrow" className={optionCls}>Amanhã</option>
+                            <option value="this_week" className={optionCls}>Esta semana</option>
+                            <option value="flexible" className={optionCls}>Flexível</option>
                           </select>
                         </Field>
                       </div>
                       <Field label="Descrição detalhada do serviço">
                         <textarea rows={5} value={editDescription} onChange={(e) => setEditDescription(e.target.value)} className={inputCls} placeholder="Descreva o serviço em detalhe..." />
                       </Field>
+
+                      {/* Entulho: quantidade de sacos e estado — apenas para recolha_entulho */}
+                      {editServiceType === "recolha_entulho" && (() => {
+                        const raw = parseRawOrder(order.rawOrderJson);
+                        const qtd: string | null = raw.entulhoQuantidade ?? null;
+                        const state: string | null = raw.entulhoState ?? null;
+                        return (qtd || state) ? (
+                          <div className="rounded-[18px] border border-white/[0.06] bg-white/[0.02] p-4 flex flex-wrap items-center gap-6">
+                            {qtd && (
+                              <div>
+                                <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-slate-600">Quantidade de sacos</p>
+                                <p className="mt-1 text-sm font-bold text-slate-200">{qtd}</p>
+                              </div>
+                            )}
+                            {state && (
+                              <div>
+                                <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-slate-600">Estado</p>
+                                <p className="mt-1 text-sm font-semibold text-slate-300">{tEntulho(state)}</p>
+                              </div>
+                            )}
+                          </div>
+                        ) : null;
+                      })()}
 
                       {/* Estimativa da IA — cartões de valores */}
                       <div>
