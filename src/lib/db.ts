@@ -709,15 +709,30 @@ export async function ensureLeadsExtended(): Promise<void> {
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
   `);
 
-  // Adicionar colunas opcionais caso a tabela existisse anteriormente sem elas
-  for (const sql of [
-    `ALTER TABLE leads ADD COLUMN IF NOT EXISTS origem VARCHAR(120) NULL DEFAULT NULL`,
-    `ALTER TABLE leads ADD COLUMN IF NOT EXISTS canal  VARCHAR(60)  NULL DEFAULT NULL`,
-    `ALTER TABLE leads ADD COLUMN IF NOT EXISTS status VARCHAR(40) NOT NULL DEFAULT 'novo'`,
-    `ALTER TABLE leads ADD COLUMN IF NOT EXISTS notasInternas TEXT NULL`,
-    `ALTER TABLE leads ADD COLUMN IF NOT EXISTS updatedAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP`,
-  ]) {
-    try { await pool.execute(sql); } catch { /* coluna já existe */ }
+  // Adicionar colunas opcionais que podem não existir em instâncias antigas.
+  // Verificamos se a coluna existe antes de tentar adicionar, evitando depender
+  // de "IF NOT EXISTS" que nem sempre está disponível em versões mais antigas.
+  const [existingCols] = await pool.execute(
+    `SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS
+     WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'leads'`
+  ) as [Array<{ COLUMN_NAME: string }>, unknown];
+  const colSet = new Set(existingCols.map(r => r.COLUMN_NAME));
+
+  const migrations: Array<[string, string]> = [
+    ["origem",        "VARCHAR(120) NULL DEFAULT NULL"],
+    ["canal",         "VARCHAR(60)  NULL DEFAULT NULL"],
+    ["status",        "VARCHAR(40)  NOT NULL DEFAULT 'novo'"],
+    ["notasInternas", "TEXT         NULL"],
+    ["updatedAt",     "DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"],
+  ];
+  for (const [col, def] of migrations) {
+    if (!colSet.has(col)) {
+      try {
+        await pool.execute(`ALTER TABLE leads ADD COLUMN ${col} ${def}`);
+      } catch (err) {
+        console.error(`[ensureLeadsExtended] Erro ao adicionar coluna ${col}:`, err);
+      }
+    }
   }
 
   _leadsExtended = true;
@@ -888,7 +903,7 @@ export async function getTodayRegistroByColaborador(colaboradorId: number) {
   return undefined;
 }
 
-// ─── SimulatorOrders ──────────────────────────────────────────────────────────
+// ─── SimulatorOrders ────────────────────────────────���─────────────────────────
 
 let _simulatorOrdersEnsured = false;
 // Bump this version number any time new migrations are added so the guard re-runs

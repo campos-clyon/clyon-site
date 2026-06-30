@@ -42,7 +42,12 @@ export async function GET(request: NextRequest) {
   if (auth.error) return auth.error;
 
   // Garantir que a tabela leads existe (e tem todas as colunas) antes de qualquer query
-  try { await ensureLeadsExtended(); } catch { /* log mas continua */ }
+  try {
+    await ensureLeadsExtended();
+  } catch (err) {
+    console.error("[api/admin/leads] ensureLeadsExtended falhou:", err);
+    // Continuar mesmo assim — a tabela pode já existir com as colunas necessárias
+  }
 
   try {
     const { searchParams } = new URL(request.url);
