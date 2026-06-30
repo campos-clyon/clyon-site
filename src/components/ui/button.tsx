@@ -10,11 +10,15 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default:
-          "border border-cyan-500 bg-cyan-500 text-white shadow-[0_18px_38px_-20px_rgba(6,182,212,0.72)] hover:-translate-y-0.5 hover:bg-cyan-400 hover:border-cyan-400",
+          "bg-cyan-600 text-white shadow-[0_18px_38px_-20px_rgba(6,182,212,0.72)] hover:-translate-y-0.5 hover:bg-cyan-700 [&_svg]:text-white",
+        primary:
+          "bg-cyan-600 text-white shadow-[0_18px_38px_-20px_rgba(6,182,212,0.72)] hover:-translate-y-0.5 hover:bg-cyan-700 [&_svg]:text-white",
+        whatsapp:
+          "bg-[#25D366] text-white shadow-[0_18px_38px_-20px_rgba(37,211,102,0.72)] hover:-translate-y-0.5 hover:bg-[#20bd5a] [&_svg]:text-white",
         destructive:
           "bg-destructive text-white hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60",
         outline:
-          "border border-cyan-200 bg-white text-cyan-700 shadow-none hover:-translate-y-0.5 hover:bg-cyan-50 hover:text-cyan-700 dark:bg-transparent dark:border-input dark:hover:bg-input/50",
+          "border border-slate-200 bg-white text-slate-900 shadow-none hover:-translate-y-0.5 hover:bg-slate-50 [&_svg]:text-slate-900",
         secondary:
           "bg-secondary text-secondary-foreground hover:bg-secondary/80",
         ghost:

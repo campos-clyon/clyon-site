@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { clearColaboradorStorage, getColaboradorItem } from "@/lib/colaborador-storage";
 import {
   AlertCircle,
   Briefcase,
@@ -161,10 +162,11 @@ export default function ColaboradorDashboard() {
   }, []);
 
   useEffect(() => {
-    const token = localStorage.getItem("colaborador_token");
-    const nome = localStorage.getItem("colaborador_nome");
-    const id = localStorage.getItem("colaborador_id");
-    const isAdmin = localStorage.getItem("colaborador_isAdmin");
+    const token = getColaboradorItem("token");
+    const nome = getColaboradorItem("nome");
+    const id = getColaboradorItem("id");
+    const isAdmin = getColaboradorItem("isAdmin");
+    const funcao = getColaboradorItem("funcao");
 
     if (!token) {
       router.push("/colaboradores");
@@ -176,10 +178,16 @@ export default function ColaboradorDashboard() {
       return;
     }
 
+    // Assistente não deve registar horas — redirecionar para painel de pedidos
+    if (funcao === "assistente") {
+      router.replace("/colaboradores/admin?section=pedidos");
+      return;
+    }
+
     setNomeColaborador(nome || "");
     if (id) setColaboradorId(parseInt(id));
     void carregarDados(token);
-  }, []);
+  }, [router]);
 
   const carregarDados = async (token: string) => {
     try {
@@ -189,7 +197,7 @@ export default function ColaboradorDashboard() {
 
       if (!responseEstatisticas.ok) {
         if (responseEstatisticas.status === 401) {
-          localStorage.removeItem("colaborador_token");
+          clearColaboradorStorage();
           router.push("/colaboradores");
           return;
         }
@@ -225,10 +233,7 @@ export default function ColaboradorDashboard() {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem("colaborador_token");
-    localStorage.removeItem("colaborador_nome");
-    localStorage.removeItem("colaborador_id");
-    localStorage.removeItem("colaborador_isAdmin");
+    clearColaboradorStorage();
     router.push("/colaboradores");
   };
 
@@ -238,7 +243,7 @@ export default function ColaboradorDashboard() {
     setSuccess("");
     setSaving(true);
 
-    const token = localStorage.getItem("colaborador_token");
+    const token = getColaboradorItem("token");
     if (!token) {
       router.push("/colaboradores");
       return;
@@ -280,7 +285,7 @@ export default function ColaboradorDashboard() {
     setSuccess("");
     setSaving(true);
 
-    const token = localStorage.getItem("colaborador_token");
+    const token = getColaboradorItem("token");
     if (!token || !registroEmAberto) {
       router.push("/colaboradores");
       return;

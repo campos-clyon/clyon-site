@@ -273,7 +273,8 @@ export default function RecolhaEntulhoPage() {
                   <Link
                     key={city.slug}
                     href={`/${getCityServiceSlug("recolha-entulho", city.slug)}`}
-                    className="rounded-full bg-slate-100 px-3 py-1.5 text-sm text-slate-700 transition-colors hover:bg-amber-100 hover:text-amber-700"
+                    className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium transition-colors hover:border-amber-300 hover:bg-amber-50"
+                    style={{ color: '#0f172a' }}
                   >
                     {city.name}
                   </Link>
@@ -292,7 +293,8 @@ export default function RecolhaEntulhoPage() {
                   <Link
                     key={city.slug}
                     href={`/${getCityServiceSlug("recolha-entulho", city.slug)}`}
-                    className="rounded-full bg-slate-100 px-3 py-1.5 text-sm text-slate-700 transition-colors hover:bg-amber-100 hover:text-amber-700"
+                    className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium transition-colors hover:border-amber-300 hover:bg-amber-50"
+                    style={{ color: '#0f172a' }}
                   >
                     {city.name}
                   </Link>
@@ -308,7 +310,8 @@ export default function RecolhaEntulhoPage() {
                   <Link
                     key={city.slug}
                     href={`/${getCityServiceSlug("recolha-entulho", city.slug)}`}
-                    className="rounded-full bg-slate-100 px-3 py-1.5 text-sm text-slate-700 transition-colors hover:bg-amber-100 hover:text-amber-700"
+                    className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium transition-colors hover:border-amber-300 hover:bg-amber-50"
+                    style={{ color: '#0f172a' }}
                   >
                     {city.name}
                   </Link>

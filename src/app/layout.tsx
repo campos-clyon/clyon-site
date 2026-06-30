@@ -1,11 +1,9 @@
 import type { Metadata } from "next";
 import { Inter, Poppins } from "next/font/google";
+import Script from "next/script";
 import { Analytics } from "@vercel/analytics/next";
 
-import DeferredCookieConsent from "@/components/DeferredCookieConsent";
-import Footer from "@/components/Footer";
-import Header from "@/components/Header";
-import StickyCTA from "@/components/StickyCTA";
+import SiteChrome from "@/components/SiteChrome";
 import { TrpcProvider } from "@/components/TrpcProvider";
 import {
   BUSINESS_ADDRESS,
@@ -28,7 +26,7 @@ const inter = Inter({
 const poppins = Poppins({
   subsets: ["latin"],
   display: "swap",
-  weight: ["400", "500", "600", "700", "800"],
+  weight: ["600", "700", "800"],
   variable: "--font-poppins",
 });
 
@@ -210,6 +208,8 @@ const websiteSchema = {
   inLanguage: "pt-PT",
 };
 
+const GOOGLE_ADS_ID = "AW-18221538324";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -219,6 +219,8 @@ export default function RootLayout({
     <html lang="pt-PT" className={`${inter.variable} ${poppins.variable}`}>
       <head>
         <meta name="color-scheme" content="light" />
+        <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
+        <link rel="preconnect" href="https://www.googletagmanager.com" crossOrigin="anonymous" />
         <link rel="icon" href="/favicon.ico" sizes="any" />
         <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
         <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
@@ -239,13 +241,22 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteSchema) }}
         />
       </head>
-      <body className="site-aqua-shell min-h-screen bg-white text-slate-900 antialiased">
+      <body className="site-aqua-shell min-h-screen bg-white text-slate-900 antialiased overflow-x-hidden">
+        <Script
+          id="gtag-src"
+          strategy="lazyOnload"
+          src={`https://www.googletagmanager.com/gtag/js?id=${GOOGLE_ADS_ID}`}
+        />
+        <Script id="gtag-init" strategy="lazyOnload">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', '${GOOGLE_ADS_ID}');
+          `}
+        </Script>
         <TrpcProvider>
-          <Header />
-          <main className="site-page-shell pt-[76px]">{children}</main>
-          <Footer />
-          <StickyCTA />
-          <DeferredCookieConsent />
+          <SiteChrome>{children}</SiteChrome>
         </TrpcProvider>
         <Analytics />
       </body>

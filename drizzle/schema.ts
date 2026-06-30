@@ -1,4 +1,4 @@
-import { int, mysqlEnum, mysqlTable, text, timestamp, varchar, decimal } from "drizzle-orm/mysql-core";
+import { int, mysqlEnum, mysqlTable, text, timestamp, varchar, decimal, tinyint } from "drizzle-orm/mysql-core";
 
 /**
  * Core user table backing auth flow.
@@ -29,10 +29,22 @@ export type InsertUser = typeof users.$inferInsert;
 export const colaboradores = mysqlTable('colaboradores', {
   id: int('id').autoincrement().primaryKey(),
   nome: varchar('nome', { length: 100 }).notNull().unique(),
-  senha: text('senha').notNull(), // Hash da senha
-  funcao: mysqlEnum('funcao', ['motorista', 'ajudante', 'admin']).notNull(),
-  valorHora: decimal('valorHora', { precision: 5, scale: 2 }).notNull(), // 8.00 ou 7.00
-  isAdmin: int('isAdmin').notNull().default(0), // 0 = false, 1 = true
+  senha: text('senha').notNull(),
+  funcao: mysqlEnum('funcao', ['motorista', 'ajudante', 'admin', 'assistente']).notNull(),
+  valorHora: decimal('valorHora', { precision: 6, scale: 2 }).default('0.00'), // null para assistentes
+  valorDiaria: decimal('valorDiaria', { precision: 6, scale: 2 }), // opcional para motoristas/ajudantes
+  isAdmin: int('isAdmin').notNull().default(0),
+  // Modelo de pagamento
+  paymentModel: mysqlEnum('paymentModel', ['hourly', 'daily', 'commission', 'none']).default('hourly'),
+  // Campos de comissão (para assistentes)
+  commissionType: mysqlEnum('commissionType', ['profit_percent', 'gross_percent', 'fixed_per_closed_request', 'none']),
+  commissionPercent: decimal('commissionPercent', { precision: 5, scale: 2 }),
+  commissionFixedAmount: decimal('commissionFixedAmount', { precision: 8, scale: 2 }),
+  commissionNotes: text('commissionNotes'),
+  // Flags operacionais
+  canReceiveSimulatorRequests: tinyint('canReceiveSimulatorRequests').default(1),
+  participatesInTimeTracking: tinyint('participatesInTimeTracking').default(1),
+  active: tinyint('active').notNull().default(1),
   createdAt: timestamp('createdAt').defaultNow().notNull(),
   updatedAt: timestamp('updatedAt').defaultNow().onUpdateNow().notNull(),
 });
@@ -88,3 +100,145 @@ export type SimulatorSetting = typeof simulatorSettings.$inferSelect;
 export type InsertSimulatorSetting = typeof simulatorSettings.$inferInsert;
 export type GalleryMedia = typeof galleryMedia.$inferSelect;
 export type InsertGalleryMedia = typeof galleryMedia.$inferInsert;
+
+// ─── SimulatorOrders (gerido com raw SQL — só os tipos aqui) ─────────────────
+
+export type OrderStatus =
+  | "pendente"
+  | "sem_assistente"
+  | "atribuido"
+  | "em_analise"
+  | "precisa_info"
+  | "estimativa_pronta"
+  | "presencial_recomendado"
+  | "aprovado"
+  | "enviado_cliente"
+  | "confirmado"
+  | "em_execucao"
+  | "concluido"
+  | "cancelado"
+  | "rejeitado";
+
+export type OrderPriority = "baixa" | "normal" | "alta" | "urgente";
+
+export interface OrderHistoryEntry {
+  type: string;
+  by?: { id: number; nome: string; role: string } | null;
+  message: string;
+  createdAt: string;
+}
+
+export interface SimulatorOrder {
+  id: number;
+  serviceType?: string | null;
+  description?: string | null;
+  filesJson?: string | null;
+  address?: string | null;
+  city?: string | null;
+  floor?: string | null;
+  hasElevator?: string | null;
+  parkingDistance?: string | null;
+  contactName?: string | null;
+  contactPhone?: string | null;
+  contactEmail?: string | null;
+  urgency?: string | null;
+  estimateMin?: string | null;
+  estimateMax?: string | null;
+  estimateTotal?: string | null;
+  estimateJson?: string | null;
+  distanceKm?: string | null;
+  distanceText?: string | null;
+  status: OrderStatus;
+  priority?: OrderPriority | null;
+  notasInternas?: string | null;
+  precoFinal?: string | null;
+  precoFinalIva?: string | null;
+  mensagemCliente?: string | null;
+  assignedToId?: number | null;
+  assignedToName?: string | null;
+  assignedAt?: Date | null;
+  chatJson?: string | null;
+  historyJson?: string | null;
+  reviewJson?: string | null;
+  colaboradorId?: number | null;
+  dataAgendada?: Date | null;
+  viewedAt?: Date | null;
+  /** Full raw form data JSON — stores originAddress, destinationAddress, originAccess, destinationAccess, movingDistance, etc. */
+  rawOrderJson?: string | null;
+  /** Timestamp when an assistant accepted this order from the general queue */
+  acceptedAt?: Date | null;
+  /** Scheduled service date (YYYY-MM-DD) */
+  scheduledDate?: string | null;
+  /** Scheduled start time (HH:MM) */
+  scheduledStartTime?: string | null;
+  /** Scheduled end time (HH:MM) */
+  scheduledEndTime?: string | null;
+  /** Google Calendar event ID once created */
+  calendarEventId?: string | null;
+  /** Google Calendar event URL */
+  calendarEventUrl?: string | null;
+  /** Calendar scheduling status */
+  calendarStatus?: "not_scheduled" | "scheduled" | "updated" | null;
+  /** Notes included in the calendar event */
+  calendarNotes?: string | null;
+  /**
+   * Extended analysis JSON — stores clyonEstimate, externalMarketEstimate,
+   * analysisSource, confidence, and pricingRulesSnapshot.
+   * Serialised as JSON string in the DB column analysisJsonExtended.
+   * ONLY for backoffice use — never sent to the client.
+   */
+  analysisJsonExtended?: string | null;
+  /** Google Calendar ID of the target calendar (e.g. CLYON org calendar). Stored from CLYON_GOOGLE_CALENDAR_ID env var at scheduling time. */
+  calendarTargetId?: string | null;
+  /** Human-readable name of the target calendar (e.g. "CLYON — Agenda da Empresa"). From CLYON_GOOGLE_CALENDAR_NAME env var. */
+  calendarTargetName?: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface InsertSimulatorOrder {
+  serviceType?: string | null;
+  description?: string | null;
+  filesJson?: string | null;
+  address?: string | null;
+  city?: string | null;
+  floor?: string | null;
+  hasElevator?: string | null;
+  parkingDistance?: string | null;
+  contactName?: string | null;
+  contactPhone?: string | null;
+  contactEmail?: string | null;
+  urgency?: string | null;
+  estimateMin?: string | null;
+  estimateMax?: string | null;
+  estimateTotal?: string | null;
+  estimateJson?: string | null;
+  distanceKm?: string | null;
+  distanceText?: string | null;
+  status?: OrderStatus;
+  priority?: OrderPriority | null;
+  notasInternas?: string | null;
+  precoFinal?: string | null;
+  precoFinalIva?: string | null;
+  mensagemCliente?: string | null;
+  assignedToId?: number | null;
+  assignedToName?: string | null;
+  assignedAt?: Date | null;
+  chatJson?: string | null;
+  historyJson?: string | null;
+  reviewJson?: string | null;
+  colaboradorId?: number | null;
+  dataAgendada?: Date | null;
+  rawOrderJson?: string | null;
+  acceptedAt?: Date | null;
+  scheduledDate?: string | null;
+  scheduledStartTime?: string | null;
+  scheduledEndTime?: string | null;
+  calendarEventId?: string | null;
+  calendarEventUrl?: string | null;
+  calendarStatus?: string | null;
+  calendarNotes?: string | null;
+  analysisJsonExtended?: string | null;
+  calendarTargetId?: string | null;
+  calendarTargetName?: string | null;
+}

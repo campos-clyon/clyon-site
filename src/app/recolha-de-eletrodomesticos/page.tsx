@@ -13,7 +13,6 @@ import {
   Users,
 } from "lucide-react";
 
-import Breadcrumb from "@/components/Breadcrumb";
 import FurnitureSeoLinks from "@/components/FurnitureSeoLinks";
 import {
   BUSINESS_NAME,
@@ -168,16 +167,9 @@ export default function RecolhaDeEletrodomesticosPage() {
 
       {/* Hero Section */}
       <section className="bg-white">
-        <div className="mx-auto max-w-7xl px-6 pb-16 pt-10 lg:px-8 lg:pb-20 lg:pt-14">
-          <Breadcrumb
-            items={[
-              { label: "Serviços", href: "/servicos" },
-              { label: "Recolha de Móveis", href: "/recolha-de-moveis" },
-              { label: "Recolha de Eletrodomésticos" },
-            ]}
-          />
+        <div className="mx-auto max-w-7xl px-6 pb-16 pt-16 lg:px-8 lg:pb-20 lg:pt-20">
 
-          <div className="mt-8 grid gap-12 lg:grid-cols-2 lg:gap-16">
+          <div className="grid gap-12 lg:grid-cols-2 lg:gap-16">
             <div>
               <h1 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl lg:text-5xl">
                 Recolha de eletrodomésticos usados em Lisboa, Margem Sul e Setúbal
@@ -206,7 +198,7 @@ export default function RecolhaDeEletrodomesticosPage() {
                   Ligar agora
                 </a>
                 <a
-                  href="https://wa.me/351934748005?text=Ol%C3%A1!%20Preciso%20de%20recolha%20de%20eletrodom%C3%A9stico."
+                  href="https://wa.me/351965785395?text=Ol%C3%A1!%20Preciso%20de%20recolha%20de%20eletrodom%C3%A9stico."
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-emerald-500 px-6 text-base font-semibold text-white transition hover:bg-emerald-600"
@@ -367,13 +359,22 @@ export default function RecolhaDeEletrodomesticosPage() {
           <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
             <Link
               href="/simulador"
-              className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-white px-6 text-base font-semibold text-cyan-600 transition hover:bg-cyan-50"
+              className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-white px-6 text-base font-semibold transition hover:bg-cyan-50"
+              style={{ color: '#0891b2' }}
             >
               Simular orçamento
               <ArrowRight className="h-4 w-4" />
             </Link>
             <a
-              href="https://wa.me/351934748005?text=Ol%C3%A1!%20Preciso%20de%20recolha%20de%20eletrodom%C3%A9stico."
+              href={`tel:${BUSINESS_PHONE}`}
+              className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-white px-6 text-base font-semibold transition hover:bg-slate-100"
+              style={{ color: '#0f172a' }}
+            >
+              <Phone className="h-4 w-4" />
+              <span>Ligar Agora</span>
+            </a>
+            <a
+              href="https://wa.me/351965785395?text=Ol%C3%A1!%20Preciso%20de%20recolha%20de%20eletrodom%C3%A9stico."
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-emerald-500 px-6 text-base font-semibold text-white transition hover:bg-emerald-600"

@@ -1,70 +1,136 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { getMapsApiKey } from "@/lib/maps-config";
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+function parseGoogleDurationToSeconds(duration: string): number {
+  // Routes API devolve ex: "1680s"
+  return Number(duration.replace("s", ""));
+}
+
+function formatDuration(seconds: number): string {
+  const minutes = Math.round(seconds / 60);
+  if (minutes < 60) return `${minutes} min`;
+  const hours = Math.floor(minutes / 60);
+  const rest = minutes % 60;
+  return rest ? `${hours}h ${rest}min` : `${hours}h`;
+}
+
+// ---------------------------------------------------------------------------
+// Resposta amigável reutilizável
+// ---------------------------------------------------------------------------
+
+const FRIENDLY_ERROR = NextResponse.json(
+  {
+    ok: false,
+    customerMessage:
+      "Não foi possível calcular a distância agora. A equipa CLYON confirma manualmente.",
+  },
+  { status: 503 }
+);
+
+// ---------------------------------------------------------------------------
+// Route handler
+// ---------------------------------------------------------------------------
 
 export const revalidate = 0;
 
 export async function POST(request: NextRequest) {
-  const { origin, destination } = await request.json();
-
-  const originText = typeof origin === "string" ? origin.trim() : "";
-  const destinationText =
-    typeof destination === "string" ? destination.trim() : "";
-
-  if (!originText || !destinationText) {
-    return NextResponse.json(
-      { error: "missing_origin_or_destination" },
-      { status: 400 },
-    );
-  }
-
-  const key = getMapsApiKey();
+  // 1. Chave de servidor — NUNCA usar NEXT_PUBLIC_ no backend
+  const key = process.env.GOOGLE_MAPS_SERVER_API_KEY;
   if (!key) {
-    return NextResponse.json(
-      { error: "maps_unconfigured" },
-      { status: 503 },
-    );
+    console.error("[maps/distance] GOOGLE_MAPS_SERVER_API_KEY não configurada.");
+    return FRIENDLY_ERROR;
   }
 
-  const params = new URLSearchParams({
-    origins: originText,
-    destinations: destinationText,
-    mode: "driving",
-    language: "pt-PT",
-    region: "pt",
-    key,
-  });
+  // 2. Origem: coordenadas da base CLYON (preferencial) ou endereço
+  const baseLat = process.env.CLYON_BASE_LAT ? Number(process.env.CLYON_BASE_LAT) : null;
+  const baseLng = process.env.CLYON_BASE_LNG ? Number(process.env.CLYON_BASE_LNG) : null;
+  const baseAddress = process.env.CLYON_BASE_ADDRESS ?? "Av. Q.ta das Laranjeiras, 2865-688 Fernão Ferro, Portugal";
 
-  const response = await fetch(
-    `https://maps.googleapis.com/maps/api/distancematrix/json?${params.toString()}`,
-    { cache: "no-store" },
-  );
+  const originPayload =
+    baseLat !== null && baseLng !== null
+      ? { location: { latLng: { latitude: baseLat, longitude: baseLng } } }
+      : { address: baseAddress };
 
-  if (!response.ok) {
-    return NextResponse.json({ error: "distance_unavailable" }, { status: 502 });
+  // 3. Destino: coordenadas (preferencial) ou endereço formatado
+  let body: { destination?: { formattedAddress?: string; lat?: number; lng?: number; placeId?: string } };
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ ok: false, customerMessage: "Payload inválido." }, { status: 400 });
   }
 
-  const data = await response.json();
-  const element = data.rows?.[0]?.elements?.[0];
+  const dest = body.destination;
+  if (!dest || (!dest.lat && !dest.formattedAddress)) {
+    return NextResponse.json({ ok: false, customerMessage: "Destino em falta." }, { status: 400 });
+  }
 
-  if (data.status !== "OK" || !element || element.status !== "OK") {
-    return NextResponse.json(
-      {
-        error:
-          element?.status ||
-          data.error_message ||
-          data.status ||
-          "distance_unavailable",
+  const destinationPayload =
+    dest.lat && dest.lng
+      ? { location: { latLng: { latitude: dest.lat, longitude: dest.lng } } }
+      : { address: dest.formattedAddress! };
+
+  // 4. Chamada à Google Routes API
+  try {
+    const res = await fetch("https://routes.googleapis.com/directions/v2:computeRoutes", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Goog-Api-Key": key,
+        "X-Goog-FieldMask": "routes.distanceMeters,routes.duration,routes.localizedValues",
       },
-      { status: 502 },
-    );
+      body: JSON.stringify({
+        origin: originPayload,
+        destination: destinationPayload,
+        travelMode: "DRIVE",
+        routingPreference: "TRAFFIC_AWARE",
+        languageCode: "pt-PT",
+        regionCode: "PT",
+      }),
+      cache: "no-store",
+    });
+
+    if (!res.ok) {
+      const errBody = await res.text();
+      console.error("[maps/distance] Routes API HTTP error:", res.status, errBody);
+      return FRIENDLY_ERROR;
+    }
+
+    const data = await res.json();
+    const route = data.routes?.[0];
+
+    if (!route || !route.distanceMeters || !route.duration) {
+      console.error("[maps/distance] Routes API sem rota válida:", JSON.stringify(data));
+      return FRIENDLY_ERROR;
+    }
+
+    const distanceMeters: number = route.distanceMeters;
+    const distanceKm = Math.round((distanceMeters / 1000) * 10) / 10;
+    const durationSeconds = parseGoogleDurationToSeconds(String(route.duration));
+    const durationText = formatDuration(durationSeconds);
+
+    return NextResponse.json({
+      ok: true,
+      distanceMeters,
+      distanceKm,
+      durationSeconds,
+      durationText,
+      origin: {
+        address: baseAddress,
+        lat: baseLat,
+        lng: baseLng,
+      },
+      destination: {
+        formattedAddress: dest.formattedAddress,
+        lat: dest.lat,
+        lng: dest.lng,
+        placeId: dest.placeId,
+      },
+    });
+  } catch (err) {
+    console.error("[maps/distance] Erro inesperado:", err);
+    return FRIENDLY_ERROR;
   }
-
-  const distanceKm = Math.round((element.distance.value / 1000) * 10) / 10;
-
-  return NextResponse.json({
-    distanceKm,
-    originAddress: data.origin_addresses?.[0] ?? originText,
-    destinationAddress: data.destination_addresses?.[0] ?? destinationText,
-  });
 }

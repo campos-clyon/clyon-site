@@ -126,7 +126,7 @@ export default function RegioesPage() {
               <Link
                 key={service.slug}
                 href={`/simulador?categoria=${simulatorCategoryMap[service.slug] ?? "moveis"}`}
-                className="rounded-[22px] border border-white/10 bg-white/5 px-4 py-4 text-sm font-medium text-slate-100 transition hover:border-cyan-300/30 hover:bg-cyan-400/10 hover:text-white"
+                className="rounded-[22px] border border-cyan-400/30 bg-cyan-400/10 px-4 py-4 text-sm font-medium text-white transition hover:border-cyan-300 hover:bg-cyan-400/20"
               >
                 {service.name}
               </Link>

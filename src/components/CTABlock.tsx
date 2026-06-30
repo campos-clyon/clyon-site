@@ -1,7 +1,10 @@
+"use client";
+
 import Link from "next/link";
 import { ArrowRight, MessageCircle, Phone } from "lucide-react";
 
 import { BUSINESS_PHONE } from "@/lib/seo-data";
+import { trackWhatsAppClick, trackCTAClick, trackPhoneCall } from "@/lib/analytics";
 
 interface CTABlockProps {
   title?: string;
@@ -35,6 +38,7 @@ export default function CTABlock({
       <div className={`flex flex-col gap-3 sm:flex-row ${className}`}>
         <Link
           href={primaryHref}
+          onClick={() => trackCTAClick(primaryText, "cta_block_compact")}
           className="site-btn-primary site-btn-lively min-w-[200px] px-6 py-3.5 text-white"
         >
           <span className="text-white">{primaryText}</span>
@@ -45,15 +49,17 @@ export default function CTABlock({
             href={whatsappUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex min-w-[180px] items-center justify-center gap-2 rounded-2xl bg-emerald-500 px-6 py-3.5 text-base font-semibold text-white shadow-[0_18px_40px_-22px_rgba(37,211,102,0.75)] transition hover:-translate-y-0.5 hover:bg-emerald-400"
+            onClick={() => trackWhatsAppClick("cta_block_compact")}
+            className="site-btn-whatsapp site-btn-lively min-w-[180px]"
           >
             <MessageCircle className="h-4 w-4" />
-            <span className="text-white">WhatsApp</span>
+            <span>WhatsApp</span>
           </a>
         )}
         {showPhone && (
           <a
             href={phoneHref}
+            onClick={() => trackPhoneCall("cta_block_compact", BUSINESS_PHONE)}
             className="site-btn-secondary site-btn-lively min-w-[160px] px-6 py-3.5"
           >
             <Phone className="h-4 w-4" />
@@ -78,6 +84,7 @@ export default function CTABlock({
         <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">
           <Link
             href={primaryHref}
+            onClick={() => trackCTAClick(primaryText, "cta_block_centered")}
             className="site-btn-primary site-btn-lively min-w-[220px] px-8 py-4 text-lg text-white"
           >
             <span className="text-white">{primaryText}</span>
@@ -88,10 +95,11 @@ export default function CTABlock({
               href={whatsappUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex min-w-[180px] items-center justify-center gap-2 rounded-2xl bg-emerald-500 px-6 py-4 text-lg font-semibold text-white shadow-[0_18px_40px_-22px_rgba(37,211,102,0.75)] transition hover:-translate-y-0.5 hover:bg-emerald-400"
+              onClick={() => trackWhatsAppClick("cta_block_centered")}
+              className="site-btn-whatsapp site-btn-lively min-w-[180px] py-4 text-lg"
             >
               <MessageCircle className="h-5 w-5" />
-              <span className="text-white">WhatsApp</span>
+              <span>WhatsApp</span>
             </a>
           )}
         </div>
@@ -112,6 +120,7 @@ export default function CTABlock({
       <div className="flex flex-shrink-0 flex-col gap-3 sm:flex-row">
         <Link
           href={primaryHref}
+          onClick={() => trackCTAClick(primaryText, "cta_block_default")}
           className="site-btn-primary site-btn-lively px-6 py-3.5 text-white"
         >
           <span className="text-white">{primaryText}</span>
@@ -122,10 +131,11 @@ export default function CTABlock({
             href={whatsappUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center justify-center gap-2 rounded-2xl bg-emerald-500 px-6 py-3.5 font-semibold text-white shadow-[0_18px_40px_-22px_rgba(37,211,102,0.75)] transition hover:-translate-y-0.5 hover:bg-emerald-400"
+            onClick={() => trackWhatsAppClick("cta_block_default")}
+            className="site-btn-whatsapp site-btn-lively"
           >
             <MessageCircle className="h-4 w-4" />
-            <span className="text-white">WhatsApp</span>
+            <span>WhatsApp</span>
           </a>
         )}
       </div>

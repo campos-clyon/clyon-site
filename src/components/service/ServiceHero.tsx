@@ -1,9 +1,9 @@
-import Link from "next/link";
-import { ArrowRight, CheckCircle2, MessageCircle } from "lucide-react";
+import { CheckCircle2 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 import Breadcrumb, { type BreadcrumbItem } from "@/components/Breadcrumb";
 import TrustBadges from "@/components/TrustBadges";
+import ServiceHeroButtons from "@/components/service/ServiceHeroButtons";
 import { BUSINESS_PHONE } from "@/lib/seo-data";
 
 interface ServiceHeroProps {
@@ -75,26 +75,13 @@ export default function ServiceHero({
               </ul>
             )}
 
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <Link
-                href={ctaHref}
-                className="site-btn-primary site-btn-lively min-w-[220px] px-8 py-4 text-lg"
-              >
-                <span>{ctaText}</span>
-                <ArrowRight className="h-5 w-5" />
-              </Link>
-              {showWhatsApp && (
-                <a
-                  href={whatsappUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex min-w-[180px] items-center justify-center gap-2 rounded-2xl bg-emerald-500 px-6 py-4 text-lg font-semibold text-white shadow-[0_18px_40px_-22px_rgba(37,211,102,0.75)] transition hover:-translate-y-0.5 hover:bg-emerald-400"
-                >
-                  <MessageCircle className="h-5 w-5" />
-                  WhatsApp
-                </a>
-              )}
-            </div>
+            <ServiceHeroButtons
+              ctaText={ctaText}
+              ctaHref={ctaHref}
+              showWhatsApp={showWhatsApp}
+              whatsappUrl={whatsappUrl}
+              serviceTitle={title}
+            />
 
             {priceFrom && (
               <p className="mt-4 text-sm text-slate-500">

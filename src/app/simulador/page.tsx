@@ -1,39 +1,21 @@
 import type { Metadata } from "next";
-
-import SimuladorClient from "./SimuladorClient";
-
-type CategoriaId = "moveis" | "monos" | "entulho" | "mudancas" | "limpeza";
-
-const categoriaIds = new Set<CategoriaId>(["moveis", "monos", "entulho", "mudancas", "limpeza"]);
+import SimulatorPage from "./SimulatorPage";
 
 export const metadata: Metadata = {
-  title: "Simulador de Preços — Calcule o Custo da Sua Recolha",
+  title: "Simulador de Preços — Estimativa Instantânea CLYON",
   description:
-    "Calcule online o preço de recolha de móveis, entulho, monos ou limpeza pós-obra em Lisboa e Setúbal. Orçamento personalizado conforme o seu pedido!",
+    "Descreva o serviço, envie fotos e indique a morada. A CLYON calcula uma estimativa com base no preçário e nas condições de acesso. Recolha de móveis, entulho, monos, esvaziamentos e mudanças em Lisboa e Setúbal.",
   alternates: {
     canonical: "https://clyon.pt/simulador",
   },
   openGraph: {
-    title: "Simulador de Preços — Calcule o Custo da Sua Recolha",
+    title: "Simulador de Preços — Estimativa Instantânea CLYON",
     description:
-      "Calcule o preço da sua recolha em Lisboa e Setúbal. Orçamento instantâneo online!",
+      "Estimativa de preço instantânea para recolha, esvaziamento e mudanças em Lisboa e Setúbal.",
     url: "https://clyon.pt/simulador",
   },
 };
 
-export const revalidate = 86400;
-
-type SimuladorPageProps = {
-  searchParams?: Promise<{ categoria?: string }>;
-};
-
-export default async function SimuladorPage({ searchParams }: SimuladorPageProps) {
-  const resolvedSearchParams = searchParams ? await searchParams : undefined;
-  const categoriaParam = resolvedSearchParams?.categoria;
-  const initialCategoriaId: CategoriaId | null =
-    categoriaParam && categoriaIds.has(categoriaParam as CategoriaId)
-      ? (categoriaParam as CategoriaId)
-      : null;
-
-  return <SimuladorClient initialCategoriaId={initialCategoriaId} />;
+export default function SimuladorPage() {
+  return <SimulatorPage />;
 }

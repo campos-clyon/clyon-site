@@ -2,19 +2,32 @@ import { drizzle } from "drizzle-orm/mysql2";
 import mysql from "mysql2/promise";
 import { eq, desc, inArray } from "drizzle-orm";
 import { users, colaboradores, registrosHoras, simulatorSettings, galleryMedia } from "../../drizzle/schema";
-import type { InsertUser } from "../../drizzle/schema";
+import type { InsertUser, InsertSimulatorOrder, SimulatorOrder } from "../../drizzle/schema";
 import { defaultSimulatorSettings } from "@/lib/simulator-settings";
 
 let dbInstance: ReturnType<typeof drizzle<typeof import('../../drizzle/schema')>> | null = null;
 let poolInstance: mysql.Pool | null = null;
 
-async function getPool() {
+/** Converte uma Date para string no formato MySQL DATETIME: 'YYYY-MM-DD HH:mm:ss' */
+export function toMySQLDateTime(date: Date = new Date()): string {
+  return date.toISOString().slice(0, 19).replace("T", " ");
+}
+
+export async function getPool() {
   if (!process.env.DATABASE_URL) {
     console.warn("[Database] DATABASE_URL not set");
     return null;
   }
   if (!poolInstance) {
-    poolInstance = mysql.createPool(process.env.DATABASE_URL);
+    poolInstance = mysql.createPool({
+      uri: process.env.DATABASE_URL,
+      waitForConnections: true,
+      connectionLimit: 5,
+      queueLimit: 0,
+      enableKeepAlive: true,
+      keepAliveInitialDelay: 10000,
+      connectTimeout: 20000,
+    });
   }
   return poolInstance;
 }
@@ -26,6 +39,26 @@ export async function getDb() {
     dbInstance = drizzle(pool) as any;
   }
   return dbInstance;
+}
+
+/**
+ * Cria uma conexão MySQL2 fresca (não reutiliza singleton) para cada request.
+ * Usar nos endpoints API admin para evitar erros de "Connection lost" com Railway.
+ */
+export async function withConnection<T>(
+  fn: (conn: mysql.Connection) => Promise<T>,
+): Promise<T> {
+  if (!process.env.DATABASE_URL) throw new Error("DATABASE_URL not set");
+  const conn = await mysql.createConnection({
+    uri: process.env.DATABASE_URL,
+    ssl: { rejectUnauthorized: false },
+    connectTimeout: 20000,
+  });
+  try {
+    return await fn(conn);
+  } finally {
+    await conn.end().catch(() => {});
+  }
 }
 
 let simulatorTableEnsured = false;
@@ -77,11 +110,17 @@ export async function ensureSimulatorSettingsTable() {
   }
 }
 
-export async function getSimulatorSettings() {
+export async function getSimulatorSettings(): Promise<typeof simulatorSettings.$inferSelect[]> {
   await ensureSimulatorSettingsTable();
   const db = await getDb();
   if (!db) return [];
-  return db.select().from(simulatorSettings);
+  try {
+    const result = await db.select().from(simulatorSettings);
+    return result || [];
+  } catch (error) {
+    console.error("[Database] Error fetching simulator settings:", error);
+    return [];
+  }
 }
 
 export async function upsertSimulatorSetting(data: {
@@ -252,31 +291,295 @@ export async function getColaboradorByNome(nome: string) {
   return result[0] ?? undefined;
 }
 
+export async function getColaboradorById(id: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select().from(colaboradores).where(eq(colaboradores.id, id)).limit(1);
+  return result[0] ?? undefined;
+}
+
+/**
+ * Garante que a coluna funcao da tabela colaboradores aceita o valor 'assistente'.
+ * Seguro para correr múltiplas vezes — falha silenciosamente se o enum já existir.
+ */
+/**
+ * Garante que a tabela colaboradores tem todos os campos necessários.
+ * Usa ALTER TABLE … ADD COLUMN IF NOT EXISTS (seguro para correr múltiplas vezes).
+ */
+/**
+ * Verifica se coluna existe em tabela (compatível com MySQL/MariaDB antigos)
+ */
+async function hasColumn(tableName: string, columnName: string): Promise<boolean> {
+  const pool = await getPool();
+  if (!pool) return false;
+
+  try {
+    const [rows] = await pool.execute(
+      `SELECT COUNT(*) AS count
+       FROM information_schema.columns
+       WHERE table_schema = DATABASE()
+         AND table_name = ?
+         AND column_name = ?`,
+      [tableName, columnName]
+    );
+    const count = Number((rows as any[])[0]?.count ?? 0);
+    return count > 0;
+  } catch (error) {
+    console.error(`[v0] hasColumn erro: ${error}`);
+    return false;
+  }
+}
+
+export async function ensureColaboradoresSchema(): Promise<void> {
+  const pool = await getPool();
+  if (!pool) return;
+
+  console.log("[v0] ensureColaboradoresSchema: Iniciando...");
+
+  try {
+    // Garantir enum actualizado (MODIFY sempre funciona)
+    await pool.execute(
+      `ALTER TABLE colaboradores MODIFY COLUMN funcao ENUM('motorista','ajudante','admin','assistente') NOT NULL`
+    );
+    console.log("[v0] ensureColaboradoresSchema: funcao enum actualizado");
+  } catch (error) {
+    console.log("[v0] ensureColaboradoresSchema: funcao enum já existe ou erro:", String(error).slice(0, 50));
+  }
+
+  try {
+    // valorHora passa a ser opcional
+    await pool.execute(
+      `ALTER TABLE colaboradores MODIFY COLUMN valorHora DECIMAL(6,2) DEFAULT '0.00'`
+    );
+    console.log("[v0] ensureColaboradoresSchema: valorHora modificado");
+  } catch (error) {
+    console.log("[v0] ensureColaboradoresSchema: valorHora já existe ou erro");
+  }
+
+  // Lista de colunas a adicionar com verificação
+  const columnsToAdd = [
+    {
+      name: "valorDiaria",
+      sql: `ALTER TABLE colaboradores ADD COLUMN valorDiaria DECIMAL(6,2) DEFAULT NULL`,
+    },
+    {
+      name: "paymentModel",
+      sql: `ALTER TABLE colaboradores ADD COLUMN paymentModel ENUM('hourly','daily','commission','none') DEFAULT 'hourly'`,
+    },
+    {
+      name: "commissionType",
+      sql: `ALTER TABLE colaboradores ADD COLUMN commissionType ENUM('profit_percent','gross_percent','fixed_per_closed_request','none') DEFAULT NULL`,
+    },
+    {
+      name: "commissionPercent",
+      sql: `ALTER TABLE colaboradores ADD COLUMN commissionPercent DECIMAL(5,2) DEFAULT NULL`,
+    },
+    {
+      name: "commissionFixedAmount",
+      sql: `ALTER TABLE colaboradores ADD COLUMN commissionFixedAmount DECIMAL(8,2) DEFAULT NULL`,
+    },
+    {
+      name: "commissionNotes",
+      sql: `ALTER TABLE colaboradores ADD COLUMN commissionNotes TEXT DEFAULT NULL`,
+    },
+    {
+      name: "canReceiveSimulatorRequests",
+      sql: `ALTER TABLE colaboradores ADD COLUMN canReceiveSimulatorRequests TINYINT(1) NOT NULL DEFAULT 0`,
+    },
+    {
+      name: "participatesInTimeTracking",
+      sql: `ALTER TABLE colaboradores ADD COLUMN participatesInTimeTracking TINYINT(1) NOT NULL DEFAULT 1`,
+    },
+    {
+      name: "active",
+      sql: `ALTER TABLE colaboradores ADD COLUMN active TINYINT(1) NOT NULL DEFAULT 1`,
+    },
+    {
+      name: "createdAt",
+      sql: `ALTER TABLE colaboradores ADD COLUMN createdAt DATETIME DEFAULT CURRENT_TIMESTAMP`,
+    },
+    {
+      name: "updatedAt",
+      sql: `ALTER TABLE colaboradores ADD COLUMN updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP`,
+    },
+  ];
+
+  // Verificar e adicionar cada coluna individualmente
+  for (const col of columnsToAdd) {
+    try {
+      const exists = await hasColumn("colaboradores", col.name);
+      if (!exists) {
+        await pool.execute(col.sql);
+        console.log(`[v0] ensureColaboradoresSchema: ✓ Coluna ${col.name} adicionada`);
+      } else {
+        console.log(`[v0] ensureColaboradoresSchema: Coluna ${col.name} já existe`);
+      }
+    } catch (error) {
+      console.error(`[v0] ensureColaboradoresSchema erro ao adicionar ${col.name}:`, String(error).slice(0, 100));
+    }
+  }
+
+  // Assistentes existentes: garantir canReceiveSimulatorRequests=1 e participatesInTimeTracking=0
+  try {
+    await pool.execute(
+      `UPDATE colaboradores SET canReceiveSimulatorRequests=1, participatesInTimeTracking=0 WHERE funcao='assistente' AND canReceiveSimulatorRequests=0`
+    );
+    console.log("[v0] ensureColaboradoresSchema: ✓ Assistentes configurados");
+  } catch (error) {
+    console.log("[v0] ensureColaboradoresSchema: Erro ao configurar assistentes");
+  }
+
+  console.log("[v0] ensureColaboradoresSchema: Completo");
+}
+
+/** @deprecated Use ensureColaboradoresSchema */
+export async function ensureColaboradoresEnum(): Promise<void> {
+  return ensureColaboradoresSchema();
+}
+
+/**
+ * Garante que WANDERSON existe e tem isAdmin=1 e funcao='admin'.
+ * Retorna o registo actualizado.
+ */
+export async function upsertWandersonAdmin(senhaHash?: string): Promise<{ id: number; nome: string; isAdmin: number; funcao: string }> {
+  const pool = await getPool();
+  if (!pool) throw new Error("Database not available");
+  await ensureColaboradoresEnum();
+
+  const [[existing]] = await pool.execute(
+    "SELECT id, nome, funcao, isAdmin FROM colaboradores WHERE nome = ? LIMIT 1",
+    ["WANDERSON"]
+  ) as any[];
+
+  if (existing) {
+    // Garantir isAdmin=1 e funcao='admin'
+    await pool.execute(
+      "UPDATE colaboradores SET isAdmin = 1, funcao = 'admin', updatedAt = NOW() WHERE id = ?",
+      [existing.id]
+    );
+    return { id: existing.id, nome: "WANDERSON", isAdmin: 1, funcao: "admin" };
+  }
+
+  // Criar WANDERSON se não existir
+  const bcrypt = await import("bcryptjs");
+  const senha = senhaHash ?? await bcrypt.hash("wanderson2026", 10);
+  await pool.execute(
+    "INSERT INTO colaboradores (nome, senha, funcao, valorHora, isAdmin) VALUES (?, ?, 'admin', '0', 1)",
+    ["WANDERSON", senha]
+  );
+  const [[created]] = await pool.execute(
+    "SELECT id, nome, funcao, isAdmin FROM colaboradores WHERE nome = ? LIMIT 1",
+    ["WANDERSON"]
+  ) as any[];
+  return created as { id: number; nome: string; isAdmin: number; funcao: string };
+}
+
 export async function getAllColaboradores() {
   const db = await getDb();
   if (!db) return [];
   return db.select().from(colaboradores);
 }
 
-export async function createColaborador(data: {
+export type ColaboradorFuncao = "motorista" | "ajudante" | "admin" | "assistente";
+export type PaymentModel = "hourly" | "daily" | "commission" | "none";
+export type CommissionType = "profit_percent" | "gross_percent" | "fixed_per_closed_request" | "none";
+
+export interface CreateColaboradorData {
   nome: string;
   senha: string;
-  funcao: "motorista" | "ajudante" | "admin";
-  valorHora: string;
+  funcao: ColaboradorFuncao;
   isAdmin?: number;
-}) {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-  await db.insert(colaboradores).values(data);
+  // Modelo de pagamento
+  paymentModel?: PaymentModel;
+  valorHora?: string | null;
+  valorDiaria?: string | null;
+  // Comissão (para assistentes)
+  commissionType?: CommissionType | null;
+  commissionPercent?: string | null;
+  commissionFixedAmount?: string | null;
+  commissionNotes?: string | null;
+  // Flags
+  canReceiveSimulatorRequests?: number;
+  participatesInTimeTracking?: number;
+  active?: number;
 }
 
-export async function updateColaborador(
-  id: number,
-  data: Partial<{ nome: string; senha: string; funcao: "motorista" | "ajudante" | "admin"; valorHora: string; isAdmin: number }>
-) {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-  await db.update(colaboradores).set(data).where(eq(colaboradores.id, id));
+export async function createColaborador(data: CreateColaboradorData) {
+  const pool = await getPool();
+  if (!pool) throw new Error("Database not available");
+
+  // Garantir schema actualizado (incluindo novos campos)
+  await ensureColaboradoresSchema();
+
+  // Derivar defaults por funcao
+  const isAssistente = data.funcao === "assistente";
+  const isAdmin = data.funcao === "admin";
+  const paymentModel = data.paymentModel ?? (isAssistente ? "commission" : isAdmin ? "none" : "hourly");
+  const valorHora = isAssistente || isAdmin ? "0.00" : (data.valorHora ? String(parseFloat(data.valorHora)) : "0.00");
+  const canReceive = data.canReceiveSimulatorRequests ?? (isAssistente ? 1 : 0);
+  const participates = data.participatesInTimeTracking ?? (isAssistente ? 0 : 1);
+
+  await pool.execute(
+    `INSERT INTO colaboradores
+      (nome, senha, funcao, valorHora, valorDiaria, isAdmin, paymentModel,
+       commissionType, commissionPercent, commissionFixedAmount, commissionNotes,
+       canReceiveSimulatorRequests, participatesInTimeTracking, active)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)`,
+    [
+      data.nome,
+      data.senha,
+      data.funcao,
+      valorHora,
+      data.valorDiaria ?? null,
+      data.isAdmin ?? 0,
+      paymentModel,
+      data.commissionType ?? null,
+      data.commissionPercent ?? null,
+      data.commissionFixedAmount ?? null,
+      data.commissionNotes ?? null,
+      canReceive,
+      participates,
+    ]
+  );
+}
+
+export interface UpdateColaboradorData {
+  nome?: string;
+  senha?: string;
+  funcao?: ColaboradorFuncao;
+  isAdmin?: number;
+  paymentModel?: PaymentModel;
+  valorHora?: string | null;
+  valorDiaria?: string | null;
+  commissionType?: CommissionType | null;
+  commissionPercent?: string | null;
+  commissionFixedAmount?: string | null;
+  commissionNotes?: string | null;
+  canReceiveSimulatorRequests?: number;
+  participatesInTimeTracking?: number;
+  active?: number;
+}
+
+export async function updateColaborador(id: number, data: UpdateColaboradorData) {
+  const pool = await getPool();
+  if (!pool) throw new Error("Database not available");
+  await ensureColaboradoresSchema();
+
+  const allowed = [
+    "nome", "senha", "funcao", "isAdmin", "paymentModel",
+    "valorHora", "valorDiaria", "commissionType", "commissionPercent",
+    "commissionFixedAmount", "commissionNotes",
+    "canReceiveSimulatorRequests", "participatesInTimeTracking", "active",
+  ] as const;
+
+  const entries = Object.entries(data).filter(
+    ([k, v]) => allowed.includes(k as typeof allowed[number]) && v !== undefined
+  );
+  if (!entries.length) return;
+
+  const setParts = entries.map(([k]) => `${k} = ?`).join(", ");
+  const values = entries.map(([, v]) => v ?? null);
+  await pool.execute(`UPDATE colaboradores SET ${setParts}, updatedAt = NOW() WHERE id = ?`, [...values, id]);
 }
 
 export async function deleteColaborador(id: number) {
@@ -322,7 +625,7 @@ export async function getRegistrosHorasByColaborador(
     .from(colaboradores)
     .where(eq(colaboradores.id, colaboradorId))
     .limit(1);
-  const valorHora = colab[0] ? parseFloat(colab[0].valorHora) : 0;
+  const valorHora = colab[0] ? parseFloat(colab[0].valorHora ?? "0") : 0;
 
   return result.map((reg) => {
     const horas = reg.horaSaida ? calcularHoras(reg.horaEntrada, reg.horaSaida, reg.horaPausa) : 0;
@@ -362,6 +665,143 @@ export async function updateRegistroHoras(
   await db.update(registrosHoras).set(data).where(eq(registrosHoras.id, id));
 }
 
+// ─── Leads helpers ───────────────────────────────────────────────────────────
+
+export async function createLead(data: {
+  nome: string; telefone: string; email: string; localidade: string;
+  tipoServico: string; preferenciaContacto: string; mensagem?: string | null;
+  pagePath?: string | null; pageUrl?: string | null;
+  utmSource?: string | null; utmMedium?: string | null; utmCampaign?: string | null;
+  gclid?: string | null;
+}) {
+  console.log("[db/createLead] A criar lead:", data.nome, data.tipoServico);
+  try {
+    await withConnection(async (conn) => {
+      await conn.execute(
+        `INSERT INTO leads (nome, telefone, email, localidade, tipoServico, preferenciaContacto,
+                            mensagem, pagePath, pageUrl, utmSource, utmMedium, utmCampaign, gclid)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [data.nome, data.telefone, data.email, data.localidade, data.tipoServico,
+         data.preferenciaContacto, data.mensagem ?? null, data.pagePath ?? null,
+         data.pageUrl ?? null, data.utmSource ?? null, data.utmMedium ?? null,
+         data.utmCampaign ?? null, data.gclid ?? null],
+      );
+    });
+    console.log("[db/createLead] Lead gravado com sucesso:", data.nome);
+  } catch (err) {
+    console.error("[db/createLead] Erro ao inserir lead:", err);
+    throw err;
+  }
+}
+
+export async function getAllLeads() {
+  const rows = await withConnection(async (conn) => {
+    const [r] = await conn.execute(
+      `SELECT id, nome, telefone, email, localidade, tipoServico, preferenciaContacto,
+              mensagem, pagePath, pageUrl, utmSource, utmMedium, utmCampaign, gclid,
+              status, notasInternas, createdAt
+       FROM leads ORDER BY createdAt DESC LIMIT 500`,
+    );
+    return r;
+  });
+  return rows as Record<string, unknown>[];
+}
+
+export async function updateLeadStatus(id: number, status: string, notasInternas?: string) {
+  await withConnection(async (conn) => {
+    if (notasInternas !== undefined) {
+      await conn.execute(`UPDATE leads SET status = ?, notasInternas = ? WHERE id = ?`, [status, notasInternas, id]);
+    } else {
+      await conn.execute(`UPDATE leads SET status = ? WHERE id = ?`, [status, id]);
+    }
+  });
+}
+
+let _leadEventsExtended = false;
+
+/**
+ * Garante que leadEvents tem as colunas alargadas (action, label, phone, email, name, message, simulatorData).
+ * Seguro para correr múltiplas vezes — usa IF NOT EXISTS via information_schema.
+ */
+async function ensureLeadEventsExtended(): Promise<void> {
+  if (_leadEventsExtended) return;
+  const pool = await getPool();
+  if (!pool) return;
+  const newCols: Array<{ name: string; sql: string }> = [
+    { name: "action",       sql: "ALTER TABLE leadEvents ADD COLUMN action VARCHAR(160) DEFAULT NULL" },
+    { name: "label",        sql: "ALTER TABLE leadEvents ADD COLUMN label VARCHAR(160) DEFAULT NULL" },
+    { name: "phone",        sql: "ALTER TABLE leadEvents ADD COLUMN phone VARCHAR(30) DEFAULT NULL" },
+    { name: "email",        sql: "ALTER TABLE leadEvents ADD COLUMN email VARCHAR(320) DEFAULT NULL" },
+    { name: "name",         sql: "ALTER TABLE leadEvents ADD COLUMN name VARCHAR(160) DEFAULT NULL" },
+    { name: "message",      sql: "ALTER TABLE leadEvents ADD COLUMN message TEXT DEFAULT NULL" },
+    { name: "simulatorData",sql: "ALTER TABLE leadEvents ADD COLUMN simulatorData JSON DEFAULT NULL" },
+  ];
+  for (const col of newCols) {
+    const exists = await hasColumn("leadEvents", col.name);
+    if (!exists) {
+      try { await pool.execute(col.sql); } catch {}
+    }
+  }
+  _leadEventsExtended = true;
+}
+
+export async function createLeadEvent(data: {
+  eventType: string;
+  action?: string | null;
+  pagePath?: string | null;
+  pageUrl?: string | null;
+  label?: string | null;
+  phone?: string | null;
+  email?: string | null;
+  name?: string | null;
+  serviceType?: string | null;
+  location?: string | null;
+  message?: string | null;
+  simulatorData?: string | null;
+  contactPreference?: string | null;
+  utmSource?: string | null;
+  utmMedium?: string | null;
+  utmCampaign?: string | null;
+  gclid?: string | null;
+}) {
+  await ensureLeadEventsExtended();
+  try {
+    await withConnection(async (conn) => {
+      await conn.execute(
+        `INSERT INTO leadEvents
+           (eventType, action, pagePath, pageUrl, label, phone, email, name,
+            serviceType, location, message, simulatorData,
+            contactPreference, utmSource, utmMedium, utmCampaign, gclid)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          String(data.eventType).slice(0, 80),
+          data.action ? String(data.action).slice(0, 160) : null,
+          data.pagePath ?? null,
+          data.pageUrl ?? null,
+          data.label ? String(data.label).slice(0, 160) : null,
+          data.phone ? String(data.phone).slice(0, 30) : null,
+          data.email ? String(data.email).slice(0, 320) : null,
+          data.name ? String(data.name).slice(0, 160) : null,
+          data.serviceType ?? null,
+          data.location ?? null,
+          data.message ?? null,
+          data.simulatorData ?? null,
+          data.contactPreference ?? null,
+          data.utmSource ?? null,
+          data.utmMedium ?? null,
+          data.utmCampaign ?? null,
+          data.gclid ?? null,
+        ],
+      );
+    });
+    console.log("[db/createLeadEvent] Evento gravado:", data.eventType);
+  } catch (err) {
+    console.warn("[db/createLeadEvent] Erro ao gravar evento:", data.eventType, err);
+  }
+}
+
+// ─── Leads helpers END ───────────────────────────────────────────────────────
+
 export async function getTodayRegistroByColaborador(colaboradorId: number) {
   const db = await getDb();
   if (!db) return undefined;
@@ -382,3 +822,527 @@ export async function getTodayRegistroByColaborador(colaboradorId: number) {
   if (regDate >= today && regDate < tomorrow) return result[0];
   return undefined;
 }
+
+// ─── SimulatorOrders ──────────────────────────────────────────────────────────
+
+let _simulatorOrdersEnsured = false;
+// Bump this version number any time new migrations are added so the guard re-runs
+const MIGRATION_VERSION = 6;
+let _migrationVersion = 0;
+
+export async function ensureSimulatorOrdersTable() {
+  if (_simulatorOrdersEnsured && _migrationVersion >= MIGRATION_VERSION) return;
+  const pool = await getPool();
+  if (!pool) return;
+  await pool.execute(`
+    CREATE TABLE IF NOT EXISTS simulatorOrders (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      serviceType VARCHAR(80),
+      description TEXT,
+      filesJson TEXT,
+      address TEXT,
+      city VARCHAR(120),
+      floor VARCHAR(40),
+      hasElevator VARCHAR(20),
+      parkingDistance VARCHAR(30),
+      contactName VARCHAR(120),
+      contactPhone VARCHAR(30),
+      contactEmail VARCHAR(200),
+      urgency VARCHAR(30),
+      estimateMin DECIMAL(10,2),
+      estimateMax DECIMAL(10,2),
+      estimateTotal DECIMAL(10,2),
+      estimateJson TEXT,
+      distanceKm DECIMAL(8,2),
+      distanceText VARCHAR(60),
+      status VARCHAR(40) NOT NULL DEFAULT 'pendente',
+      priority VARCHAR(20) DEFAULT 'normal',
+      notasInternas TEXT,
+      precoFinal DECIMAL(10,2),
+      precoFinalIva DECIMAL(10,2),
+      mensagemCliente TEXT,
+      assignedToId INT,
+      assignedToName VARCHAR(120),
+      assignedAt TIMESTAMP NULL DEFAULT NULL,
+      chatJson LONGTEXT,
+      historyJson LONGTEXT,
+      reviewJson TEXT,
+      colaboradorId INT,
+      dataAgendada TIMESTAMP NULL DEFAULT NULL,
+      viewedAt TIMESTAMP NULL DEFAULT NULL,
+      createdAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updatedAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    )
+  `);
+  // Migração: adicionar colunas novas se a tabela já existia (sem falhar se já existem)
+  const migrations = [
+    `ALTER TABLE simulatorOrders MODIFY COLUMN status VARCHAR(40) NOT NULL DEFAULT 'pendente'`,
+    // Each ALTER is wrapped in try/catch above — safe to run on every cold start
+    `ALTER TABLE simulatorOrders ADD COLUMN priority VARCHAR(20) DEFAULT 'normal'`,
+    `ALTER TABLE simulatorOrders ADD COLUMN precoFinalIva DECIMAL(10,2)`,
+    `ALTER TABLE simulatorOrders ADD COLUMN mensagemCliente TEXT`,
+    `ALTER TABLE simulatorOrders ADD COLUMN assignedToId INT`,
+    `ALTER TABLE simulatorOrders ADD COLUMN assignedToName VARCHAR(120)`,
+    `ALTER TABLE simulatorOrders ADD COLUMN assignedAt TIMESTAMP NULL DEFAULT NULL`,
+    `ALTER TABLE simulatorOrders ADD COLUMN chatJson LONGTEXT`,
+    `ALTER TABLE simulatorOrders ADD COLUMN historyJson LONGTEXT`,
+    `ALTER TABLE simulatorOrders ADD COLUMN reviewJson TEXT`,
+    `ALTER TABLE simulatorOrders ADD COLUMN viewedAt TIMESTAMP NULL DEFAULT NULL`,
+    `ALTER TABLE simulatorOrders ADD COLUMN postalCode VARCHAR(20)`,
+    `ALTER TABLE simulatorOrders ADD COLUMN parkingDistance VARCHAR(60)`,
+    `ALTER TABLE simulatorOrders ADD COLUMN city VARCHAR(120)`,
+    // v3 migrations — rawOrderJson stores full form data (origin/dest for mudanca), acceptedAt tracks when assistant accepted
+    `ALTER TABLE simulatorOrders ADD COLUMN rawOrderJson LONGTEXT`,
+    `ALTER TABLE simulatorOrders ADD COLUMN acceptedAt TIMESTAMP NULL DEFAULT NULL`,
+    // v4 migrations — calendar scheduling fields
+    `ALTER TABLE simulatorOrders ADD COLUMN scheduledDate DATE NULL DEFAULT NULL`,
+    `ALTER TABLE simulatorOrders ADD COLUMN scheduledStartTime VARCHAR(10) NULL DEFAULT NULL`,
+    `ALTER TABLE simulatorOrders ADD COLUMN scheduledEndTime VARCHAR(10) NULL DEFAULT NULL`,
+    `ALTER TABLE simulatorOrders ADD COLUMN calendarEventId VARCHAR(255) NULL DEFAULT NULL`,
+    `ALTER TABLE simulatorOrders ADD COLUMN calendarEventUrl TEXT NULL DEFAULT NULL`,
+    `ALTER TABLE simulatorOrders ADD COLUMN calendarStatus VARCHAR(30) NULL DEFAULT 'not_scheduled'`,
+    `ALTER TABLE simulatorOrders ADD COLUMN calendarNotes TEXT NULL DEFAULT NULL`,
+    // v5 migrations — extended analysis JSON (includes externalMarketEstimate, analysisSource, confidence)
+    `ALTER TABLE simulatorOrders ADD COLUMN analysisJsonExtended LONGTEXT NULL DEFAULT NULL`,
+    // v6 migrations — target Google Calendar identity (which calendar the event was sent to)
+    `ALTER TABLE simulatorOrders ADD COLUMN calendarTargetId VARCHAR(255) NULL DEFAULT NULL`,
+    `ALTER TABLE simulatorOrders ADD COLUMN calendarTargetName VARCHAR(255) NULL DEFAULT NULL`,
+  ];
+  for (const sql of migrations) {
+    try { await pool.execute(sql); } catch (e: any) {
+      // Log only non-"duplicate column" errors so we can see real problems
+      if (!e?.message?.includes("Duplicate column")) {
+        console.error("[v0] migration skipped:", e?.message);
+      }
+    }
+  }
+  _simulatorOrdersEnsured = true;
+  _migrationVersion = MIGRATION_VERSION;
+}
+
+export async function createSimulatorOrder(data: InsertSimulatorOrder): Promise<number> {
+  console.log("[v0] createSimulatorOrder: Iniciando com", Object.keys(data).length, "campos");
+  await ensureSimulatorOrdersTable();
+  const pool = await getPool();
+  if (!pool) throw new Error("DB not available");
+  const cols = Object.keys(data).filter((k) => (data as Record<string, unknown>)[k] !== undefined);
+  const vals = cols.map((k) => (data as Record<string, unknown>)[k]);
+  const placeholders = cols.map(() => "?").join(", ");
+  const sql = `INSERT INTO simulatorOrders (${cols.join(", ")}) VALUES (${placeholders})`;
+  console.log("[v0] createSimulatorOrder: SQL com", cols.length, "colunas: contactName, serviceType, status, priority...");
+  const [result] = await pool.execute(sql, vals) as any[];
+  const insertId = result.insertId ?? 0;
+  console.log("[v0] createSimulatorOrder: ✓ Pedido criado com insertId=", insertId, "tipo=", typeof insertId);
+  return insertId;
+}
+
+export async function getAllSimulatorOrders(filters?: {
+  status?: string;
+  search?: string;
+}): Promise<SimulatorOrder[]> {
+  console.log("[v0] getAllSimulatorOrders: Iniciando com filters=", filters);
+  await ensureSimulatorOrdersTable();
+  const pool = await getPool();
+  if (!pool) {
+    console.error("[v0] getAllSimulatorOrders: ❌ Pool indisponível!");
+    return [];
+  }
+  const conditions: string[] = [];
+  const params: unknown[] = [];
+  
+  // Handle special filters
+  if (filters?.status === "sem_assistente") {
+    conditions.push("(assignedToId IS NULL OR assignedToId = 0) AND status NOT IN ('cancelado','confirmado','concluido','arquivado')");
+  } else if (filters?.status === "pendente") {
+    // "Novos" = any status but NOT viewed yet (viewedAt IS NULL)
+    conditions.push("viewedAt IS NULL");
+  } else if (filters?.status) {
+    conditions.push("status = ?");
+    params.push(filters.status);
+  }
+  
+  if (filters?.search) {
+    conditions.push("(contactName LIKE ? OR contactPhone LIKE ? OR address LIKE ? OR description LIKE ?)");
+    const s = `%${filters.search}%`;
+    params.push(s, s, s, s);
+  }
+  const where = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";
+  // OPTIMIZATION: Select only essential fields (exclude large JSON fields like chatHistory, estimate)
+  // This dramatically reduces payload size and improves dashboard load time
+  const [rows] = await pool.execute(
+    `SELECT id, contactName, contactPhone, address, serviceType, status, precoFinal, estimateTotal, 
+            createdAt, dataAgendada, assignedToId, assignedToName, priority 
+     FROM simulatorOrders ${where} ORDER BY createdAt DESC LIMIT 100`,
+    params,
+  ) as any[];
+  const result = rows as SimulatorOrder[];
+  console.log("[v0] getAllSimulatorOrders: ✓ Retornando", result.length, "pedidos (campos otimizados)");
+  return result;
+}
+
+export async function getSimulatorOrderById(id: number): Promise<SimulatorOrder | undefined> {
+  await ensureSimulatorOrdersTable();
+  const pool = await getPool();
+  if (!pool) return undefined;
+  const [rows] = await pool.execute("SELECT * FROM simulatorOrders WHERE id = ? LIMIT 1", [id]) as any[];
+  return (rows as SimulatorOrder[])[0];
+}
+
+export async function markOrderAsViewed(id: number): Promise<void> {
+  console.log("[v0] markOrderAsViewed: Marcando pedido #", id, "como visualizado");
+  await ensureSimulatorOrdersTable();
+  const pool = await getPool();
+  if (!pool) throw new Error("DB not available");
+  await pool.execute(
+    "UPDATE simulatorOrders SET viewedAt = CURRENT_TIMESTAMP WHERE id = ? AND viewedAt IS NULL",
+    [id]
+  );
+  console.log("[v0] markOrderAsViewed: ✓ Pedido #", id, "marcado como visualizado");
+}
+
+export async function updateSimulatorOrder(
+  id: number,
+  data: Partial<{
+    status: string;
+    priority: string;
+    notasInternas: string | null;
+    precoFinal: string | null;
+    precoFinalIva: string | null;
+    mensagemCliente: string | null;
+    colaboradorId: number;
+    dataAgendada: string | null;
+    assignedToId: number | null;
+    assignedToName: string | null;
+    assignedAt: string | null;
+    serviceType: string | null;
+    description: string | null;
+    contactName: string | null;
+    contactPhone: string | null;
+    contactEmail: string | null;
+    address: string | null;
+    city: string | null;
+    postalCode: string | null;
+    floor: string | null;
+    hasElevator: string | null;
+    parkingDistance: string | null;
+    urgency: string | null;
+    rawOrderJson: string | null;
+    acceptedAt: Date | string | null;
+    scheduledDate: string | null;
+    scheduledStartTime: string | null;
+    scheduledEndTime: string | null;
+    calendarEventId: string | null;
+    calendarEventUrl: string | null;
+    calendarStatus: string | null;
+    calendarNotes: string | null;
+    analysisJsonExtended: string | null;
+    calendarTargetId: string | null;
+    calendarTargetName: string | null;
+  }>
+) {
+  await ensureSimulatorOrdersTable();
+  const pool = await getPool();
+  if (!pool) throw new Error("DB not available");
+  const entries = Object.entries(data).filter(([, v]) => v !== undefined);
+  if (!entries.length) return;
+  const sets = entries.map(([k]) => `${k} = ?`).join(", ");
+  const vals = [...entries.map(([, v]) => v), id];
+  await pool.execute(`UPDATE simulatorOrders SET ${sets} WHERE id = ?`, vals);
+}
+
+export async function deleteSimulatorOrder(id: number) {
+  await ensureSimulatorOrdersTable();
+  const pool = await getPool();
+  if (!pool) throw new Error("DB not available");
+  await pool.execute("DELETE FROM simulatorOrders WHERE id = ?", [id]);
+}
+
+export async function countSimulatorOrdersByStatus(): Promise<Record<string, number>> {
+  try {
+    await ensureSimulatorOrdersTable();
+    const pool = await getPool();
+    if (!pool) {
+      console.error("[v0] countSimulatorOrdersByStatus: ❌ Pool indisponível");
+      return { total: 0 };
+    }
+    
+    console.log("[v0] countSimulatorOrdersByStatus: Iniciando contagem");
+    
+    // Usar uma única query otimizada para contar tudo
+    const [countRows] = await pool.execute(
+      `SELECT 
+        COUNT(*) as total,
+        SUM(CASE WHEN status = 'pendente' THEN 1 ELSE 0 END) as pendente_status,
+        SUM(CASE WHEN viewedAt IS NULL THEN 1 ELSE 0 END) as pendente_viewed,
+        SUM(CASE WHEN status = 'atribuido' THEN 1 ELSE 0 END) as atribuido,
+        SUM(CASE WHEN status = 'em_analise' THEN 1 ELSE 0 END) as em_analise,
+        SUM(CASE WHEN status = 'aprovado' THEN 1 ELSE 0 END) as aprovado,
+        SUM(CASE WHEN status = 'confirmado' THEN 1 ELSE 0 END) as confirmado,
+        SUM(CASE WHEN status = 'presencial_recomendado' THEN 1 ELSE 0 END) as presencial,
+        SUM(CASE WHEN (assignedToId IS NULL OR assignedToId = 0) AND status NOT IN ('cancelado','confirmado','concluido','arquivado') THEN 1 ELSE 0 END) as sem_assistente
+       FROM simulatorOrders`
+    ) as any[];
+    
+    const row = (countRows as any[])[0];
+    const result: Record<string, number> = {};
+    
+    // Mapear resultados
+    result["total"] = Number(row?.total ?? 0);
+    result["pendente"] = Number(row?.pendente_viewed ?? 0); // Novos = viewedAt IS NULL
+    result["atribuido"] = Number(row?.atribuido ?? 0);
+    result["em_analise"] = Number(row?.em_analise ?? 0);
+    result["aprovado"] = Number(row?.aprovado ?? 0);
+    result["confirmado"] = Number(row?.confirmado ?? 0);
+    result["presencial_recomendado"] = Number(row?.presencial ?? 0);
+    result["sem_assistente"] = Number(row?.sem_assistente ?? 0);
+    
+    console.log("[v0] countSimulatorOrdersByStatus: ✓ Contagens =", result);
+    return result;
+  } catch (err: any) {
+    console.error("[v0] countSimulatorOrdersByStatus: ❌ Erro =", err.message);
+    return { total: 0 };
+  }
+}
+
+// ─── Assistentes (colaboradores que gerem pedidos) ───────────────────────────
+
+export async function getActiveAssistants(): Promise<Array<{ id: number; nome: string; funcao: string; isAdmin: number }>> {
+  const pool = await getPool();
+  if (!pool) {
+    console.error("[v0] getActiveAssistants: ❌ Pool indisponível!");
+    return [];
+  }
+  // Apenas assistentes activos que podem receber pedidos do simulador
+  const [rows] = await pool.execute(
+    `SELECT id, nome, funcao, isAdmin FROM colaboradores
+     WHERE funcao = 'assistente'
+       AND isAdmin = 0
+       AND (active IS NULL OR active = 1)
+       AND (canReceiveSimulatorRequests IS NULL OR canReceiveSimulatorRequests = 1)
+     ORDER BY nome ASC`
+  ) as any[];
+  const result = rows as any[];
+  console.log("[v0] getActiveAssistants: ✓ Encontradas", result.length, "assistentes:", result.map(r => `${r.nome}(id=${r.id})`));
+  return result;
+}
+
+export async function countActiveOrdersByAssistant(): Promise<Record<number, number>> {
+  await ensureSimulatorOrdersTable();
+  const pool = await getPool();
+  if (!pool) {
+    console.error("[v0] countActiveOrdersByAssistant: ❌ Pool indisponível!");
+    return {};
+  }
+  const [rows] = await pool.execute(
+    `SELECT assignedToId, COUNT(*) AS total FROM simulatorOrders
+     WHERE assignedToId IS NOT NULL
+       AND status NOT IN ('confirmado','concluido','cancelado','rejeitado')
+     GROUP BY assignedToId`
+  ) as any[];
+  const result: Record<number, number> = {};
+  for (const row of rows as any[]) result[Number(row.assignedToId)] = Number(row.total);
+  console.log("[v0] countActiveOrdersByAssistant: ✓ Contadores:", result);
+  return result;
+}
+
+export async function pickLeastLoadedAssistant(): Promise<{ id: number; nome: string } | null> {
+  console.log("[v0] pickLeastLoadedAssistant: Iniciando...");
+  await ensureSimulatorOrdersTable();
+  const pool = await getPool();
+  const [assistants, counts] = await Promise.all([
+    getActiveAssistants(),
+    countActiveOrdersByAssistant(),
+  ]);
+  console.log("[v0] pickLeastLoadedAssistant: Assistentes encontradas:", assistants.length, assistants.map(a => `${a.nome}(id=${a.id}, isAdmin=${a.isAdmin})`));
+  console.log("[v0] pickLeastLoadedAssistant: Contadores por assistente:", counts);
+  
+  if (!assistants.length) {
+    console.log("[v0] pickLeastLoadedAssistant: ⚠ Nenhuma assistente activa encontrada!");
+    return null;
+  }
+
+  // Desempate: assistente que recebeu pedido há mais tempo tem prioridade
+  const lastAssigned: Record<number, string> = {};
+  if (pool) {
+    try {
+      const [rows] = await pool.execute(
+        `SELECT assignedToId, MAX(assignedAt) AS lastAt FROM simulatorOrders
+         WHERE assignedToId IS NOT NULL GROUP BY assignedToId`
+      ) as any[];
+      for (const row of rows as any[]) lastAssigned[Number(row.assignedToId)] = String(row.lastAt ?? "");
+      console.log("[v0] pickLeastLoadedAssistant: Última atribuição por assistente:", lastAssigned);
+    } catch (e) {
+      console.error("[v0] pickLeastLoadedAssistant: Erro ao buscar lastAssigned:", e);
+    }
+  }
+
+  let best: { id: number; nome: string } | null = null;
+  let bestCount = Infinity;
+  let bestLastAt = "9999-12-31";
+
+  for (const a of assistants) {
+    const c = counts[a.id] ?? 0;
+    const lastAt = lastAssigned[a.id] ?? "0000-01-01";
+    console.log(`[v0] pickLeastLoadedAssistant: Avaliando ${a.nome} (id=${a.id}): count=${c}, lastAt=${lastAt}`);
+    if (c < bestCount || (c === bestCount && lastAt < bestLastAt)) {
+      bestCount = c;
+      bestLastAt = lastAt;
+      best = { id: a.id, nome: a.nome };
+      console.log(`[v0] pickLeastLoadedAssistant: ✓ Novo melhor: ${a.nome} (count=${c})`);
+    }
+  }
+  
+  console.log("[v0] pickLeastLoadedAssistant: Resultado final:", best ? `${best.nome} (id=${best.id})` : "null");
+  return best;
+}
+
+export async function appendOrderHistory(
+  orderId: number,
+  entry: { type: string; by?: { id: number; nome: string; role: string } | null; message: string }
+): Promise<void> {
+  await ensureSimulatorOrdersTable();
+  const pool = await getPool();
+  if (!pool) return;
+  const now = toMySQLDateTime();
+  const [rows] = await pool.execute("SELECT historyJson FROM simulatorOrders WHERE id = ? LIMIT 1", [orderId]) as any[];
+  const existing: any[] = [];
+  try { if ((rows as any[])[0]?.historyJson) existing.push(...JSON.parse((rows as any[])[0].historyJson)); } catch {}
+  existing.push({ ...entry, createdAt: now });
+  await pool.execute("UPDATE simulatorOrders SET historyJson=?, updatedAt=NOW() WHERE id=?", [JSON.stringify(existing), orderId]);
+}
+
+export async function assignSimulatorOrder(
+  orderId: number,
+  assignee: { id: number; nome: string } | null,
+  actor: { id: number; nome: string; role: string } | null
+): Promise<void> {
+  console.log("[v0] assignSimulatorOrder: Iniciando para pedido #", orderId, "assignee=", assignee ? `${assignee.nome}(id=${assignee.id})` : "null");
+  await ensureSimulatorOrdersTable();
+  const pool = await getPool();
+  if (!pool) {
+    console.error("[v0] assignSimulatorOrder: ❌ Pool indisponível!");
+    return;
+  }
+  const newStatus = assignee ? "atribuido" : "pendente";
+  const isAuto = actor === null;
+  const message = assignee
+    ? isAuto
+      ? `Pedido atribuído automaticamente a ${assignee.nome}.`
+      : `Pedido reatribuído a ${assignee.nome} por ${actor?.nome ?? "—"}.`
+    : actor
+      ? `Atribuição removida por ${actor.nome}.`
+      : "Pedido sem assistente atribuído.";
+  
+  const [rows] = await pool.execute("SELECT historyJson FROM simulatorOrders WHERE id = ? LIMIT 1", [orderId]) as any[];
+  const existing: any[] = [];
+  try { if ((rows as any[])[0]?.historyJson) existing.push(...JSON.parse((rows as any[])[0].historyJson)); } catch {}
+  existing.push({ type: "assigned", by: actor ?? null, message, createdAt: toMySQLDateTime() });
+  
+  console.log("[v0] assignSimulatorOrder: Actualizando pedido #", orderId, "com assignedToId=", assignee?.id, ", status=", newStatus);
+  await pool.execute(
+    `UPDATE simulatorOrders SET assignedToId=?, assignedToName=?, assignedAt=?, status=?, historyJson=?, updatedAt=NOW() WHERE id=?`,
+    [assignee?.id ?? null, assignee?.nome ?? null, assignee ? new Date() : null, newStatus, JSON.stringify(existing), orderId]
+  );
+  console.log("[v0] assignSimulatorOrder: ✓ Pedido #", orderId, " actualizado com sucesso");
+}
+
+export async function approveSimulatorOrder(
+  orderId: number,
+  data: { precoFinal: number; precoFinalIva: number; mensagemCliente: string; notasInternas?: string; reviewedBy: { id: number; nome: string; role: string } }
+): Promise<void> {
+  await ensureSimulatorOrdersTable();
+  const pool = await getPool();
+  if (!pool) return;
+  const reviewJson = JSON.stringify({ ...data, reviewedAt: toMySQLDateTime() });
+  await pool.execute(
+    `UPDATE simulatorOrders SET status='aprovado', precoFinal=?, precoFinalIva=?, mensagemCliente=?, notasInternas=COALESCE(?,notasInternas), reviewJson=?, updatedAt=NOW() WHERE id=?`,
+    [data.precoFinal, data.precoFinalIva, data.mensagemCliente, data.notasInternas ?? null, reviewJson, orderId]
+  );
+  await appendOrderHistory(orderId, {
+    type: "approved",
+    by: data.reviewedBy,
+    message: `Pedido aprovado por ${data.reviewedBy.nome}. Valor: ${data.precoFinal}€ + IVA.`,
+  });
+}
+
+export async function getSimulatorOrdersByAssistant(assignedToId: number): Promise<SimulatorOrder[]> {
+  console.log("[v0] getSimulatorOrdersByAssistant: Iniciando para assistante id=", assignedToId);
+  await ensureSimulatorOrdersTable();
+  const pool = await getPool();
+  if (!pool) {
+    console.error("[v0] getSimulatorOrdersByAssistant: ❌ Pool indisponível!");
+    return [];
+  }
+  // Assistente vê:
+  //  1. pedidos explicitamente atribuídos a si (assignedToId = ?)
+  //  2. pedidos na fila geral: assignedToId IS NULL — inclui status 'pendente' e 'sem_assistente'
+  // Nunca vê pedidos atribuídos a outro assistente.
+  const [rows] = await pool.execute(
+    `SELECT id, contactName, contactPhone, address, serviceType, status, precoFinal, estimateTotal,
+            createdAt, updatedAt, dataAgendada, assignedToId, assignedToName, priority, viewedAt,
+            description, urgency, distanceKm
+     FROM simulatorOrders
+     WHERE assignedToId = ?
+        OR (assignedToId IS NULL AND status IN ('pendente', 'sem_assistente', 'novo'))
+     ORDER BY createdAt DESC
+     LIMIT 200`,
+    [assignedToId]
+  ) as any[];
+  const result = rows as SimulatorOrder[];
+  console.log("[v0] getSimulatorOrdersByAssistant: ✓", result.length, "pedidos — atribuídos a", assignedToId, "+ fila geral");
+  return result;
+}
+
+export function calculateOrderPriority(order: {
+  urgency?: string | null;
+  description?: string | null;
+  estimateTotal?: string | null;
+}): "baixa" | "normal" | "alta" | "urgente" {
+  const desc = (order.description ?? "").toLowerCase();
+  const urgency = (order.urgency ?? "").toLowerCase();
+  if (urgency.includes("hoje") || urgency.includes("urgente")) return "urgente";
+  if (urgency.includes("amanh")) return "alta";
+  if (desc.includes("casa cheia") || desc.includes("esvaziamento") || desc.includes("obra pesada")) return "alta";
+  const total = parseFloat(order.estimateTotal ?? "0");
+  if (total > 400) return "alta";
+  if (!order.description && !order.urgency) return "baixa";
+  return "normal";
+}
+
+// ─── Helpers de permissão e roles ───────────────────────────────────────────
+
+export type EffectiveRole = "admin_geral" | "assistente" | "motorista" | "ajudante" | "colaborador";
+
+/**
+ * Fonte única de verdade para o role efectivo de um utilizador.
+ * Admin geral é determinado por isAdmin=1, independentemente de funcao.
+ */
+export function getEffectiveRole(user: { isAdmin: number; funcao: string }): EffectiveRole {
+  if (user.isAdmin) return "admin_geral";
+  if (user.funcao === "assistente") return "assistente";
+  if (user.funcao === "motorista") return "motorista";
+  if (user.funcao === "ajudante") return "ajudante";
+  return "colaborador";
+}
+
+export function canViewRequest(
+  user: { isAdmin: number; id: number },
+  request: { assignedToId?: number | null }
+): boolean {
+  if (user.isAdmin) return true;
+  return request.assignedToId === user.id;
+}
+
+export function canEditRequest(
+  user: { isAdmin: number; id: number },
+  request: { assignedToId?: number | null }
+): boolean {
+  if (user.isAdmin) return true;
+  return request.assignedToId === user.id;
+}
+
+export function canManageUsers(user: { isAdmin: number }): boolean {
+  return !!user.isAdmin;
+}
+
+// ─── SimulatorOrders END ───────────────────────────────────────���──────────────

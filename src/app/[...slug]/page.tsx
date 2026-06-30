@@ -758,10 +758,11 @@ export default async function ServiceCityPage({ params }: Props) {
                 <Link
                   key={item.href}
                   href={item.href}
-                  className="flex items-center justify-between rounded-[22px] border border-cyan-100 bg-cyan-50/70 px-4 py-4 text-sm font-medium text-slate-800 transition hover:bg-cyan-50"
+                  className="flex items-center justify-between rounded-2xl border border-slate-200 bg-white px-5 py-4 text-base font-medium shadow-sm transition hover:border-cyan-300 hover:shadow-md"
+                  style={{ color: '#1e293b' }}
                 >
-                  <span>{item.label}</span>
-                  <ArrowRight className="h-4 w-4 text-cyan-700" />
+                  <span style={{ color: '#1e293b' }}>{item.label}</span>
+                  <ArrowRight className="h-4 w-4 text-cyan-600" />
                 </Link>
               ))}
             </div>

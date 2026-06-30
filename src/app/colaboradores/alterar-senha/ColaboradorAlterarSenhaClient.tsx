@@ -3,6 +3,7 @@
 import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, CheckCircle2, Eye, EyeOff, KeyRound, Loader2 } from "lucide-react";
+import { getColaboradorItem } from "@/lib/colaborador-storage";
 
 export default function ColaboradorAlterarSenhaClient() {
   const router = useRouter();
@@ -18,8 +19,8 @@ export default function ColaboradorAlterarSenhaClient() {
   const [success, setSuccess] = useState("");
 
   useEffect(() => {
-    const token = localStorage.getItem("colaborador_token");
-    const nome = localStorage.getItem("colaborador_nome");
+    const token = getColaboradorItem("token");
+    const nome = getColaboradorItem("nome");
 
     if (!token) {
       router.push("/colaboradores");
@@ -49,7 +50,7 @@ export default function ColaboradorAlterarSenhaClient() {
       return;
     }
 
-    const token = localStorage.getItem("colaborador_token");
+    const token = getColaboradorItem("token");
     if (!token) {
       router.push("/colaboradores");
       return;

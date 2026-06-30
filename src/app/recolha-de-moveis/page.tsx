@@ -15,7 +15,6 @@ import {
   Zap,
 } from "lucide-react";
 
-import Breadcrumb from "@/components/Breadcrumb";
 import FurnitureSeoLinks from "@/components/FurnitureSeoLinks";
 import {
   BUSINESS_NAME,
@@ -240,108 +239,95 @@ const serviceSchema = {
 export default function RecolhaDeMoveisPage() {
   return (
     <div className="min-h-screen bg-slate-50">
-      {/* Hero Section - Premium Full-Width Background */}
-      <section 
-        className="relative min-h-[620px] bg-cover bg-center bg-no-repeat lg:min-h-[720px]"
-        style={{
-          backgroundImage: "url('/hero-clyon-carrinha-lisboa.jpg')",
-        }}
-      >
-        {/* Overlay gradient for text legibility */}
-        <div className="absolute inset-0 bg-gradient-to-r from-slate-900/90 via-slate-900/70 to-transparent" />
+      {/* Hero Section - Clean Light Background */}
+      <section className="relative min-h-[550px] overflow-hidden bg-gradient-to-b from-slate-50 to-white lg:min-h-[640px]">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(34,211,238,0.08),transparent_50%)]" />
         
         {/* Content */}
-        <div className="relative z-10 mx-auto max-w-7xl px-6 pb-16 pt-10 lg:px-8 lg:pb-20 lg:pt-14">
-          <Breadcrumb
-            items={[
-              { label: "Serviços", href: "/servicos" },
-              { label: "Recolha de Móveis" },
-            ]}
-            className="mb-6 [&_a]:text-white/80 [&_a:hover]:text-white [&_span]:text-white/60 [&_svg]:text-white/40"
-          />
+        <div className="relative z-10 mx-auto max-w-7xl px-6 pb-14 pt-14 lg:px-8 lg:pb-18 lg:pt-18">
           
           <div className="max-w-2xl">
             {/* Badge */}
-            <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-sm font-medium text-white backdrop-blur-sm">
-              <span className="flex h-2 w-2 rounded-full bg-emerald-400" />
+            <div className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700">
+              <span className="flex h-1.5 w-1.5 rounded-full bg-emerald-500" />
               163 avaliações 5 estrelas
             </div>
             
             {/* Title */}
-            <h1 className="mt-6 text-4xl font-bold tracking-tight text-white sm:text-5xl lg:text-6xl">
+            <h1 className="mt-5 text-[1.75rem] font-bold leading-[1.15] tracking-tight text-slate-900 sm:text-[2.2rem] lg:text-[2.5rem]">
               Recolha de Móveis, Entulho e Esvaziamento de Casas em Lisboa
             </h1>
             
             {/* Subtitle */}
-            <p className="mt-4 text-lg font-medium text-cyan-300">
+            <p className="mt-3 text-base font-medium text-cyan-600">
               Sem contentores, sem espera: recolha rápida diretamente no local.
             </p>
             
             {/* Description */}
-            <p className="mt-4 text-lg leading-8 text-white/80">
+            <p className="mt-3 text-[0.9375rem] leading-relaxed text-slate-600">
               Recolha rápida de móveis, entulho, monos e limpeza pós-obra em Lisboa, Margem Sul e Setúbal. Orçamento grátis em 24h.
             </p>
 
             {/* CTAs */}
-            <div className="mt-8 flex flex-col gap-4 sm:flex-row">
+            <div className="mt-6 flex flex-col gap-3 sm:flex-row">
               <Link
                 href="/simulador"
-                className="inline-flex h-14 items-center justify-center gap-2 rounded-xl bg-cyan-500 px-8 text-base font-semibold text-white shadow-lg shadow-cyan-500/30 transition hover:bg-cyan-400"
+                className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-[#0891b2] px-7 text-sm font-semibold text-white shadow-lg shadow-cyan-600/25 transition hover:bg-[#0e7490]"
               >
-                Pedir Orçamento Grátis
+                <span className="text-white">Pedir Orçamento Grátis</span>
               </Link>
               <a
-                href="https://wa.me/351934748005?text=Ol%C3%A1!%20Preciso%20de%20recolha%20de%20m%C3%B3veis."
+                href="https://wa.me/351965785395?text=Ol%C3%A1!%20Preciso%20de%20recolha%20de%20m%C3%B3veis."
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex h-14 items-center justify-center gap-2 rounded-xl border-2 border-emerald-400 bg-emerald-500 px-8 text-base font-semibold text-white shadow-lg shadow-emerald-500/30 transition hover:bg-emerald-400"
+                className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-[#25D366] px-7 text-sm font-semibold text-white shadow-lg shadow-emerald-500/25 transition hover:bg-[#1ebe5d]"
               >
-                <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
+                <svg className="h-4 w-4 text-white" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
                 </svg>
-                WhatsApp
+                <span className="text-white">WhatsApp</span>
               </a>
             </div>
 
             {/* Stats */}
-            <div className="mt-10 flex flex-wrap gap-8 border-t border-white/20 pt-8">
+            <div className="mt-8 flex flex-wrap gap-6 border-t border-slate-200 pt-6">
               <div>
-                <div className="text-3xl font-bold text-white">163</div>
-                <div className="text-sm text-white/60">Avaliações</div>
+                <div className="text-xl font-bold text-slate-900">163</div>
+                <div className="text-xs text-slate-500">Avaliações</div>
               </div>
               <div>
-                <div className="text-3xl font-bold text-white">24h</div>
-                <div className="text-sm text-white/60">Resposta</div>
+                <div className="text-xl font-bold text-slate-900">24h</div>
+                <div className="text-xs text-slate-500">Resposta</div>
               </div>
               <div>
-                <div className="text-3xl font-bold text-white">Grátis</div>
-                <div className="text-sm text-white/60">Orçamento</div>
+                <div className="text-xl font-bold text-slate-900">Grátis</div>
+                <div className="text-xs text-slate-500">Orçamento</div>
               </div>
             </div>
           </div>
         </div>
         
         {/* Floating badges - desktop only */}
-        <div className="absolute bottom-8 right-8 z-10 hidden flex-col gap-3 lg:flex">
-          <div className="rounded-xl bg-white/95 px-5 py-3 shadow-xl backdrop-blur-sm">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-cyan-100">
-                <ShieldCheck className="h-5 w-5 text-cyan-600" />
+        <div className="absolute bottom-6 right-6 z-10 hidden flex-col gap-2.5 lg:flex">
+          <div className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 shadow-md">
+            <div className="flex items-center gap-2.5">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-cyan-100">
+                <ShieldCheck className="h-4 w-4 text-cyan-600" />
               </div>
               <div>
-                <p className="text-sm font-semibold text-slate-900">Equipa Profissional</p>
-                <p className="text-xs text-slate-500">Lisboa e Setúbal</p>
+                <p className="text-xs font-semibold text-slate-900">Equipa Profissional</p>
+                <p className="text-[10px] text-slate-500">Lisboa e Setúbal</p>
               </div>
             </div>
           </div>
-          <div className="rounded-xl bg-white/95 px-5 py-3 shadow-xl backdrop-blur-sm">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-100">
-                <Zap className="h-5 w-5 text-emerald-600" />
+          <div className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 shadow-md">
+            <div className="flex items-center gap-2.5">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-100">
+                <Zap className="h-4 w-4 text-emerald-600" />
               </div>
               <div>
-                <p className="text-sm font-semibold text-slate-900">Resposta Rápida</p>
-                <p className="text-xs text-slate-500">Em 11 minutos</p>
+                <p className="text-xs font-semibold text-slate-900">Resposta Rápida</p>
+                <p className="text-[10px] text-slate-500">Em 11 minutos</p>
               </div>
             </div>
           </div>
@@ -562,10 +548,10 @@ export default function RecolhaDeMoveisPage() {
             </Link>
             <a
               href={`tel:${BUSINESS_PHONE}`}
-              className="inline-flex h-12 items-center justify-center gap-2 rounded-lg border border-white/20 bg-white/10 px-8 font-semibold text-white transition hover:bg-white/20"
+              className="inline-flex h-12 items-center justify-center gap-2 rounded-lg bg-white px-8 font-semibold text-slate-900 transition hover:bg-slate-100"
             >
               <Phone className="h-4 w-4" />
-              Ligar Agora
+              <span>Ligar Agora</span>
             </a>
           </div>
         </div>
