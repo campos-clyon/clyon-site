@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Resend } from "resend";
 import { BUSINESS_EMAIL } from "@/lib/seo-data";
+import { createLead } from "@/lib/db";
 
 export async function POST(request: NextRequest) {
   try {
@@ -17,7 +18,8 @@ export async function POST(request: NextRequest) {
     const resend = new Resend(process.env.RESEND_API_KEY_clyonsite);
 
     const body = await request.json();
-    const { nome, telemovel, endereco, servico, mensagem } = body;
+    const { nome, telemovel, endereco, servico, mensagem,
+            pagePath, pageUrl, utmSource, utmMedium, utmCampaign, gclid } = body;
 
     // Validação básica
     if (!nome || !telemovel || !endereco || !servico) {
@@ -193,6 +195,25 @@ Este email foi enviado automaticamente através do formulário de contacto em cl
         { status: 500 }
       );
     }
+
+    // Gravar lead na DB em paralelo — independente do email, best-effort
+    createLead({
+      nome,
+      telefone: telemovel,
+      email: "",
+      localidade: endereco,
+      tipoServico: servico,
+      preferenciaContacto: "Email",
+      mensagem: mensagem ?? null,
+      pagePath: pagePath ?? null,
+      pageUrl: pageUrl ?? null,
+      utmSource: utmSource ?? null,
+      utmMedium: utmMedium ?? null,
+      utmCampaign: utmCampaign ?? null,
+      gclid: gclid ?? null,
+      origem: "formulario_contactos",
+      canal: "email",
+    }).catch((err) => console.error("[api/contact] Erro ao gravar lead:", err));
 
     return NextResponse.json({ success: true, id: data?.id });
   } catch (error) {

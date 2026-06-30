@@ -130,10 +130,29 @@ ${formData.mensagem ? `- Mensagem: ${formData.mensagem}` : ""}
 Podem entrar em contacto comigo?`;
 
     const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
-    
+
+    // Gravar lead na DB — fire-and-forget, não bloqueia nem depende do WhatsApp
+    fetch("/api/leads", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        nome: formData.nome.trim(),
+        telefone: formData.telemovel.replace(/\s/g, ""),
+        email: "",
+        localidade: formData.endereco.trim(),
+        tipoServico: formData.servico,
+        preferenciaContacto: "WhatsApp",
+        mensagem: formData.mensagem.trim() || null,
+        pagePath: window.location.pathname,
+        pageUrl: window.location.href,
+        origem: "formulario_contactos",
+        canal: "whatsapp",
+      }),
+    }).catch(() => null);
+
     // Open WhatsApp
     window.open(whatsappUrl, "_blank", "noopener,noreferrer");
-    
+
     setIsSubmitting(false);
   }, [formData, validate]);
 
@@ -150,10 +169,19 @@ Podem entrar em contacto comigo?`;
     trackLeadFormSubmit("contactos_page_email", formData.servico);
 
     try {
+      const utmParams = Object.fromEntries(new URLSearchParams(window.location.search).entries());
       const response = await fetch("/api/contact", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          ...formData,
+          pagePath: window.location.pathname,
+          pageUrl: window.location.href,
+          utmSource: utmParams.utm_source ?? null,
+          utmMedium: utmParams.utm_medium ?? null,
+          utmCampaign: utmParams.utm_campaign ?? null,
+          gclid: utmParams.gclid ?? null,
+        }),
       });
 
       if (response.ok) {
@@ -235,7 +263,7 @@ Podem entrar em contacto comigo?`;
       {/* Endereço */}
       <div>
         <label htmlFor="endereco" className="block text-sm font-semibold text-slate-950">
-          Endereço <span className="text-red-500">*</span>
+          Endere��o <span className="text-red-500">*</span>
         </label>
         <input
           type="text"

@@ -60,7 +60,8 @@ export async function GET(request: NextRequest) {
     const { leads, totals } = await withConnection(async (conn) => {
       const [leadsRows] = await conn.execute(
         `SELECT id, nome, telefone, email, localidade, tipoServico, preferenciaContacto,
-                pagePath, utmSource, utmMedium, utmCampaign, gclid, status, notasInternas, createdAt
+                mensagem, pagePath, utmSource, utmMedium, utmCampaign, gclid,
+                origem, canal, status, notasInternas, createdAt
          FROM leads ${where}
          ORDER BY createdAt DESC
          LIMIT 200`,

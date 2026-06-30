@@ -117,6 +117,10 @@ type Lead = {
   utmMedium?: string | null;
   utmCampaign?: string | null;
   gclid?: string | null;
+  /** Formulário de origem, ex: "formulario_contactos", "quero_contratar_header" */
+  origem?: string | null;
+  /** Canal usado: "whatsapp" | "email" | "simulador" | "quero_contratar" */
+  canal?: string | null;
   status: "novo" | "contactado" | "orcamento_enviado" | "fechado" | "perdido";
   notasInternas?: string | null;
   createdAt: string;
@@ -3192,9 +3196,30 @@ export default function ColaboradorAdminClient() {
                                 </td>
                                 <td className="px-4 py-3 text-slate-300">{lead.localidade}</td>
                                 <td className="px-4 py-3 text-slate-300">{lead.tipoServico}</td>
-                                <td className="px-4 py-3 text-xs text-slate-400">
-                                  {lead.utmSource || lead.pagePath || "—"}
-                                  {lead.utmCampaign && <div className="text-slate-500">{lead.utmCampaign}</div>}
+                                <td className="px-4 py-3 text-xs">
+                                  {/* Formulário de origem */}
+                                  <span className="block text-slate-300">
+                                    {lead.origem
+                                      ? lead.origem.replace(/_/g, " ")
+                                      : lead.pagePath || "—"}
+                                  </span>
+                                  {/* Canal */}
+                                  {lead.canal && (
+                                    <span className={`mt-0.5 inline-block rounded-full border px-2 py-0.5 text-[10px] font-semibold ${
+                                      lead.canal === "whatsapp"
+                                        ? "border-emerald-300/30 bg-emerald-400/[0.12] text-emerald-300"
+                                        : lead.canal === "email"
+                                        ? "border-sky-300/30 bg-sky-400/[0.12] text-sky-300"
+                                        : lead.canal === "simulador"
+                                        ? "border-violet-300/30 bg-violet-400/[0.12] text-violet-300"
+                                        : "border-slate-300/20 bg-white/[0.05] text-slate-400"
+                                    }`}>
+                                      {lead.canal}
+                                    </span>
+                                  )}
+                                  {lead.utmCampaign && (
+                                    <div className="mt-0.5 text-slate-500">{lead.utmCampaign}</div>
+                                  )}
                                 </td>
                                 <td className="px-4 py-3">
                                   <span className={`rounded-full border px-2.5 py-0.5 text-xs font-semibold ${statusColors[lead.status] || ""}`}>

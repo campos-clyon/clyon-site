@@ -253,7 +253,7 @@ export async function replaceGalleryMediaItems(
   }
 }
 
-// ─── User helpers ─────────────────────────────────────��─────────────────────
+// ─── User helpers ─────────────────────────────────────���─────────────────────
 
 export async function upsertUser(values: InsertUser) {
   const db = await getDb();
@@ -668,27 +668,47 @@ export async function updateRegistroHoras(
 
 // ─── Leads helpers ───────────────────────────────────────────────────────────
 
+let _leadsExtended = false;
+async function ensureLeadsExtended(): Promise<void> {
+  if (_leadsExtended) return;
+  const pool = await getPool();
+  if (!pool) return;
+  // Adicionar colunas origem e canal se ainda não existirem (seguro de correr múltiplas vezes)
+  for (const sql of [
+    `ALTER TABLE leads ADD COLUMN IF NOT EXISTS origem VARCHAR(120) NULL DEFAULT NULL`,
+    `ALTER TABLE leads ADD COLUMN IF NOT EXISTS canal  VARCHAR(60)  NULL DEFAULT NULL`,
+  ]) {
+    try { await pool.execute(sql); } catch { /* coluna já existe */ }
+  }
+  _leadsExtended = true;
+}
+
 export async function createLead(data: {
   nome: string; telefone: string; email: string; localidade: string;
   tipoServico: string; preferenciaContacto: string; mensagem?: string | null;
   pagePath?: string | null; pageUrl?: string | null;
   utmSource?: string | null; utmMedium?: string | null; utmCampaign?: string | null;
   gclid?: string | null;
+  /** Formulário/ponto de entrada, ex: "formulario_contactos", "quero_contratar_header" */
+  origem?: string | null;
+  /** Canal de envio: "whatsapp" | "email" | "simulador" | "quero_contratar" */
+  canal?: string | null;
 }) {
-  console.log("[db/createLead] A criar lead:", data.nome, data.tipoServico);
   try {
+    await ensureLeadsExtended();
     await withConnection(async (conn) => {
       await conn.execute(
         `INSERT INTO leads (nome, telefone, email, localidade, tipoServico, preferenciaContacto,
-                            mensagem, pagePath, pageUrl, utmSource, utmMedium, utmCampaign, gclid)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                            mensagem, pagePath, pageUrl, utmSource, utmMedium, utmCampaign, gclid,
+                            origem, canal)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [data.nome, data.telefone, data.email, data.localidade, data.tipoServico,
          data.preferenciaContacto, data.mensagem ?? null, data.pagePath ?? null,
          data.pageUrl ?? null, data.utmSource ?? null, data.utmMedium ?? null,
-         data.utmCampaign ?? null, data.gclid ?? null],
+         data.utmCampaign ?? null, data.gclid ?? null,
+         data.origem ?? null, data.canal ?? null],
       );
     });
-    console.log("[db/createLead] Lead gravado com sucesso:", data.nome);
   } catch (err) {
     console.error("[db/createLead] Erro ao inserir lead:", err);
     throw err;
