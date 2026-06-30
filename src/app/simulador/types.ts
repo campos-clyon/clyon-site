@@ -165,6 +165,14 @@ export interface EstimateResult {
   estimatedHoursText?: string | null;
   /** Recomendação de acção para o admin */
   recommendation?: "pode_aprovar" | "pedir_fotos" | "pedir_info" | "visita_presencial" | null;
+  /** Limite inferior do intervalo estimado (com IVA) */
+  estimateMinWithVat?: number | null;
+  /** Limite superior do intervalo estimado (com IVA) */
+  estimateMaxWithVat?: number | null;
+  /** Número de itens resolvido para o cálculo de mínimos */
+  itemCount?: number | null;
+  /** Indica se o pedido foi tratado como carga completa (≥ FULL_LOAD_ITEM_THRESHOLD) */
+  isFullLoad?: boolean | null;
   /** Detalhes de mão de obra (sempre presente quando status = "estimated") */
   labor?: LaborCost;
   /** Fonte da análise — preçário CLYON tem sempre prioridade */
