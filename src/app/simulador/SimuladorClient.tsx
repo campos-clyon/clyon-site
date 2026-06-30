@@ -360,7 +360,6 @@ export default function SimuladorClient({ initialCategoriaId = null }: Simulador
 
     // NOVO: Guardar pedido em BD ANTES de ir para WhatsApp
     try {
-      console.log("[v0] SimuladorClient: Guardando pedido em BD...");
       const orderData = {
         serviceType: categoria.nome,
         description: `Origem: ${origem || "Base CLYON"}, Destino: ${destino}, Distância: ${km.toFixed(1)}km, Pessoas: ${quantidadePessoas}, Tempo: ${tempoEstimado}h${acessoDificil ? ", Acesso difícil" : ""}`,
@@ -404,7 +403,6 @@ export default function SimuladorClient({ initialCategoriaId = null }: Simulador
 
       if (res.ok) {
         const data = await res.json();
-        console.log("[v0] SimuladorClient: ✓ Pedido guardado com ID", data.id);
       } else {
         const err = await res.json();
         console.error("[v0] SimuladorClient: ❌ Erro ao guardar pedido:", err);

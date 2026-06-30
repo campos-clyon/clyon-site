@@ -1,9 +1,35 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { Resend } from "resend";
 import { BUSINESS_EMAIL } from "@/lib/seo-data";
 import { createLead } from "@/lib/db";
+import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
+
+const ContactSchema = z.object({
+  nome:                z.string().min(2).max(120),
+  telemovel:           z.string().min(9).max(20),
+  endereco:            z.string().min(3).max(200),
+  servico:             z.string().min(2).max(80),
+  mensagem:            z.string().max(2000).optional(),
+  pagePath:            z.string().max(255).optional(),
+  pageUrl:             z.string().max(512).optional(),
+  utmSource:           z.string().max(120).optional(),
+  utmMedium:           z.string().max(120).optional(),
+  utmCampaign:         z.string().max(120).optional(),
+  gclid:               z.string().max(200).optional(),
+});
 
 export async function POST(request: NextRequest) {
+  // Rate limit: 5 pedidos por IP por 60 segundos
+  const ip = getClientIp(request);
+  const rl = await checkRateLimit(`contact:${ip}`, 5, 60);
+  if (!rl.allowed) {
+    return NextResponse.json(
+      { error: "Demasiados pedidos. Aguarde um momento e tente novamente." },
+      { status: 429, headers: { "Retry-After": "60" } },
+    );
+  }
+
   try {
     // Verificar se a API key está configurada
     if (!process.env.RESEND_API_KEY_clyonsite) {
@@ -17,17 +43,16 @@ export async function POST(request: NextRequest) {
     // Inicializar Resend apenas quando necessário (evita erro no build)
     const resend = new Resend(process.env.RESEND_API_KEY_clyonsite);
 
-    const body = await request.json();
-    const { nome, telemovel, endereco, servico, mensagem,
-            pagePath, pageUrl, utmSource, utmMedium, utmCampaign, gclid } = body;
-
-    // Validação básica
-    if (!nome || !telemovel || !endereco || !servico) {
+    const raw = await request.json();
+    const parsed = ContactSchema.safeParse(raw);
+    if (!parsed.success) {
       return NextResponse.json(
-        { error: "Campos obrigatórios em falta" },
-        { status: 400 }
+        { error: "Dados inválidos.", details: parsed.error.flatten().fieldErrors },
+        { status: 400 },
       );
     }
+    const { nome, telemovel, endereco, servico, mensagem,
+            pagePath, pageUrl, utmSource, utmMedium, utmCampaign, gclid } = parsed.data;
 
     const plainText = `
 Novo pedido de orçamento recebido através do site CLYON.

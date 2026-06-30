@@ -162,7 +162,6 @@ export default function SimulatorMultiStepForm() {
 
     setIsSubmitting(true);
     try {
-      console.log("[v0] SimulatorMultiStepForm: Submitting order...", formData);
 
       const res = await fetch("/api/simulador/pedido", {
         method: "POST",
@@ -201,7 +200,6 @@ export default function SimulatorMultiStepForm() {
 
       if (res.ok) {
         const data = await res.json();
-        console.log("[v0] SimulatorMultiStepForm: ✓ Order saved", data);
         localStorage.removeItem("clyon_simulator_form_draft");
         setFormData({
           serviceType: "",

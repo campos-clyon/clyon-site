@@ -45,16 +45,13 @@ export async function GET(req: NextRequest) {
   const search = searchParams.get("search") ?? undefined;
 
   const isAdmin = colab!.isAdmin === 1;
-  console.log("[v0] GET /api/admin/pedidos: Utilizador=", colab!.nome, ", isAdmin=", isAdmin, ", status filter=", status, ", search=", search);
 
   if (isAdmin) {
     // Admin vê todos os pedidos
-    console.log("[v0] GET /api/admin/pedidos: Admin - carregando TODOS os pedidos");
     const [orders, counts] = await Promise.all([
       getAllSimulatorOrders({ status: status !== "todos" ? status : undefined, search }),
       countSimulatorOrdersByStatus(),
     ]);
-    console.log("[v0] GET /api/admin/pedidos: Admin - pedidos carregados:", orders.length, "contadores:", counts);
     return NextResponse.json({ orders, counts, role: "admin_geral" });
   } else {
     // Assistente vê pedidos atribuídos a si + pedidos da fila geral (assignedToId IS NULL)

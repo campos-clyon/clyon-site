@@ -33,24 +33,19 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    console.log("[v0] admin/setup: Iniciando migração de esquema...");
 
     // 1. Garantir schema de colaboradores (adiciona colunas em falta)
     await ensureColaboradoresSchema();
-    console.log("[v0] admin/setup: ✓ Esquema colaboradores garantido");
 
     // 2. Garantir tabelas auxiliares (incluindo colunas novas de simulatorOrders)
     await ensureSimulatorOrdersTable();
-    console.log("[v0] admin/setup: ✓ Tabela simulatorOrders e colunas garantidas");
 
     // Forçar re-seed dos defaults mesmo que a tabela já exista, para propagar
     // alterações de valor (ex: custo_km 0.33→0.50, overhead 15.30→17.00)
     resetSimulatorTableEnsuredFlag();
     await ensureSimulatorSettingsTable();
-    console.log("[v0] admin/setup: ✓ Tabela simulatorSettings garantida e defaults actualizados");
 
     await ensureGalleryMediaTable();
-    console.log("[v0] admin/setup: ✓ Tabela galleryMedia garantida");
 
     // 3. Configurar valores por função
     const pool = await getPool();
@@ -64,7 +59,6 @@ export async function POST(req: NextRequest) {
              active = 1
          WHERE funcao = 'assistente'`
       ).catch(() => {});
-      console.log("[v0] admin/setup: ✓ Assistentes configurados");
 
       // Motoristas/Ajudantes: hourly, com horas, sem pedidos
       await pool.execute(
@@ -75,7 +69,6 @@ export async function POST(req: NextRequest) {
              active = 1
          WHERE funcao IN ('motorista', 'ajudante')`
       ).catch(() => {});
-      console.log("[v0] admin/setup: ✓ Motoristas/Ajudantes configurados");
 
       // Admin: none, sem horas, sem pedidos
       await pool.execute(
@@ -86,13 +79,11 @@ export async function POST(req: NextRequest) {
              active = 1
          WHERE funcao = 'admin' AND isAdmin = 0`
       ).catch(() => {});
-      console.log("[v0] admin/setup: ✓ Admins configurados");
     }
 
     // 4. Garantir que WANDERSON existe e tem isAdmin=1
     const admin = await upsertWandersonAdmin();
     const effectiveRole = getEffectiveRole({ isAdmin: admin.isAdmin, funcao: admin.funcao });
-    console.log("[v0] admin/setup: ✓ WANDERSON garantido como admin");
 
     return NextResponse.json({
       ok: true,

@@ -83,7 +83,6 @@ export default function SimulatorReviewCard({
     setError(null);
 
     try {
-      console.log("[v0] SimulatorReviewCard: Confirming order");
 
       const res = await fetch("/api/simulador/pedido", {
         method: "POST",
@@ -121,7 +120,6 @@ export default function SimulatorReviewCard({
       }
 
       const result = await res.json();
-      console.log("[v0] SimulatorReviewCard: ✓ Order saved with ID:", result.id);
       onConfirm(result.id);
     } catch (err: any) {
       console.error("[v0] SimulatorReviewCard: ❌ Error:", err);

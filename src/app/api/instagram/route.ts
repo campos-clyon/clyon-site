@@ -49,7 +49,6 @@ export async function GET() {
     }
 
     const userData = await userResponse.json();
-    console.log("[v0] Instagram user:", userData);
 
     // Buscar os últimos 12 posts do Instagram
     const response = await fetch(
@@ -67,7 +66,6 @@ export async function GET() {
     }
 
     const data: InstagramResponse = await response.json();
-    console.log("[v0] Instagram media count:", data.data?.length || 0);
 
     // Filtrar apenas imagens e carousel (excluir vídeos ou pegar thumbnail)
     const media = data.data.map((item) => ({

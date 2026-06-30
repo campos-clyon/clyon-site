@@ -8,9 +8,16 @@ export type ColaboradorTokenPayload = {
   funcao?: string;
 };
 
-// JWT_SECRET DEVE ter >= 32 caracteres para HS256 (jose requer isto)
-// Definir JWT_SECRET no Vercel com: openssl rand -base64 32
-const JWT_SECRET = process.env.JWT_SECRET || "clyon-dashboard-secret-2026-xk9p";
+// JWT_SECRET DEVE ter >= 32 caracteres para HS256 (jose requer isto).
+// Gerar com: openssl rand -base64 32
+// Adicionar como variável de ambiente JWT_SECRET no Vercel.
+if (!process.env.JWT_SECRET) {
+  throw new Error(
+    "[colaborador-auth] JWT_SECRET não está definido. " +
+    "Adicione JWT_SECRET às variáveis de ambiente (openssl rand -base64 32).",
+  );
+}
+const JWT_SECRET = process.env.JWT_SECRET;
 
 /**
  * Fonte única de verdade para o segredo JWT dos colaboradores.

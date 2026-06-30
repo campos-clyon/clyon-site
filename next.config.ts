@@ -341,41 +341,68 @@ const nextConfig: NextConfig = {
     ];
   },
   async headers() {
+    // Cabeçalhos de segurança aplicados a todas as rotas
+    const securityHeaders = [
+      { key: "X-Content-Type-Options",    value: "nosniff" },
+      { key: "X-Frame-Options",           value: "SAMEORIGIN" },
+      { key: "X-XSS-Protection",          value: "1; mode=block" },
+      { key: "Referrer-Policy",           value: "strict-origin-when-cross-origin" },
+      { key: "Permissions-Policy",        value: "camera=(), microphone=(), geolocation=()" },
+      {
+        key: "Strict-Transport-Security",
+        value: "max-age=63072000; includeSubDomains; preload",
+      },
+      {
+        key: "Content-Security-Policy",
+        value: [
+          "default-src 'self'",
+          // Scripts: self + Next.js inline + Google Analytics/Tag Manager
+          "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://www.google-analytics.com",
+          // Estilos: self + inline (necessário para Tailwind/shadcn)
+          "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+          // Fontes
+          "font-src 'self' https://fonts.gstatic.com",
+          // Imagens: self + blobs Vercel + Instagram CDN + Google
+          "img-src 'self' data: blob: https://*.cdninstagram.com https://*.fbcdn.net https://lh3.googleusercontent.com https://hebbkx1anhila5yf.public.blob.vercel-storage.com",
+          // Ligações de rede: self + APIs externas
+          "connect-src 'self' https://generativelanguage.googleapis.com https://api.resend.com https://*.upstash.io",
+          // Frames: nenhum (embeds externos não usados)
+          "frame-src 'none'",
+          "object-src 'none'",
+          "base-uri 'self'",
+          "form-action 'self'",
+        ].join("; "),
+      },
+    ];
+
     return [
+      {
+        // Aplicar cabeçalhos de segurança a todas as páginas e rotas
+        source: "/(.*)",
+        headers: securityHeaders,
+      },
       {
         source: "/api/:path*",
         headers: [
-          {
-            key: "X-Robots-Tag",
-            value: "noindex, nofollow, noarchive",
-          },
+          { key: "X-Robots-Tag", value: "noindex, nofollow, noarchive" },
         ],
       },
       {
         source: "/_next/static/:path*",
         headers: [
-          {
-            key: "X-Robots-Tag",
-            value: "noindex, nofollow, noarchive",
-          },
+          { key: "X-Robots-Tag", value: "noindex, nofollow, noarchive" },
         ],
       },
       {
         source: "/favicon.ico",
         headers: [
-          {
-            key: "X-Robots-Tag",
-            value: "noindex, nofollow, noarchive",
-          },
+          { key: "X-Robots-Tag", value: "noindex, nofollow, noarchive" },
         ],
       },
       {
         source: "/site.webmanifest",
         headers: [
-          {
-            key: "X-Robots-Tag",
-            value: "noindex, nofollow, noarchive",
-          },
+          { key: "X-Robots-Tag", value: "noindex, nofollow, noarchive" },
         ],
       },
     ];

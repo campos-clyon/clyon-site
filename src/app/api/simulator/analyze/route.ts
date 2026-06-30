@@ -1,5 +1,6 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import type { NextRequest } from "next/server";
+import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 import type { OrderData, EstimateResult, ExternalMarketEstimate, AnalysisSource } from "../../../simulador/types";
 import {
   getActivePricingRulesForGemini,
@@ -196,6 +197,16 @@ function resolveAnalysisSource(
 }
 
 export async function POST(req: NextRequest) {
+  // Rate limit: 20 análises por IP por 60 segundos
+  const ip = getClientIp(req);
+  const rl = await checkRateLimit(`analyze:${ip}`, 20, 60);
+  if (!rl.allowed) {
+    return Response.json(
+      { error: "Demasiados pedidos. Aguarde um momento e tente novamente." },
+      { status: 429, headers: { "Retry-After": "60" } },
+    );
+  }
+
   let order: OrderData;
   try {
     const body = await req.json();

@@ -344,16 +344,13 @@ export async function ensureColaboradoresSchema(): Promise<void> {
   const pool = await getPool();
   if (!pool) return;
 
-  console.log("[v0] ensureColaboradoresSchema: Iniciando...");
 
   try {
     // Garantir enum actualizado (MODIFY sempre funciona)
     await pool.execute(
       `ALTER TABLE colaboradores MODIFY COLUMN funcao ENUM('motorista','ajudante','admin','assistente') NOT NULL`
     );
-    console.log("[v0] ensureColaboradoresSchema: funcao enum actualizado");
   } catch (error) {
-    console.log("[v0] ensureColaboradoresSchema: funcao enum já existe ou erro:", String(error).slice(0, 50));
   }
 
   try {
@@ -361,9 +358,7 @@ export async function ensureColaboradoresSchema(): Promise<void> {
     await pool.execute(
       `ALTER TABLE colaboradores MODIFY COLUMN valorHora DECIMAL(6,2) DEFAULT '0.00'`
     );
-    console.log("[v0] ensureColaboradoresSchema: valorHora modificado");
   } catch (error) {
-    console.log("[v0] ensureColaboradoresSchema: valorHora já existe ou erro");
   }
 
   // Lista de colunas a adicionar com verificação
@@ -420,9 +415,7 @@ export async function ensureColaboradoresSchema(): Promise<void> {
       const exists = await hasColumn("colaboradores", col.name);
       if (!exists) {
         await pool.execute(col.sql);
-        console.log(`[v0] ensureColaboradoresSchema: ✓ Coluna ${col.name} adicionada`);
       } else {
-        console.log(`[v0] ensureColaboradoresSchema: Coluna ${col.name} já existe`);
       }
     } catch (error) {
       console.error(`[v0] ensureColaboradoresSchema erro ao adicionar ${col.name}:`, String(error).slice(0, 100));
@@ -434,12 +427,9 @@ export async function ensureColaboradoresSchema(): Promise<void> {
     await pool.execute(
       `UPDATE colaboradores SET canReceiveSimulatorRequests=1, participatesInTimeTracking=0 WHERE funcao='assistente' AND canReceiveSimulatorRequests=0`
     );
-    console.log("[v0] ensureColaboradoresSchema: ✓ Assistentes configurados");
   } catch (error) {
-    console.log("[v0] ensureColaboradoresSchema: Erro ao configurar assistentes");
   }
 
-  console.log("[v0] ensureColaboradoresSchema: Completo");
 }
 
 /** @deprecated Use ensureColaboradoresSchema */
@@ -1009,7 +999,6 @@ export async function ensureSimulatorOrdersTable() {
 }
 
 export async function createSimulatorOrder(data: InsertSimulatorOrder): Promise<number> {
-  console.log("[v0] createSimulatorOrder: Iniciando com", Object.keys(data).length, "campos");
   await ensureSimulatorOrdersTable();
   const pool = await getPool();
   if (!pool) throw new Error("DB not available");
@@ -1017,10 +1006,8 @@ export async function createSimulatorOrder(data: InsertSimulatorOrder): Promise<
   const vals = cols.map((k) => (data as Record<string, unknown>)[k]);
   const placeholders = cols.map(() => "?").join(", ");
   const sql = `INSERT INTO simulatorOrders (${cols.join(", ")}) VALUES (${placeholders})`;
-  console.log("[v0] createSimulatorOrder: SQL com", cols.length, "colunas: contactName, serviceType, status, priority...");
   const [result] = await pool.execute(sql, vals) as any[];
   const insertId = result.insertId ?? 0;
-  console.log("[v0] createSimulatorOrder: ✓ Pedido criado com insertId=", insertId, "tipo=", typeof insertId);
   return insertId;
 }
 
@@ -1028,7 +1015,6 @@ export async function getAllSimulatorOrders(filters?: {
   status?: string;
   search?: string;
 }): Promise<SimulatorOrder[]> {
-  console.log("[v0] getAllSimulatorOrders: Iniciando com filters=", filters);
   await ensureSimulatorOrdersTable();
   const pool = await getPool();
   if (!pool) {
@@ -1064,7 +1050,6 @@ export async function getAllSimulatorOrders(filters?: {
     params,
   ) as any[];
   const result = rows as SimulatorOrder[];
-  console.log("[v0] getAllSimulatorOrders: ✓ Retornando", result.length, "pedidos (campos otimizados)");
   return result;
 }
 
@@ -1077,7 +1062,6 @@ export async function getSimulatorOrderById(id: number): Promise<SimulatorOrder 
 }
 
 export async function markOrderAsViewed(id: number): Promise<void> {
-  console.log("[v0] markOrderAsViewed: Marcando pedido #", id, "como visualizado");
   await ensureSimulatorOrdersTable();
   const pool = await getPool();
   if (!pool) throw new Error("DB not available");
@@ -1085,7 +1069,6 @@ export async function markOrderAsViewed(id: number): Promise<void> {
     "UPDATE simulatorOrders SET viewedAt = CURRENT_TIMESTAMP WHERE id = ? AND viewedAt IS NULL",
     [id]
   );
-  console.log("[v0] markOrderAsViewed: ✓ Pedido #", id, "marcado como visualizado");
 }
 
 export async function updateSimulatorOrder(
@@ -1154,7 +1137,6 @@ export async function countSimulatorOrdersByStatus(): Promise<Record<string, num
       return { total: 0 };
     }
     
-    console.log("[v0] countSimulatorOrdersByStatus: Iniciando contagem");
     
     // Usar uma única query otimizada para contar tudo
     const [countRows] = await pool.execute(
@@ -1184,7 +1166,6 @@ export async function countSimulatorOrdersByStatus(): Promise<Record<string, num
     result["presencial_recomendado"] = Number(row?.presencial ?? 0);
     result["sem_assistente"] = Number(row?.sem_assistente ?? 0);
     
-    console.log("[v0] countSimulatorOrdersByStatus: ✓ Contagens =", result);
     return result;
   } catch (err: any) {
     console.error("[v0] countSimulatorOrdersByStatus: ❌ Erro =", err.message);
@@ -1210,7 +1191,6 @@ export async function getActiveAssistants(): Promise<Array<{ id: number; nome: s
      ORDER BY nome ASC`
   ) as any[];
   const result = rows as any[];
-  console.log("[v0] getActiveAssistants: ✓ Encontradas", result.length, "assistentes:", result.map(r => `${r.nome}(id=${r.id})`));
   return result;
 }
 
@@ -1229,23 +1209,18 @@ export async function countActiveOrdersByAssistant(): Promise<Record<number, num
   ) as any[];
   const result: Record<number, number> = {};
   for (const row of rows as any[]) result[Number(row.assignedToId)] = Number(row.total);
-  console.log("[v0] countActiveOrdersByAssistant: ✓ Contadores:", result);
   return result;
 }
 
 export async function pickLeastLoadedAssistant(): Promise<{ id: number; nome: string } | null> {
-  console.log("[v0] pickLeastLoadedAssistant: Iniciando...");
   await ensureSimulatorOrdersTable();
   const pool = await getPool();
   const [assistants, counts] = await Promise.all([
     getActiveAssistants(),
     countActiveOrdersByAssistant(),
   ]);
-  console.log("[v0] pickLeastLoadedAssistant: Assistentes encontradas:", assistants.length, assistants.map(a => `${a.nome}(id=${a.id}, isAdmin=${a.isAdmin})`));
-  console.log("[v0] pickLeastLoadedAssistant: Contadores por assistente:", counts);
   
   if (!assistants.length) {
-    console.log("[v0] pickLeastLoadedAssistant: ⚠ Nenhuma assistente activa encontrada!");
     return null;
   }
 
@@ -1258,7 +1233,6 @@ export async function pickLeastLoadedAssistant(): Promise<{ id: number; nome: st
          WHERE assignedToId IS NOT NULL GROUP BY assignedToId`
       ) as any[];
       for (const row of rows as any[]) lastAssigned[Number(row.assignedToId)] = String(row.lastAt ?? "");
-      console.log("[v0] pickLeastLoadedAssistant: Última atribuição por assistente:", lastAssigned);
     } catch (e) {
       console.error("[v0] pickLeastLoadedAssistant: Erro ao buscar lastAssigned:", e);
     }
@@ -1271,16 +1245,13 @@ export async function pickLeastLoadedAssistant(): Promise<{ id: number; nome: st
   for (const a of assistants) {
     const c = counts[a.id] ?? 0;
     const lastAt = lastAssigned[a.id] ?? "0000-01-01";
-    console.log(`[v0] pickLeastLoadedAssistant: Avaliando ${a.nome} (id=${a.id}): count=${c}, lastAt=${lastAt}`);
     if (c < bestCount || (c === bestCount && lastAt < bestLastAt)) {
       bestCount = c;
       bestLastAt = lastAt;
       best = { id: a.id, nome: a.nome };
-      console.log(`[v0] pickLeastLoadedAssistant: ✓ Novo melhor: ${a.nome} (count=${c})`);
     }
   }
   
-  console.log("[v0] pickLeastLoadedAssistant: Resultado final:", best ? `${best.nome} (id=${best.id})` : "null");
   return best;
 }
 
@@ -1363,7 +1334,6 @@ export async function approveSimulatorOrder(
 }
 
 export async function getSimulatorOrdersByAssistant(assignedToId: number): Promise<SimulatorOrder[]> {
-  console.log("[v0] getSimulatorOrdersByAssistant: Iniciando para assistante id=", assignedToId);
   await ensureSimulatorOrdersTable();
   const pool = await getPool();
   if (!pool) {
@@ -1386,7 +1356,6 @@ export async function getSimulatorOrdersByAssistant(assignedToId: number): Promi
     [assignedToId]
   ) as any[];
   const result = rows as SimulatorOrder[];
-  console.log("[v0] getSimulatorOrdersByAssistant: ✓", result.length, "pedidos — atribuídos a", assignedToId, "+ fila geral");
   return result;
 }
 
