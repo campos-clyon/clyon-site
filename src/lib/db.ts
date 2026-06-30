@@ -28,6 +28,8 @@ export async function getPool() {
       enableKeepAlive: true,
       keepAliveInitialDelay: 10000,
       connectTimeout: 20000,
+      // SSL necessário para Railway — sem isto o pool falha silenciosamente
+      ssl: { rejectUnauthorized: false },
     });
   }
   return poolInstance;

@@ -29,26 +29,42 @@ interface UserRow {
 }
 
 async function getOrCreateUser(email: string, name: string | null): Promise<UserRow> {
+  // Normalizar email para lowercase para evitar duplicados por case (ex: Google OAuth)
+  const normalizedEmail = email.trim().toLowerCase();
+
   return withConnection(async (conn) => {
+    // Procurar por email exacto (normalizado) ou por variante case-insensitive
     const [rows] = await conn.execute(
-      "SELECT * FROM users WHERE email = ? AND deletedAt IS NULL LIMIT 1",
-      [email],
+      "SELECT * FROM users WHERE LOWER(email) = ? AND deletedAt IS NULL ORDER BY createdAt ASC LIMIT 1",
+      [normalizedEmail],
     ) as [UserRow[], unknown];
 
-    if (rows.length > 0) return rows[0];
+    if (rows.length > 0) {
+      // Se o email na DB não está em lowercase, normalizar agora
+      if (rows[0].email !== normalizedEmail) {
+        await conn.execute(
+          "UPDATE users SET email = ?, updatedAt = NOW() WHERE id = ?",
+          [normalizedEmail, rows[0].id],
+        );
+        rows[0].email = normalizedEmail;
+        console.log(`[api/users/me] email normalizado para lowercase: id=${rows[0].id}`);
+      }
+      return rows[0];
+    }
 
-    // Criar utilizador novo
+    // Criar utilizador novo com email em lowercase
     await conn.execute(
       `INSERT INTO users (name, email, loginMethod, role, createdAt, updatedAt, lastSignedIn)
        VALUES (?, ?, 'google', 'user', NOW(), NOW(), NOW())`,
-      [name ?? email.split("@")[0], email],
+      [name ?? normalizedEmail.split("@")[0], normalizedEmail],
     );
 
     const [newRows] = await conn.execute(
       "SELECT * FROM users WHERE email = ? LIMIT 1",
-      [email],
+      [normalizedEmail],
     ) as [UserRow[], unknown];
 
+    console.log(`[api/users/me] novo utilizador criado: id=${newRows[0]?.id} email=${normalizedEmail}`);
     return newRows[0];
   });
 }
@@ -63,16 +79,16 @@ export async function GET() {
   // Garantir colunas (idempotente, usa withConnection internamente)
   await ensureUsersSchema();
 
+  const emailNorm = session.user.email.trim().toLowerCase();
+
   try {
-    const user = await getOrCreateUser(
-      session.user.email,
-      session.user.name ?? null,
-    );
+    const user = await getOrCreateUser(emailNorm, session.user.name ?? null);
+    console.log(`[api/users/me] GET ok — id=${user?.id} email=${emailNorm}`);
     return NextResponse.json({ user }, {
       headers: { "Cache-Control": "no-store, no-cache, must-revalidate" },
     });
   } catch (err) {
-    console.error("[api/users/me] GET:", err);
+    console.error("[api/users/me] GET erro:", err);
     return NextResponse.json({ error: "Erro ao carregar dados." }, { status: 500 });
   }
 }
@@ -138,14 +154,15 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json({ success: true });
   }
 
-  const userEmail = session.user.email;
+  // Normalizar email para garantir que o WHERE casa com a linha criada pelo GET
+  const userEmail = session.user.email.trim().toLowerCase();
 
   try {
     return await withConnection(async (conn) => {
       // Verificar unicidade do telefone
       if (data.phone) {
         const [phoneRows] = await conn.execute(
-          "SELECT id FROM users WHERE phone = ? AND email <> ? AND deletedAt IS NULL LIMIT 1",
+          "SELECT id FROM users WHERE phone = ? AND LOWER(email) <> ? AND deletedAt IS NULL LIMIT 1",
           [data.phone, userEmail],
         ) as [Array<{ id: number }>, unknown];
         if (phoneRows.length > 0) {
@@ -158,9 +175,18 @@ export async function PATCH(request: NextRequest) {
 
       const queryValues = [...values, userEmail];
       const [result] = await conn.execute(
-        `UPDATE users SET ${setClauses.join(", ")} WHERE email = ? AND deletedAt IS NULL`,
+        `UPDATE users SET ${setClauses.join(", ")} WHERE LOWER(email) = ? AND deletedAt IS NULL`,
         queryValues,
       ) as [{ affectedRows: number; changedRows: number }, unknown];
+
+      // Se affectedRows for 0, o UPDATE não encontrou a linha — erro crítico
+      if (result.affectedRows === 0) {
+        console.error(`[api/users/me] PATCH FALHOU — affectedRows=0 para email="${userEmail}". O email pode não existir na DB.`);
+        return NextResponse.json(
+          { error: `Conta não encontrada para o email "${userEmail}". Tenta sair e entrar novamente.` },
+          { status: 404 },
+        );
+      }
 
       console.log(`[api/users/me] PATCH OK — affectedRows=${result.affectedRows} changedRows=${result.changedRows} email=${userEmail}`);
       return NextResponse.json({ success: true, affectedRows: result.affectedRows });
