@@ -62,9 +62,8 @@ export default function SimulatorThreePhaseForm() {
       // Sempre limpar localStorage ao montar (F5 reseta o formulário)
       localStorage.removeItem(DRAFT_KEY);
       localStorage.removeItem("clyon_simulator_form_draft");
-      console.log("[v0] SimulatorThreePhaseForm: ✓ Formulário zerado (F5 = reset)");
-    } catch (e) {
-      console.error("[v0] SimulatorThreePhaseForm: ❌ Erro ao limpar localStorage", e);
+    } catch {
+      // silencioso
     }
     // Registar início do simulador
     trackSimulatorStart();
@@ -299,75 +298,13 @@ export default function SimulatorThreePhaseForm() {
     }
   };
 
-  const handleSubmitOrder = async () => {
-    // Pedido já foi auto-guardado durante análise
-    // Esta é apenas tela ilustrativa de confirmação
-    console.log("[v0] SimulatorThreePhaseForm: Tela ilustrativa - pedido já foi registado durante análise");
-    // Nada a fazer - o pedido já foi salvo no handleAnalyzeOrder
-    return;
-
-    // Código antigo (comentado para referência, será removido)
-    /*
-    if (!analysis || !isPhase3Valid()) {
-      setError("Dados incompletos para enviar pedido");
-      return;
-    }
-
-    setIsSubmitting(true);
-    setError(null);
-
-    try {
-      console.log("[v0] SimulatorThreePhaseForm: Enviando pedido para criação...", {
-        contactName: formData.receiver?.name,
-        contactPhone: formData.receiver?.phone,
-        serviceType: formData.serviceType,
-        analysisStatus: analysis?.status,
-      });
-
-      const payload = {
-        order: formData,
-        estimate: analysis,
-        chatHistory: [],
-      };
-      console.log("[v0] SimulatorThreePhaseForm: Payload -", JSON.stringify(payload, null, 2).substring(0, 200));
-
-      const res = await fetch("/api/simulador/pedido", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-
-      if (!res.ok) {
-        const err = await res.json();
-        console.error("[v0] SimulatorThreePhaseForm: API Error -", err);
-        throw new Error(err.error || "Erro ao enviar pedido");
-      }
-
-      const result = await res.json();
-      console.log("[v0] SimulatorThreePhaseForm: ✓ Pedido criado -", {
-        id: result.id,
-        status: result.status,
-        assignedTo: result.assignedTo,
-        assignedToId: result.assignedToId,
-      });
-
-      setSuccessOrderId(result.id);
-      if (result.assignedToId && (result.assignedToName || result.assignedTo)) {
-        setSuccessAssignedTo({ id: result.assignedToId, name: result.assignedToName ?? result.assignedTo });
-      }
-      localStorage.removeItem(DRAFT_KEY);
-    } catch (err) {
-      const message = err instanceof Error ? err.message : "Erro ao enviar pedido";
-      console.error("[v0] SimulatorThreePhaseForm: ❌", message);
-      setError(message);
-    } finally {
-      setIsSubmitting(false);
-    }
-    */
+  const handleSubmitOrder = () => {
+    // O pedido já foi guardado automaticamente em handleAnalyze.
+    // Este handler é mantido como no-op — os botões no AnalysisResultCard
+    // são apenas ilustrativos e o success screen aparece via successOrderId.
   };
 
   const handleReset = () => {
-    console.log("[v0] SimulatorThreePhaseForm: Reset - limpando tudo");
     setFormData({});
     setAnalysis(null);
     setSuccessOrderId(null);
@@ -375,17 +312,16 @@ export default function SimulatorThreePhaseForm() {
     setPhase(1);
     setAddressValue("");
     setError(null);
-    
+
     // Limpar TODOS os localStorage keys (novos e antigos)
     localStorage.removeItem(DRAFT_KEY);
     localStorage.removeItem("clyon_simulator_form_draft");
     localStorage.removeItem("clyon_simulator_draft");
-    
+
     // Limpar também qualquer outra chave do simulador antigo
     Object.keys(localStorage).forEach(key => {
       if (key.includes("simulador") || key.includes("simulator")) {
         localStorage.removeItem(key);
-        console.log("[v0] SimulatorThreePhaseForm: Limpado localStorage key -", key);
       }
     });
   };
@@ -563,6 +499,7 @@ export default function SimulatorThreePhaseForm() {
                   isLoading={isAnalyzing}
                   onConfirm={handleSubmitOrder}
                   isSubmitting={isSubmitting}
+                  alreadySaved={!!successOrderId}
                 />
               )}
 

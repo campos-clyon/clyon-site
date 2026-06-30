@@ -8,6 +8,8 @@ interface AnalysisResultCardProps {
   isLoading?: boolean;
   onConfirm: () => void;
   isSubmitting?: boolean;
+  /** true quando o pedido já foi guardado automaticamente na BD */
+  alreadySaved?: boolean;
 }
 
 export default function AnalysisResultCard({
@@ -15,6 +17,7 @@ export default function AnalysisResultCard({
   isLoading = false,
   onConfirm,
   isSubmitting = false,
+  alreadySaved = false,
 }: AnalysisResultCardProps) {
   const statusConfig = {
     estimated: {
@@ -30,8 +33,8 @@ export default function AnalysisResultCard({
       color: "text-amber-600",
       bgColor: "bg-amber-50",
       borderColor: "border-amber-200",
-      title: "Análise no Local Recomendada",
-      subtitle: "Precisamos de uma análise no local para confirmar o preço",
+      title: "Encaminhamento ao Assistente",
+      subtitle: "Não foi possível identificar a quantidade exata de itens",
     },
     needs_more_info: {
       icon: AlertCircle,
@@ -170,38 +173,59 @@ export default function AnalysisResultCard({
         </div>
       )}
 
-      {/* Action Button */}
+      {/* Action Buttons */}
       {analysis.status === "estimated" && (
-        <button
-          onClick={onConfirm}
-          disabled={isSubmitting || isLoading}
-          className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white font-semibold py-3 px-4 rounded-xl transition-colors"
-        >
-          {isSubmitting ? "A enviar pedido..." : "Enviar Pedido"}
-        </button>
+        alreadySaved ? (
+          <div className="flex items-center justify-center gap-2 w-full bg-green-100 border border-green-300 text-green-800 font-semibold py-3 px-4 rounded-xl">
+            <CheckCircle className="w-4 h-4" />
+            Pedido Registado
+          </div>
+        ) : (
+          <button
+            onClick={onConfirm}
+            disabled={isSubmitting || isLoading}
+            className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white font-semibold py-3 px-4 rounded-xl transition-colors"
+          >
+            {isSubmitting ? "A enviar pedido..." : "Enviar Pedido"}
+          </button>
+        )
       )}
 
       {analysis.status === "onsite_required" && (
         <div className="space-y-3">
           <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
             <p className="text-sm text-amber-900">
-              <strong>Não foi possível identificar a quantidade exata.</strong> Este pedido será encaminhado a um assistente CLYON para análise detalhada e confirmação final de valores.
+              Este pedido será encaminhado a um assistente CLYON para análise detalhada e confirmação final de valores.
             </p>
           </div>
-          <button
-            onClick={onConfirm}
-            disabled={isSubmitting || isLoading}
-            className="w-full bg-cyan-600 hover:bg-cyan-700 disabled:bg-gray-400 text-white font-semibold py-3 px-4 rounded-xl transition-colors"
-          >
-            {isSubmitting ? "A encaminhar..." : "Encaminhar ao Assistente"}
-          </button>
+          {alreadySaved ? (
+            <div className="flex items-center justify-center gap-2 w-full bg-cyan-100 border border-cyan-300 text-cyan-800 font-semibold py-3 px-4 rounded-xl">
+              <CheckCircle className="w-4 h-4" />
+              Encaminhado ao Assistente
+            </div>
+          ) : (
+            <button
+              onClick={onConfirm}
+              disabled={isSubmitting || isLoading}
+              className="w-full bg-cyan-600 hover:bg-cyan-700 disabled:bg-gray-400 text-white font-semibold py-3 px-4 rounded-xl transition-colors"
+            >
+              {isSubmitting ? "A encaminhar..." : "Encaminhar ao Assistente"}
+            </button>
+          )}
         </div>
       )}
 
       {analysis.status === "needs_more_info" && (
-        <p className="text-sm text-center text-gray-600">
-          Por favor, forneça mais informações para obter um orçamento preciso.
-        </p>
+        alreadySaved ? (
+          <div className="flex items-center justify-center gap-2 w-full bg-blue-100 border border-blue-300 text-blue-800 font-semibold py-3 px-4 rounded-xl">
+            <CheckCircle className="w-4 h-4" />
+            Pedido Registado
+          </div>
+        ) : (
+          <p className="text-sm text-center text-gray-600">
+            Por favor, forneça mais informações para obter um orçamento preciso.
+          </p>
+        )
       )}
     </div>
   );
