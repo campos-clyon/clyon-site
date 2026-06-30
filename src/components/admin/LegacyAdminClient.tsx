@@ -754,30 +754,28 @@ export default function ColaboradorAdminClient() {
         }),
       ]);
 
-      let hasError = false;
-
+      // Leads principais — só estes erros mostram mensagem de erro visível
       if (leadsRes.ok) {
         const data = await leadsRes.json();
         if (data.error) {
-          hasError = true;
+          setLeadsError("Não foi possível carregar leads. Verifique a ligação à base de dados ou os endpoints.");
         } else {
           setLeads(data.leads || []);
           setLeadTotals(data.totals || {});
         }
       } else {
-        hasError = true;
-      }
-
-      if (eventsRes.ok) {
-        const data = await eventsRes.json();
-        if (!data.error) {
-          setLeadEvents(data.events || []);
-          setEventTotals(data.totals || {});
-        }
-      }
-
-      if (hasError) {
         setLeadsError("Não foi possível carregar leads. Verifique a ligação à base de dados ou os endpoints.");
+      }
+
+      // Eventos de contacto — falha silenciosa, não bloqueia a tab de leads
+      if (eventsRes.ok) {
+        try {
+          const data = await eventsRes.json();
+          if (!data.error) {
+            setLeadEvents(data.events || []);
+            setEventTotals(data.totals || {});
+          }
+        } catch { /* silencioso */ }
       }
 
       setLeadsLastUpdate(new Date());
@@ -1736,14 +1734,17 @@ export default function ColaboradorAdminClient() {
                         presencial_recomendado: "bg-orange-500/20 text-orange-300",
                       };
                       const statusLabel: Record<string, string> = {
+                        sem_assistente: "Sem assistente",
                         pendente: "Novo",
                         atribuido: "Atribuído",
                         em_analise: "Em análise",
+                        precisa_info: "Info",
+                        presencial_recomendado: "Presencial",
+                        estimativa_pronta: "Estimativa",
                         aprovado: "Aprovado",
+                        enviado_cliente: "Enviado",
                         confirmado: "Confirmado",
                         cancelado: "Cancelado",
-                        presencial_recomendado: "Presencial",
-                        precisa_info: "Info",
                       };
                       return (
                         <button
@@ -2120,6 +2121,7 @@ export default function ColaboradorAdminClient() {
                             cancelado: "bg-slate-500/20 text-slate-400 border-slate-500/30",
                           };
                           const statusLabel: Record<string, string> = {
+                            sem_assistente: "Sem assistente",
                             pendente: "Novo",
                             atribuido: "Atribuído",
                             em_analise: "Em análise",
@@ -2915,7 +2917,7 @@ export default function ColaboradorAdminClient() {
                           <td className="px-3 py-3">
                             <StatusBadge status={row.ativoHoje ? "ativo" : row.estadoAtividade === "ativo" ? "validado" : "inativo"} />
                           </td>
-                          <td className="px-3 py-3 font-medium text-white">{money(parseFloat(row.valorHora || "0"))}</td>
+                          <td className="px-3 py-3 font-medium text-white">{row.funcao === "assistente" ? <span className="text-slate-500">—</span> : money(parseFloat(row.valorHora || "0"))}</td>
                           <td className="px-3 py-3">{decimal(row.horasSemana)}h</td>
                           <td className="px-3 py-3">{decimal(row.horas30)}h</td>
                           <td className="px-3 py-3 font-medium text-cyan-200">{money(row.valorMes)}</td>
@@ -3549,7 +3551,7 @@ export default function ColaboradorAdminClient() {
                                     </span>
                                   )}
                                 </td>
-                                <td className="px-4 py-3 text-white">{money(parseFloat(colaborador.valorHora || "0"))}</td>
+                                <td className="px-4 py-3 text-white">{colaborador.funcao === "assistente" ? <span className="text-slate-500">—</span> : money(parseFloat(colaborador.valorHora || "0"))}</td>
                               </tr>
                             ))}
                         </tbody>
@@ -3566,8 +3568,8 @@ export default function ColaboradorAdminClient() {
                   description="Gira o carrossel da homepage e a galeria de trabalhos. Use o painel dedicado para fazer upload, substituir ou apagar imagens."
                 >
                   <div className="space-y-4">
-                    <div className="rounded-[16px] border border-amber-300/20 bg-amber-400/[0.07] px-4 py-3 text-sm text-amber-100">
-                      Em produção no Vercel, ficheiros guardados apenas no disco local podem ser perdidos. Use sempre o upload pelo painel ou indique um URL público estável.
+                    <div className="rounded-[16px] border border-emerald-300/20 bg-emerald-400/[0.07] px-4 py-3 text-sm text-emerald-100">
+                      Imagens guardadas no Vercel Blob — persistentes entre deploys. Use o painel para gerir uploads.
                     </div>
                     {loadingImageStats ? (
                       <div className="rounded-[16px] border border-white/10 bg-white/[0.03] px-4 py-6 text-center text-sm text-slate-400">

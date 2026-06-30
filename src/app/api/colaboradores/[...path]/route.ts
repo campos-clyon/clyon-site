@@ -127,17 +127,11 @@ function getLisbonPeriodAnchors() {
 async function loadAdminDataset(db: Awaited<ReturnType<typeof getDb>>) {
   try {
     if (!db) {
-      console.error("[v0] loadAdminDataset: db nao disponível");
       return { colaboradores: [], error: "Database not available" };
     }
 
-    console.log("[v0] loadAdminDataset: Iniciando carregamento de team...");
     const team = await db.select().from(colaboradores);
-    console.log("[v0] loadAdminDataset: Team carregado, ", team.length, " colaboradores");
-
-    console.log("[v0] loadAdminDataset: Iniciando carregamento de registrosHoras...");
     const allRecords = await db.select().from(registrosHoras).orderBy(desc(registrosHoras.data));
-    console.log("[v0] loadAdminDataset: RegistrosHoras carregado, ", allRecords.length, " registros");
 
     const { weekStart, monthStart, fifteenDaysStart } = getLisbonPeriodAnchors();
 
@@ -184,7 +178,6 @@ async function loadAdminDataset(db: Awaited<ReturnType<typeof getDb>>) {
       }),
     };
 
-    console.log("[v0] loadAdminDataset: Carregamento completo");
     return result;
   } catch (error) {
     console.error("[v0] loadAdminDataset erro:", error instanceof Error ? error.message : String(error));

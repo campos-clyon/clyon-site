@@ -741,7 +741,7 @@ export async function updateLeadStatus(id: number, status: string, notasInternas
 let _leadEventsExtended = false;
 
 /**
- * Garante que leadEvents tem as colunas alargadas (action, label, phone, email, name, message, simulatorData).
+ * Garante que leadEvents tem as colunas alargadas.
  * Seguro para correr múltiplas vezes — usa IF NOT EXISTS via information_schema.
  */
 async function ensureLeadEventsExtended(): Promise<void> {
@@ -749,13 +749,17 @@ async function ensureLeadEventsExtended(): Promise<void> {
   const pool = await getPool();
   if (!pool) return;
   const newCols: Array<{ name: string; sql: string }> = [
-    { name: "action",       sql: "ALTER TABLE leadEvents ADD COLUMN action VARCHAR(160) DEFAULT NULL" },
-    { name: "label",        sql: "ALTER TABLE leadEvents ADD COLUMN label VARCHAR(160) DEFAULT NULL" },
-    { name: "phone",        sql: "ALTER TABLE leadEvents ADD COLUMN phone VARCHAR(30) DEFAULT NULL" },
-    { name: "email",        sql: "ALTER TABLE leadEvents ADD COLUMN email VARCHAR(320) DEFAULT NULL" },
-    { name: "name",         sql: "ALTER TABLE leadEvents ADD COLUMN name VARCHAR(160) DEFAULT NULL" },
-    { name: "message",      sql: "ALTER TABLE leadEvents ADD COLUMN message TEXT DEFAULT NULL" },
-    { name: "simulatorData",sql: "ALTER TABLE leadEvents ADD COLUMN simulatorData JSON DEFAULT NULL" },
+    { name: "action",            sql: "ALTER TABLE leadEvents ADD COLUMN action VARCHAR(160) DEFAULT NULL" },
+    { name: "label",             sql: "ALTER TABLE leadEvents ADD COLUMN label VARCHAR(160) DEFAULT NULL" },
+    { name: "phone",             sql: "ALTER TABLE leadEvents ADD COLUMN phone VARCHAR(30) DEFAULT NULL" },
+    { name: "email",             sql: "ALTER TABLE leadEvents ADD COLUMN email VARCHAR(320) DEFAULT NULL" },
+    { name: "name",              sql: "ALTER TABLE leadEvents ADD COLUMN name VARCHAR(160) DEFAULT NULL" },
+    { name: "message",           sql: "ALTER TABLE leadEvents ADD COLUMN message TEXT DEFAULT NULL" },
+    { name: "simulatorData",     sql: "ALTER TABLE leadEvents ADD COLUMN simulatorData JSON DEFAULT NULL" },
+    // colunas usadas pelo /api/admin/lead-events SELECT
+    { name: "serviceType",       sql: "ALTER TABLE leadEvents ADD COLUMN serviceType VARCHAR(120) DEFAULT NULL" },
+    { name: "location",          sql: "ALTER TABLE leadEvents ADD COLUMN location VARCHAR(160) DEFAULT NULL" },
+    { name: "contactPreference", sql: "ALTER TABLE leadEvents ADD COLUMN contactPreference VARCHAR(60) DEFAULT NULL" },
   ];
   for (const col of newCols) {
     const exists = await hasColumn("leadEvents", col.name);
