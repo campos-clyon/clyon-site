@@ -6,6 +6,7 @@ import {
   createPricingSnapshot,
   calculateFastEstimate,
   buildReferenceEstimate,
+  FULL_LOAD_ITEM_THRESHOLD,
 } from "@/lib/pricing-helper";
 
 // Gemini abortado após este tempo — cliente nunca fica preso
@@ -161,7 +162,7 @@ Retorna APENAS o JSON sem texto adicional.`;
   }
 }
 
-// ── Determinar analysisSource final ──────────────────────����───────────────────
+// ── Determinar analysisSource final ──────────────────────────────────────────
 function resolveAnalysisSource(
   baseSource: AnalysisSource,
   externalEstimate: ExternalMarketEstimate | null,
@@ -241,7 +242,11 @@ export async function POST(req: NextRequest) {
   try {
     const pricingRules = await getActivePricingRulesForGemini();
     const pricingSnapshot = await createPricingSnapshot();
-    const formattedData = formatOrderDataForPrompt(orderForGemini);
+    // Número de itens já calculado deterministicamente pelo motor local — o Gemini
+    // NUNCA deve recontar a partir do texto livre (era a causa do bug de subcontagem).
+    const resolvedItemCount = fastEstimate.itemCount ?? 1;
+    const resolvedIsFullLoad = fastEstimate.isFullLoad ?? false;
+    const formattedData = formatOrderDataForPrompt(orderForGemini, resolvedItemCount, resolvedIsFullLoad);
     const prompt = buildAnalysisPrompt(formattedData, pricingRules);
 
     const client = new GoogleGenerativeAI(apiKey);
@@ -278,8 +283,40 @@ export async function POST(req: NextRequest) {
       baseSource = "gemini_reference";
     }
 
+    // Guarda de mínimo (anti-prejuízo): o motor local já sabe o mínimo comercial
+    // real (por item, de zona, de entulho ou de mudança) para este pedido —
+    // se o Gemini devolver um preço abaixo desse mínimo (ex: por ter avaliado
+    // a descrição como tendo menos itens do que realmente tem), o preço é
+    // ajustado para o mínimo local, preservando os campos qualitativos do Gemini.
+    const localFloor = fastEstimate.estimateMinWithoutVat ?? fastEstimate.estimatedPriceWithoutVat ?? 0;
+    if (
+      localFloor > 0 &&
+      analysis.estimatedPriceWithoutVat !== null &&
+      analysis.estimatedPriceWithoutVat < localFloor
+    ) {
+      const geminiPriceBeforeClamp = analysis.estimatedPriceWithoutVat;
+      const vatRate = 0.23;
+      const clampedWithVat = Math.round(localFloor * (1 + vatRate) * 100) / 100;
+      analysis = {
+        ...analysis,
+        estimatedPriceWithoutVat: localFloor,
+        vatAmount: Math.round(localFloor * vatRate * 100) / 100,
+        estimatedPriceWithVat: clampedWithVat,
+        estimateMinWithoutVat: localFloor,
+        estimateMaxWithoutVat: Math.max(analysis.estimateMaxWithoutVat ?? localFloor, fastEstimate.estimateMaxWithoutVat ?? localFloor),
+        internalNotes: [
+          ...(analysis.internalNotes ?? []),
+          `Preço do Gemini (${geminiPriceBeforeClamp}€ s/IVA) estava abaixo do mínimo comercial calculado (${localFloor}€ s/IVA, ${resolvedItemCount} item(ns)) — ajustado para evitar prejuízo.`,
+        ],
+      } as EstimateResult;
+    }
+
     analysis = {
       ...analysis,
+      itemCount: resolvedItemCount,
+      isFullLoad: resolvedIsFullLoad,
+      estimateMinWithVat: analysis.estimateMinWithoutVat != null ? Math.round(analysis.estimateMinWithoutVat * 1.23 * 100) / 100 : fastEstimate.estimateMinWithVat,
+      estimateMaxWithVat: analysis.estimateMaxWithoutVat != null ? Math.round(analysis.estimateMaxWithoutVat * 1.23 * 100) / 100 : fastEstimate.estimateMaxWithVat,
       internalNotes: [
         ...(analysis.internalNotes || []),
         `Preçário usado: ${pricingSnapshot?.timestamp || "default"}`,
@@ -360,12 +397,17 @@ export async function POST(req: NextRequest) {
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
-function formatOrderDataForPrompt(order: OrderData): string {
+function formatOrderDataForPrompt(order: OrderData, resolvedItemCount: number, isFullLoad: boolean): string {
   const lines = [
     "=== DADOS DO PEDIDO ===",
     "",
     `Tipo de Serviço: ${getServiceName(order.serviceType)}`,
     `Descrição: ${order.description || "(não fornecida)"}`,
+    "",
+    "=== CONTAGEM DE ITENS (PRÉ-CALCULADA — NÃO RECALCULAR) ===",
+    `Número de Itens: ${resolvedItemCount}`,
+    `Classificação: ${isFullLoad ? `Carga completa (≥ ${FULL_LOAD_ITEM_THRESHOLD} itens ou esvaziamento)` : "Itens soltos (cobrança por item)"}`,
+    "Este valor já foi determinado pelo motor de preços CLYON a partir da lista de itens e/ou da descrição. USA EXATAMENTE este número de itens nos teus cálculos — não tentes recontar a partir da descrição em texto livre.",
   ];
 
   if (order.serviceType === "recolha_entulho") {
@@ -473,6 +515,8 @@ FORMATO DE RESPOSTA (JSON puro — sem markdown, sem texto extra)
   "estimatedPriceWithVat": número (= estimatedPriceWithoutVat × 1.23),
   "estimateMinWithoutVat": número (mínimo s/IVA — NUNCA null ou 0),
   "estimateMaxWithoutVat": número (máximo s/IVA — NUNCA null ou 0),
+  "estimateMinWithVat": número (= estimateMinWithoutVat × 1.23),
+  "estimateMaxWithVat": número (= estimateMaxWithoutVat × 1.23),
   "difficultyLevel": 1-5,
   "confidence": "high" | "medium" | "low",
   "teamSize": "string ex: 3 pessoas",
@@ -495,6 +539,7 @@ FORMATO DE RESPOSTA (JSON puro — sem markdown, sem texto extra)
 REGRAS ABSOLUTAS
 ═══════════════════════════════════════════════════════════
 
+0. NÚMERO DE ITENS: usa SEMPRE o valor em "CONTAGEM DE ITENS (PRÉ-CALCULADA)" acima — está correto e já contabiliza todos os itens mencionados na descrição. NUNCA contes os itens tu mesmo a partir do texto livre nem assumas 1 item quando o valor pré-calculado é maior. Um pedido com 3 ou 4 itens TEM de ser cobrado como 3 ou 4 itens, nunca como 1.
 1. USA SEMPRE a fórmula: (combustível + pessoal + overhead) × (1 + margem) = preço s/IVA.
 2. MÍNIMOS — REGRAS DIFERENTES POR TIPO DE SERVIÇO:
    a) ITENS SOLTOS (1–5 itens — recolha de móveis/monos): NÃO aplicar mínimo de zona.
@@ -516,7 +561,7 @@ REGRAS ABSOLUTAS
 
 ═══════════════════════════════════════════════════════════
 PEDIDO A ANALISAR
-══════════════════��════════════════════════════════════════
+═══════════════════════════════════════════════════════════
 
 ${formattedData}`;
 }
@@ -559,6 +604,8 @@ function parseGeminiResponse(response: string): EstimateResult {
       estimatedPriceWithVat: parsed.estimatedPriceWithVat ?? null,
       estimateMinWithoutVat: typeof parsed.estimateMinWithoutVat === "number" ? parsed.estimateMinWithoutVat : null,
       estimateMaxWithoutVat: typeof parsed.estimateMaxWithoutVat === "number" ? parsed.estimateMaxWithoutVat : null,
+      estimateMinWithVat: typeof parsed.estimateMinWithVat === "number" ? parsed.estimateMinWithVat : null,
+      estimateMaxWithVat: typeof parsed.estimateMaxWithVat === "number" ? parsed.estimateMaxWithVat : null,
       difficultyLevel: diffLevel,
       confidence,
       teamSize: typeof parsed.teamSize === "string" ? parsed.teamSize : null,

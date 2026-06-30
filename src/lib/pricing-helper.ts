@@ -11,7 +11,7 @@ export async function getActivePricingRulesForGemini() {
   try {
     const settings = await getSimulatorSettings();
     console.log("[pricing-helper] Configurações carregadas:", settings?.length ?? 0, "itens");
-    
+
     if (!settings || settings.length === 0) {
       console.warn("[pricing-helper] Nenhuma configuração de preços encontrada, usando defaults");
       return getDefaultPricingRules();
@@ -19,7 +19,7 @@ export async function getActivePricingRulesForGemini() {
 
     // Converter array para mapa utilizável
     const settingsMap = createSimulatorSettingsMap(settings);
-    
+
     // Formatar para Gemini (texto legível)
     const result = formatPricingRulesForGemini(settingsMap);
     console.log("[pricing-helper] ✓ Preçário formatado para Gemini (" + result.length + " chars)");
@@ -214,6 +214,12 @@ export interface FastEstimateResult {
   estimatedPriceWithVat: number | null;
   estimateMinWithoutVat?: number | null;
   estimateMaxWithoutVat?: number | null;
+  estimateMinWithVat?: number | null;
+  estimateMaxWithVat?: number | null;
+  /** Número de itens determinado de forma determinística (resolveItemCount) — fonte única de verdade. */
+  itemCount?: number;
+  /** true quando tratado como carga completa (≥ FULL_LOAD_ITEM_THRESHOLD itens ou esvaziamento) */
+  isFullLoad?: boolean;
   labor?: LaborCost;
   difficultyLevel: 1 | 2 | 3 | 4 | 5;
   summary: string;
@@ -291,6 +297,10 @@ export function buildReferenceEstimate(input: FastEstimateInput): FastEstimateRe
   // Guardar min/max com mão de obra incluída
   const minWithLabor = Math.round((range.min + labor.laborCost) * 100) / 100;
   const maxWithLabor = Math.round((range.max + labor.laborCost) * 100) / 100;
+  const vatRateRef = 0.23;
+  const minWithLaborVat = Math.round(minWithLabor * (1 + vatRateRef) * 100) / 100;
+  const maxWithLaborVat = Math.round(maxWithLabor * (1 + vatRateRef) * 100) / 100;
+  const itemCount = resolveItemCount(input);
 
   return {
     ok: true,
@@ -301,6 +311,10 @@ export function buildReferenceEstimate(input: FastEstimateInput): FastEstimateRe
     estimatedPriceWithVat: withVat,
     estimateMinWithoutVat: minWithLabor,
     estimateMaxWithoutVat: maxWithLabor,
+    estimateMinWithVat: minWithLaborVat,
+    estimateMaxWithVat: maxWithLaborVat,
+    itemCount,
+    isFullLoad: itemCount >= FULL_LOAD_ITEM_THRESHOLD,
     labor,
     difficultyLevel: 2,
     confidence: "low",
@@ -347,44 +361,69 @@ export function countItemsFromDescription(description: string): number | null {
     "eletrodoméstico", "electrodomestico", "aparador", "vitrine", "poltrona",
   ];
 
-  // ESTRATÉGIA 1: dígitos seguidos de item (ex: "3 sofás", "1 frigorifico")
-  const digitMatches = [
-    ...d.matchAll(new RegExp(`(\\d+)\\s+(${itemKeywords.join("|")})`, "gi")),
-  ];
-  if (digitMatches.length > 0) {
-    return digitMatches.reduce((acc, m) => acc + parseInt(m[1], 10), 0);
-  }
-
-  // ESTRATÉGIA 2: contar quantas vezes cada palavra numérica aparece ANTES de
-  // qualquer keyword de item (não agrupado — "um X, um Y" = 2)
-  const numWords: Record<string, number> = {
-    "um ": 1, "uma ": 1, "dois ": 2, "duas ": 2,
-    "três ": 3, "tres ": 3, "quatro ": 4, "cinco ": 5,
-    "seis ": 6, "sete ": 7, "oito ": 8, "nove ": 9, "dez ": 10,
+  // Passagem única: cada ocorrência de keyword conta como pelo menos 1 item;
+  // se tiver um quantificador (dígito OU palavra numérica) imediatamente
+  // antes, usa esse valor. Isto cobre frases mistas como "uma cama com mesa
+  // e 1 frigorífico mais uma máquina de lavar" → cama(1) + mesa(1) +
+  // frigorífico(1) + máquina(1) = 4 itens, em vez de a primeira estratégia
+  // que encontrasse QUALQUER match "ganhar" e ignorar os restantes itens
+  // (bug original: a frase acima devolvia 1 em vez de 4).
+  const numberWordMap: Record<string, number> = {
+    um: 1, uma: 1, dois: 2, duas: 2,
+    "três": 3, tres: 3, quatro: 4, cinco: 5,
+    seis: 6, sete: 7, oito: 8, nove: 9, dez: 10,
   };
-  // Verificar se a descrição contém pelo menos um item keyword
-  const hasItems = itemKeywords.some((kw) => d.includes(kw));
-  if (hasItems) {
-    // Contar todas as ocorrências de palavras numéricas na frase
-    let total = 0;
-    let foundAny = false;
-    for (const [word, num] of Object.entries(numWords)) {
-      // Contar ocorrências sem word-boundary para aceitar início de frase
-      const regex = new RegExp(word.trim(), "gi");
-      const matches = d.match(regex);
-      if (matches) {
-        total += matches.length * num;
-        foundAny = true;
-      }
-    }
-    if (foundAny && total > 0) return total;
+  const numberWordsPattern = Object.keys(numberWordMap).join("|");
+  const combinedRegex = new RegExp(
+    `(?:(\\d+|${numberWordsPattern})\\s+)?(${itemKeywords.join("|")})`,
+    "gi"
+  );
 
-    // Se tem keywords mas sem numerais → contar keywords únicas encontradas
-    const uniqueFound = [...new Set(itemKeywords.filter((kw) => d.includes(kw)))];
-    if (uniqueFound.length > 0) return uniqueFound.length;
+  const matches = [...d.matchAll(combinedRegex)];
+  if (matches.length === 0) return null;
+
+  let total = 0;
+  let lastEnd = -1;
+  for (const m of matches) {
+    const start = m.index ?? 0;
+    if (start < lastEnd) continue; // match sobreposto com o anterior — já contado
+    const qtyToken = m[1]?.toLowerCase();
+    let qty = 1;
+    if (qtyToken) {
+      const asDigit = parseInt(qtyToken, 10);
+      qty = !isNaN(asDigit) ? asDigit : numberWordMap[qtyToken] ?? 1;
+    }
+    total += qty;
+    lastEnd = start + m[0].length;
   }
 
-  return null; // não conseguiu determinar
+  return total > 0 ? total : null;
+}
+
+/**
+ * Limite de itens a partir do qual o pedido passa a ser tratado como "carga
+ * completa" (4h base + mínimo de zona) em vez de cobrado item a item.
+ * Regra de negócio actual da CLYON (ver contexto do projecto): 1 a 5 itens
+ * cobra por item, 6 ou mais é carga completa. Ponto único de configuração —
+ * alterar aqui se a empresa decidir mudar o limite (ex: para 8).
+ */
+export const FULL_LOAD_ITEM_THRESHOLD = 6;
+
+/**
+ * Determina o número de itens de forma determinística — fonte ÚNICA de
+ * verdade, usada tanto no cálculo de horas (estimateLaborHours) como no
+ * mínimo por item e mínimo de zona (applyZoneMinimum), e enviada ao Gemini
+ * para que nunca tenha de recontar a partir do texto livre.
+ *
+ * Prioridade: heavyItems[] (lista explícita do simulador) > contagem na
+ * descrição (countItemsFromDescription) > 1 (conservador — nunca infla o
+ * preço por falta de informação).
+ */
+export function resolveItemCount(input: FastEstimateInput): number {
+  const heavyItemCount = input.heavyItems?.length ?? 0;
+  if (heavyItemCount > 0) return heavyItemCount;
+  const fromDescription = countItemsFromDescription(input.description ?? "");
+  return fromDescription !== null ? fromDescription : 1;
 }
 
 /**
@@ -510,8 +549,9 @@ export function estimateLaborHours(input: FastEstimateInput): number {
     const floor = floorNumber(input.floor);
     const noElev = input.hasElevator === "no";
     const smallElev = input.hasElevator === "small";
-    const itemCount = input.heavyItems?.length ?? 0;
-    const isFull = svc === "esvaziamento_casa" || svc === "esvaziamento_apartamento" || itemCount >= 6;
+    // Fonte única de verdade — usa heavyItems[] ou conta na descrição (nunca 0)
+    const itemCount = resolveItemCount(input);
+    const isFull = svc === "esvaziamento_casa" || svc === "esvaziamento_apartamento" || itemCount >= FULL_LOAD_ITEM_THRESHOLD;
 
     if (isFull) {
       // Carga completa: base 4h
@@ -521,7 +561,7 @@ export function estimateLaborHours(input: FastEstimateInput): number {
       if (input.parkingDistance === "difficult" || input.needsDismantling) hours += 1; // acesso difícil
     } else {
       // Por item (1 a 5 itens): 30 min/item = 0.5h/item
-      hours = Math.max(0.5, (itemCount || 1) * 0.5);
+      hours = Math.max(0.5, itemCount * 0.5);
       // Sem elevador: +50% no tempo total
       if (noElev) hours = hours * 1.5;
       // Elevador pequeno: +15% no tempo total
@@ -585,36 +625,36 @@ function applyZoneMinimum(
   hasElevator: string | undefined,
   parkingDistance: string | undefined,
   svc: string | undefined,
-  itemCount: number = 0,
+  itemCount: number = 1,
   isFullLoad: boolean = false,
-): { price: number; note: string | null } {
+): { price: number; note: string | null; minimumThreshold: number } {
   // Entulho: mínimo fixo próprio, sem mínimo de zona
   if (svc === "recolha_entulho") {
-    if (priceWithoutVat < 90) return { price: 90, note: "Mínimo de entulho aplicado: 90 € s/IVA" };
-    return { price: priceWithoutVat, note: null };
+    if (priceWithoutVat < 90) return { price: 90, note: "Mínimo de entulho aplicado: 90 € s/IVA", minimumThreshold: 90 };
+    return { price: priceWithoutVat, note: null, minimumThreshold: 90 };
   }
 
   // Mudança: mínimo fixo, sem mínimo de zona
   if (svc === "mudanca") {
-    if (priceWithoutVat < 150) return { price: 150, note: "Mínimo de mudança aplicado: 150 € s/IVA" };
-    return { price: priceWithoutVat, note: null };
+    if (priceWithoutVat < 150) return { price: 150, note: "Mínimo de mudança aplicado: 150 € s/IVA", minimumThreshold: 150 };
+    return { price: priceWithoutVat, note: null, minimumThreshold: 150 };
   }
 
-  // Itens soltos (1–5 itens, ou itemCount desconhecido=0): NÃO aplicar mínimo de zona
+  // Itens soltos (1 a FULL_LOAD_ITEM_THRESHOLD-1 itens): NÃO aplicar mínimo de zona
   // Para recolha_moveis/monos sem carga completa, usar apenas mínimo por item: 48,78€ s/IVA
-  // itemCount=0 significa "desconhecido" — tratar como 1 item (conservador, não infla o preço)
-  const isLooseItems = !isFullLoad && (svc === "recolha_moveis" || svc === "recolha_monos") && itemCount < 6;
+  const isLooseItems = !isFullLoad && (svc === "recolha_moveis" || svc === "recolha_monos") && itemCount < FULL_LOAD_ITEM_THRESHOLD;
   if (isLooseItems) {
-    const effectiveCount = Math.max(1, itemCount); // 0 → 1 item como mínimo
+    const effectiveCount = Math.max(1, itemCount);
     const perItemMin = 48.78; // ~60 € c/IVA por item
     const itemMin = Math.round(effectiveCount * perItemMin * 100) / 100;
     if (priceWithoutVat < itemMin) {
       return {
         price: itemMin,
         note: `Mínimo por item aplicado: ${effectiveCount} item(s) × 48,78 € = ${itemMin.toFixed(2)} € s/IVA`,
+        minimumThreshold: itemMin,
       };
     }
-    return { price: priceWithoutVat, note: null };
+    return { price: priceWithoutVat, note: null, minimumThreshold: itemMin };
   }
 
   // Carga completa / esvaziamento: aplicar mínimo de zona
@@ -637,9 +677,9 @@ function applyZoneMinimum(
   else                minimum = 240; // zona genérica não mapeada
 
   if (priceWithoutVat < minimum) {
-    return { price: minimum, note: `Mínimo de zona aplicado (${city || "zona"}): ${minimum} € s/IVA` };
+    return { price: minimum, note: `Mínimo de zona aplicado (${city || "zona"}): ${minimum} € s/IVA`, minimumThreshold: minimum };
   }
-  return { price: priceWithoutVat, note: null };
+  return { price: priceWithoutVat, note: null, minimumThreshold: minimum };
 }
 
 export async function calculateFastEstimate(input: FastEstimateInput): Promise<FastEstimateResult> {
@@ -717,23 +757,14 @@ export async function calculateFastEstimate(input: FastEstimateInput): Promise<F
   // ── 8. Aplicar mínimos de zona ───────────────────────────────────────────────
   const city = (input as any).address?.city ?? (input as any).city ?? "";
 
-  // Determinar itemCount: usar heavyItems se disponível, senão extrair da descrição
-  const heavyItemCount = input.heavyItems?.length ?? 0;
-  const descriptionItemCount = heavyItemCount === 0
-    ? countItemsFromDescription(input.description ?? "")
-    : null;
-  // Se não conseguimos determinar para recolha_moveis/monos, assumir 1 item (itens soltos)
-  // NÃO assumir carga completa por defeito — isso inflaciona o preço incorrectamente
-  const itemCount =
-    heavyItemCount > 0
-      ? heavyItemCount
-      : (descriptionItemCount !== null ? descriptionItemCount : 1);
+  // Determinar itemCount — fonte única de verdade (heavyItems[] > descrição > 1)
+  const itemCount = resolveItemCount(input);
 
   const isFull =
     input.serviceType === "esvaziamento_casa" ||
     input.serviceType === "esvaziamento_apartamento" ||
-    itemCount >= 6;
-  const { price: precoComMinimo, note: minNote } = applyZoneMinimum(
+    itemCount >= FULL_LOAD_ITEM_THRESHOLD;
+  const { price: precoComMinimo, note: minNote, minimumThreshold } = applyZoneMinimum(
     precoSemIva + extras,
     city,
     input.floor,
@@ -759,9 +790,13 @@ export async function calculateFastEstimate(input: FastEstimateInput): Promise<F
   const diff: 1 | 2 | 3 | 4 | 5 =
     totalFloors >= 6 ? 4 : totalFloors >= 4 ? 3 : totalFloors >= 2 ? 2 : 1;
 
-  // Intervalo ±10% para mostrar min/max no backoffice
-  const minVal = Math.round(finalSemIva * 0.90 * 100) / 100;
+  // Intervalo mínimo/médio/máximo — o mínimo NUNCA pode ficar abaixo do
+  // mínimo comercial aplicável (zona/entulho/mudança/por item), para nunca
+  // gerar prejuízo; o máximo dá margem de ±10% sobre o valor médio calculado.
+  const minVal = Math.max(minimumThreshold, Math.round(finalSemIva * 0.90 * 100) / 100);
   const maxVal = Math.round(finalSemIva * 1.10 * 100) / 100;
+  const minValWithVat = Math.round(minVal * (1 + vatRate) * 100) / 100;
+  const maxValWithVat = Math.round(maxVal * (1 + vatRate) * 100) / 100;
 
   return {
     ok: true,
@@ -772,6 +807,10 @@ export async function calculateFastEstimate(input: FastEstimateInput): Promise<F
     estimatedPriceWithVat: withVat,
     estimateMinWithoutVat: minVal,
     estimateMaxWithoutVat: maxVal,
+    estimateMinWithVat: minValWithVat,
+    estimateMaxWithVat: maxValWithVat,
+    itemCount,
+    isFullLoad: isFull,
     labor,
     difficultyLevel: diff,
     confidence: missing.length > 0 ? "low" : distKmFuel > 0 ? "high" : "medium",
@@ -779,7 +818,12 @@ export async function calculateFastEstimate(input: FastEstimateInput): Promise<F
     assumptions,
     missingFields: missing,
     customerMessage: `Estimativa de referência: à volta de ${finalSemIva.toFixed(2)} € + IVA (${withVat.toFixed(2)} € c/IVA). Inclui equipa de ${numPessoas} pessoas, ${laborHours}h de trabalho.`,
-    internalNotes: [...notes, `Total s/IVA: ${finalSemIva}€ | IVA 23%: ${vat}€ | Total c/IVA: ${withVat}€`],
+    internalNotes: [
+      ...notes,
+      `Itens identificados: ${itemCount} (${isFull ? "carga completa" : "itens soltos"})`,
+      `Total s/IVA: ${finalSemIva}€ | IVA 23%: ${vat}€ | Total c/IVA: ${withVat}€`,
+      `Intervalo: ${minVal}€ a ${maxVal}€ s/IVA (${minValWithVat}€ a ${maxValWithVat}€ c/IVA)`,
+    ],
     analysisSource: "local_fast_estimate",
   };
 }
