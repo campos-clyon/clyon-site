@@ -1,7 +1,7 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
+import UserAvatar from "@/components/UserAvatar";
 import { ArrowRight, CalendarDays, ClipboardList } from "lucide-react";
 import StatusBadge from "./StatusBadge";
 import { SERVICE_LABELS, type UserProfile, type Order, type Section } from "./types";
@@ -31,7 +31,6 @@ function MetricCard({ label, value }: { label: string; value: string | number })
 export default function VisaoGeral({ user, googleAvatar, orders, onSection }: Props) {
   const nome = user.name ?? user.email.split("@")[0];
   const primeiroNome = nome.split(" ")[0];
-  const inicial = primeiroNome.charAt(0).toUpperCase();
   const avatar = user.avatarUrl ?? googleAvatar;
 
   const pedidosAtivos = orders.filter((o) =>
@@ -44,19 +43,12 @@ export default function VisaoGeral({ user, googleAvatar, orders, onSection }: Pr
     <div className="space-y-8">
       {/* Card de boas-vindas */}
       <div className="flex items-center gap-5 rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
-        {avatar ? (
-          <Image
-            src={avatar}
-            alt={nome}
-            width={72}
-            height={72}
-            className="h-18 w-18 rounded-full object-cover ring-2 ring-[#00B4D8]/20"
-          />
-        ) : (
-          <div className="flex h-[72px] w-[72px] shrink-0 items-center justify-center rounded-full bg-[#00B4D8]/10 text-2xl font-bold text-[#0077B6]">
-            {inicial}
-          </div>
-        )}
+        <UserAvatar
+          src={avatar}
+          name={nome}
+          size={72}
+          className="ring-2 ring-[#00B4D8]/20"
+        />
         <div>
           <p className="text-xs font-medium text-slate-400">Bem-vindo de volta</p>
           <h2 className="text-2xl font-bold text-slate-900">{primeiroNome}</h2>

@@ -24,6 +24,7 @@ import {
   ClipboardList,
 } from "lucide-react";
 import { useSession, signOut } from "next-auth/react";
+import UserAvatar from "@/components/UserAvatar";
 
 import { trackWhatsAppClick } from "@/lib/analytics";
 import { trackContactEvent } from "@/lib/track-contact";
@@ -214,22 +215,14 @@ export default function Header() {
               <button
                 type="button"
                 onClick={() => setContaOpen(!contaOpen)}
-                className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full border-2 border-cyan-200 bg-cyan-50 transition hover:border-cyan-400"
+                className="rounded-full border-2 border-cyan-200 transition hover:border-cyan-400"
                 aria-label="Menu da conta"
               >
-                {session.user.image ? (
-                  <Image
-                    src={session.user.image}
-                    alt={session.user.name ?? "Conta"}
-                    width={36}
-                    height={36}
-                    className="h-full w-full object-cover"
-                  />
-                ) : (
-                  <span className="text-sm font-bold text-cyan-700">
-                    {(session.user.name ?? session.user.email ?? "?").charAt(0).toUpperCase()}
-                  </span>
-                )}
+                <UserAvatar
+                  src={session.user.image}
+                  name={session.user.name ?? session.user.email}
+                  size={36}
+                />
               </button>
               {contaOpen && (
                 <div className="absolute right-0 top-full mt-2 w-48 rounded-2xl border border-slate-100 bg-white py-1.5 shadow-xl">

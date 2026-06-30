@@ -1,7 +1,7 @@
 "use client";
 
-import Image from "next/image";
 import { signOut } from "next-auth/react";
+import UserAvatar from "@/components/UserAvatar";
 import {
   LayoutDashboard,
   ClipboardList,
@@ -31,25 +31,16 @@ interface Props {
 }
 
 export default function ContaSidebar({ section, onSection, nome, email, avatar }: Props) {
-  const inicial = (nome || email).charAt(0).toUpperCase();
-
   return (
     <aside className="flex w-60 shrink-0 flex-col border-r border-slate-100 bg-white">
       {/* Utilizador */}
       <div className="flex flex-col items-center gap-2 border-b border-slate-100 px-4 py-6 text-center">
-        {avatar ? (
-          <Image
-            src={avatar}
-            alt={nome}
-            width={56}
-            height={56}
-            className="h-14 w-14 rounded-full object-cover ring-2 ring-[#00B4D8]/20"
-          />
-        ) : (
-          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#00B4D8]/10 text-xl font-bold text-[#0077B6]">
-            {inicial}
-          </div>
-        )}
+        <UserAvatar
+          src={avatar}
+          name={nome}
+          size={56}
+          className="ring-2 ring-[#00B4D8]/20"
+        />
         <div className="min-w-0 w-full">
           <p className="truncate text-sm font-semibold text-slate-800">{nome}</p>
           <p className="truncate text-xs text-slate-400">{email}</p>
