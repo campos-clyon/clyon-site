@@ -14,6 +14,16 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "**.fbcdn.net",
       },
+      {
+        // Avatar do Google OAuth
+        protocol: "https",
+        hostname: "lh3.googleusercontent.com",
+      },
+      {
+        // Uploads para Vercel Blob
+        protocol: "https",
+        hostname: "**.public.blob.vercel-storage.com",
+      },
     ],
   },
   async redirects() {
@@ -363,7 +373,7 @@ const nextConfig: NextConfig = {
           // Fontes
           "font-src 'self' https://fonts.gstatic.com",
           // Imagens: self + blobs Vercel + Instagram CDN + Google
-          "img-src 'self' data: blob: https://*.cdninstagram.com https://*.fbcdn.net https://lh3.googleusercontent.com https://hebbkx1anhila5yf.public.blob.vercel-storage.com",
+          "img-src 'self' data: blob: https://*.cdninstagram.com https://*.fbcdn.net https://lh3.googleusercontent.com https://*.public.blob.vercel-storage.com",
           // Ligações de rede: self + APIs externas
           "connect-src 'self' https://generativelanguage.googleapis.com https://api.resend.com https://*.upstash.io",
           // Frames: nenhum (embeds externos não usados)

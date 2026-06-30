@@ -264,6 +264,79 @@ export async function replaceGalleryMediaItems(
 
 // ─── User helpers ─────────────────────────────────────����─────────────────────
 
+let usersSchemaEnsured = false;
+
+/**
+ * Garante que a tabela `users` tem todas as colunas necessárias para a área
+ * de conta do cliente (phone, morada, faturação, avatar, notificações).
+ * Seguro para correr múltiplas vezes — usa cache de flag e hasColumn().
+ * Também cria índices UNIQUE em `email` e `phone` se não existirem.
+ */
+export async function ensureUsersSchema(): Promise<void> {
+  if (usersSchemaEnsured) return;
+  const pool = await getPool();
+  if (!pool) return;
+
+  const columnsToAdd: Array<{ name: string; sql: string }> = [
+    { name: "phone",             sql: "ALTER TABLE users ADD COLUMN phone VARCHAR(30) NULL" },
+    { name: "addressLine",       sql: "ALTER TABLE users ADD COLUMN addressLine VARCHAR(255) NULL" },
+    { name: "addressNumber",     sql: "ALTER TABLE users ADD COLUMN addressNumber VARCHAR(20) NULL" },
+    { name: "postalCode",        sql: "ALTER TABLE users ADD COLUMN postalCode VARCHAR(20) NULL" },
+    { name: "addressCity",       sql: "ALTER TABLE users ADD COLUMN addressCity VARCHAR(120) NULL" },
+    { name: "nif",               sql: "ALTER TABLE users ADD COLUMN nif VARCHAR(20) NULL" },
+    { name: "billingName",       sql: "ALTER TABLE users ADD COLUMN billingName VARCHAR(160) NULL" },
+    { name: "billingNif",        sql: "ALTER TABLE users ADD COLUMN billingNif VARCHAR(20) NULL" },
+    { name: "billingAddress",    sql: "ALTER TABLE users ADD COLUMN billingAddress VARCHAR(255) NULL" },
+    { name: "billingPostalCode", sql: "ALTER TABLE users ADD COLUMN billingPostalCode VARCHAR(20) NULL" },
+    { name: "billingCity",       sql: "ALTER TABLE users ADD COLUMN billingCity VARCHAR(120) NULL" },
+    { name: "avatarUrl",         sql: "ALTER TABLE users ADD COLUMN avatarUrl TEXT NULL" },
+    { name: "notifOrderStatus",  sql: "ALTER TABLE users ADD COLUMN notifOrderStatus TINYINT(1) NOT NULL DEFAULT 1" },
+    { name: "notifWeeklyDigest", sql: "ALTER TABLE users ADD COLUMN notifWeeklyDigest TINYINT(1) NOT NULL DEFAULT 0" },
+    { name: "notifWhatsapp",     sql: "ALTER TABLE users ADD COLUMN notifWhatsapp TINYINT(1) NOT NULL DEFAULT 0" },
+    { name: "deletedAt",         sql: "ALTER TABLE users ADD COLUMN deletedAt TIMESTAMP NULL" },
+  ];
+
+  for (const col of columnsToAdd) {
+    try {
+      const exists = await hasColumn("users", col.name);
+      if (!exists) {
+        await pool.execute(col.sql);
+      }
+    } catch (err) {
+      console.error(`[ensureUsersSchema] erro ao adicionar coluna ${col.name}:`, String(err).slice(0, 120));
+    }
+  }
+
+  // Criar índice UNIQUE em email (se não existir)
+  try {
+    const [emailIdx] = await pool.execute(
+      `SELECT COUNT(*) AS cnt FROM information_schema.statistics
+       WHERE table_schema = DATABASE() AND table_name = 'users' AND index_name = 'users_email_unique'`,
+    ) as [Array<{ cnt: number }>, unknown];
+    if (Number(emailIdx[0]?.cnt ?? 0) === 0) {
+      await pool.execute("ALTER TABLE users ADD UNIQUE INDEX users_email_unique (email)");
+    }
+  } catch (err) {
+    // Pode já existir com outro nome — ignorar silenciosamente
+    console.error("[ensureUsersSchema] índice email:", String(err).slice(0, 120));
+  }
+
+  // Criar índice UNIQUE em phone (NULL não conta como duplicado em MySQL)
+  try {
+    const [phoneIdx] = await pool.execute(
+      `SELECT COUNT(*) AS cnt FROM information_schema.statistics
+       WHERE table_schema = DATABASE() AND table_name = 'users' AND index_name = 'users_phone_unique'`,
+    ) as [Array<{ cnt: number }>, unknown];
+    if (Number(phoneIdx[0]?.cnt ?? 0) === 0) {
+      await pool.execute("ALTER TABLE users ADD UNIQUE INDEX users_phone_unique (phone)");
+    }
+  } catch (err) {
+    console.error("[ensureUsersSchema] índice phone:", String(err).slice(0, 120));
+  }
+
+  usersSchemaEnsured = true;
+}
+
 export async function upsertUser(values: InsertUser) {
   const db = await getDb();
   if (!db) return;

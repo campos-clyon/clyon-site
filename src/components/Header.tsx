@@ -24,6 +24,7 @@ import {
   ClipboardList,
 } from "lucide-react";
 import { useSession, signOut } from "next-auth/react";
+import { usePathname } from "next/navigation";
 import UserAvatar from "@/components/UserAvatar";
 
 import { trackWhatsAppClick } from "@/lib/analytics";
@@ -106,6 +107,8 @@ export default function Header() {
   const contaRef = useRef<HTMLDivElement>(null);
 
   const { data: session } = useSession();
+  const pathname = usePathname();
+  const isContaActive = pathname?.startsWith("/conta") ?? false;
 
   const whatsappNumber = BUSINESS_PHONE.replace(/[^\d]/g, "");
   const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent("Olá! Gostava de pedir um orçamento à CLYON.")}`;
@@ -215,7 +218,11 @@ export default function Header() {
               <button
                 type="button"
                 onClick={() => setContaOpen(!contaOpen)}
-                className="rounded-full border-2 border-cyan-200 transition hover:border-cyan-400"
+                className={`rounded-full border-2 transition ${
+                  isContaActive
+                    ? "border-cyan-500 ring-2 ring-cyan-500 ring-offset-2"
+                    : "border-cyan-200 hover:border-cyan-400"
+                }`}
                 aria-label="Menu da conta"
               >
                 <UserAvatar
@@ -264,14 +271,41 @@ export default function Header() {
           )}
         </div>
 
-        {/* Mobile menu button */}
-        <button
-          className="inline-flex rounded-xl border border-slate-200 bg-white p-2.5 text-slate-600 transition-colors hover:border-cyan-200 hover:text-cyan-600 lg:hidden"
-          onClick={() => setMenuOpen((open) => !open)}
-          aria-label={menuOpen ? "Fechar menu" : "Abrir menu"}
-        >
-          {menuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-        </button>
+        {/* Mobile: avatar de conta + botão hambúrguer */}
+        <div className="flex items-center gap-2 lg:hidden">
+          {session?.user ? (
+            <Link
+              href="/conta"
+              aria-label="A minha conta"
+              className={`rounded-full border-2 transition ${
+                isContaActive
+                  ? "border-cyan-500 ring-2 ring-cyan-500 ring-offset-2"
+                  : "border-cyan-200 hover:border-cyan-400"
+              }`}
+            >
+              <UserAvatar
+                src={session.user.image}
+                name={session.user.name ?? session.user.email}
+                size={36}
+              />
+            </Link>
+          ) : (
+            <Link
+              href="/entrar"
+              aria-label="Entrar na conta"
+              className="flex h-9 w-9 items-center justify-center rounded-full border-2 border-slate-200 text-slate-500 transition hover:border-cyan-300 hover:text-cyan-600"
+            >
+              <User className="h-4 w-4" />
+            </Link>
+          )}
+          <button
+            className="inline-flex rounded-xl border border-slate-200 bg-white p-2.5 text-slate-600 transition-colors hover:border-cyan-200 hover:text-cyan-600"
+            onClick={() => setMenuOpen((open) => !open)}
+            aria-label={menuOpen ? "Fechar menu" : "Abrir menu"}
+          >
+            {menuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </button>
+        </div>
       </div>
 
       {/* Mega Menu Dropdown - Centralized */}
@@ -434,24 +468,14 @@ export default function Header() {
               </button>
               {/* Conta mobile */}
               {session?.user ? (
-                <>
-                  <Link
-                    href="/conta"
-                    onClick={() => setMenuOpen(false)}
-                    className="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3.5 text-base font-semibold text-slate-700 transition hover:border-slate-300"
-                  >
-                    <ClipboardList className="h-5 w-5 text-cyan-600" />
-                    A minha conta
-                  </Link>
-                  <button
-                    type="button"
-                    onClick={() => { setMenuOpen(false); signOut({ callbackUrl: "/" }); }}
-                    className="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-100 px-4 py-3 text-sm text-slate-500 transition hover:text-red-600"
-                  >
-                    <LogOut className="h-4 w-4" />
-                    Sair da conta
-                  </button>
-                </>
+                <button
+                  type="button"
+                  onClick={() => { setMenuOpen(false); signOut({ callbackUrl: "/" }); }}
+                  className="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-100 px-4 py-3 text-sm text-slate-500 transition hover:text-red-600"
+                >
+                  <LogOut className="h-4 w-4" />
+                  Sair da conta
+                </button>
               ) : (
                 <Link
                   href="/entrar"

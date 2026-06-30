@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { z } from "zod";
 import { authOptionsCliente } from "@/auth-cliente";
-import { getPool } from "@/lib/db";
+import { getPool, ensureUsersSchema } from "@/lib/db";
 
 // Row returned from DB
 interface UserRow {
@@ -61,6 +61,9 @@ export async function GET() {
     return NextResponse.json({ error: "Não autenticado." }, { status: 401 });
   }
 
+  // Garantir que todas as colunas existem (idempotente, cacheada após 1ª chamada)
+  await ensureUsersSchema();
+
   try {
     const user = await getOrCreateUser(
       session.user.email,
@@ -100,6 +103,9 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json({ error: "Não autenticado." }, { status: 401 });
   }
 
+  // Garantir que todas as colunas existem antes de tentar escrever
+  await ensureUsersSchema();
+
   const raw = await request.json();
   const parsed = PatchSchema.safeParse(raw);
   if (!parsed.success) {
@@ -132,12 +138,39 @@ export async function PATCH(request: NextRequest) {
   try {
     const pool = await getPool();
     if (!pool) throw new Error("Pool não disponível");
+
+    // Verificar unicidade do telefone antes do UPDATE
+    if (data.phone) {
+      const [phoneRows] = await pool.execute(
+        "SELECT id FROM users WHERE phone = ? AND email <> ? AND deletedAt IS NULL LIMIT 1",
+        [data.phone, session.user.email],
+      ) as [Array<{ id: number }>, unknown];
+      if (phoneRows.length > 0) {
+        return NextResponse.json(
+          { error: "Este número de telefone já está associado a outra conta.", field: "phone" },
+          { status: 409 },
+        );
+      }
+    }
+
     await pool.execute(
       `UPDATE users SET ${setClauses.join(", ")} WHERE email = ? AND deletedAt IS NULL`,
       values,
     );
     return NextResponse.json({ success: true });
-  } catch (err) {
+  } catch (err: unknown) {
+    // Rede de segurança para concorrência: ER_DUP_ENTRY no índice de phone
+    if (
+      err instanceof Error &&
+      "code" in err &&
+      (err as NodeJS.ErrnoException).code === "ER_DUP_ENTRY" &&
+      err.message.includes("phone")
+    ) {
+      return NextResponse.json(
+        { error: "Este número de telefone já está associado a outra conta.", field: "phone" },
+        { status: 409 },
+      );
+    }
     console.error("[api/users/me] PATCH:", err);
     return NextResponse.json({ error: "Erro ao guardar dados." }, { status: 500 });
   }
