@@ -166,10 +166,10 @@ export const defaultSimulatorSettings: SimulatorSettingDefinition[] = [
   {
     key: "custo_km",
     label: "Custo por km (combustível)",
-    description: "Custo real por km: veículo 1.3, 1L cada 6 km, diesel 2€/L → 0,33€/km.",
+    description: "Custo real por km (combustível + desgaste veículo): 0,50€/km.",
     category: "geral",
     unit: "eur",
-    value: 0.33,
+    value: 0.50,
   },
   {
     key: "custo_hora_pessoa",
@@ -190,10 +190,10 @@ export const defaultSimulatorSettings: SimulatorSettingDefinition[] = [
   {
     key: "overhead_por_servico",
     label: "Overhead por serviço",
-    description: "Custos fixos mensais (~1.591€/mês ÷ 104 serviços/mês) = 15,30€ por serviço.",
+    description: "Custos fixos mensais rateados por serviço = 17,00€ por serviço.",
     category: "geral",
     unit: "eur",
-    value: 15.30,
+    value: 17.00,
   },
   {
     key: "margem_lucro",

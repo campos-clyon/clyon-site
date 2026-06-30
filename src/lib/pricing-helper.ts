@@ -54,10 +54,10 @@ export async function getActivePricingMap(): Promise<SimulatorSettingsMap> {
  * Lê os valores configuráveis da DB para que o Gemini use sempre os valores actuais.
  */
 function formatPricingRulesForGemini(settingsMap: SimulatorSettingsMap): string {
-  const custoKm       = settingsMap.custo_km          ?? 0.33;
+  const custoKm       = settingsMap.custo_km          ?? 0.50;
   const custoHoraPess = settingsMap.custo_hora_pessoa  ?? 9;
   const numPessoas    = settingsMap.num_pessoas_equipa ?? 3;
-  const overhead      = settingsMap.overhead_por_servico ?? 15.30;
+  const overhead      = settingsMap.overhead_por_servico ?? 17.00;
   const margem        = settingsMap.margem_lucro       ?? 0.40;
   const margemPct     = (margem * 100).toFixed(0);
   const fatorMargem   = (1 + margem).toFixed(2);
@@ -169,7 +169,7 @@ function getDefaultPricingRules(): string {
     // Fallback de último recurso — texto literal com defaults
     return `ESTRUTURA DE CUSTOS REAIS CLYON (valores default):
 
-FÓRMULA: custo_combustivel (distancia × 0.33 €/km) + custo_pessoal (horas × 3p × 9 €/h) + overhead (15.30 €) → × 1.40 (40% margem) = preço s/IVA
+FÓRMULA: custo_combustivel (distancia × 0.50 €/km) + custo_pessoal (horas × 3p × 9 €/h) + overhead (17.00 €) → × 1.40 (40% margem) = preço s/IVA
 IVA: 23%
 
 HORAS: Recolha 1-7 itens: 0.5h/item | Carga completa: 4h | Entulho 1-10 sacos: 1h, 11-30: 1.5h, 31-80: 2.5h, 81-150: 4h | Mudança: 7h base
@@ -686,10 +686,10 @@ export async function calculateFastEstimate(input: FastEstimateInput): Promise<F
   const pricing = await getActivePricingMap();
 
   // ── Parâmetros reais da estrutura de custos (da DB) ─────────────────────────
-  const custoKm       = pricing.custo_km          ?? 0.33;   // €/km
+  const custoKm       = pricing.custo_km          ?? 0.50;   // €/km
   const custoHoraPess = pricing.custo_hora_pessoa  ?? 9;     // €/hora/pessoa
   const numPessoas    = pricing.num_pessoas_equipa ?? 3;     // pessoas na equipa
-  const overhead      = pricing.overhead_por_servico ?? 15.30; // €/serviço
+  const overhead      = pricing.overhead_por_servico ?? 17.00; // €/serviço
   const margem        = pricing.margem_lucro       ?? 0.40;  // 40%
 
   const missing: string[] = [];
