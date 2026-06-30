@@ -234,6 +234,9 @@ export async function POST(req: NextRequest) {
       internalNotes: [
         ...fastEstimate.internalNotes,
         "GEMINI_API_KEY não configurada — usada estimativa local.",
+        ...(fastEstimate.recommendedPriceWithoutVat && fastEstimate.recommendedPriceWithoutVat > (fastEstimate.estimatedPriceWithoutVat ?? 0)
+          ? [`VALOR RECOMENDADO EMPRESA: ${fastEstimate.recommendedPriceWithoutVat}€ s/IVA (${fastEstimate.recommendedPriceWithVat}€ c/IVA)`]
+          : []),
       ],
     } satisfies EstimateResult);
   }
@@ -450,6 +453,10 @@ export async function POST(req: NextRequest) {
     analysisSource,
     confidence,
     customerMessage,
+    // Preservar valor recomendado calculado localmente como metadado interno.
+    // O Gemini não calcula este campo — vem sempre do motor local (calculateFastEstimate).
+    recommendedPriceWithoutVat: fastEstimate.recommendedPriceWithoutVat,
+    recommendedPriceWithVat: fastEstimate.recommendedPriceWithVat,
     // Incluir referência externa APENAS quando existir — backoffice lê este campo
     ...(externalMarketEstimate ? { externalMarketEstimate } : {}),
   };
@@ -609,10 +616,25 @@ REGRAS ABSOLUTAS
       EXEMPLO CORRETO: Mesa e cadeiras (2 itens), 2º andar, elevador pequeno, Lisboa → 100 a 130 € c/IVA (NÃO 270 €!)
       EXEMPLO CORRETO: 1 frigorífico, rés-do-chão, estacionamento à porta → 50 a 80 € c/IVA
       Para múltiplos itens soltos: aplica desconto de eficiência (~60% do custo por item adicional).
-   b) CARGA COMPLETA (≥8 itens), ESVAZIAMENTO: aplicar mínimo de zona.
-      Lisboa 250 € s/IVA (acesso difícil: 270 €) | Almada/Barreiro 230 € | Amora/Seixal 220 €
-      EXEMPLO: Esvaziamento Lisboa, cálculo = 180 € s/IVA → preço final = 250 € s/IVA (mínimo zona).
-   c) ENTULHO: mínimo fixo 90 € s/IVA — sem mínimo de zona.
+   b) CARGA COMPLETA (≥8 itens), ESVAZIAMENTO: aplicar VALOR RECOMENDADO por zona e distância.
+      Este valor é mais favorável à empresa que o mínimo absoluto e deve ser sempre respeitado:
+        Margem Sul / Almada / Barreiro / Seixal / Amora          → 220 € s/IVA (mínimo e recomendado)
+        Lisboa acesso normal, distância ≤ 15 km                  → 250 € s/IVA (recomendado)
+        Lisboa acesso normal, distância 15-25 km                 → 270 € s/IVA (recomendado)
+        Lisboa distância > 25 km                                 → 300 € s/IVA (recomendado)
+        Lisboa andar > 3 sem elevador (qualquer distância)       → 360 € s/IVA (recomendado)
+        Loures / VFX / Sintra / Cascais ≤ 20 km                 → 270 € s/IVA (recomendado)
+        Loures / VFX / Sintra / Cascais > 20 km                 → 300 € s/IVA (recomendado)
+      EXEMPLO: Esvaziamento Lisboa, distância 18km, acesso normal, cálculo = 180€ → preço = 270€ s/IVA.
+      EXEMPLO: Carga completa Seixal, cálculo = 190€ → preço = 220€ s/IVA (mínimo zona).
+      EXEMPLO: Esvaziamento Lisboa, 4º andar sem elevador → preço = 360€ s/IVA.
+   c) ENTULHO: tabela de preços POR SACO (afecta directamente o preço final — NÃO apenas o tempo):
+        Sacos já ensacados (padrão)                              → 3,00 € por saco s/IVA
+        Sacos sem elevador ou acesso difícil (agravamento)       → 3,20 € por saco s/IVA
+        Entulho no chão (a ensacar)                              → usar custo_hora_pessoa × equipa
+      Mínimo fixo de entulho: 90 € s/IVA (sem mínimo de zona).
+      EXEMPLO: 10 sacos ensacados, acesso normal → 10 × 3,00 = 30€ (preço saco) + tempo fórmula. Mínimo = 90€.
+      EXEMPLO: 20 sacos, sem elevador → 20 × 3,20 = 64€ (preço saco) + tempo fórmula. Mínimo = 90€.
    d) MUDANÇA: mínimo fixo 150 € s/IVA — sem mínimo de zona.
 3. estimatedPriceWithoutVat, estimateMinWithoutVat e estimateMaxWithoutVat NUNCA podem ser null ou 0.
 4. Se faltarem dados críticos, dá SEMPRE um intervalo razoável com confidence "low".
@@ -639,7 +661,7 @@ f) Adiciona em "internalNotes" uma frase como:
    NUNCA mostres esta nota ao cliente — é apenas para uso interno da equipa.
 g) Se as fotos não forem relevantes para o cálculo, ignora-as e usa apenas o texto.
 ` : ""}
-═══════════════════════════════════════════════════════════
+═══════════════════���═══════════════════════════════════════
 PEDIDO A ANALISAR
 ═══════════════════════════════════════════════════════════
 

@@ -180,6 +180,15 @@ export interface EstimateResult {
   /** Confiança geral da análise */
   confidence?: "high" | "medium" | "low";
   /**
+   * Valor recomendado s/IVA — mais favorável à empresa do que o mínimo absoluto.
+   * Aplicado a cargas completas para garantir margens estratégicas por zona e
+   * distância. Nunca inferior ao mínimo absoluto (applyZoneMinimum).
+   * Se igual ao estimatedPriceWithoutVat, o preço já estava acima do recomendado.
+   */
+  recommendedPriceWithoutVat?: number | null;
+  /** recommendedPriceWithoutVat × 1.23 */
+  recommendedPriceWithVat?: number | null;
+  /**
    * Referência de mercado obtida por pesquisa externa.
    * APENAS para uso interno (assistente/admin). Nunca mostrar ao cliente.
    */

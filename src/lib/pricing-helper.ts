@@ -93,7 +93,13 @@ RECOLHA / ESVAZIAMENTO (carga completa ≥ 6 itens):
   - Elevador pequeno: 4.5h
   - Acesso difícil: +1h
 
-ENTULHO (tabela por sacos):
+ENTULHO — PREÇO POR SACO (adiciona ao preço calculado pela fórmula de tempo):
+  - Sacos já ensacados (padrão): 3,00 € por saco s/IVA
+  - Sacos sem elevador ou acesso difícil: 3,20 € por saco s/IVA
+  - Entulho no chão: usar apenas fórmula de tempo com × 1.3
+  Mínimo de entulho: 90 € s/IVA (sem mínimo de zona)
+
+ENTULHO — tabela de TEMPO (para a fórmula de custo pessoal):
   - 1 a 10 sacos: 1h
   - 11 a 30 sacos: 1.5h
   - 31 a 80 sacos: 2.5h
@@ -129,11 +135,15 @@ ITENS SOLTOS (1 a 7 itens — recolha de móveis / monos):
     A equipa já está no local — cada item adicional custa ~60% do primeiro.
 
 CARGA COMPLETA (≥8 itens), ESVAZIAMENTO DE CASA/APARTAMENTO:
-  Aplicar mínimos de zona:
-  - Amora / Seixal / Fernão Ferro: 220 € s/IVA
-  - Almada / Barreiro / Setúbal: 230 € s/IVA
-  - Lisboa acesso normal: 250 € s/IVA
-  - Lisboa acesso difícil / Sintra / Cascais / Loures / VFX: 270 € s/IVA
+  Aplicar VALOR RECOMENDADO por zona e distância (mais favorável à empresa):
+  - Amora / Seixal / Fernão Ferro / Corroios: 220 € s/IVA
+  - Almada / Barreiro / Setúbal:              220 € s/IVA
+  - Lisboa acesso normal, ≤ 15 km:            250 € s/IVA
+  - Lisboa acesso normal, 15-25 km:           270 € s/IVA
+  - Lisboa distância > 25 km:                 300 € s/IVA
+  - Lisboa andar > 3º sem elevador:           360 € s/IVA
+  - Loures / VFX / Sintra / Cascais ≤ 20 km: 270 € s/IVA
+  - Loures / VFX / Sintra / Cascais > 20 km: 300 € s/IVA
 
 ENTULHO: mínimo fixo 90 € s/IVA — sem mínimo de zona
 MUDANÇA: mínimo fixo 150 € s/IVA — sem mínimo de zona
@@ -220,6 +230,14 @@ export interface FastEstimateResult {
   itemCount?: number;
   /** true quando tratado como carga completa (≥ FULL_LOAD_ITEM_THRESHOLD itens ou esvaziamento) */
   isFullLoad?: boolean;
+  /**
+   * Valor recomendado s/IVA — mais favorável à empresa que o mínimo absoluto.
+   * Garantido apenas para cargas completas (zona + distância + dificuldade).
+   * Se igual a estimatedPriceWithoutVat, o preço calculado já era suficiente.
+   */
+  recommendedPriceWithoutVat?: number | null;
+  /** recommendedPriceWithoutVat × 1.23 */
+  recommendedPriceWithVat?: number | null;
   labor?: LaborCost;
   difficultyLevel: 1 | 2 | 3 | 4 | 5;
   summary: string;
@@ -682,6 +700,97 @@ function applyZoneMinimum(
   return { price: priceWithoutVat, note: null, minimumThreshold: minimum };
 }
 
+/**
+ * Calcula o valor recomendado pela empresa para cargas completas — mais
+ * favorável que o mínimo absoluto (applyZoneMinimum), incorporando zona,
+ * distância e dificuldade de acesso. Afecta APENAS o campo
+ * recommendedPriceWithoutVat; nunca altera o mínimo absoluto nem o max.
+ *
+ * Tabela de referência (valores s/IVA):
+ *   Margem Sul local / Almada / Barreiro     — 220 €
+ *   Lisboa normal, distância ≤ 15 km         — 250 €
+ *   Lisboa normal, distância 15-25 km        — 270 €
+ *   Lisboa distância > 25 km                 — 300 €
+ *   Lisboa andar > 3 sem elevador (qualquer) — 360 €
+ *   Loures / Sintra / Cascais / VFX ≤ 20 km — 270 €
+ *   Loures / Sintra / Cascais / VFX > 20 km — 300 €
+ *
+ * Só se aplica a cargas completas (isFullLoad = true).
+ * Devolve null para entulho, mudança ou itens soltos.
+ */
+function applyRecommendedPrice(
+  currentPriceSemIva: number,
+  city: string,
+  floor: string | undefined,
+  hasElevator: string | undefined,
+  parkingDistance: string | undefined,
+  svc: string | undefined,
+  isFullLoad: boolean,
+  distKmOneWay: number,
+): { recommended: number; note: string | null } {
+  // Só cargas completas ou esvaziamentos
+  if (!isFullLoad || svc === "recolha_entulho" || svc === "mudanca") {
+    return { recommended: currentPriceSemIva, note: null };
+  }
+  if (svc !== "esvaziamento_casa" && svc !== "esvaziamento_apartamento" &&
+      svc !== "recolha_moveis" && svc !== "recolha_monos" && svc !== undefined) {
+    // outro tipo — não aplicar
+  }
+
+  const c = city.toLowerCase();
+  const floorN = floorNumber(floor);
+  const noElev = hasElevator === "no";
+  const hardParking = parkingDistance === "difficult";
+
+  const isLisboa  = c.includes("lisboa") || c.includes("lisbon");
+  const isLoures  = c.includes("loures") || c.includes("alverca") || c.includes("vila franca") || c.includes("cascais") || c.includes("sintra");
+  const isAlmada  = c.includes("almada") || c.includes("barreiro") || c.includes("setúbal") || c.includes("setubal");
+  const isLocal   = c.includes("amora") || c.includes("seixal") || c.includes("fernão ferro") || c.includes("fernao ferro") || c.includes("corroios");
+
+  let recommended: number;
+  let zone: string;
+
+  if (isLisboa) {
+    // Andar alto sem elevador → máximo agravamento
+    if (floorN > 3 && noElev) {
+      recommended = 360;
+      zone = "Lisboa, andar > 3 sem elevador";
+    } else if (hardParking || (floorN > 2 && noElev)) {
+      // Acesso difícil qualquer
+      recommended = distKmOneWay > 20 ? 300 : 270;
+      zone = `Lisboa, acesso difícil, ${distKmOneWay} km`;
+    } else {
+      // Acesso normal — escala por distância
+      if      (distKmOneWay > 25) recommended = 300;
+      else if (distKmOneWay > 15) recommended = 270;
+      else                         recommended = 250;
+      zone = `Lisboa normal, ${distKmOneWay} km`;
+    }
+  } else if (isLoures) {
+    recommended = distKmOneWay > 20 ? 300 : 270;
+    zone = `Loures/Sintra/Cascais, ${distKmOneWay} km`;
+  } else if (isAlmada || isLocal || c === "") {
+    recommended = 220;
+    zone = isAlmada ? "Almada/Barreiro" : "Margem Sul local";
+  } else {
+    // Zona genérica não mapeada
+    recommended = 240;
+    zone = "zona genérica";
+  }
+
+  // O valor recomendado nunca pode ser inferior ao preço actual (que já
+  // passou pelo mínimo absoluto de zona)
+  recommended = Math.max(recommended, currentPriceSemIva);
+
+  if (recommended > currentPriceSemIva) {
+    return {
+      recommended,
+      note: `Valor recomendado (${zone}): ${recommended} € s/IVA`,
+    };
+  }
+  return { recommended, note: null };
+}
+
 export async function calculateFastEstimate(input: FastEstimateInput): Promise<FastEstimateResult> {
   const pricing = await getActivePricingMap();
 
@@ -776,11 +885,29 @@ export async function calculateFastEstimate(input: FastEstimateInput): Promise<F
   );
   if (minNote) assumptions.push(minNote);
 
-  // ── 9. IVA e resultado final ─────────────────────────────────────────────────
+  // ── 9. Valor recomendado pela empresa (cargas completas) ─────────────────
+  // Distância de uma via para cálculo do recomendado (não ida+volta)
+  const distKmOneWay = input.distanceFromBase?.distanceKm ?? input.movingDistance?.distanceKm ?? 0;
+  const { recommended: precoRecomendado, note: recNote } = applyRecommendedPrice(
+    precoComMinimo,
+    city,
+    input.floor,
+    input.hasElevator,
+    input.parkingDistance,
+    input.serviceType,
+    isFull,
+    distKmOneWay,
+  );
+  if (recNote) assumptions.push(recNote);
+
+  // ── 10. IVA e resultado final ─────────────────────────────────────────────
   const vatRate = 0.23;
   const finalSemIva = Math.round(precoComMinimo * 100) / 100;
   const vat = Math.round(finalSemIva * vatRate * 100) / 100;
   const withVat = Math.round((finalSemIva + vat) * 100) / 100;
+
+  const recSemIva = Math.round(precoRecomendado * 100) / 100;
+  const recComIva = Math.round(recSemIva * 1.23 * 100) / 100;
 
   // Dificuldade estimada
   const totalFloors =
@@ -809,6 +936,8 @@ export async function calculateFastEstimate(input: FastEstimateInput): Promise<F
     estimateMaxWithoutVat: maxVal,
     estimateMinWithVat: minValWithVat,
     estimateMaxWithVat: maxValWithVat,
+    recommendedPriceWithoutVat: recSemIva,
+    recommendedPriceWithVat: recComIva,
     itemCount,
     isFullLoad: isFull,
     labor,
@@ -823,6 +952,9 @@ export async function calculateFastEstimate(input: FastEstimateInput): Promise<F
       `Itens identificados: ${itemCount} (${isFull ? "carga completa" : "itens soltos"})`,
       `Total s/IVA: ${finalSemIva}€ | IVA 23%: ${vat}€ | Total c/IVA: ${withVat}€`,
       `Intervalo: ${minVal}€ a ${maxVal}€ s/IVA (${minValWithVat}€ a ${maxValWithVat}€ c/IVA)`,
+      ...(recSemIva > finalSemIva
+        ? [`Valor recomendado (acima do calculado): ${recSemIva}€ s/IVA (${recComIva}€ c/IVA)`]
+        : []),
     ],
     analysisSource: "local_fast_estimate",
   };

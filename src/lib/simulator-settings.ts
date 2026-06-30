@@ -86,18 +86,18 @@ export const defaultSimulatorSettings: SimulatorSettingDefinition[] = [
   {
     key: "entulho_saco_ensacado",
     label: "Preço por saco já ensacado",
-    description: "Valor por saco quando o entulho já está em sacos.",
+    description: "Valor por saco quando o entulho já está em sacos (padrão). 3,00€/saco.",
     category: "entulho",
     unit: "eur",
-    value: 2.5,
+    value: 3.00,
   },
   {
     key: "entulho_saco_chao",
     label: "Preço por saco no chão/por ensacar",
-    description: "Valor por saco quando o entulho está no chão ou precisa ser ensacado.",
+    description: "Valor por saco sem elevador ou acesso difícil (agravamento). 3,20€/saco.",
     category: "entulho",
     unit: "eur",
-    value: 3.0,
+    value: 3.20,
   },
   {
     key: "entulho_distancia_km",
