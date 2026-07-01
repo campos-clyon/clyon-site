@@ -236,7 +236,7 @@ export default function OrderSummaryCard({ order, onEdit }: OrderSummaryCardProp
             label="Percurso da mudança"
             value={
               order.movingDistanceStatus === "calculated" && order.movingDistance?.distanceKm
-                ? `${order.movingDistance.distanceKm} km · ${order.movingDistance.durationText}`
+                ? `${String(order.movingDistance.distanceKm).replace(".", ",")} km · ${order.movingDistance.durationText}`
                 : order.movingDistanceStatus === "calculating"
                 ? "A calcular..."
                 : undefined
@@ -255,7 +255,7 @@ export default function OrderSummaryCard({ order, onEdit }: OrderSummaryCardProp
             label="Distância da base"
             value={
               order.distanceStatus === "calculated" && order.distanceFromBase?.distanceKm
-                ? `${order.distanceFromBase.distanceKm} km · ${order.distanceFromBase.durationText}`
+                ? `${String(order.distanceFromBase.distanceKm).replace(".", ",")} km · ${order.distanceFromBase.durationText}`
                 : order.distanceStatus === "calculating"
                 ? "A calcular..."
                 : order.distanceStatus === "error"
