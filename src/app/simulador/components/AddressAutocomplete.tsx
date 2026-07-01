@@ -309,18 +309,14 @@ export default function AddressAutocomplete({
       setAddressStatus(v.length > 0 ? "typing" : "empty");
     }
 
-    // debounce Nominatim (só se Google não estiver ativo)
-    if (!googleLoaded) {
-      if (process.env.NODE_ENV !== "production") {
-        console.log("[AddressAutocomplete] Debounce Nominatim fetch para query:", v);
-      }
-      if (debounceRef.current) clearTimeout(debounceRef.current);
-      debounceRef.current = setTimeout(() => fetchNominatim(v), 300);
-    } else {
-      if (process.env.NODE_ENV !== "production") {
-        console.log("[AddressAutocomplete] Google carregado, autocomplete nativo dispara sugestões");
-      }
+    // Nominatim: sempre fazer fetch em paralelo, mesmo que Google esteja carregado
+    // Isso garante dropdown visual mesmo que Google Places não mostre sugestões
+    if (process.env.NODE_ENV !== "production") {
+      console.log("[AddressAutocomplete] Debounce Nominatim fetch para query:", v, 
+        "(googleLoaded:", googleLoaded, "- Nominatim como fallback visual)");
     }
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => fetchNominatim(v), 300);
   };
 
   const handleManualConfirm = () => {
