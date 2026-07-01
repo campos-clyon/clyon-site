@@ -31,6 +31,7 @@ import { trackWhatsAppClick } from "@/lib/analytics";
 import { trackContactEvent } from "@/lib/track-contact";
 import { BUSINESS_PHONE } from "@/lib/seo-data";
 import QueroContratarModal from "@/components/QueroContratarModal";
+import HeaderLocationSelector from "@/components/HeaderLocationSelector";
 
 const solucoes = [
   {
@@ -194,6 +195,7 @@ export default function Header() {
 
         {/* Desktop CTA Buttons */}
         <div className="hidden items-center gap-3 lg:flex">
+          <HeaderLocationSelector />
           <a
             href={whatsappUrl}
             target="_blank"

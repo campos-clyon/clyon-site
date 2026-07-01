@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
+import { useLocation } from "@/contexts/LocationContext";
 import type {
   OrderData,
   UploadedFile,
@@ -39,6 +40,7 @@ interface FormState extends OrderData {
 
 export default function SimulatorThreePhaseForm() {
   const { data: session } = useSession();
+  const { location: savedLocation } = useLocation();
   const [phase, setPhase] = useState(1);
   const [formData, setFormData] = useState<FormState>({});
   const [analysis, setAnalysis] = useState<EstimateResult | null>(null);
@@ -71,9 +73,9 @@ export default function SimulatorThreePhaseForm() {
     trackSimulatorStart();
   }, []);
 
-  // Pré-preencher simplificado: só nome e email da sessão Google
+  // Pré-preencher simplificado: nome, email da sessão Google e morada salva
   useEffect(() => {
-    if (session?.user?.email || session?.user?.name) {
+    if (session?.user?.email || session?.user?.name || savedLocation) {
       setFormData((prev) => ({
         ...prev,
         receiver: {
@@ -81,9 +83,14 @@ export default function SimulatorThreePhaseForm() {
           name: prev.receiver?.name || session?.user?.name || undefined,
           email: prev.receiver?.email || session?.user?.email || undefined,
         },
+        address: prev.address || savedLocation || undefined,
       }));
+      // Se temos localização salva, preencher também o campo de input
+      if (savedLocation && !addressValue && savedLocation.formattedAddress) {
+        setAddressValue(savedLocation.formattedAddress);
+      }
     }
-  }, [session?.user?.email, session?.user?.name]);
+  }, [session?.user?.email, session?.user?.name, savedLocation]);
 
   // Salvar draft no localStorage
   useEffect(() => {

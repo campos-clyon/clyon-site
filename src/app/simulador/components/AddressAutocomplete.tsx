@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { AddressData, AddressStatus, DistanceFromBase, DistanceStatus } from "../types";
+import { useLocation } from "@/contexts/LocationContext";
 
 interface AddressSuggestion {
   label: string;
@@ -33,6 +34,7 @@ export default function AddressAutocomplete({
   const inputRef = useRef<HTMLInputElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const { setLocation } = useLocation();
 
   const [suggestions, setSuggestions] = useState<AddressSuggestion[]>([]);
   const [showDropdown, setShowDropdown] = useState(false);
@@ -115,6 +117,9 @@ export default function AddressAutocomplete({
     setAddressStatus("selected");
     setSuggestions([]);
     setShowDropdown(false);
+
+    // Guardar localização no contexto global (para reutilização em header)
+    setLocation(addressData);
 
     // Chamar callback do componente pai com os dados da morada
     onSelect(addressData);
