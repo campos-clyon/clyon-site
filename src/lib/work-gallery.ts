@@ -1,7 +1,6 @@
 import { promises as fs } from "fs";
 import path from "path";
 import { randomUUID } from "crypto";
-import { put, del } from "@vercel/blob";
 import { getDb, getGalleryMediaItems, replaceGalleryMediaItems } from "@/lib/db";
 
 export const gallerySections = ["hero", "showcase"] as const;
@@ -350,13 +349,13 @@ function extensionFromFileName(fileName: string) {
 }
 
 export async function saveGalleryFile(file: File, hint?: string) {
-  // 1. Se Vercel Blob estiver disponível, usar sempre Blob (persistente)
-  if (process.env.BLOB_READ_WRITE_TOKEN) {
-    const baseName = sanitizeFileName(hint || file.name || "imagem");
-    const fileName = `${Date.now()}-${baseName || "imagem"}${extensionFromFileName(file.name)}`;
-    const blob = await put(`work-gallery/${fileName}`, file, { access: "public" });
-    return blob.url;
-  }
+  // 1. Blob upload desativado temporariamente (store privada, access: "public" incompatível)
+  // if (process.env.BLOB_READ_WRITE_TOKEN) {
+  //   const baseName = sanitizeFileName(hint || file.name || "imagem");
+  //   const fileName = `${Date.now()}-${baseName || "imagem"}${extensionFromFileName(file.name)}`;
+  //   const blob = await put(`work-gallery/${fileName}`, file, { access: "public" });
+  //   return blob.url;
+  // }
 
   // 2. Se a DB estiver ligada mas sem Blob, guardar como data URL na BD
   const db = await getDb();
@@ -378,10 +377,11 @@ export async function replaceGalleryFile(previousUrl: string, file: File, hint?:
   const nextUrl = await saveGalleryFile(file, hint);
 
   // Limpar ficheiro antigo se aplicável
-  if (previousUrl.startsWith("https://") && previousUrl.includes(".blob.vercel-storage.com")) {
-    // URL do Blob — apagar via API
-    try { await del(previousUrl); } catch { /* silencioso */ }
-  } else if (previousUrl.startsWith("/uploads/work-gallery/")) {
+  // if (previousUrl.startsWith("https://") && previousUrl.includes(".blob.vercel-storage.com")) {
+  //   // URL do Blob — apagar via API (Blob desativado)
+  //   // try { await del(previousUrl); } catch { /* silencioso */ }
+  // } else if (previousUrl.startsWith("/uploads/work-gallery/")) {
+  if (previousUrl.startsWith("/uploads/work-gallery/")) {
     // Ficheiro local
     const previousPath = path.join(process.cwd(), "public", previousUrl.replace(/^\//, ""));
     await fs.unlink(previousPath).catch(() => undefined);
