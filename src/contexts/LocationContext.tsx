@@ -3,8 +3,10 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import type { AddressData } from '@/app/simulador/types';
 
-// CustomerLocation é um alias para AddressData (mesma estrutura)
-export type CustomerLocation = AddressData;
+// CustomerLocation estende AddressData com informação de origem
+export interface CustomerLocation extends AddressData {
+  source?: 'manual' | 'gps' | 'account'; // origem da localização
+}
 
 interface LocationContextType {
   location: CustomerLocation | null;
