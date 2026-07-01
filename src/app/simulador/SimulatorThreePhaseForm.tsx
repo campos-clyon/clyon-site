@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useSession } from "next-auth/react";
 import type {
   OrderData,
   UploadedFile,
@@ -37,6 +38,7 @@ interface FormState extends OrderData {
 }
 
 export default function SimulatorThreePhaseForm() {
+  const { data: session } = useSession();
   const [phase, setPhase] = useState(1);
   const [formData, setFormData] = useState<FormState>({});
   const [analysis, setAnalysis] = useState<EstimateResult | null>(null);
@@ -48,6 +50,7 @@ export default function SimulatorThreePhaseForm() {
   const [addressValue, setAddressValue] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [phase2Attempted, setPhase2Attempted] = useState(false);
+  const [userDataPrefilled, setUserDataPrefilled] = useState(false);
 
   const ANALYZE_STEP_LABELS = [
     "Analisar pedido",
@@ -68,6 +71,67 @@ export default function SimulatorThreePhaseForm() {
     // Registar início do simulador
     trackSimulatorStart();
   }, []);
+
+  // Pré-preencher dados do utilizador autenticado
+  useEffect(() => {
+    if (!session?.user?.email || userDataPrefilled) return;
+
+    const prefillUserData = async () => {
+      try {
+        const res = await fetch("/api/users/me");
+        if (!res.ok) return;
+        
+        const userData = await res.json() as {
+          name?: string;
+          phone?: string;
+          email?: string;
+          addressLine?: string;
+          postalCode?: string;
+          addressCity?: string;
+        };
+
+        // Pré-preencher nome, telefone, email (fase 3)
+        if ((!formData.receiver?.name && userData.name) ||
+            (!formData.receiver?.phone && userData.phone) ||
+            (!formData.receiver?.email && session?.user?.email)) {
+          setFormData((prev) => ({
+            ...prev,
+            receiver: {
+              name: prev.receiver?.name || userData.name || undefined,
+              phone: prev.receiver?.phone || userData.phone || undefined,
+              email: prev.receiver?.email || session?.user?.email || undefined,
+            },
+          }));
+        }
+
+        // Pré-preencher morada (fase 2)
+        if (
+          !formData.address?.formattedAddress &&
+          userData.addressLine &&
+          userData.postalCode &&
+          userData.addressCity
+        ) {
+          const fullAddress = `${userData.addressLine}, ${userData.postalCode} ${userData.addressCity}`;
+          setFormData((prev) => ({
+            ...prev,
+            address: {
+              formattedAddress: fullAddress,
+              city: userData.addressCity,
+            },
+            floor: "rés-do-chão", // Assumir rés-do-chão por padrão
+          }));
+          setAddressValue(fullAddress);
+        }
+
+        setUserDataPrefilled(true);
+      } catch {
+        // Silencioso se falhar
+        setUserDataPrefilled(true);
+      }
+    };
+
+    prefillUserData();
+  }, [session?.user?.email, userDataPrefilled]);
 
   // Salvar draft no localStorage
   useEffect(() => {
