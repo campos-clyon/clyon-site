@@ -100,8 +100,8 @@ export default function AddressAutocomplete({
     }, 300);
   };
 
-  // ── Selecionar sugestão ────────────────────────────────────────────────
-  const handleSelectSuggestion = (suggestion: AddressSuggestion) => {
+  // ── Selecionar sugestão e calcular distância da base ──────────────────────
+  const handleSelectSuggestion = async (suggestion: AddressSuggestion) => {
     const addressData: AddressData = {
       formattedAddress: suggestion.label,
       city: suggestion.city,
@@ -116,7 +116,51 @@ export default function AddressAutocomplete({
     setSuggestions([]);
     setShowDropdown(false);
 
+    // Chamar callback do componente pai com os dados da morada
     onSelect(addressData);
+
+    // Mostrar "A calcular distância..." no resumo lateral
+    if (typeof onDistanceCalculated === "function") {
+      onDistanceCalculated({}, "calculating");
+    }
+
+    // Calcular distância da base CLYON (assíncrono, não bloqueia)
+    try {
+      const res = await fetch("/api/maps/distance", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          destination: {
+            formattedAddress: suggestion.label,
+            lat: suggestion.lat,
+            lng: suggestion.lng,
+          },
+        }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        if (typeof onDistanceCalculated === "function") {
+          onDistanceCalculated({
+            distanceMeters: data.distanceMeters,
+            distanceKm: data.distanceKm,
+            durationSeconds: data.durationSeconds,
+            durationText: data.durationText,
+            calculatedAt: new Date().toISOString(),
+          }, "calculated");
+        }
+      } else {
+        // API error — marcar como erro
+        if (typeof onDistanceCalculated === "function") {
+          onDistanceCalculated({}, "error");
+        }
+      }
+    } catch (err) {
+      // Network error — marcar como erro
+      if (typeof onDistanceCalculated === "function") {
+        onDistanceCalculated({}, "error");
+      }
+    }
   };
 
   return (
