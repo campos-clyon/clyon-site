@@ -93,7 +93,6 @@ const solucoes = [
 const navLinks = [
   { label: "Trabalhos", href: "/trabalhos" },
   { label: "Avaliações", href: "/avaliacoes" },
-  { label: "Sobre Nós", href: "/sobre-nos" },
   { label: "Contactos", href: "/contactos" },
 ];
 
@@ -159,7 +158,7 @@ export default function Header() {
         </Link>
 
         {/* Location Selector */}
-        <div className="hidden lg:flex border-l border-slate-100 pl-6">
+        <div className="hidden lg:flex ml-5">
           <HeaderLocationSelector />
         </div>
 
