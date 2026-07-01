@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { CheckCircle2, AlertCircle, Info } from "lucide-react";
 import type { UserProfile } from "./types";
 
@@ -39,6 +39,15 @@ export default function Faturacao({ user, onUpdate }: Props) {
   const [saving,  setSaving]  = useState(false);
   const [success, setSuccess] = useState(false);
   const [error,   setError]   = useState("");
+
+  /* ---- sincronizar campos com user prop (quando os dados são carregados da API) ---- */
+  useEffect(() => {
+    setBillingName(user.billingName ?? "");
+    setBillingNif(user.billingNif ?? "");
+    setBillingAddress(user.billingAddress ?? "");
+    setBillingPostalCode(user.billingPostalCode ?? "");
+    setBillingCity(user.billingCity ?? "");
+  }, [user]);
 
   const handleSave = async () => {
     if (billingNif && !/^\d{9}$/.test(billingNif)) {

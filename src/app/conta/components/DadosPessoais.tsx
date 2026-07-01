@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import Cropper, { type Area } from "react-easy-crop";
 import {
   LockKeyhole,
@@ -215,6 +215,17 @@ export default function DadosPessoais({ user, googleAvatar, onUpdate }: Props) {
   const [addressNumber, setAddressNumber] = useState(user.addressNumber ?? "");
   const [postalCode,    setPostalCode]    = useState(user.postalCode ?? "");
   const [addressCity,   setAddressCity]   = useState(user.addressCity ?? "");
+
+  /* ---- sincronizar campos com user prop (quando os dados são carregados da API) ---- */
+  useEffect(() => {
+    setName(user.name ?? "");
+    setPhone(user.phone ?? "");
+    setAddressLine(user.addressLine ?? "");
+    setAddressNumber(user.addressNumber ?? "");
+    setPostalCode(user.postalCode ?? "");
+    setAddressCity(user.addressCity ?? "");
+    setAvatarPreview(user.avatarUrl ?? googleAvatar ?? null);
+  }, [user, googleAvatar]);
 
   /* ---- avatar ---- */
   const [avatarPreview, setAvatarPreview] = useState<string | null>(
