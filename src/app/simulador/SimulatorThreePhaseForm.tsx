@@ -50,7 +50,6 @@ export default function SimulatorThreePhaseForm() {
   const [addressValue, setAddressValue] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [phase2Attempted, setPhase2Attempted] = useState(false);
-  const [userDataPrefilled, setUserDataPrefilled] = useState(false);
 
   const ANALYZE_STEP_LABELS = [
     "Analisar pedido",
@@ -72,72 +71,19 @@ export default function SimulatorThreePhaseForm() {
     trackSimulatorStart();
   }, []);
 
-  // Pré-preencher dados do utilizador autenticado (PRIORIDADE: BD > Google)
+  // Pré-preencher simplificado: só nome e email da sessão Google
   useEffect(() => {
-    if (!session?.user?.email || userDataPrefilled) return;
-
-    const prefillUserData = async () => {
-      try {
-        // Sempre buscar dados da BD (mais completos que Google)
-        const res = await fetch("/api/users/me");
-        if (!res.ok) {
-          setUserDataPrefilled(true);
-          return;
-        }
-        
-        const userData = await res.json() as {
-          name?: string;
-          phone?: string;
-          email?: string;
-          addressLine?: string;
-          addressNumber?: string;
-          postalCode?: string;
-          addressCity?: string;
-        };
-
-        // SEMPRE pré-preencher receiver com dados disponíveis
-        // Prioridade: BD > Google Session
-        setFormData((prev) => ({
-          ...prev,
-          receiver: {
-            name: userData.name || session?.user?.name || prev.receiver?.name,
-            phone: userData.phone || prev.receiver?.phone,
-            email: userData.email || session?.user?.email || prev.receiver?.email,
-          },
-        }));
-
-        // Pré-preencher morada (fase 2) se tiver dados no BD
-        if (userData.addressLine && userData.postalCode && userData.addressCity) {
-          const fullAddress = `${userData.addressLine}, ${userData.postalCode} ${userData.addressCity}`;
-          setFormData((prev) => ({
-            ...prev,
-            address: {
-              formattedAddress: fullAddress,
-              city: userData.addressCity,
-            },
-            floor: "rés-do-chão",
-          }));
-          setAddressValue(fullAddress);
-        }
-
-        setUserDataPrefilled(true);
-      } catch {
-        setUserDataPrefilled(true);
-      }
-    };
-
-    prefillUserData();
-  }, [session?.user?.email, session?.user?.name]);
-
-  // Garantir que receiver está sempre definido (para sincronizar com Phase3Contact inputs)
-  useEffect(() => {
-    if (!formData.receiver) {
+    if (session?.user?.email || session?.user?.name) {
       setFormData((prev) => ({
         ...prev,
-        receiver: {},
+        receiver: {
+          ...prev.receiver,
+          name: prev.receiver?.name || session?.user?.name || undefined,
+          email: prev.receiver?.email || session?.user?.email || undefined,
+        },
       }));
     }
-  }, []);
+  }, [session?.user?.email, session?.user?.name]);
 
   // Salvar draft no localStorage
   useEffect(() => {
@@ -559,6 +505,7 @@ export default function SimulatorThreePhaseForm() {
                 <Phase3Contact
                   formData={formData}
                   updateField={updateField}
+                  session={session}
                 />
               )}
 
@@ -1170,13 +1117,54 @@ function Phase2Location({
 function Phase3Contact({
   formData,
   updateField,
+  session,
 }: {
   formData: FormState;
   updateField: (field: string, value: unknown) => void;
+  session: any;
 }) {
+  const isLoggedIn = !!session?.user?.email;
+
   return (
     <div className="space-y-6">
       <h2 className="text-2xl font-bold text-gray-900">Contacto e revisão</h2>
+
+      {/* Info Box: Not Logged In */}
+      {!isLoggedIn && (
+        <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 flex items-start gap-3">
+          <span className="text-lg">ℹ️</span>
+          <div className="flex-1">
+            <p className="text-sm text-amber-900">
+              Tem conta CLYON?{" "}
+              <a
+                href="/entrar"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-semibold text-cyan-600 hover:text-cyan-700 underline"
+              >
+                Entrar com Google
+              </a>{" "}
+              para acompanhar o seu pedido online.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Info Box: Logged In */}
+      {isLoggedIn && (
+        <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4 flex items-start gap-3">
+          <span className="text-lg">✓</span>
+          <div>
+            <p className="text-sm text-emerald-900">
+              <strong>Sessão activa</strong> — poderá acompanhar este pedido em{" "}
+              <a href="/conta" className="font-semibold text-cyan-600 hover:text-cyan-700 underline">
+                clyon.pt/conta
+              </a>{" "}
+              após a conclusão.
+            </p>
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-2">
