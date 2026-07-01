@@ -15,6 +15,15 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Não autenticado." }, { status: 401 });
   }
 
+  // Verificar se BLOB_READ_WRITE_TOKEN está configurado
+  if (!process.env.BLOB_READ_WRITE_TOKEN) {
+    console.error("[avatar] BLOB_READ_WRITE_TOKEN não configurado");
+    return NextResponse.json(
+      { error: "BLOB_READ_WRITE_TOKEN não configurado no servidor. Contacta o suporte." },
+      { status: 500 }
+    );
+  }
+
   // Normalizar email (mesmo padrão do GET/PATCH)
   const emailNorm = session.user.email.trim().toLowerCase();
 
@@ -53,7 +62,13 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ url: blob.url });
   } catch (err) {
-    console.error("[api/users/me/avatar] POST erro:", err);
-    return NextResponse.json({ error: "Erro ao fazer upload." }, { status: 500 });
+    console.error("[avatar] POST erro completo:", {
+      name: err instanceof Error ? err.name : "unknown",
+      message: err instanceof Error ? err.message : String(err),
+      stack: err instanceof Error ? err.stack : undefined,
+    });
+    return NextResponse.json({
+      error: err instanceof Error ? err.message : `Erro ao fazer upload: ${String(err)}`,
+    }, { status: 500 });
   }
 }

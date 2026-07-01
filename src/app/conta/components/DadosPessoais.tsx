@@ -264,13 +264,27 @@ export default function DadosPessoais({ user, googleAvatar, onUpdate }: Props) {
     try {
       const fd = new FormData();
       fd.append("file", blob, "avatar.png");
+      console.log("[v0] DadosPessoais: enviando POST /api/users/me/avatar");
+      
       const res = await fetch("/api/users/me/avatar", { method: "POST", body: fd });
+      console.log("[v0] DadosPessoais: resposta status:", res.status, "ok:", res.ok);
+      
       const data = await res.json() as { url?: string; error?: string };
-      if (!res.ok || !data.url) throw new Error(data.error ?? "Erro ao guardar foto.");
+      console.log("[v0] DadosPessoais: resposta JSON:", JSON.stringify(data, null, 2));
+      
+      if (!res.ok || !data.url) {
+        const errorMsg = data.error ?? `Erro ao guardar foto (status ${res.status}).`;
+        console.error("[v0] DadosPessoais: erro no upload:", errorMsg);
+        throw new Error(errorMsg);
+      }
+      
+      console.log("[v0] DadosPessoais: upload avatar sucesso! URL:", data.url);
       setAvatarPreview(data.url);
       onUpdate({ avatarUrl: data.url });
     } catch (err) {
-      setErrorGlobal(err instanceof Error ? err.message : "Erro ao guardar foto.");
+      const errorMsg = err instanceof Error ? err.message : "Erro ao guardar foto.";
+      console.error("[v0] DadosPessoais: erro catch no upload:", errorMsg);
+      setErrorGlobal(errorMsg);
       // Reverter para avatar anterior em caso de erro
       setAvatarPreview(user.avatarUrl ?? googleAvatar ?? null);
     } finally {
