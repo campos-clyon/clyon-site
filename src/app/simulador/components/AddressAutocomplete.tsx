@@ -61,25 +61,41 @@ export default function AddressAutocomplete({
   // ── Tentar carregar Google Maps SDK se chave disponível ──────────────────
   useEffect(() => {
     const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
-    if (!apiKey) return; // sem chave: usamos Nominatim
+    console.log("[v0] AddressAutocomplete: apiKey exists:", !!apiKey, "key slice:", apiKey?.slice(0, 10));
+    
+    if (!apiKey) {
+      console.log("[v0] AddressAutocomplete: sem API key, usaremos Nominatim");
+      return; // sem chave: usamos Nominatim
+    }
 
     if (typeof window !== "undefined" && window.google?.maps?.places) {
+      console.log("[v0] AddressAutocomplete: Google Maps já carregado");
       setGoogleLoaded(true);
       return;
     }
 
     const scriptId = "google-maps-script";
     if (document.getElementById(scriptId)) {
-      window.initGoogleMaps = () => setGoogleLoaded(true);
+      console.log("[v0] AddressAutocomplete: script já existe, aguardando callback");
+      window.initGoogleMaps = () => {
+        console.log("[v0] AddressAutocomplete: Google Maps carregou (callback)");
+        setGoogleLoaded(true);
+      };
       return;
     }
 
-    window.initGoogleMaps = () => setGoogleLoaded(true);
+    console.log("[v0] AddressAutocomplete: carregando script Google Maps");
+    window.initGoogleMaps = () => {
+      console.log("[v0] AddressAutocomplete: Google Maps carregou (novo script)");
+      setGoogleLoaded(true);
+    };
+    
     const script = document.createElement("script");
     script.id = scriptId;
     script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places&callback=initGoogleMaps&language=pt&region=PT`;
     script.async = true;
     script.defer = true;
+    script.onerror = () => console.error("[v0] AddressAutocomplete: erro ao carregar script Google Maps");
     document.head.appendChild(script);
   }, []);
 

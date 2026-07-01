@@ -72,66 +72,75 @@ export default function SimulatorThreePhaseForm() {
     trackSimulatorStart();
   }, []);
 
-  // Pré-preencher dados do utilizador autenticado
+  // Pré-preencher dados do utilizador autenticado (PRIORIDADE: BD > Google)
   useEffect(() => {
     if (!session?.user?.email || userDataPrefilled) return;
 
+    console.log("[v0] SimulatorThreePhaseForm: iniciando prefill para email:", session?.user?.email);
+
     const prefillUserData = async () => {
       try {
+        // Sempre buscar dados da BD (mais completos que Google)
         const res = await fetch("/api/users/me");
-        if (!res.ok) return;
+        if (!res.ok) {
+          console.log("[v0] SimulatorThreePhaseForm: /api/users/me retornou status", res.status);
+          setUserDataPrefilled(true);
+          return;
+        }
         
         const userData = await res.json() as {
           name?: string;
           phone?: string;
           email?: string;
           addressLine?: string;
+          addressNumber?: string;
           postalCode?: string;
           addressCity?: string;
         };
 
-        // Pré-preencher nome, telefone, email (fase 3)
-        if ((!formData.receiver?.name && userData.name) ||
-            (!formData.receiver?.phone && userData.phone) ||
-            (!formData.receiver?.email && session?.user?.email)) {
-          setFormData((prev) => ({
-            ...prev,
-            receiver: {
-              name: prev.receiver?.name || userData.name || undefined,
-              phone: prev.receiver?.phone || userData.phone || undefined,
-              email: prev.receiver?.email || session?.user?.email || undefined,
-            },
-          }));
-        }
+        console.log("[v0] SimulatorThreePhaseForm: userData carregado:", userData);
 
-        // Pré-preencher morada (fase 2)
-        if (
-          !formData.address?.formattedAddress &&
-          userData.addressLine &&
-          userData.postalCode &&
-          userData.addressCity
-        ) {
+        // SEMPRE pré-preencher receiver com dados disponíveis (não apenas se vazios)
+        // Prioridade: BD > Google Session
+        setFormData((prev) => {
+          const newReceiver = {
+            name: userData.name || session?.user?.name || prev.receiver?.name,
+            phone: userData.phone || prev.receiver?.phone,
+            email: userData.email || session?.user?.email || prev.receiver?.email,
+          };
+          console.log("[v0] SimulatorThreePhaseForm: novo receiver:", newReceiver);
+          
+          return {
+            ...prev,
+            receiver: newReceiver,
+          };
+        });
+
+        // Pré-preencher morada (fase 2) se tiver dados no BD
+        if (userData.addressLine && userData.postalCode && userData.addressCity) {
           const fullAddress = `${userData.addressLine}, ${userData.postalCode} ${userData.addressCity}`;
+          console.log("[v0] SimulatorThreePhaseForm: pré-preenchendo morada:", fullAddress);
+          
           setFormData((prev) => ({
             ...prev,
             address: {
               formattedAddress: fullAddress,
               city: userData.addressCity,
             },
-            floor: "rés-do-chão", // Assumir rés-do-chão por padrão
+            floor: "rés-do-chão",
           }));
           setAddressValue(fullAddress);
         }
 
         setUserDataPrefilled(true);
-      } catch {
-        // Silencioso se falhar
+      } catch (err) {
+        console.error("[v0] SimulatorThreePhaseForm: erro ao prefill:", err);
         setUserDataPrefilled(true);
       }
     };
 
     prefillUserData();
-  }, [session?.user?.email]);
+  }, [session?.user?.email, session?.user?.name]);
 
   // Garantir que receiver está sempre definido (para sincronizar com Phase3Contact inputs)
   useEffect(() => {
