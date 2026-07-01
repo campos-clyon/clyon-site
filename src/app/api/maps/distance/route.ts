@@ -40,14 +40,28 @@ export async function POST(request: NextRequest) {
   // 1. Chave de servidor — NUNCA usar NEXT_PUBLIC_ no backend
   const key = process.env.GOOGLE_MAPS_SERVER_API_KEY;
   if (!key) {
-    console.error("[maps/distance] ERRO: GOOGLE_MAPS_SERVER_API_KEY não configurada no .env");
+    console.error(
+      "[maps/distance] ERRO CRÍTICO: GOOGLE_MAPS_SERVER_API_KEY não configurada em produção.\n" +
+      "AÇÃO NECESSÁRIA:\n" +
+      "1. Ir a https://vercel.com/projects/clyon-site/settings/environment-variables\n" +
+      "2. Adicionar variável na environment 'Production':\n" +
+      "   Nome: GOOGLE_MAPS_SERVER_API_KEY\n" +
+      "   Valor: [chave do Google Cloud com Routes API ativa]\n" +
+      "3. Fazer redeploy\n" +
+      "Routes API docs: https://developers.google.com/maps/documentation/routes"
+    );
     return NextResponse.json(
       {
         ok: false,
         error: "NO_API_KEY",
-        customerMessage: "Servidor não tem chave de API. Contacte o administrador.",
+        customerMessage: "Distância a confirmar manualmente.",
+        debug: {
+          missingVar: "GOOGLE_MAPS_SERVER_API_KEY",
+          action: "Adicionar em Project Settings → Environment Variables → Production",
+          docsUrl: "https://developers.google.com/maps/documentation/routes",
+        },
       },
-      { status: 503 }
+      { status: 200 } // 200, não 503, para não quebrar o frontend
     );
   }
 
@@ -124,15 +138,27 @@ export async function POST(request: NextRequest) {
     if (!res.ok) {
       const errBody = await res.text();
       console.error("[maps/distance] ERRO HTTP:", res.status, "| Body:", errBody);
+      
+      // Identificar causa comum
+      let debugInfo = "";
+      if (res.status === 403) {
+        debugInfo = "PERMISSION_DENIED — Chave sem permissão para Routes API ou IP não autorizado";
+      } else if (res.status === 429) {
+        debugInfo = "QUOTA_EXCEEDED — Limite de requisições Google atingido";
+      } else if (res.status === 401) {
+        debugInfo = "UNAUTHENTICATED — Chave inválida ou expirada";
+      }
+      
       return NextResponse.json(
         {
           ok: false,
           error: "ROUTES_API_ERROR",
           httpStatus: res.status,
           details: errBody.substring(0, 200),
-          customerMessage: "Não foi possível calcular a distância. A equipa CLYON confirma manualmente.",
+          debugInfo,
+          customerMessage: "Distância a confirmar manualmente.",
         },
-        { status: 503 }
+        { status: 200 } // 200, não 503
       );
     }
 
@@ -148,9 +174,9 @@ export async function POST(request: NextRequest) {
           ok: false,
           error: "NO_ROUTE_FOUND",
           details: "Google Routes não encontrou rota",
-          customerMessage: "Não foi possível encontrar rota até ao destino.",
+          customerMessage: "Distância a confirmar manualmente.",
         },
-        { status: 503 }
+        { status: 200 } // 200, não 503
       );
     }
 
@@ -161,9 +187,9 @@ export async function POST(request: NextRequest) {
           ok: false,
           error: "INVALID_ROUTE_DATA",
           details: "Rota sem distância ou duração",
-          customerMessage: "Dados de rota incompletos.",
+          customerMessage: "Distância a confirmar manualmente.",
         },
-        { status: 503 }
+        { status: 200 } // 200, não 503
       );
     }
 

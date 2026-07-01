@@ -138,8 +138,10 @@ export default function AddressAutocomplete({
         }),
       });
 
-      if (res.ok) {
-        const data = await res.json();
+      const data = await res.json().catch(() => ({}));
+
+      if (res.ok && data.ok) {
+        // Sucesso
         console.log("[v0] Distance calculated:", { distanceKm: data.distanceKm, duration: data.durationText });
         if (typeof onDistanceCalculated === "function") {
           onDistanceCalculated({
@@ -150,10 +152,20 @@ export default function AddressAutocomplete({
             calculatedAt: new Date().toISOString(),
           }, "calculated");
         }
+      } else if (!data.ok) {
+        // Erro estruturado (status 200 mas ok: false)
+        console.error("[v0] Distance API error:", { 
+          error: data.error, 
+          details: data.details, 
+          debugInfo: data.debugInfo,
+          message: data.customerMessage 
+        });
+        if (typeof onDistanceCalculated === "function") {
+          onDistanceCalculated({}, "error");
+        }
       } else {
-        // API error — log details
-        const errorData = await res.json().catch(() => ({}));
-        console.error("[v0] Distance API error:", { status: res.status, error: errorData.error, details: errorData.details });
+        // Erro de rede ou JSON parsing
+        console.error("[v0] Distance fetch HTTP error:", res.status);
         if (typeof onDistanceCalculated === "function") {
           onDistanceCalculated({}, "error");
         }
