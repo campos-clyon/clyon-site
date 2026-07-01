@@ -47,26 +47,46 @@ export default function Faturacao({ user, onUpdate }: Props) {
     }
     setSaving(true); setSuccess(false); setError("");
     try {
+      const payload = {
+        billingName: billingName || null,
+        billingNif: billingNif || null,
+        billingAddress: billingAddress || null,
+        billingPostalCode: billingPostalCode || null,
+        billingCity: billingCity || null,
+      };
+      console.log("[v0] Faturacao: enviando PATCH com payload:", payload);
+      
       const res = await fetch("/api/users/me", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          billingName: billingName || null,
-          billingNif: billingNif || null,
-          billingAddress: billingAddress || null,
-          billingPostalCode: billingPostalCode || null,
-          billingCity: billingCity || null,
-        }),
+        body: JSON.stringify(payload),
       });
+      
+      console.log("[v0] Faturacao: resposta status:", res.status, "ok:", res.ok);
+      
       const data = await res.json() as { success?: boolean; error?: string };
-      if (!res.ok || !data.success) throw new Error(data.error ?? "Erro ao guardar.");
+      console.log("[v0] Faturacao: resposta JSON:", JSON.stringify(data, null, 2));
+      
+      if (!res.ok || !data.success) {
+        const errorMsg = data.error ?? `Erro ao guardar (status ${res.status}).`;
+        console.error("[v0] Faturacao: erro na resposta:", errorMsg);
+        throw new Error(errorMsg);
+      }
+      
+      console.log("[v0] Faturacao: sucesso! A guardar no estado local.");
       setSuccess(true);
-      onUpdate({ billingName: billingName || null, billingNif: billingNif || null,
-        billingAddress: billingAddress || null, billingPostalCode: billingPostalCode || null,
-        billingCity: billingCity || null });
+      onUpdate({
+        billingName: billingName || null,
+        billingNif: billingNif || null,
+        billingAddress: billingAddress || null,
+        billingPostalCode: billingPostalCode || null,
+        billingCity: billingCity || null,
+      });
       setTimeout(() => setSuccess(false), 3000);
-    } catch {
-      setError("Não foi possível guardar. Tenta novamente.");
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : "Não foi possível guardar. Tenta novamente.";
+      console.error("[v0] Faturacao: erro catch:", errorMsg);
+      setError(errorMsg);
     } finally {
       setSaving(false);
     }

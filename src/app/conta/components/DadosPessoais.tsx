@@ -289,21 +289,34 @@ export default function DadosPessoais({ user, googleAvatar, onUpdate }: Props) {
     }
 
     try {
+      const payload = {
+        name: name.trim(),
+        phone: phone.trim() || null,
+        addressLine: addressLine.trim() || null,
+        addressNumber: addressNumber.trim() || null,
+        postalCode: postalCode.trim() || null,
+        addressCity: addressCity.trim() || null,
+      };
+      console.log("[v0] DadosPessoais: enviando PATCH com payload:", payload);
+      
       const res = await fetch("/api/users/me", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: name.trim(),
-          phone: phone.trim() || null,
-          addressLine: addressLine.trim() || null,
-          addressNumber: addressNumber.trim() || null,
-          postalCode: postalCode.trim() || null,
-          addressCity: addressCity.trim() || null,
-        }),
+        body: JSON.stringify(payload),
       });
+      
+      console.log("[v0] DadosPessoais: resposta status:", res.status, "ok:", res.ok);
+      
       const data = await res.json() as { success?: boolean; error?: string };
-      if (!res.ok || !data.success) throw new Error(data.error ?? "Erro ao guardar.");
+      console.log("[v0] DadosPessoais: resposta JSON:", JSON.stringify(data, null, 2));
+      
+      if (!res.ok || !data.success) {
+        const errorMsg = data.error ?? `Erro ao guardar (status ${res.status}).`;
+        console.error("[v0] DadosPessoais: erro na resposta:", errorMsg);
+        throw new Error(errorMsg);
+      }
 
+      console.log("[v0] DadosPessoais: sucesso! A guardar no estado local.");
       setSuccess(true);
       onUpdate({
         name: name.trim(),
@@ -315,7 +328,9 @@ export default function DadosPessoais({ user, googleAvatar, onUpdate }: Props) {
       });
       setTimeout(() => setSuccess(false), 4000);
     } catch (err) {
-      setErrorGlobal(err instanceof Error ? err.message : "Não foi possível guardar. Tenta novamente.");
+      const errorMsg = err instanceof Error ? err.message : "Não foi possível guardar. Tenta novamente.";
+      console.error("[v0] DadosPessoais: erro catch:", errorMsg);
+      setErrorGlobal(errorMsg);
     } finally {
       setSaving(false);
     }

@@ -106,8 +106,11 @@ const PatchSchema = z.object({
 export async function PATCH(request: NextRequest) {
   const session = await getServerSession(authOptionsCliente);
   if (!session?.user?.email) {
+    console.error("[v0] PATCH /api/users/me: não autenticado");
     return NextResponse.json({ error: "Não autenticado." }, { status: 401 });
   }
+
+  console.log("[v0] PATCH /api/users/me: email da sessão:", session.user.email);
 
   await ensureUsersSchema();
 
@@ -115,11 +118,15 @@ export async function PATCH(request: NextRequest) {
   try {
     raw = await request.json();
   } catch {
+    console.error("[v0] PATCH: body JSON inválido");
     return NextResponse.json({ error: "Body inválido." }, { status: 400 });
   }
 
+  console.log("[v0] PATCH: body recebido:", JSON.stringify(raw, null, 2));
+
   const parsed = PatchSchema.safeParse(raw);
   if (!parsed.success) {
+    console.error("[v0] PATCH: validação zod falhou:", parsed.error.flatten());
     return NextResponse.json(
       { error: "Dados inválidos.", details: parsed.error.flatten().fieldErrors },
       { status: 400 },
@@ -191,6 +198,10 @@ export async function PATCH(request: NextRequest) {
         ...boolFields.filter(f => f in data).map(f => data[f] ? 1 : 0),
       ];
 
+      console.log("[v0] PATCH: INSERT cols:", insertCols.join(", "));
+      console.log("[v0] PATCH: UPDATE clauses:", updateClauses.join(", "));
+      console.log("[v0] PATCH: total params:", insertVals.length + updateValues.length);
+
       const [result] = await conn.execute(
         `INSERT INTO users (${insertCols.join(", ")}) VALUES (${insertCols.map(() => "?").join(", ")})
          ON DUPLICATE KEY UPDATE ${updateClauses.join(", ")}`,
@@ -198,9 +209,9 @@ export async function PATCH(request: NextRequest) {
       ) as [{ affectedRows: number; changedRows: number }, unknown];
 
       // affectedRows = 1 → INSERT novo; 2 → UPDATE feito; 0 → UPDATE sem alteração (dados iguais)
-      console.log(`[api/users/me] PATCH OK — affectedRows=${result.affectedRows} email=${userEmail}`);
+      console.log(`[v0] PATCH OK — affectedRows=${result.affectedRows} changedRows=${result.changedRows} email=${userEmail}`);
 
-      return NextResponse.json({ success: true });
+      return NextResponse.json({ success: true, affectedRows: result.affectedRows });
     });
   } catch (err: unknown) {
     // ER_DUP_ENTRY no telefone pode acontecer em race condition
@@ -210,13 +221,21 @@ export async function PATCH(request: NextRequest) {
       (err as NodeJS.ErrnoException).code === "ER_DUP_ENTRY" &&
       err.message.includes("phone")
     ) {
+      console.error("[v0] PATCH: ER_DUP_ENTRY no telefone:", err.message);
       return NextResponse.json(
         { error: "Este número de telefone já está associado a outra conta.", field: "phone" },
         { status: 409 },
       );
     }
-    console.error("[api/users/me] PATCH erro:", err);
-    return NextResponse.json({ error: "Erro ao guardar dados." }, { status: 500 });
+    console.error("[v0] PATCH erro completo:", {
+      name: err instanceof Error ? err.name : "unknown",
+      message: err instanceof Error ? err.message : String(err),
+      stack: err instanceof Error ? err.stack : undefined,
+    });
+    return NextResponse.json({
+      error: `Erro ao guardar dados: ${err instanceof Error ? err.message : String(err)}`,
+      timestamp: new Date().toISOString(),
+    }, { status: 500 });
   }
 }
 
