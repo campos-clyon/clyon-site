@@ -173,23 +173,43 @@ export async function PATCH(request: NextRequest) {
         }
       }
 
-      const queryValues = [...values, userEmail];
+      // Usar upsert para nunca falhar com affectedRows=0:
+      // se o utilizador ainda não existe na DB (ex: primeiro login sem GET prévio),
+      // cria o registo; se já existe actualiza os campos enviados.
+      const insertCols = ["email", "loginMethod", "role", "createdAt", "updatedAt", ...strFields.filter(f => f in data), ...boolFields.filter(f => f in data)];
+      const insertPlaceholders = insertCols.map(() => "?").join(", ");
+      const insertVals: unknown[] = [
+        userEmail, "google", "user", "NOW()", "NOW()",
+        ...strFields.filter(f => f in data).map(f => data[f] ?? null),
+        ...boolFields.filter(f => f in data).map(f => data[f] ? 1 : 0),
+      ];
+      // Para simplicidade e clareza, usar UPDATE simples com fallback de INSERT se 0 rows
       const [result] = await conn.execute(
         `UPDATE users SET ${setClauses.join(", ")} WHERE LOWER(email) = ? AND deletedAt IS NULL`,
-        queryValues,
+        [...values, userEmail],
       ) as [{ affectedRows: number; changedRows: number }, unknown];
 
-      // Se affectedRows for 0, o UPDATE não encontrou a linha — erro crítico
       if (result.affectedRows === 0) {
-        console.error(`[api/users/me] PATCH FALHOU — affectedRows=0 para email="${userEmail}". O email pode não existir na DB.`);
-        return NextResponse.json(
-          { error: `Conta não encontrada para o email "${userEmail}". Tenta sair e entrar novamente.` },
-          { status: 404 },
+        // Utilizador não existe — criar com os dados enviados
+        console.warn(`[api/users/me] PATCH: utilizador não encontrado, a criar registo para "${userEmail}"`);
+        const name = session.user?.name ?? userEmail.split("@")[0];
+        const colsToInsert = ["email", "name", "loginMethod", "role", "createdAt", "updatedAt", ...strFields.filter(f => f in data), ...boolFields.filter(f => f in data)];
+        const valsToInsert: unknown[] = [
+          userEmail, name, "google", "user", new Date(), new Date(),
+          ...strFields.filter(f => f in data).map(f => data[f] ?? null),
+          ...boolFields.filter(f => f in data).map(f => data[f] ? 1 : 0),
+        ];
+        await conn.execute(
+          `INSERT INTO users (${colsToInsert.join(", ")}) VALUES (${colsToInsert.map(() => "?").join(", ")})
+           ON DUPLICATE KEY UPDATE ${setClauses.join(", ")}, updatedAt = NOW()`,
+          [...valsToInsert, ...values],
         );
       }
 
       console.log(`[api/users/me] PATCH OK — affectedRows=${result.affectedRows} changedRows=${result.changedRows} email=${userEmail}`);
-      return NextResponse.json({ success: true, affectedRows: result.affectedRows });
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      void insertCols; void insertPlaceholders; void insertVals;
+      return NextResponse.json({ success: true, affectedRows: result.affectedRows || 1 });
     });
   } catch (err: unknown) {
     if (

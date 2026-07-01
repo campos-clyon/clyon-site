@@ -279,6 +279,39 @@ export async function ensureUsersSchema(): Promise<void> {
 
   // Usa withConnection (ssl + connectTimeout) em vez de getPool — necessário para Railway
   await withConnection(async (conn) => {
+    // 1. Garantir que a tabela existe com schema completo (cobre instalações novas)
+    await conn.execute(`
+      CREATE TABLE IF NOT EXISTS users (
+        id            INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+        name          VARCHAR(255) NULL,
+        email         VARCHAR(255) NOT NULL,
+        openId        VARCHAR(255) NULL,
+        loginMethod   VARCHAR(40)  NOT NULL DEFAULT 'google',
+        role          VARCHAR(40)  NOT NULL DEFAULT 'user',
+        phone         VARCHAR(30)  NULL,
+        addressLine   VARCHAR(255) NULL,
+        addressNumber VARCHAR(20)  NULL,
+        postalCode    VARCHAR(20)  NULL,
+        addressCity   VARCHAR(120) NULL,
+        nif           VARCHAR(20)  NULL,
+        billingName   VARCHAR(160) NULL,
+        billingNif    VARCHAR(20)  NULL,
+        billingAddress    VARCHAR(255) NULL,
+        billingPostalCode VARCHAR(20)  NULL,
+        billingCity   VARCHAR(120) NULL,
+        avatarUrl     TEXT         NULL,
+        notifOrderStatus  TINYINT(1) NOT NULL DEFAULT 1,
+        notifWeeklyDigest TINYINT(1) NOT NULL DEFAULT 0,
+        notifWhatsapp     TINYINT(1) NOT NULL DEFAULT 0,
+        lastSignedIn  DATETIME NULL,
+        deletedAt     TIMESTAMP NULL,
+        createdAt     DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updatedAt     DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    `);
+    console.log("[ensureUsersSchema] tabela users verificada/criada");
+
+    // 2. Adicionar colunas em falta para instâncias com schema antigo (idempotente)
     const columnsToAdd: Array<{ name: string; sql: string }> = [
       { name: "phone",             sql: "ALTER TABLE users ADD COLUMN phone VARCHAR(30) NULL" },
       { name: "addressLine",       sql: "ALTER TABLE users ADD COLUMN addressLine VARCHAR(255) NULL" },
