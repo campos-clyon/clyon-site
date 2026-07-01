@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { ChevronDown } from 'lucide-react';
 import { useLocation } from '@/contexts/LocationContext';
 import LocationModal from './LocationModal';
 
@@ -12,29 +13,29 @@ export default function HeaderLocationSelector() {
     return null;
   }
 
+  // Resumir morada: mostrar rua resumida + cidade
+  const addressDisplay = location && location.formattedAddress
+    ? location.formattedAddress.length > 40
+      ? location.formattedAddress.substring(0, 37) + "..."
+      : location.formattedAddress
+    : "Definir localização";
+
   return (
     <>
       <button
         onClick={() => setShowModal(true)}
-        className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-slate-100 transition-colors text-sm text-slate-700"
+        className="flex flex-col items-start gap-1 px-3 py-2 rounded-lg hover:bg-slate-50 transition-colors"
         title="Alterar localização de entrega"
       >
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={1.5}
-            d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-          />
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-        </svg>
-        <span className="hidden sm:inline text-slate-600">
-          {location ? (
-            <span className="font-medium text-slate-900">{location.city}</span>
-          ) : (
-            <span>Selecionar localização</span>
-          )}
+        <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
+          Localização
         </span>
+        <div className="flex items-center gap-1.5">
+          <span className="text-sm font-medium text-slate-900">
+            {addressDisplay}
+          </span>
+          <ChevronDown className="w-4 h-4 text-slate-400 flex-shrink-0" />
+        </div>
       </button>
 
       {showModal && <LocationModal onClose={() => setShowModal(false)} />}

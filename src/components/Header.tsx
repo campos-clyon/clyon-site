@@ -158,6 +158,11 @@ export default function Header() {
           />
         </Link>
 
+        {/* Location Selector */}
+        <div className="hidden lg:flex border-l border-slate-100 pl-6">
+          <HeaderLocationSelector />
+        </div>
+
         {/* Desktop Navigation */}
         <nav className="hidden flex-1 items-center justify-center gap-1 lg:flex">
           {/* Soluções dropdown */}
@@ -195,7 +200,6 @@ export default function Header() {
 
         {/* Desktop CTA Buttons */}
         <div className="hidden items-center gap-3 lg:flex">
-          <HeaderLocationSelector />
           <a
             href={whatsappUrl}
             target="_blank"
