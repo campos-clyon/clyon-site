@@ -61,12 +61,23 @@ export default function AddressAutocomplete({
   // ── Carregar Google Maps SDK se chave disponível ──────────────────────────
   useEffect(() => {
     const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+    
+    if (process.env.NODE_ENV !== "production") {
+      console.log("[AddressAutocomplete] API key disponível:", !!apiKey);
+    }
+    
     if (!apiKey) {
+      if (process.env.NODE_ENV !== "production") {
+        console.log("[AddressAutocomplete] Sem API key, usaremos Nominatim");
+      }
       return; // sem chave: usamos Nominatim como fallback
     }
 
     // Verificar se já está carregado
     if (typeof window !== "undefined" && (window as any).google?.maps?.places) {
+      if (process.env.NODE_ENV !== "production") {
+        console.log("[AddressAutocomplete] Google Maps já estava carregado");
+      }
       setGoogleLoaded(true);
       return;
     }
@@ -74,7 +85,15 @@ export default function AddressAutocomplete({
     // Verificar se script já foi criado
     const scriptId = "google-maps-places";
     if (document.getElementById(scriptId)) {
+      if (process.env.NODE_ENV !== "production") {
+        console.log("[AddressAutocomplete] Script Google Maps já criado, aguardando load");
+      }
       return;
+    }
+
+    if (process.env.NODE_ENV !== "production") {
+      console.log("[AddressAutocomplete] Criando script Google Maps com URL:", 
+        `https://maps.googleapis.com/maps/api/js?key=${apiKey.slice(0, 10)}...&libraries=places`);
     }
 
     // Criar script para Google Maps
@@ -85,12 +104,17 @@ export default function AddressAutocomplete({
     script.defer = true;
 
     script.onload = () => {
+      if (process.env.NODE_ENV !== "production") {
+        console.log("[AddressAutocomplete] Script Google Maps carregou com sucesso");
+        console.log("[AddressAutocomplete] window.google.maps.places disponível:", 
+          !!(window as any).google?.maps?.places);
+      }
       setGoogleLoaded(true);
     };
 
     script.onerror = () => {
       if (process.env.NODE_ENV !== "production") {
-        console.error("[AddressAutocomplete] Erro ao carregar script Google Maps");
+        console.error("[AddressAutocomplete] Erro ao carregar script Google Maps, usando Nominatim");
       }
       // Fallback para Nominatim se Google falhar
     };
@@ -178,7 +202,14 @@ export default function AddressAutocomplete({
   const fetchNominatim = useCallback(async (query: string) => {
     if (query.trim().length < 3) {
       setSuggestions([]);
+      if (process.env.NODE_ENV !== "production") {
+        console.log("[AddressAutocomplete] Query muito curta:", query.length);
+      }
       return;
+    }
+
+    if (process.env.NODE_ENV !== "production") {
+      console.log("[AddressAutocomplete] Fetching Nominatim com query:", query);
     }
 
     // cancelar pedido anterior
@@ -201,9 +232,20 @@ export default function AddressAutocomplete({
         signal: nominatimAbortRef.current.signal,
       });
       const data: NominatimResult[] = await res.json();
+      
+      if (process.env.NODE_ENV !== "production") {
+        console.log("[AddressAutocomplete] Nominatim retornou", data.length, "sugestões");
+      }
+      
       setSuggestions(data);
+      if (data.length > 0) {
+        setShowDropdown(true);
+      }
     } catch (err: unknown) {
       if ((err as Error)?.name !== "AbortError") {
+        if (process.env.NODE_ENV !== "production") {
+          console.error("[AddressAutocomplete] Erro Nominatim:", err);
+        }
         setSuggestions([]);
       }
     } finally {
@@ -253,6 +295,10 @@ export default function AddressAutocomplete({
     const v = e.target.value;
     onChange(v);
 
+    if (process.env.NODE_ENV !== "production") {
+      console.log("[AddressAutocomplete] Input changed:", v, "googleLoaded:", googleLoaded);
+    }
+
     // reset status se estava selecionado
     if (addressStatus === "selected" || addressStatus === "manual_confirmed") {
       setAddressStatus("typing");
@@ -265,8 +311,15 @@ export default function AddressAutocomplete({
 
     // debounce Nominatim (só se Google não estiver ativo)
     if (!googleLoaded) {
+      if (process.env.NODE_ENV !== "production") {
+        console.log("[AddressAutocomplete] Debounce Nominatim fetch para query:", v);
+      }
       if (debounceRef.current) clearTimeout(debounceRef.current);
       debounceRef.current = setTimeout(() => fetchNominatim(v), 300);
+    } else {
+      if (process.env.NODE_ENV !== "production") {
+        console.log("[AddressAutocomplete] Google carregado, autocomplete nativo dispara sugestões");
+      }
     }
   };
 
