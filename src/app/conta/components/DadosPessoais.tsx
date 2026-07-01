@@ -266,7 +266,13 @@ export default function DadosPessoais({ user, googleAvatar, onUpdate }: Props) {
       fd.append("file", blob, "avatar.png");
       
       const res = await fetch("/api/users/me/avatar", { method: "POST", body: fd });
-      const data = await res.json() as { url?: string; error?: string };
+      const data = await res.json() as { url?: string; error?: string; message?: string };
+      
+      // Status 501 significa endpoint desativado (temporariamente)
+      if (res.status === 501) {
+        const msg = data.message || "Alteração de foto temporariamente indisponível. A foto da tua conta Google continuará a ser usada.";
+        throw new Error(msg);
+      }
       
       if (!res.ok || !data.url) {
         const errorMsg = data.error ?? `Erro ao guardar foto (status ${res.status}).`;

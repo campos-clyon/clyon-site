@@ -1,21 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { put } from "@vercel/blob";
 import { authOptionsCliente } from "@/auth-cliente";
-import { withConnection, ensureUsersSchema } from "@/lib/db";
-
-// Cache de módulo para evitar chamar ensureUsersSchema múltiplas vezes (é lento na Neon DB)
-let _schemaReady = false;
-async function getSchemaReady() {
-  if (_schemaReady) return;
-  await ensureUsersSchema();
-  _schemaReady = true;
-}
 
 /**
  * POST /api/users/me/avatar
- * Recebe um FormData com um campo "file" (imagem já cortada em PNG),
- * faz upload para o Vercel Blob e actualiza avatarUrl na DB via upsert.
+ * 
+ * Temporariamente desativado.
+ * Vercel Blob store configurada como privada — não pode usar access: "public".
+ * Upload de avatar será reativado quando a store for reconfigurada ou alternative implementado.
+ * 
+ * Por enquanto, utilizadores veem a foto da conta Google.
  */
 export async function POST(request: NextRequest) {
   const session = await getServerSession(authOptionsCliente);
@@ -23,57 +17,13 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Não autenticado." }, { status: 401 });
   }
 
-  // Verificar se BLOB_READ_WRITE_TOKEN está configurado
-  if (!process.env.BLOB_READ_WRITE_TOKEN) {
-    if (process.env.NODE_ENV !== "production") {
-      console.error("[avatar] BLOB_READ_WRITE_TOKEN não configurado");
-    }
-    return NextResponse.json(
-      { error: "Erro ao configurar armazenamento. Contacta o suporte." },
-      { status: 500 }
-    );
-  }
-
-  // Normalizar email (mesmo padrão do GET/PATCH)
-  const emailNorm = session.user.email.trim().toLowerCase();
-
-  try {
-    const formData = await request.formData();
-    const file = formData.get("file") as File | null;
-
-    if (!file || !file.type.startsWith("image/")) {
-      return NextResponse.json({ error: "Ficheiro inválido." }, { status: 400 });
-    }
-    if (file.size > 5 * 1024 * 1024) {
-      return NextResponse.json({ error: "Ficheiro demasiado grande (máx. 5MB)." }, { status: 400 });
-    }
-
-    // Garantir que a tabela e colunas existem
-    await getSchemaReady();
-
-    // Upload para Vercel Blob (store privado, sem access: public)
-    const ext = file.type === "image/png" ? "png" : "jpg";
-    const filename = `avatars/${emailNorm.replace(/[^a-z0-9]/gi, "_")}_${Date.now()}.${ext}`;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const blob = await (put as any)(filename, file);
-
-    // Upsert: actualiza se já existe, cria se não existe
-    await withConnection(async (conn) => {
-      await conn.execute(
-        `INSERT INTO users (email, openId, avatarUrl, loginMethod, role, createdAt, updatedAt)
-         VALUES (?, NULL, ?, 'google', 'user', NOW(), NOW())
-         ON DUPLICATE KEY UPDATE avatarUrl = VALUES(avatarUrl), updatedAt = NOW()`,
-        [emailNorm, blob.url],
-      );
-    });
-
-    return NextResponse.json({ url: blob.url });
-  } catch (err) {
-    if (process.env.NODE_ENV !== "production") {
-      console.error("[avatar] POST erro:", err instanceof Error ? err.message : String(err));
-    }
-    return NextResponse.json({
-      error: err instanceof Error ? err.message : `Erro ao fazer upload.`,
-    }, { status: 500 });
-  }
+  // Endpoint desativado — retornar 501 com mensagem amigável
+  return NextResponse.json(
+    {
+      ok: false,
+      error: "AVATAR_UPLOAD_DISABLED",
+      message: "Alteração de foto temporariamente indisponível. A foto da tua conta Google continuará a ser usada.",
+    },
+    { status: 501 }
+  );
 }
