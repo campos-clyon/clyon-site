@@ -53,9 +53,10 @@ async function getOrCreateUser(email: string, name: string | null): Promise<User
     }
 
     // Criar utilizador novo com email em lowercase
+    // openId incluído explicitamente como NULL para compatibilidade com schemas antigos (NOT NULL sem default)
     await conn.execute(
-      `INSERT INTO users (name, email, loginMethod, role, createdAt, updatedAt, lastSignedIn)
-       VALUES (?, ?, 'google', 'user', NOW(), NOW(), NOW())`,
+      `INSERT INTO users (name, email, openId, loginMethod, role, createdAt, updatedAt, lastSignedIn)
+       VALUES (?, ?, NULL, 'google', 'user', NOW(), NOW(), NOW())`,
       [name ?? normalizedEmail.split("@")[0], normalizedEmail],
     );
 
@@ -193,9 +194,9 @@ export async function PATCH(request: NextRequest) {
         // Utilizador não existe — criar com os dados enviados
         console.warn(`[api/users/me] PATCH: utilizador não encontrado, a criar registo para "${userEmail}"`);
         const name = session.user?.name ?? userEmail.split("@")[0];
-        const colsToInsert = ["email", "name", "loginMethod", "role", "createdAt", "updatedAt", ...strFields.filter(f => f in data), ...boolFields.filter(f => f in data)];
+        const colsToInsert = ["email", "name", "openId", "loginMethod", "role", "createdAt", "updatedAt", ...strFields.filter(f => f in data), ...boolFields.filter(f => f in data)];
         const valsToInsert: unknown[] = [
-          userEmail, name, "google", "user", new Date(), new Date(),
+          userEmail, name, null, "google", "user", new Date(), new Date(),
           ...strFields.filter(f => f in data).map(f => data[f] ?? null),
           ...boolFields.filter(f => f in data).map(f => data[f] ? 1 : 0),
         ];

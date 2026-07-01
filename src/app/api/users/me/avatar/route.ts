@@ -43,8 +43,8 @@ export async function POST(request: NextRequest) {
     // Upsert: actualiza se já existe, cria se não existe
     await withConnection(async (conn) => {
       const [result] = await conn.execute(
-        `INSERT INTO users (email, avatarUrl, loginMethod, role, createdAt, updatedAt)
-         VALUES (?, ?, 'google', 'user', NOW(), NOW())
+        `INSERT INTO users (email, openId, avatarUrl, loginMethod, role, createdAt, updatedAt)
+         VALUES (?, NULL, ?, 'google', 'user', NOW(), NOW())
          ON DUPLICATE KEY UPDATE avatarUrl = VALUES(avatarUrl), updatedAt = NOW()`,
         [emailNorm, blob.url],
       ) as [{ affectedRows: number }, unknown];

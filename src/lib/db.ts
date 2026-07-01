@@ -311,6 +311,14 @@ export async function ensureUsersSchema(): Promise<void> {
     `);
     console.log("[ensureUsersSchema] tabela users verificada/criada");
 
+    // 1b. Corrigir colunas NOT NULL que bloqueiam INSERT (caso a tabela já existisse com schema antigo)
+    try {
+      // openId pode ser NOT NULL sem default — impede criação de utilizadores Google OAuth
+      await conn.execute(
+        "ALTER TABLE users MODIFY COLUMN openId VARCHAR(64) NULL DEFAULT NULL"
+      );
+    } catch { /* coluna pode não existir ainda — ignorar */ }
+
     // 2. Adicionar colunas em falta para instâncias com schema antigo (idempotente)
     const columnsToAdd: Array<{ name: string; sql: string }> = [
       { name: "phone",             sql: "ALTER TABLE users ADD COLUMN phone VARCHAR(30) NULL" },
@@ -704,7 +712,7 @@ export async function deleteColaborador(id: number) {
   await db.delete(colaboradores).where(eq(colaboradores.id, id));
 }
 
-// ─── Registros de Horas helpers ──────────────────────────────────────────────
+// ─── Registros de Horas helpers ───────────────────────────��──────────────────
 
 function calcularHoras(entrada: string, saida: string, pausa?: string | null): number {
   try {
@@ -1683,7 +1691,7 @@ export async function getPagamentosAssistente(opts: {
   return Array.from(map.values()).sort((a, b) => b.totalEuros - a.totalEuros);
 }
 
-// ─── Trabalhos Realizados ─────────────────────────────────────────────────────
+// ─── Trabalhos Realizados ──────────────────────��──────────────────────────────
 
 let trabalhosTableEnsured = false;
 
