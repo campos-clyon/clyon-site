@@ -54,7 +54,8 @@ export async function POST(request: NextRequest) {
     // Upload para Vercel Blob (store privado, sem access: public)
     const ext = file.type === "image/png" ? "png" : "jpg";
     const filename = `avatars/${emailNorm.replace(/[^a-z0-9]/gi, "_")}_${Date.now()}.${ext}`;
-    const blob = await put(filename, file, { addRandomSuffix: false });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const blob = await (put as any)(filename, file);
 
     // Upsert: actualiza se já existe, cria se não existe
     await withConnection(async (conn) => {
