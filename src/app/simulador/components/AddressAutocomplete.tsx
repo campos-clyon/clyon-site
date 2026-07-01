@@ -149,12 +149,8 @@ export default function AddressAutocomplete({
 
   // ── Nominatim: buscar sugestões ───────────────────────────────────────────
   const fetchNominatim = useCallback(async (query: string) => {
-    console.log("[v0] AddressAutocomplete: fetchNominatim called com query:", query);
-    
-    if (query.trim().length < 4) {
-      console.log("[v0] AddressAutocomplete: query muito curta (<4 chars), limpando sugestões");
+    if (query.trim().length < 3) {
       setSuggestions([]);
-      setShowDropdown(false);
       return;
     }
 
@@ -163,7 +159,6 @@ export default function AddressAutocomplete({
     nominatimAbortRef.current = new AbortController();
 
     setLoadingSuggestions(true);
-    console.log("[v0] AddressAutocomplete: enviando pedido a Nominatim para:", query);
     
     try {
       const url = new URL("https://nominatim.openstreetmap.org/search");
@@ -171,7 +166,7 @@ export default function AddressAutocomplete({
       url.searchParams.set("format", "json");
       url.searchParams.set("addressdetails", "1");
       url.searchParams.set("countrycodes", "pt");
-      url.searchParams.set("limit", "6");
+      url.searchParams.set("limit", "8");
       url.searchParams.set("accept-language", "pt");
 
       const res = await fetch(url.toString(), {
@@ -179,14 +174,10 @@ export default function AddressAutocomplete({
         signal: nominatimAbortRef.current.signal,
       });
       const data: NominatimResult[] = await res.json();
-      console.log("[v0] AddressAutocomplete: Nominatim retornou", data.length, "resultados");
       setSuggestions(data);
-      setShowDropdown(data.length > 0);
     } catch (err: unknown) {
-      console.error("[v0] AddressAutocomplete: erro em Nominatim:", err);
       if ((err as Error)?.name !== "AbortError") {
         setSuggestions([]);
-        setShowDropdown(false);
       }
     } finally {
       setLoadingSuggestions(false);
@@ -233,7 +224,6 @@ export default function AddressAutocomplete({
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const v = e.target.value;
-    console.log("[v0] AddressAutocomplete: handleInputChange com valor:", v, "| googleLoaded:", googleLoaded);
     onChange(v);
 
     // reset status se estava selecionado
@@ -248,11 +238,8 @@ export default function AddressAutocomplete({
 
     // debounce Nominatim (só se Google não estiver ativo)
     if (!googleLoaded) {
-      console.log("[v0] AddressAutocomplete: googleLoaded é false, agendando fetchNominatim");
       if (debounceRef.current) clearTimeout(debounceRef.current);
-      debounceRef.current = setTimeout(() => fetchNominatim(v), 350);
-    } else {
-      console.log("[v0] AddressAutocomplete: googleLoaded é true, não chamando Nominatim (esperando Google Places)");
+      debounceRef.current = setTimeout(() => fetchNominatim(v), 300);
     }
   };
 
@@ -389,15 +376,6 @@ export default function AddressAutocomplete({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAddressReady, selectedAddress]);
 
-  console.log("[v0] AddressAutocomplete render:", {
-    googleLoaded,
-    showDropdown,
-    suggestionsCount: suggestions.length,
-    willShowDropdown: !googleLoaded && showDropdown && suggestions.length > 0,
-    value,
-    addressStatus,
-  });
-
   return (
     <div className={`space-y-2 ${className}`}>
       {/* Input com dropdown */}
@@ -449,10 +427,10 @@ export default function AddressAutocomplete({
         </div>
 
         {/* Dropdown de sugestões Nominatim */}
-        {!googleLoaded && showDropdown && suggestions.length > 0 && (
+        {!googleLoaded && suggestions.length > 0 && (
           <div
             ref={dropdownRef}
-            className="absolute z-[9999] top-full mt-1 w-full bg-white border border-[#E2E8F0] rounded-xl shadow-xl overflow-hidden"
+            className="absolute z-[9999] top-full mt-1 w-full bg-white border border-[#E2E8F0] rounded-xl shadow-xl overflow-hidden max-h-80 overflow-y-auto"
           >
             {suggestions.map((item) => {
               const parts = item.display_name.split(", ");
