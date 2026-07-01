@@ -4,6 +4,14 @@ import { put } from "@vercel/blob";
 import { authOptionsCliente } from "@/auth-cliente";
 import { withConnection, ensureUsersSchema } from "@/lib/db";
 
+// Cache de módulo para evitar chamar ensureUsersSchema múltiplas vezes (é lento na Neon DB)
+let _schemaReady = false;
+async function getSchemaReady() {
+  if (_schemaReady) return;
+  await ensureUsersSchema();
+  _schemaReady = true;
+}
+
 /**
  * POST /api/users/me/avatar
  * Recebe um FormData com um campo "file" (imagem já cortada em PNG),
@@ -39,7 +47,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Garantir que a tabela e colunas existem
-    await ensureUsersSchema();
+    await getSchemaReady();
 
     // Upload para Vercel Blob
     const ext = file.type === "image/png" ? "png" : "jpg";

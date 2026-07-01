@@ -4,6 +4,14 @@ import { z } from "zod";
 import { authOptionsCliente } from "@/auth-cliente";
 import { withConnection, ensureUsersSchema } from "@/lib/db";
 
+// Cache de módulo para evitar chamar ensureUsersSchema múltiplas vezes (é lento na Neon DB)
+let _schemaReady = false;
+async function getSchemaReady() {
+  if (_schemaReady) return;
+  await ensureUsersSchema();
+  _schemaReady = true;
+}
+
 // Row returned from DB
 interface UserRow {
   id: number;
@@ -68,7 +76,7 @@ export async function GET() {
     return NextResponse.json({ error: "Não autenticado." }, { status: 401 });
   }
 
-  await ensureUsersSchema();
+  await getSchemaReady();
 
   const emailNorm = session.user.email.trim().toLowerCase();
 
@@ -112,7 +120,7 @@ export async function PATCH(request: NextRequest) {
 
   console.log("[v0] PATCH /api/users/me: email da sessão:", session.user.email);
 
-  await ensureUsersSchema();
+  await getSchemaReady();
 
   let raw: unknown;
   try {

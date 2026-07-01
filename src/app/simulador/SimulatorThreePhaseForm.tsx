@@ -78,12 +78,8 @@ export default function SimulatorThreePhaseForm() {
 
     const prefillUserData = async () => {
       try {
-        console.log("[v0] SimulatorThreePhaseForm: prefillUserData starting para email:", session?.user?.email);
         const res = await fetch("/api/users/me");
-        if (!res.ok) {
-          console.log("[v0] SimulatorThreePhaseForm: /api/users/me retornou status", res.status);
-          return;
-        }
+        if (!res.ok) return;
         
         const userData = await res.json() as {
           name?: string;
@@ -94,13 +90,10 @@ export default function SimulatorThreePhaseForm() {
           addressCity?: string;
         };
 
-        console.log("[v0] SimulatorThreePhaseForm: userData carregado:", userData);
-
         // Pré-preencher nome, telefone, email (fase 3)
         if ((!formData.receiver?.name && userData.name) ||
             (!formData.receiver?.phone && userData.phone) ||
             (!formData.receiver?.email && session?.user?.email)) {
-          console.log("[v0] SimulatorThreePhaseForm: a actualizar receiver com dados do utilizador");
           setFormData((prev) => ({
             ...prev,
             receiver: {
