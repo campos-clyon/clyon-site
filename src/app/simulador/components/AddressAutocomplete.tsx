@@ -1,17 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Loader } from "@googlemaps/js-api-loader";
 import type { AddressData, AddressStatus, DistanceFromBase, DistanceStatus } from "../types";
-
-// Singleton loader para reutilizar a promise do Google Maps
-const googleMapsLoader = new Loader({
-  apiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "",
-  version: "weekly",
-  libraries: ["places"],
-  language: "pt",
-  region: "PT",
-});
 
 interface NominatimResult {
   place_id: string;
@@ -72,19 +62,44 @@ export default function AddressAutocomplete({
   useEffect(() => {
     const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
     if (!apiKey) {
-      // sem chave: usamos Nominatim como fallback
+      return; // sem chave: usamos Nominatim como fallback
+    }
+
+    // Verificar se já está carregado
+    if (typeof window !== "undefined" && (window as any).google?.maps?.places) {
+      setGoogleLoaded(true);
       return;
     }
 
-    // Carregar Google Maps de forma assíncrona
-    (googleMapsLoader.load() as Promise<typeof google>).then(() => {
+    // Verificar se script já foi criado
+    const scriptId = "google-maps-places";
+    if (document.getElementById(scriptId)) {
+      return;
+    }
+
+    // Criar script para Google Maps
+    const script = document.createElement("script");
+    script.id = scriptId;
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places&language=pt&region=PT`;
+    script.async = true;
+    script.defer = true;
+
+    script.onload = () => {
       setGoogleLoaded(true);
-    }).catch((err: unknown) => {
+    };
+
+    script.onerror = () => {
       if (process.env.NODE_ENV !== "production") {
-        console.error("[AddressAutocomplete] Erro ao carregar Google Maps:", err);
+        console.error("[AddressAutocomplete] Erro ao carregar script Google Maps");
       }
       // Fallback para Nominatim se Google falhar
-    });
+    };
+
+    document.head.appendChild(script);
+
+    return () => {
+      // Cleanup
+    };
   }, []);
 
   // ── Inicializar Google Autocomplete quando SDK estiver pronto ────────────
@@ -107,11 +122,11 @@ export default function AddressAutocomplete({
       if (!place?.formatted_address) return;
 
       const getComponent = (type: string) =>
-        place.address_components?.find((c) => c.types.includes(type))?.long_name;
+        place.address_components?.find((c: google.maps.GeocoderAddressComponent) => c.types.includes(type))?.long_name;
 
       const postalParts = [
-        place.address_components?.find((c) => c.types.includes("postal_code"))?.long_name,
-        place.address_components?.find((c) => c.types.includes("postal_code_suffix"))?.long_name,
+        place.address_components?.find((c: google.maps.GeocoderAddressComponent) => c.types.includes("postal_code"))?.long_name,
+        place.address_components?.find((c: google.maps.GeocoderAddressComponent) => c.types.includes("postal_code_suffix"))?.long_name,
       ].filter(Boolean);
 
       const city =
