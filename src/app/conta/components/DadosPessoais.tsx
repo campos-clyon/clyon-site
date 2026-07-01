@@ -264,26 +264,19 @@ export default function DadosPessoais({ user, googleAvatar, onUpdate }: Props) {
     try {
       const fd = new FormData();
       fd.append("file", blob, "avatar.png");
-      console.log("[v0] DadosPessoais: enviando POST /api/users/me/avatar");
       
       const res = await fetch("/api/users/me/avatar", { method: "POST", body: fd });
-      console.log("[v0] DadosPessoais: resposta status:", res.status, "ok:", res.ok);
-      
       const data = await res.json() as { url?: string; error?: string };
-      console.log("[v0] DadosPessoais: resposta JSON:", JSON.stringify(data, null, 2));
       
       if (!res.ok || !data.url) {
         const errorMsg = data.error ?? `Erro ao guardar foto (status ${res.status}).`;
-        console.error("[v0] DadosPessoais: erro no upload:", errorMsg);
         throw new Error(errorMsg);
       }
       
-      console.log("[v0] DadosPessoais: upload avatar sucesso! URL:", data.url);
       setAvatarPreview(data.url);
       onUpdate({ avatarUrl: data.url });
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : "Erro ao guardar foto.";
-      console.error("[v0] DadosPessoais: erro catch no upload:", errorMsg);
       setErrorGlobal(errorMsg);
       // Reverter para avatar anterior em caso de erro
       setAvatarPreview(user.avatarUrl ?? googleAvatar ?? null);
@@ -322,7 +315,6 @@ export default function DadosPessoais({ user, googleAvatar, onUpdate }: Props) {
         postalCode: postalCode.trim() || null,
         addressCity: addressCity.trim() || null,
       };
-      console.log("[v0] DadosPessoais: enviando PATCH com payload:", payload);
       
       const res = await fetch("/api/users/me", {
         method: "PATCH",
@@ -330,18 +322,12 @@ export default function DadosPessoais({ user, googleAvatar, onUpdate }: Props) {
         body: JSON.stringify(payload),
       });
       
-      console.log("[v0] DadosPessoais: resposta status:", res.status, "ok:", res.ok);
-      
       const data = await res.json() as { success?: boolean; error?: string };
-      console.log("[v0] DadosPessoais: resposta JSON:", JSON.stringify(data, null, 2));
       
       if (!res.ok || !data.success) {
         const errorMsg = data.error ?? `Erro ao guardar (status ${res.status}).`;
-        console.error("[v0] DadosPessoais: erro na resposta:", errorMsg);
         throw new Error(errorMsg);
       }
-
-      console.log("[v0] DadosPessoais: sucesso! A guardar no estado local.");
       setSuccess(true);
       onUpdate({
         name: name.trim(),

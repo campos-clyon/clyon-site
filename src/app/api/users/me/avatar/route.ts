@@ -25,9 +25,11 @@ export async function POST(request: NextRequest) {
 
   // Verificar se BLOB_READ_WRITE_TOKEN está configurado
   if (!process.env.BLOB_READ_WRITE_TOKEN) {
-    console.error("[avatar] BLOB_READ_WRITE_TOKEN não configurado");
+    if (process.env.NODE_ENV !== "production") {
+      console.error("[avatar] BLOB_READ_WRITE_TOKEN não configurado");
+    }
     return NextResponse.json(
-      { error: "BLOB_READ_WRITE_TOKEN não configurado no servidor. Contacta o suporte." },
+      { error: "Erro ao configurar armazenamento. Contacta o suporte." },
       { status: 500 }
     );
   }
@@ -49,34 +51,28 @@ export async function POST(request: NextRequest) {
     // Garantir que a tabela e colunas existem
     await getSchemaReady();
 
-    // Upload para Vercel Blob
+    // Upload para Vercel Blob (store privado, sem access: public)
     const ext = file.type === "image/png" ? "png" : "jpg";
     const filename = `avatars/${emailNorm.replace(/[^a-z0-9]/gi, "_")}_${Date.now()}.${ext}`;
-    const blob = await put(filename, file, {
-      access: "public",
-      contentType: file.type,
-    });
+    const blob = await put(filename, file, { addRandomSuffix: false });
 
     // Upsert: actualiza se já existe, cria se não existe
     await withConnection(async (conn) => {
-      const [result] = await conn.execute(
+      await conn.execute(
         `INSERT INTO users (email, openId, avatarUrl, loginMethod, role, createdAt, updatedAt)
          VALUES (?, NULL, ?, 'google', 'user', NOW(), NOW())
          ON DUPLICATE KEY UPDATE avatarUrl = VALUES(avatarUrl), updatedAt = NOW()`,
         [emailNorm, blob.url],
-      ) as [{ affectedRows: number }, unknown];
-      console.log(`[avatar] upsert ok — affectedRows=${result.affectedRows} email=${emailNorm}`);
+      );
     });
 
     return NextResponse.json({ url: blob.url });
   } catch (err) {
-    console.error("[avatar] POST erro completo:", {
-      name: err instanceof Error ? err.name : "unknown",
-      message: err instanceof Error ? err.message : String(err),
-      stack: err instanceof Error ? err.stack : undefined,
-    });
+    if (process.env.NODE_ENV !== "production") {
+      console.error("[avatar] POST erro:", err instanceof Error ? err.message : String(err));
+    }
     return NextResponse.json({
-      error: err instanceof Error ? err.message : `Erro ao fazer upload: ${String(err)}`,
+      error: err instanceof Error ? err.message : `Erro ao fazer upload.`,
     }, { status: 500 });
   }
 }
