@@ -188,14 +188,18 @@ export async function PATCH(request: NextRequest) {
       // INSERT ... ON DUPLICATE KEY UPDATE — atómica, nunca falha por falta de registo
       // Se o utilizador não existe: cria. Se existe: actualiza os campos enviados.
       // O índice UNIQUE em email garante que ON DUPLICATE KEY dispara correctamente.
+      // Excluir 'name' de strFields porque já está incluído explicitamente
+      const extraStrFields = strFields.filter(f => f !== "name" && f in data);
+      const extraBoolFields = boolFields.filter(f => f in data);
+      
       const insertCols = ["email", "name", "openId", "loginMethod", "role", "createdAt", "updatedAt",
-        ...strFields.filter(f => f in data),
-        ...boolFields.filter(f => f in data),
+        ...extraStrFields,
+        ...extraBoolFields,
       ];
       const insertVals: unknown[] = [
         userEmail, displayName, null, "google", "user", new Date(), new Date(),
-        ...strFields.filter(f => f in data).map(f => data[f] ?? null),
-        ...boolFields.filter(f => f in data).map(f => data[f] ? 1 : 0),
+        ...extraStrFields.map(f => data[f] ?? null),
+        ...extraBoolFields.map(f => data[f] ? 1 : 0),
       ];
 
       console.log("[v0] PATCH: INSERT cols:", insertCols.join(", "));
