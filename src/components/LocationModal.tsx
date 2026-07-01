@@ -51,6 +51,9 @@ export default function LocationModal({ onClose }: LocationModalProps) {
           const data = await response.json();
 
           if (data.ok) {
+            // Se sucesso, limpar flag de permissão negada
+            localStorage.removeItem('clyon_location_permission_denied');
+            
             setLocation({
               formattedAddress: data.formattedAddress,
               city: data.city,
@@ -83,7 +86,7 @@ export default function LocationModal({ onClose }: LocationModalProps) {
           setGpsError('Erro ao obter localização');
         }
       },
-      { timeout: 10000, enableHighAccuracy: true }
+      { timeout: 10000, enableHighAccuracy: false }
     );
   };
 

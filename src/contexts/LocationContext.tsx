@@ -48,26 +48,42 @@ async function reverseGeocode(lat: number, lng: number): Promise<CustomerLocatio
 
 function requestLocationFromGPS(onLocationFound: (location: CustomerLocation) => void) {
   if (!navigator.geolocation) {
-    console.log('[LocationContext] Geolocation não suportado');
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('[Location] geolocation não suportado');
+    }
     return;
+  }
+
+  if (process.env.NODE_ENV !== 'production') {
+    console.log('[Location] requesting GPS automatically');
   }
 
   navigator.geolocation.getCurrentPosition(
     async (position) => {
       const { latitude, longitude } = position.coords;
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('[Location] GPS success', { lat: latitude, lng: longitude });
+      }
       const location = await reverseGeocode(latitude, longitude);
       if (location) {
-        console.log('[LocationContext] Localização obtida via GPS:', location);
+        if (process.env.NODE_ENV !== 'production') {
+          console.log('[Location] reverse geocoding success', location);
+        }
         onLocationFound(location);
       }
     },
     (error) => {
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('[Location] GPS error', error.code, error.message);
+      }
       if (error.code === error.PERMISSION_DENIED) {
-        console.log('[LocationContext] Permissão de localização negada');
         localStorage.setItem(PERMISSION_DENIED_KEY, 'true');
+        if (process.env.NODE_ENV !== 'production') {
+          console.log('[Location] permission denied - saved flag');
+        }
       }
     },
-    { timeout: 10000, enableHighAccuracy: true }
+    { timeout: 10000, enableHighAccuracy: false }
   );
 }
 
@@ -79,8 +95,16 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     async function initializeLocation() {
       try {
+        if (process.env.NODE_ENV !== 'production') {
+          console.log('[Location] provider mounted');
+        }
+
         // 1. Verificar localStorage
         const stored = localStorage.getItem(STORAGE_KEY);
+        if (process.env.NODE_ENV !== 'production') {
+          console.log('[Location] localStorage location:', stored ? JSON.parse(stored) : null);
+        }
+        
         if (stored) {
           const parsed = JSON.parse(stored);
           setLocationState(parsed);
@@ -90,9 +114,11 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
 
         // 2. Se não houver localização e permissão não foi negada, tentar GPS
         const permissionDenied = localStorage.getItem(PERMISSION_DENIED_KEY) === 'true';
+        if (process.env.NODE_ENV !== 'production') {
+          console.log('[Location] permission denied flag:', permissionDenied);
+        }
+        
         if (!permissionDenied) {
-          console.log('[LocationContext] Tentando obter localização via GPS');
-          
           let gpsCompleted = false;
           
           requestLocationFromGPS((location) => {
@@ -101,17 +127,20 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
             gpsCompleted = true;
           });
 
-          // Timeout: se GPS não responder em 3s, considerar como não disponível
+          // Timeout: se GPS não responder em 5s, considerar como não disponível
           setTimeout(() => {
             if (!gpsCompleted) {
+              if (process.env.NODE_ENV !== 'production') {
+                console.log('[Location] GPS timeout - no response');
+              }
               setIsLoading(false);
             }
-          }, 3000);
+          }, 5000);
         } else {
           setIsLoading(false);
         }
       } catch (err) {
-        console.error('[LocationContext] Erro na inicialização:', err);
+        console.error('[Location] initialization error:', err);
         setIsLoading(false);
       }
     }

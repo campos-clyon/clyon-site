@@ -267,8 +267,9 @@ export default function Header() {
           )}
         </div>
 
-        {/* Mobile: avatar de conta + botão hambúrguer */}
+        {/* Mobile: localização + avatar de conta + botão hambúrguer */}
         <div className="flex items-center gap-2 lg:hidden">
+          <HeaderLocationSelector />
           {session?.user ? (
             <Link
               href="/conta"
