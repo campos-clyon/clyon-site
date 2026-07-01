@@ -78,8 +78,12 @@ export default function SimulatorThreePhaseForm() {
 
     const prefillUserData = async () => {
       try {
+        console.log("[v0] SimulatorThreePhaseForm: prefillUserData starting para email:", session?.user?.email);
         const res = await fetch("/api/users/me");
-        if (!res.ok) return;
+        if (!res.ok) {
+          console.log("[v0] SimulatorThreePhaseForm: /api/users/me retornou status", res.status);
+          return;
+        }
         
         const userData = await res.json() as {
           name?: string;
@@ -90,10 +94,13 @@ export default function SimulatorThreePhaseForm() {
           addressCity?: string;
         };
 
+        console.log("[v0] SimulatorThreePhaseForm: userData carregado:", userData);
+
         // Pré-preencher nome, telefone, email (fase 3)
         if ((!formData.receiver?.name && userData.name) ||
             (!formData.receiver?.phone && userData.phone) ||
             (!formData.receiver?.email && session?.user?.email)) {
+          console.log("[v0] SimulatorThreePhaseForm: a actualizar receiver com dados do utilizador");
           setFormData((prev) => ({
             ...prev,
             receiver: {
@@ -131,7 +138,17 @@ export default function SimulatorThreePhaseForm() {
     };
 
     prefillUserData();
-  }, [session?.user?.email, userDataPrefilled]);
+  }, [session?.user?.email]);
+
+  // Garantir que receiver está sempre definido (para sincronizar com Phase3Contact inputs)
+  useEffect(() => {
+    if (!formData.receiver) {
+      setFormData((prev) => ({
+        ...prev,
+        receiver: {},
+      }));
+    }
+  }, []);
 
   // Salvar draft no localStorage
   useEffect(() => {
