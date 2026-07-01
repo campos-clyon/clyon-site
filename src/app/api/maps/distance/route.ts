@@ -40,14 +40,23 @@ export async function POST(request: NextRequest) {
   // 1. Chave de servidor — NUNCA usar NEXT_PUBLIC_ no backend
   const key = process.env.GOOGLE_MAPS_SERVER_API_KEY;
   if (!key) {
-    console.error("[maps/distance] GOOGLE_MAPS_SERVER_API_KEY não configurada.");
-    return FRIENDLY_ERROR;
+    console.error("[maps/distance] ERRO: GOOGLE_MAPS_SERVER_API_KEY não configurada no .env");
+    return NextResponse.json(
+      {
+        ok: false,
+        error: "NO_API_KEY",
+        customerMessage: "Servidor não tem chave de API. Contacte o administrador.",
+      },
+      { status: 503 }
+    );
   }
 
   // 2. Origem: coordenadas da base CLYON (preferencial) ou endereço
   const baseLat = process.env.CLYON_BASE_LAT ? Number(process.env.CLYON_BASE_LAT) : null;
   const baseLng = process.env.CLYON_BASE_LNG ? Number(process.env.CLYON_BASE_LNG) : null;
   const baseAddress = process.env.CLYON_BASE_ADDRESS ?? "Av. Q.ta das Laranjeiras, 2865-688 Fernão Ferro, Portugal";
+
+  console.log("[maps/distance] BASE_COORDS:", baseLat, baseLng, "| ADDRESS:", baseAddress);
 
   const originPayload =
     baseLat !== null && baseLng !== null
@@ -58,13 +67,21 @@ export async function POST(request: NextRequest) {
   let body: { destination?: { formattedAddress?: string; lat?: number; lng?: number; placeId?: string } };
   try {
     body = await request.json();
-  } catch {
-    return NextResponse.json({ ok: false, customerMessage: "Payload inválido." }, { status: 400 });
+  } catch (err) {
+    console.error("[maps/distance] ERRO: Payload JSON inválido:", err);
+    return NextResponse.json(
+      { ok: false, error: "INVALID_PAYLOAD", customerMessage: "Dados inválidos no pedido." },
+      { status: 400 }
+    );
   }
 
   const dest = body.destination;
   if (!dest || (!dest.lat && !dest.formattedAddress)) {
-    return NextResponse.json({ ok: false, customerMessage: "Destino em falta." }, { status: 400 });
+    console.error("[maps/distance] ERRO: Destino em falta ou inválido:", dest);
+    return NextResponse.json(
+      { ok: false, error: "MISSING_DESTINATION", customerMessage: "Destino em falta." },
+      { status: 400 }
+    );
   }
 
   const destinationPayload =
@@ -72,44 +89,94 @@ export async function POST(request: NextRequest) {
       ? { location: { latLng: { latitude: dest.lat, longitude: dest.lng } } }
       : { address: dest.formattedAddress! };
 
+  console.log("[maps/distance] REQUEST:", {
+    origin: originPayload,
+    destination: destinationPayload,
+  });
+
   // 4. Chamada à Google Routes API
   try {
-    const res = await fetch("https://routes.googleapis.com/directions/v2:computeRoutes", {
+    const routesUrl = "https://routes.googleapis.com/directions/v2:computeRoutes";
+    const routesPayload = {
+      origin: originPayload,
+      destination: destinationPayload,
+      travelMode: "DRIVE",
+      routingPreference: "TRAFFIC_AWARE",
+      languageCode: "pt-PT",
+      regionCode: "PT",
+    };
+
+    console.log("[maps/distance] Chamando Google Routes API...");
+
+    const res = await fetch(routesUrl, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         "X-Goog-Api-Key": key,
         "X-Goog-FieldMask": "routes.distanceMeters,routes.duration,routes.localizedValues",
       },
-      body: JSON.stringify({
-        origin: originPayload,
-        destination: destinationPayload,
-        travelMode: "DRIVE",
-        routingPreference: "TRAFFIC_AWARE",
-        languageCode: "pt-PT",
-        regionCode: "PT",
-      }),
+      body: JSON.stringify(routesPayload),
       cache: "no-store",
     });
 
+    console.log("[maps/distance] Routes API HTTP status:", res.status);
+
     if (!res.ok) {
       const errBody = await res.text();
-      console.error("[maps/distance] Routes API HTTP error:", res.status, errBody);
-      return FRIENDLY_ERROR;
+      console.error("[maps/distance] ERRO HTTP:", res.status, "| Body:", errBody);
+      return NextResponse.json(
+        {
+          ok: false,
+          error: "ROUTES_API_ERROR",
+          httpStatus: res.status,
+          details: errBody.substring(0, 200),
+          customerMessage: "Não foi possível calcular a distância. A equipa CLYON confirma manualmente.",
+        },
+        { status: 503 }
+      );
     }
 
     const data = await res.json();
+    console.log("[maps/distance] Routes API response:", JSON.stringify(data).substring(0, 300));
+
     const route = data.routes?.[0];
 
-    if (!route || !route.distanceMeters || !route.duration) {
-      console.error("[maps/distance] Routes API sem rota válida:", JSON.stringify(data));
-      return FRIENDLY_ERROR;
+    if (!route) {
+      console.error("[maps/distance] ERRO: Nenhuma rota retornada. Data:", JSON.stringify(data));
+      return NextResponse.json(
+        {
+          ok: false,
+          error: "NO_ROUTE_FOUND",
+          details: "Google Routes não encontrou rota",
+          customerMessage: "Não foi possível encontrar rota até ao destino.",
+        },
+        { status: 503 }
+      );
+    }
+
+    if (!route.distanceMeters || !route.duration) {
+      console.error("[maps/distance] ERRO: Rota sem distância ou duração. Route:", JSON.stringify(route).substring(0, 300));
+      return NextResponse.json(
+        {
+          ok: false,
+          error: "INVALID_ROUTE_DATA",
+          details: "Rota sem distância ou duração",
+          customerMessage: "Dados de rota incompletos.",
+        },
+        { status: 503 }
+      );
     }
 
     const distanceMeters: number = route.distanceMeters;
     const distanceKm = Math.round((distanceMeters / 1000) * 10) / 10;
     const durationSeconds = parseGoogleDurationToSeconds(String(route.duration));
     const durationText = formatDuration(durationSeconds);
+
+    console.log("[maps/distance] SUCESSO:", {
+      distanceKm,
+      durationText,
+      distanceMeters,
+    });
 
     return NextResponse.json({
       ok: true,
@@ -130,7 +197,15 @@ export async function POST(request: NextRequest) {
       },
     });
   } catch (err) {
-    console.error("[maps/distance] Erro inesperado:", err);
-    return FRIENDLY_ERROR;
+    console.error("[maps/distance] ERRO INESPERADO:", err instanceof Error ? err.message : String(err));
+    return NextResponse.json(
+      {
+        ok: false,
+        error: "UNEXPECTED_ERROR",
+        details: err instanceof Error ? err.message : "Unknown error",
+        customerMessage: "Erro ao calcular distância. Tente novamente.",
+      },
+      { status: 500 }
+    );
   }
 }

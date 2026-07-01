@@ -140,6 +140,7 @@ export default function AddressAutocomplete({
 
       if (res.ok) {
         const data = await res.json();
+        console.log("[v0] Distance calculated:", { distanceKm: data.distanceKm, duration: data.durationText });
         if (typeof onDistanceCalculated === "function") {
           onDistanceCalculated({
             distanceMeters: data.distanceMeters,
@@ -150,13 +151,16 @@ export default function AddressAutocomplete({
           }, "calculated");
         }
       } else {
-        // API error — marcar como erro
+        // API error — log details
+        const errorData = await res.json().catch(() => ({}));
+        console.error("[v0] Distance API error:", { status: res.status, error: errorData.error, details: errorData.details });
         if (typeof onDistanceCalculated === "function") {
           onDistanceCalculated({}, "error");
         }
       }
     } catch (err) {
       // Network error — marcar como erro
+      console.error("[v0] Distance fetch failed:", err instanceof Error ? err.message : String(err));
       if (typeof onDistanceCalculated === "function") {
         onDistanceCalculated({}, "error");
       }
