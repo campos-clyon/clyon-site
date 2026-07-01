@@ -28,45 +28,36 @@ interface UserRow {
   createdAt: string;
 }
 
+/**
+ * Obtém ou cria o utilizador pelo email (normalizado para lowercase).
+ * Usa INSERT ... ON DUPLICATE KEY UPDATE para ser uma única query atómica
+ * que nunca falha por falta de registo nem cria duplicados.
+ * Requer índice UNIQUE em `email`, que `ensureUsersSchema` garante.
+ */
 async function getOrCreateUser(email: string, name: string | null): Promise<UserRow> {
-  // Normalizar email para lowercase para evitar duplicados por case (ex: Google OAuth)
   const normalizedEmail = email.trim().toLowerCase();
+  const displayName = name ?? normalizedEmail.split("@")[0];
 
   return withConnection(async (conn) => {
-    // Procurar por email exacto (normalizado) ou por variante case-insensitive
-    const [rows] = await conn.execute(
-      "SELECT * FROM users WHERE LOWER(email) = ? AND deletedAt IS NULL ORDER BY createdAt ASC LIMIT 1",
-      [normalizedEmail],
-    ) as [UserRow[], unknown];
-
-    if (rows.length > 0) {
-      // Se o email na DB não está em lowercase, normalizar agora
-      if (rows[0].email !== normalizedEmail) {
-        await conn.execute(
-          "UPDATE users SET email = ?, updatedAt = NOW() WHERE id = ?",
-          [normalizedEmail, rows[0].id],
-        );
-        rows[0].email = normalizedEmail;
-        console.log(`[api/users/me] email normalizado para lowercase: id=${rows[0].id}`);
-      }
-      return rows[0];
-    }
-
-    // Criar utilizador novo com email em lowercase
-    // openId incluído explicitamente como NULL para compatibilidade com schemas antigos (NOT NULL sem default)
+    // Upsert: cria se não existe, actualiza lastSignedIn se já existe
+    // openId = NULL explícito para schemas antigos onde era NOT NULL sem default
     await conn.execute(
-      `INSERT INTO users (name, email, openId, loginMethod, role, createdAt, updatedAt, lastSignedIn)
-       VALUES (?, ?, NULL, 'google', 'user', NOW(), NOW(), NOW())`,
-      [name ?? normalizedEmail.split("@")[0], normalizedEmail],
+      `INSERT INTO users (email, name, openId, loginMethod, role, lastSignedIn, createdAt, updatedAt)
+       VALUES (?, ?, NULL, 'google', 'user', NOW(), NOW(), NOW())
+       ON DUPLICATE KEY UPDATE
+         name = IF(name IS NULL OR name = '', VALUES(name), name),
+         lastSignedIn = NOW(),
+         updatedAt = NOW()`,
+      [normalizedEmail, displayName],
     );
 
-    const [newRows] = await conn.execute(
-      "SELECT * FROM users WHERE email = ? LIMIT 1",
+    const [rows] = await conn.execute(
+      "SELECT * FROM users WHERE email = ? AND deletedAt IS NULL LIMIT 1",
       [normalizedEmail],
     ) as [UserRow[], unknown];
 
-    console.log(`[api/users/me] novo utilizador criado: id=${newRows[0]?.id} email=${normalizedEmail}`);
-    return newRows[0];
+    if (!rows[0]) throw new Error(`Utilizador não encontrado após upsert: ${normalizedEmail}`);
+    return rows[0];
   });
 }
 
@@ -77,14 +68,12 @@ export async function GET() {
     return NextResponse.json({ error: "Não autenticado." }, { status: 401 });
   }
 
-  // Garantir colunas (idempotente, usa withConnection internamente)
   await ensureUsersSchema();
 
   const emailNorm = session.user.email.trim().toLowerCase();
 
   try {
     const user = await getOrCreateUser(emailNorm, session.user.name ?? null);
-    console.log(`[api/users/me] GET ok — id=${user?.id} email=${emailNorm}`);
     return NextResponse.json({ user }, {
       headers: { "Cache-Control": "no-store, no-cache, must-revalidate" },
     });
@@ -120,10 +109,15 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json({ error: "Não autenticado." }, { status: 401 });
   }
 
-  // Garantir colunas antes de escrever
   await ensureUsersSchema();
 
-  const raw = await request.json();
+  let raw: unknown;
+  try {
+    raw = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Body inválido." }, { status: 400 });
+  }
+
   const parsed = PatchSchema.safeParse(raw);
   if (!parsed.success) {
     return NextResponse.json(
@@ -133,37 +127,47 @@ export async function PATCH(request: NextRequest) {
   }
 
   const data = parsed.data;
-  const setClauses: string[] = ["updatedAt = NOW()"];
-  const values: unknown[] = [];
+  const userEmail = session.user.email.trim().toLowerCase();
+  const displayName = session.user?.name ?? userEmail.split("@")[0];
 
+  // Campos string que podem ser NULL
   const strFields = [
     "name", "phone", "addressLine", "addressNumber", "postalCode", "addressCity",
     "nif", "billingName", "billingNif", "billingAddress", "billingPostalCode",
     "billingCity", "avatarUrl",
   ] as const;
+
+  // Campos boolean (TINYINT na DB)
   const boolFields = ["notifOrderStatus", "notifWeeklyDigest", "notifWhatsapp"] as const;
 
+  // Construir SET clauses para o ON DUPLICATE KEY UPDATE
+  const updateClauses: string[] = ["updatedAt = NOW()"];
+  const updateValues: unknown[] = [];
+
   for (const f of strFields) {
-    if (f in data) { setClauses.push(`${f} = ?`); values.push(data[f] ?? null); }
+    if (f in data) {
+      updateClauses.push(`${f} = ?`);
+      updateValues.push(data[f] ?? null);
+    }
   }
   for (const f of boolFields) {
-    if (f in data) { setClauses.push(`${f} = ?`); values.push(data[f] ? 1 : 0); }
+    if (f in data) {
+      updateClauses.push(`${f} = ?`);
+      updateValues.push(data[f] ? 1 : 0);
+    }
   }
 
-  // Se não há nada para actualizar além do timestamp, retornar cedo
-  if (setClauses.length === 1) {
+  if (updateClauses.length === 1) {
+    // Só updatedAt — nada para guardar
     return NextResponse.json({ success: true });
   }
 
-  // Normalizar email para garantir que o WHERE casa com a linha criada pelo GET
-  const userEmail = session.user.email.trim().toLowerCase();
-
   try {
     return await withConnection(async (conn) => {
-      // Verificar unicidade do telefone
+      // Verificar unicidade do telefone antes de gravar
       if (data.phone) {
         const [phoneRows] = await conn.execute(
-          "SELECT id FROM users WHERE phone = ? AND LOWER(email) <> ? AND deletedAt IS NULL LIMIT 1",
+          "SELECT id FROM users WHERE phone = ? AND email <> ? AND deletedAt IS NULL LIMIT 1",
           [data.phone, userEmail],
         ) as [Array<{ id: number }>, unknown];
         if (phoneRows.length > 0) {
@@ -174,45 +178,32 @@ export async function PATCH(request: NextRequest) {
         }
       }
 
-      // Usar upsert para nunca falhar com affectedRows=0:
-      // se o utilizador ainda não existe na DB (ex: primeiro login sem GET prévio),
-      // cria o registo; se já existe actualiza os campos enviados.
-      const insertCols = ["email", "loginMethod", "role", "createdAt", "updatedAt", ...strFields.filter(f => f in data), ...boolFields.filter(f => f in data)];
-      const insertPlaceholders = insertCols.map(() => "?").join(", ");
+      // INSERT ... ON DUPLICATE KEY UPDATE — atómica, nunca falha por falta de registo
+      // Se o utilizador não existe: cria. Se existe: actualiza os campos enviados.
+      // O índice UNIQUE em email garante que ON DUPLICATE KEY dispara correctamente.
+      const insertCols = ["email", "name", "openId", "loginMethod", "role", "createdAt", "updatedAt",
+        ...strFields.filter(f => f in data),
+        ...boolFields.filter(f => f in data),
+      ];
       const insertVals: unknown[] = [
-        userEmail, "google", "user", "NOW()", "NOW()",
+        userEmail, displayName, null, "google", "user", new Date(), new Date(),
         ...strFields.filter(f => f in data).map(f => data[f] ?? null),
         ...boolFields.filter(f => f in data).map(f => data[f] ? 1 : 0),
       ];
-      // Para simplicidade e clareza, usar UPDATE simples com fallback de INSERT se 0 rows
+
       const [result] = await conn.execute(
-        `UPDATE users SET ${setClauses.join(", ")} WHERE LOWER(email) = ? AND deletedAt IS NULL`,
-        [...values, userEmail],
+        `INSERT INTO users (${insertCols.join(", ")}) VALUES (${insertCols.map(() => "?").join(", ")})
+         ON DUPLICATE KEY UPDATE ${updateClauses.join(", ")}`,
+        [...insertVals, ...updateValues],
       ) as [{ affectedRows: number; changedRows: number }, unknown];
 
-      if (result.affectedRows === 0) {
-        // Utilizador não existe — criar com os dados enviados
-        console.warn(`[api/users/me] PATCH: utilizador não encontrado, a criar registo para "${userEmail}"`);
-        const name = session.user?.name ?? userEmail.split("@")[0];
-        const colsToInsert = ["email", "name", "openId", "loginMethod", "role", "createdAt", "updatedAt", ...strFields.filter(f => f in data), ...boolFields.filter(f => f in data)];
-        const valsToInsert: unknown[] = [
-          userEmail, name, null, "google", "user", new Date(), new Date(),
-          ...strFields.filter(f => f in data).map(f => data[f] ?? null),
-          ...boolFields.filter(f => f in data).map(f => data[f] ? 1 : 0),
-        ];
-        await conn.execute(
-          `INSERT INTO users (${colsToInsert.join(", ")}) VALUES (${colsToInsert.map(() => "?").join(", ")})
-           ON DUPLICATE KEY UPDATE ${setClauses.join(", ")}, updatedAt = NOW()`,
-          [...valsToInsert, ...values],
-        );
-      }
+      // affectedRows = 1 → INSERT novo; 2 → UPDATE feito; 0 → UPDATE sem alteração (dados iguais)
+      console.log(`[api/users/me] PATCH OK — affectedRows=${result.affectedRows} email=${userEmail}`);
 
-      console.log(`[api/users/me] PATCH OK — affectedRows=${result.affectedRows} changedRows=${result.changedRows} email=${userEmail}`);
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      void insertCols; void insertPlaceholders; void insertVals;
-      return NextResponse.json({ success: true, affectedRows: result.affectedRows || 1 });
+      return NextResponse.json({ success: true });
     });
   } catch (err: unknown) {
+    // ER_DUP_ENTRY no telefone pode acontecer em race condition
     if (
       err instanceof Error &&
       "code" in err &&
@@ -236,7 +227,7 @@ export async function DELETE() {
     return NextResponse.json({ error: "Não autenticado." }, { status: 401 });
   }
 
-  const userEmail = session.user.email;
+  const userEmail = session.user.email.trim().toLowerCase();
   try {
     await withConnection(async (conn) => {
       await conn.execute(

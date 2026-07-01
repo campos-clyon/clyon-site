@@ -58,7 +58,8 @@ export default function Faturacao({ user, onUpdate }: Props) {
           billingCity: billingCity || null,
         }),
       });
-      if (!res.ok) throw new Error();
+      const data = await res.json() as { success?: boolean; error?: string };
+      if (!res.ok || !data.success) throw new Error(data.error ?? "Erro ao guardar.");
       setSuccess(true);
       onUpdate({ billingName: billingName || null, billingNif: billingNif || null,
         billingAddress: billingAddress || null, billingPostalCode: billingPostalCode || null,
