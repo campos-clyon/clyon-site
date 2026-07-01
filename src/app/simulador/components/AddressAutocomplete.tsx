@@ -1,7 +1,17 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { Loader } from "@googlemaps/js-api-loader";
 import type { AddressData, AddressStatus, DistanceFromBase, DistanceStatus } from "../types";
+
+// Singleton loader para reutilizar a promise do Google Maps
+const googleMapsLoader = new Loader({
+  apiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "",
+  version: "weekly",
+  libraries: ["places"],
+  language: "pt",
+  region: "PT",
+});
 
 interface NominatimResult {
   place_id: string;
@@ -58,59 +68,42 @@ export default function AddressAutocomplete({
   const [selectedAddress, setSelectedAddress] = useState<AddressData | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // ── Tentar carregar Google Maps SDK se chave disponível ──────────────────
+  // ── Carregar Google Maps SDK se chave disponível ──────────────────────────
   useEffect(() => {
     const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
-    console.log("[v0] AddressAutocomplete: apiKey exists:", !!apiKey, "key slice:", apiKey?.slice(0, 10));
-    
     if (!apiKey) {
-      console.log("[v0] AddressAutocomplete: sem API key, usaremos Nominatim");
-      return; // sem chave: usamos Nominatim
-    }
-
-    if (typeof window !== "undefined" && window.google?.maps?.places) {
-      console.log("[v0] AddressAutocomplete: Google Maps já carregado");
-      setGoogleLoaded(true);
+      // sem chave: usamos Nominatim como fallback
       return;
     }
 
-    const scriptId = "google-maps-script";
-    if (document.getElementById(scriptId)) {
-      console.log("[v0] AddressAutocomplete: script já existe, aguardando callback");
-      window.initGoogleMaps = () => {
-        console.log("[v0] AddressAutocomplete: Google Maps carregou (callback)");
-        setGoogleLoaded(true);
-      };
-      return;
-    }
-
-    console.log("[v0] AddressAutocomplete: carregando script Google Maps");
-    window.initGoogleMaps = () => {
-      console.log("[v0] AddressAutocomplete: Google Maps carregou (novo script)");
+    // Carregar Google Maps de forma assíncrona
+    (googleMapsLoader.load() as Promise<typeof google>).then(() => {
       setGoogleLoaded(true);
-    };
-    
-    const script = document.createElement("script");
-    script.id = scriptId;
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places&callback=initGoogleMaps&language=pt&region=PT`;
-    script.async = true;
-    script.defer = true;
-    script.onerror = () => console.error("[v0] AddressAutocomplete: erro ao carregar script Google Maps");
-    document.head.appendChild(script);
+    }).catch((err: unknown) => {
+      if (process.env.NODE_ENV !== "production") {
+        console.error("[AddressAutocomplete] Erro ao carregar Google Maps:", err);
+      }
+      // Fallback para Nominatim se Google falhar
+    });
   }, []);
 
   // ── Inicializar Google Autocomplete quando SDK estiver pronto ────────────
   useEffect(() => {
     if (!googleLoaded || !inputRef.current) return;
 
-    autocompleteRef.current = new window.google.maps.places.Autocomplete(inputRef.current, {
+    const google = (window as any).google;
+    if (!google?.maps?.places) return;
+
+    const autocomplete = new google.maps.places.Autocomplete(inputRef.current, {
       componentRestrictions: { country: "pt" },
       fields: ["formatted_address", "address_components", "geometry", "place_id"],
       types: ["address"],
     });
 
-    autocompleteRef.current.addListener("place_changed", () => {
-      const place = autocompleteRef.current?.getPlace();
+    autocompleteRef.current = autocomplete;
+
+    autocomplete.addListener("place_changed", () => {
+      const place = autocomplete?.getPlace();
       if (!place?.formatted_address) return;
 
       const getComponent = (type: string) =>
@@ -141,7 +134,10 @@ export default function AddressAutocomplete({
 
     return () => {
       if (autocompleteRef.current) {
-        window.google.maps.event.clearInstanceListeners(autocompleteRef.current);
+        const google = (window as any).google;
+        if (google?.maps?.event) {
+          google.maps.event.clearInstanceListeners(autocompleteRef.current);
+        }
       }
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps

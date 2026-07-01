@@ -86,7 +86,9 @@ export async function GET() {
       headers: { "Cache-Control": "no-store, no-cache, must-revalidate" },
     });
   } catch (err) {
-    console.error("[api/users/me] GET erro:", err);
+    if (process.env.NODE_ENV !== "production") {
+      console.error("[api/users/me] GET erro:", err);
+    }
     return NextResponse.json({ error: "Erro ao carregar dados." }, { status: 500 });
   }
 }
@@ -114,11 +116,8 @@ const PatchSchema = z.object({
 export async function PATCH(request: NextRequest) {
   const session = await getServerSession(authOptionsCliente);
   if (!session?.user?.email) {
-    console.error("[v0] PATCH /api/users/me: não autenticado");
     return NextResponse.json({ error: "Não autenticado." }, { status: 401 });
   }
-
-  console.log("[v0] PATCH /api/users/me: email da sessão:", session.user.email);
 
   await getSchemaReady();
 
@@ -126,15 +125,11 @@ export async function PATCH(request: NextRequest) {
   try {
     raw = await request.json();
   } catch {
-    console.error("[v0] PATCH: body JSON inválido");
     return NextResponse.json({ error: "Body inválido." }, { status: 400 });
   }
 
-  console.log("[v0] PATCH: body recebido:", JSON.stringify(raw, null, 2));
-
   const parsed = PatchSchema.safeParse(raw);
   if (!parsed.success) {
-    console.error("[v0] PATCH: validação zod falhou:", parsed.error.flatten());
     return NextResponse.json(
       { error: "Dados inválidos.", details: parsed.error.flatten().fieldErrors },
       { status: 400 },

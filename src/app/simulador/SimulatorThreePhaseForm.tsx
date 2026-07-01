@@ -76,14 +76,11 @@ export default function SimulatorThreePhaseForm() {
   useEffect(() => {
     if (!session?.user?.email || userDataPrefilled) return;
 
-    console.log("[v0] SimulatorThreePhaseForm: iniciando prefill para email:", session?.user?.email);
-
     const prefillUserData = async () => {
       try {
         // Sempre buscar dados da BD (mais completos que Google)
         const res = await fetch("/api/users/me");
         if (!res.ok) {
-          console.log("[v0] SimulatorThreePhaseForm: /api/users/me retornou status", res.status);
           setUserDataPrefilled(true);
           return;
         }
@@ -98,29 +95,20 @@ export default function SimulatorThreePhaseForm() {
           addressCity?: string;
         };
 
-        console.log("[v0] SimulatorThreePhaseForm: userData carregado:", userData);
-
-        // SEMPRE pré-preencher receiver com dados disponíveis (não apenas se vazios)
+        // SEMPRE pré-preencher receiver com dados disponíveis
         // Prioridade: BD > Google Session
-        setFormData((prev) => {
-          const newReceiver = {
+        setFormData((prev) => ({
+          ...prev,
+          receiver: {
             name: userData.name || session?.user?.name || prev.receiver?.name,
             phone: userData.phone || prev.receiver?.phone,
             email: userData.email || session?.user?.email || prev.receiver?.email,
-          };
-          console.log("[v0] SimulatorThreePhaseForm: novo receiver:", newReceiver);
-          
-          return {
-            ...prev,
-            receiver: newReceiver,
-          };
-        });
+          },
+        }));
 
         // Pré-preencher morada (fase 2) se tiver dados no BD
         if (userData.addressLine && userData.postalCode && userData.addressCity) {
           const fullAddress = `${userData.addressLine}, ${userData.postalCode} ${userData.addressCity}`;
-          console.log("[v0] SimulatorThreePhaseForm: pré-preenchendo morada:", fullAddress);
-          
           setFormData((prev) => ({
             ...prev,
             address: {
@@ -133,8 +121,7 @@ export default function SimulatorThreePhaseForm() {
         }
 
         setUserDataPrefilled(true);
-      } catch (err) {
-        console.error("[v0] SimulatorThreePhaseForm: erro ao prefill:", err);
+      } catch {
         setUserDataPrefilled(true);
       }
     };
