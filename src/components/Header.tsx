@@ -30,7 +30,6 @@ import UserAvatar from "@/components/UserAvatar";
 import { trackWhatsAppClick } from "@/lib/analytics";
 import { trackContactEvent } from "@/lib/track-contact";
 import { BUSINESS_PHONE } from "@/lib/seo-data";
-import QueroContratarModal from "@/components/QueroContratarModal";
 import HeaderLocationSelector from "@/components/HeaderLocationSelector";
 
 const solucoes = [
@@ -100,7 +99,6 @@ export default function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [solucoesOpen, setSolucoesOpen] = useState(false);
   const [mobileAccordionOpen, setMobileAccordionOpen] = useState(false);
-  const [modalOpen, setModalOpen] = useState(false);
   const [contaOpen, setContaOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
@@ -209,13 +207,6 @@ export default function Header() {
             <MessageCircle className="h-4 w-4 text-white" />
             <span className="text-white">WhatsApp</span>
           </a>
-          <button
-            type="button"
-            onClick={() => setModalOpen(true)}
-            className="inline-flex items-center gap-2 rounded-xl bg-cyan-600 px-5 py-2.5 text-sm font-semibold text-white transition-all hover:bg-cyan-700"
-          >
-            Quero contratar
-          </button>
 
           {/* Botão conta / entrar */}
           {session?.user ? (
@@ -458,19 +449,12 @@ export default function Header() {
                 href={whatsappUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                onClick={() => { trackWhatsAppClick("header_mobile"); setMenuOpen(false); }}
+                onClick={() => trackWhatsAppClick("header-mobile")}
                 className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#25D366] px-4 py-3.5 text-base font-semibold text-white transition-all hover:bg-[#20bd5a]"
               >
                 <MessageCircle className="h-5 w-5 text-white" />
                 <span className="text-white">WhatsApp</span>
               </a>
-              <button
-                type="button"
-                onClick={() => { setMenuOpen(false); setModalOpen(true); }}
-                className="flex w-full items-center justify-center gap-2 rounded-xl bg-cyan-600 px-4 py-3.5 text-base font-semibold text-white transition-all hover:bg-cyan-700"
-              >
-                Quero contratar
-              </button>
               {/* Conta mobile */}
               {session?.user ? (
                 <button
@@ -496,8 +480,6 @@ export default function Header() {
         </div>
       )}
     </header>
-
-    <QueroContratarModal open={modalOpen} onClose={() => setModalOpen(false)} />
     </>
   );
 }
