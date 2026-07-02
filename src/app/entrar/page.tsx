@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
+import { Suspense } from "react";
 import { authOptionsCliente } from "@/auth-cliente";
-import EntrarClienteForm from "./EntrarClienteForm";
+import { AnimatedBackground } from "./AnimatedBackground";
+import { ErrorHandler } from "./ErrorHandler";
 
 export const metadata: Metadata = {
   title: "Entrar na tua conta | CLYON",
@@ -15,8 +17,13 @@ export default async function EntrarPage() {
   if (session) redirect("/conta");
 
   return (
-    <div className="flex min-h-[calc(100vh-76px)] items-center justify-center bg-slate-50 px-4 py-16">
-      <EntrarClienteForm />
-    </div>
+    <>
+      <AnimatedBackground />
+      <div className="relative flex min-h-screen items-center justify-center px-4 py-16">
+        <Suspense fallback={null}>
+          <ErrorHandler />
+        </Suspense>
+      </div>
+    </>
   );
 }
