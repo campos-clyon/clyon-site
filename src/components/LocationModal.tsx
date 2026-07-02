@@ -1,7 +1,9 @@
 'use client';
 
 import React, { useState } from 'react';
+import { X, MapPin, Loader2 } from 'lucide-react';
 import { useLocation, CustomerLocation } from '@/contexts/LocationContext';
+import { checkCoverage } from '@/lib/coverage';
 import AddressAutocomplete from '@/app/simulador/components/AddressAutocomplete';
 
 interface LocationModalProps {
@@ -14,8 +16,15 @@ export default function LocationModal({ onClose }: LocationModalProps) {
   const [gpsLoading, setGpsLoading] = useState(false);
   const [gpsError, setGpsError] = useState<string | null>(null);
 
+  const coverage = location
+    ? checkCoverage({ city: location.city, countryCode: location.countryCode })
+    : null;
+
+  // Mostrar aviso "fora de área" quando temos localização e não está coberta
+  const showOutOfArea = Boolean(location && coverage && !coverage.covered);
+
   const handleSelectAddress = (addressData: CustomerLocation) => {
-    setLocation({ ...addressData, source: 'manual' });
+    setLocation({ ...addressData, source: 'manual', isApproximate: false });
     if (addressData.formattedAddress) {
       setTempAddress(addressData.formattedAddress);
     }
@@ -24,7 +33,7 @@ export default function LocationModal({ onClose }: LocationModalProps) {
 
   const handleUseGPS = async () => {
     if (!navigator.geolocation) {
-      setGpsError('Geolocalização não suportada no seu browser');
+      setGpsError('Geolocalização não suportada no seu navegador');
       return;
     }
 
@@ -34,9 +43,7 @@ export default function LocationModal({ onClose }: LocationModalProps) {
     navigator.geolocation.getCurrentPosition(
       async (position) => {
         const { latitude, longitude } = position.coords;
-
         try {
-          // Chamar reverse geocoding API
           const response = await fetch('/api/address/reverse', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -51,16 +58,15 @@ export default function LocationModal({ onClose }: LocationModalProps) {
           const data = await response.json();
 
           if (data.ok) {
-            // Se sucesso, limpar flag de permissão negada
-            localStorage.removeItem('clyon_location_permission_denied');
-            
             setLocation({
               formattedAddress: data.formattedAddress,
               city: data.city,
               postalCode: data.postalCode,
               lat: data.lat,
               lng: data.lng,
+              label: data.city,
               source: 'gps',
+              isApproximate: false,
             });
             setTempAddress(data.formattedAddress);
             setGpsError(null);
@@ -69,9 +75,7 @@ export default function LocationModal({ onClose }: LocationModalProps) {
           }
         } catch (err) {
           console.error('[LocationModal GPS] Erro:', err);
-          setGpsError(
-            err instanceof Error ? err.message : 'Erro ao processar localização'
-          );
+          setGpsError(err instanceof Error ? err.message : 'Erro ao processar localização');
         } finally {
           setGpsLoading(false);
         }
@@ -81,116 +85,127 @@ export default function LocationModal({ onClose }: LocationModalProps) {
         if (error.code === error.PERMISSION_DENIED) {
           setGpsError('Permissão de localização negada');
         } else if (error.code === error.TIMEOUT) {
-          setGpsError('Timeout ao obter localização');
+          setGpsError('Tempo esgotado ao obter localização');
         } else {
           setGpsError('Erro ao obter localização');
         }
       },
-      { timeout: 10000, enableHighAccuracy: false }
+      { timeout: 10000, enableHighAccuracy: false },
     );
-  };
-
-  const handleClear = () => {
-    setLocation(null);
-    setTempAddress('');
-    setGpsError(null);
   };
 
   const handleSave = () => {
     onClose();
   };
 
+  // Fora de área: limpar campo para o utilizador tentar outra morada (não fecha)
+  const handleTryAnother = () => {
+    setTempAddress('');
+    setGpsError(null);
+  };
+
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+      <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-lg font-semibold text-slate-900">Localização de Entrega</h2>
+        <div className="mb-4 flex items-start justify-between">
+          <div className="flex items-center gap-2">
+            <MapPin className="h-5 w-5 text-cyan-600" />
+            <h2 className="text-lg font-semibold text-slate-900">A tua localização</h2>
+          </div>
           <button
             onClick={onClose}
-            className="text-slate-500 hover:text-slate-700"
+            className="text-slate-400 transition hover:text-slate-600"
             aria-label="Fechar"
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
+            <X className="h-5 w-5" />
           </button>
         </div>
 
-        {/* Address Input with Autocomplete */}
-        <div className="mb-6">
-          <label className="block text-sm font-medium text-slate-700 mb-2">
-            Morada de Entrega
-          </label>
+        {showOutOfArea ? (
+          /* Aviso fora de cobertura (estilo Oscar) */
+          <div className="mb-5 rounded-xl border border-amber-200 bg-amber-50 p-4">
+            <p className="text-sm font-semibold text-amber-900">
+              Ainda não estamos na tua área… mas em breve!
+            </p>
+            <p className="mt-1.5 text-sm text-amber-800">
+              Estamos a crescer rapidamente e esperamos estar na tua área em breve.
+              Enquanto isso, experimenta procurar noutra localização.
+            </p>
+          </div>
+        ) : (
+          <p className="mb-5 text-sm leading-relaxed text-slate-600">
+            Insere o teu endereço, cidade ou código postal para que possamos mostrar os
+            serviços disponíveis e os preços atualizados na tua área.
+          </p>
+        )}
+
+        {/* Autocomplete de morada */}
+        <div className="mb-4">
           <AddressAutocomplete
             value={tempAddress}
             onChange={setTempAddress}
             onSelect={handleSelectAddress}
-            placeholder="Digite a morada..."
+            placeholder="Endereço, cidade ou código postal..."
           />
         </div>
 
-        {/* GPS Button */}
-        <div className="mb-6">
-          <button
-            onClick={handleUseGPS}
-            disabled={gpsLoading}
-            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-slate-700 bg-slate-100 rounded-lg hover:bg-slate-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {gpsLoading ? (
-              <>
-                <svg className="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                  <path
-                    className="opacity-75"
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                  />
-                </svg>
-                A obter localização...
-              </>
-            ) : (
-              <>
-                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm0-13c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5z" />
-                </svg>
-                Usar localização atual
-              </>
-            )}
-          </button>
-        </div>
+        {/* Botão GPS */}
+        <button
+          onClick={handleUseGPS}
+          disabled={gpsLoading}
+          className="mb-4 flex w-full items-center justify-center gap-2 rounded-lg bg-slate-100 px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          {gpsLoading ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" />
+              A obter localização...
+            </>
+          ) : (
+            <>
+              <MapPin className="h-4 w-4" />
+              Usar localização atual
+            </>
+          )}
+        </button>
 
-        {/* GPS Error Display */}
+        {/* Erro GPS */}
         {gpsError && (
-          <div className="mb-6 p-3 bg-red-50 rounded-lg border border-red-200">
+          <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3">
             <p className="text-sm text-red-700">{gpsError}</p>
           </div>
         )}
 
-        {/* Current Location Display */}
-        {location && (
-          <div className="mb-6 p-4 bg-slate-50 rounded-lg border border-slate-200">
-            <p className="text-sm font-medium text-slate-700 mb-1">Localização Actual:</p>
-            <p className="text-sm text-slate-600">{location.formattedAddress}</p>
-            <p className="text-xs text-slate-500 mt-2">{location.postalCode} · {location.city}</p>
+        {/* Localização atual */}
+        {location && !gpsError && (
+          <div className="mb-5 rounded-lg border border-slate-200 bg-slate-50 p-3">
+            <p className="text-xs font-medium text-slate-500">Localização atual</p>
+            <p className="mt-0.5 text-sm font-medium text-slate-800">
+              {location.formattedAddress || location.label || location.city}
+            </p>
+            {location.isApproximate && (
+              <p className="mt-1 text-xs text-slate-400">
+                Localização aproximada — escolhe uma morada exata para um orçamento preciso.
+              </p>
+            )}
           </div>
         )}
 
-        {/* Actions */}
+        {/* Ações */}
         <div className="flex gap-3">
-          {location && (
+          {showOutOfArea && (
             <button
-              onClick={handleClear}
-              className="flex-1 px-4 py-2 text-sm font-medium text-slate-700 border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors"
+              onClick={onClose}
+              className="flex-1 rounded-lg border border-slate-300 px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
             >
-              Limpar
+              Continuar a explorar
             </button>
           )}
           <button
-            onClick={handleSave}
-            className="flex-1 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
+            onClick={showOutOfArea ? handleTryAnother : handleSave}
+            className="flex-1 rounded-lg bg-cyan-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-cyan-700"
           >
-            Guardar
+            {showOutOfArea ? 'Experimenta outra localização' : 'Guardar'}
           </button>
         </div>
       </div>

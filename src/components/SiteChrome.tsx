@@ -2,6 +2,7 @@
 
 import { usePathname } from "next/navigation";
 
+import CoverageNotice from "@/components/CoverageNotice";
 import DeferredCookieConsent from "@/components/DeferredCookieConsent";
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
@@ -48,6 +49,7 @@ export default function SiteChrome({
       <Footer />
       <StickyCTA />
       <DeferredCookieConsent />
+      <CoverageNotice />
     </>
   );
 }

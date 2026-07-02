@@ -76,6 +76,12 @@ export default function SimulatorThreePhaseForm() {
   // Pré-preencher simplificado: nome, email da sessão Google e morada salva
   useEffect(() => {
     if (session?.user?.email || session?.user?.name || savedLocation) {
+      // Localização aproximada (por IP): usar apenas a cidade, nunca uma morada
+      // exata — o cliente deve escolher a morada precisa no passo "Local e acesso".
+      const isApproximate = savedLocation?.isApproximate;
+      const exactAddress =
+        savedLocation && !isApproximate ? savedLocation : undefined;
+
       setFormData((prev) => ({
         ...prev,
         receiver: {
@@ -83,11 +89,13 @@ export default function SimulatorThreePhaseForm() {
           name: prev.receiver?.name || session?.user?.name || undefined,
           email: prev.receiver?.email || session?.user?.email || undefined,
         },
-        address: prev.address || savedLocation || undefined,
+        address: prev.address || exactAddress || undefined,
+        city: prev.city || savedLocation?.city || undefined,
       }));
-      // Se temos localização salva, preencher também o campo de input
-      if (savedLocation && !addressValue && savedLocation.formattedAddress) {
-        setAddressValue(savedLocation.formattedAddress);
+
+      // Só preencher o campo de input com morada exata (não aproximada)
+      if (exactAddress && !addressValue && exactAddress.formattedAddress) {
+        setAddressValue(exactAddress.formattedAddress);
       }
     }
   }, [session?.user?.email, session?.user?.name, savedLocation]);
