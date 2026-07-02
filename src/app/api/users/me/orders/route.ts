@@ -6,22 +6,15 @@ import { getPool, ensureSimulatorOrdersTable } from "@/lib/db";
 /**
  * Constrói a condição SQL que liga os pedidos ao cliente autenticado.
  *
- * Um pedido pertence ao cliente se:
- *   1. o email do pedido (contactEmail) corresponde ao email da sessão
- *      — comparação normalizada (TRIM + LOWER) para tolerar maiúsculas/espaços;
- *   2. OU o telefone do pedido (contactPhone) corresponde ao telefone do perfil
- *      — permite recuperar pedidos criados antes do login com o mesmo número.
+ * Um pedido pertence ao cliente se o email do pedido (contactEmail) corresponde
+ * ao email da sessão — comparação normalizada (TRIM + LOWER) para tolerar maiúsculas/espaços.
+ *
+ * Nota: Fallback por telefone desactivado até que a coluna `phone` exista na tabela `users`.
  *
  * Devolve o fragmento SQL e os respectivos parâmetros.
  */
-function buildOwnershipMatch(emailNorm: string, phone: string | null) {
-  const parts = ["LOWER(TRIM(contactEmail)) = ?"];
-  const params: unknown[] = [emailNorm];
-  if (phone && phone.trim()) {
-    parts.push("REPLACE(contactPhone, ' ', '') = ?");
-    params.push(phone.replace(/\s+/g, ""));
-  }
-  return { sql: `(${parts.join(" OR ")})`, params };
+function buildOwnershipMatch(emailNorm: string) {
+  return { sql: `LOWER(TRIM(contactEmail)) = ?`, params: [emailNorm] };
 }
 
 export async function GET(request: NextRequest) {
@@ -43,21 +36,7 @@ export async function GET(request: NextRequest) {
     const pool = await getPool();
     if (!pool) throw new Error("Pool não disponível");
 
-    // Telefone do perfil (para ligar pedidos criados com o mesmo número antes do login)
-    // NOTA: A tabela `users` ainda não tem coluna `phone`, portanto este fallback
-    // não funciona por enquanto. Fallback desactivado até migração.
-    let phone: string | null = null;
-    // try {
-    //   const [uRows] = await pool.execute(
-    //     "SELECT phone FROM users WHERE email = ? AND deletedAt IS NULL LIMIT 1",
-    //     [emailNorm],
-    //   ) as [Array<{ phone: string | null }>, unknown];
-    //   phone = uRows[0]?.phone ?? null;
-    // } catch {
-    //   phone = null;
-    // }
-
-    const match = buildOwnershipMatch(emailNorm, phone);
+    const match = buildOwnershipMatch(emailNorm);
     
     console.log("[v0] GET /api/users/me/orders — DEBUG:");
     console.log("  emailNorm:", emailNorm);
@@ -100,8 +79,6 @@ export async function GET(request: NextRequest) {
        WHERE ${match.sql}`,
       match.params,
     ) as [Array<{ totalOrders: number; activeOrders: number | null; lastOrderDate: string | null }>, unknown];
-    
-    console.log("  summary:", summary);
 
     const summary = {
       totalOrders:   Number(summaryRows[0]?.totalOrders ?? 0),
