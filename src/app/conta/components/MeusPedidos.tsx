@@ -116,10 +116,22 @@ export default function MeusPedidos() {
     setLoading(true);
     try {
       const res = await fetch(`/api/users/me/orders?status=${f}&page=${p}`, { credentials: "include" });
-      const data = await res.json() as { orders: Order[]; total: number; pages: number };
+      const data = await res.json() as { orders?: Order[]; total?: number; pages?: number; error?: string };
+      if (data.error) {
+        console.error("[MeusPedidos] API error:", data.error);
+        setOrders([]);
+        setTotal(0);
+        setPages(1);
+        return;
+      }
       setOrders(data.orders ?? []);
       setTotal(data.total ?? 0);
       setPages(data.pages ?? 1);
+    } catch (err) {
+      console.error("[MeusPedidos] Fetch failed:", err);
+      setOrders([]);
+      setTotal(0);
+      setPages(1);
     } finally {
       setLoading(false);
     }

@@ -35,11 +35,17 @@ export default function ContaCliente({ nome, email, avatar }: Props) {
   useEffect(() => {
     fetch("/api/users/me/orders?page=1", { credentials: "include" })
       .then((r) => r.json())
-      .then((d: { orders?: Order[]; summary?: OrderSummary }) => {
+      .then((d: { orders?: Order[]; summary?: OrderSummary; error?: string }) => {
+        if (d.error) {
+          console.error("[ContaCliente] API error:", d.error);
+          return;
+        }
         if (d.orders) setOrders(d.orders.slice(0, 10));
         if (d.summary) setSummary(d.summary);
       })
-      .catch(() => { /* falha silenciosa */ });
+      .catch((err) => {
+        console.error("[ContaCliente] Fetch failed:", err);
+      });
   }, []);
 
   const handleUpdate = (updated: Partial<UserProfile>) => {

@@ -77,8 +77,8 @@ export async function GET(request: NextRequest) {
          precoFinal, precoFinalIva,
          mensagemCliente, description,
          scheduledDate, scheduledStartTime,
-         createdAt, updatedAt, confirmadoPeloCliente,
-         canceladoPeloCliente
+         confirmadoPeloCliente, canceladoPeloCliente,
+         createdAt
        FROM simulatorOrders
        WHERE ${where}
        ORDER BY createdAt DESC
@@ -93,8 +93,21 @@ export async function GET(request: NextRequest) {
       pages: Math.ceil(total / limit),
       summary,
     });
-  } catch (err) {
-    console.error("[api/users/me/orders] GET:", err);
-    return NextResponse.json({ error: "Erro ao carregar pedidos." }, { status: 500 });
+  } catch (err: any) {
+    const errorMsg = err?.message || String(err);
+    console.error("[api/users/me/orders] GET ERROR:", {
+      message: errorMsg,
+      stack: err?.stack,
+      email: emailNorm,
+    });
+    return NextResponse.json(
+      {
+        ok: false,
+        error: "ORDERS_FETCH_FAILED",
+        message: "Não foi possível carregar os pedidos.",
+        ...(process.env.NODE_ENV === "development" && { details: errorMsg }),
+      },
+      { status: 500 }
+    );
   }
 }
