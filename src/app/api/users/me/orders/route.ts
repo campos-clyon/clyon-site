@@ -44,17 +44,18 @@ export async function GET(request: NextRequest) {
     if (!pool) throw new Error("Pool não disponível");
 
     // Telefone do perfil (para ligar pedidos criados com o mesmo número antes do login)
+    // NOTA: A tabela `users` ainda não tem coluna `phone`, portanto este fallback
+    // não funciona por enquanto. Fallback desactivado até migração.
     let phone: string | null = null;
-    try {
-      const [uRows] = await pool.execute(
-        "SELECT phone FROM users WHERE email = ? AND deletedAt IS NULL LIMIT 1",
-        [emailNorm],
-      ) as [Array<{ phone: string | null }>, unknown];
-      phone = uRows[0]?.phone ?? null;
-    } catch {
-      // Se a tabela users não tiver deletedAt/phone num schema antigo, ignoramos o fallback.
-      phone = null;
-    }
+    // try {
+    //   const [uRows] = await pool.execute(
+    //     "SELECT phone FROM users WHERE email = ? AND deletedAt IS NULL LIMIT 1",
+    //     [emailNorm],
+    //   ) as [Array<{ phone: string | null }>, unknown];
+    //   phone = uRows[0]?.phone ?? null;
+    // } catch {
+    //   phone = null;
+    // }
 
     const match = buildOwnershipMatch(emailNorm, phone);
 

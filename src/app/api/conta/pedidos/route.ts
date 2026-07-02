@@ -16,17 +16,19 @@ export async function GET() {
     const pool = await getPool();
     if (!pool) throw new Error("Pool não disponível");
 
-    // Telefone do perfil — permite ligar pedidos criados com o mesmo número antes do login
-    let phone: string | null = null;
-    try {
-      const [uRows] = await pool.execute(
-        "SELECT phone FROM users WHERE email = ? AND deletedAt IS NULL LIMIT 1",
-        [emailNorm],
-      ) as [Array<{ phone: string | null }>, unknown];
-      phone = uRows[0]?.phone ?? null;
-    } catch {
-      phone = null;
-    }
+  // Telefone do perfil — permite ligar pedidos criados com o mesmo número antes do login
+  // NOTA: A tabela `users` ainda não tem coluna `phone`, portanto este fallback
+  // não funciona por enquanto. Fallback desactivado até migração.
+  let phone: string | null = null;
+  // try {
+  //   const [uRows] = await pool.execute(
+  //     "SELECT phone FROM users WHERE email = ? AND deletedAt IS NULL LIMIT 1",
+  //     [emailNorm],
+  //   ) as [Array<{ phone: string | null }>, unknown];
+  //   phone = uRows[0]?.phone ?? null;
+  // } catch {
+  //   phone = null;
+  // }
 
     // Ligação por email (normalizado) OU telefone
     const parts = ["LOWER(TRIM(contactEmail)) = ?"];
