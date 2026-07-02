@@ -83,8 +83,17 @@ export async function GET(request: NextRequest) {
         [...params, limit, offset],
       ) as [Array<Record<string, unknown>>, unknown];
 
+      // Serialize dates properly before returning
+      const serializedOrders = rows.map((row) => ({
+        ...row,
+        createdAt: row.createdAt instanceof Date ? row.createdAt.toISOString() : row.createdAt,
+        scheduledDate: row.scheduledDate instanceof Date ? row.scheduledDate.toISOString() : row.scheduledDate,
+        scheduledStartTime: row.scheduledStartTime instanceof Date ? row.scheduledStartTime.toISOString() : row.scheduledStartTime,
+      }));
+
       return {
-        orders: rows,
+        ok: true,
+        orders: serializedOrders,
         total,
         page,
         pages: Math.ceil(total / limit),
