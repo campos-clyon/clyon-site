@@ -458,9 +458,24 @@ export async function POST(req: NextRequest) {
       "Pedido recebido para análise. A equipa CLYON irá confirmar os dados e entrar em contacto em breve.";
   }
 
+  // ── Deslocação — garantir que o resultado leva sempre a distância do pedido ──
+  // Se o Gemini não devolveu "travel" (ex: timeout/fallback local), derivamos a
+  // partir da distância enviada no pedido para que o admin veja sempre os km.
+  let travel = analysis.travel;
+  const orderKm = order.distanceFromBase?.distanceKm ?? null;
+  if ((!travel || travel.distanceKm == null) && orderKm != null) {
+    travel = {
+      distanceKm: orderKm,
+      durationText: order.distanceFromBase?.durationText ?? null,
+      distanceCost: Math.round(orderKm * 2 * 100) / 100,
+      source: order.distanceFromBase?.isEstimate ? "estimate" : "google",
+    };
+  }
+
   // ── 7. Compor resposta final ──────────────────────────────────────────────
   const result: EstimateResult = {
     ...analysis,
+    ...(travel ? { travel } : {}),
     analysisSource,
     confidence,
     customerMessage,
@@ -537,18 +552,27 @@ function formatOrderDataForPrompt(order: OrderData, resolvedItemCount: number, i
       `Estacionamento: ${parkLabel(order.destinationAccess?.parkingDistance)}`,
       `Acesso Difícil: ${order.destinationAccess?.difficultAccess ? "Sim" : "Não"}`,
       "",
-      "=== MUDANÇA: PERCURSO ===",
+      "=== MUDANÇA: PERCURSO (OBRIGATÓRIO CONSIDERAR NO PREÇO) ===",
+      `Base CLYON: Av. Q.ta das Laranjeiras, 2865-688 Fernão Ferro, Portugal`,
+      `Distância Base→Origem: ${order.distanceFromBase?.distanceKm ? `${order.distanceFromBase.distanceKm} km${order.distanceFromBase.durationText ? ` · ${order.distanceFromBase.durationText}` : ""}` : "(não calculada)"}`,
       `Distância Origem→Destino: ${order.movingDistance?.distanceKm ? `${order.movingDistance.distanceKm} km` : "(não calculada)"}`,
-      `Duração Estimada: ${order.movingDistance?.durationText || "(não calculada)"}`,
+      `Duração Estimada Origem→Destino: ${order.movingDistance?.durationText || "(não calculada)"}`,
     );
   } else {
+    const dKm = order.distanceFromBase?.distanceKm;
     lines.push(
       "",
       "=== LOCALIZAÇÃO ===",
       `Morada: ${order.address?.formattedAddress || "(não fornecida)"}`,
       `Localidade: ${order.address?.city || "(não fornecida)"}`,
       `Código Postal: ${order.address?.postalCode || "(não fornecido)"}`,
-      `Distância da Base: ${order.distanceFromBase?.distanceKm ? `${order.distanceFromBase.distanceKm} km` : "(não calculada)"}`,
+      "",
+      "=== DADOS DE DESLOCAÇÃO (OBRIGATÓRIO CONSIDERAR NO PREÇO) ===",
+      `Base CLYON: Av. Q.ta das Laranjeiras, 2865-688 Fernão Ferro, Portugal`,
+      `Morada do cliente: ${order.address?.formattedAddress || order.address?.city || "(não fornecida)"}`,
+      `Distância da base: ${dKm ? `${dKm} km` : "(NÃO CALCULADA — assume acesso local e assinala em missingFields)"}`,
+      `Tempo estimado de deslocação: ${order.distanceFromBase?.durationText || "(não calculado)"}`,
+      `Custo de deslocação interno (km × 2 €, ida+volta já embebida nas zonas): ${dKm ? `${(Math.round(dKm * 2 * 100) / 100)} €` : "(a confirmar)"}`,
       "",
       "=== CONDIÇÕES DE ACESSO ===",
       `Andar: ${order.floor || "(não fornecido)"}`,
@@ -612,6 +636,11 @@ FORMATO DE RESPOSTA (JSON puro — sem markdown, sem texto extra)
     "peopleCount": número de pessoas da equipa,
     "hourlyRatePerPerson": custo €/h por pessoa,
     "laborCost": horas × pessoas × €/h
+  },
+  "travel": {
+    "distanceKm": número (distância da base CLYON à morada, dos DADOS DE DESLOCAÇÃO — null se não calculada),
+    "durationText": "string (tempo de deslocação, ex: 43 min — null se não calculado)",
+    "distanceCost": número (= distanceKm × 2, arredondado — componente de deslocação considerada; null se distância desconhecida)
   }
 }
 
@@ -647,6 +676,12 @@ REGRAS ABSOLUTAS
       EXEMPLO: 10 sacos ensacados, acesso normal → 10 × 3,00 = 30€ (preço saco) + tempo fórmula. Mínimo = 90€.
       EXEMPLO: 20 sacos, sem elevador → 20 × 3,20 = 64€ (preço saco) + tempo fórmula. Mínimo = 90€.
    d) MUDANÇA: mínimo fixo 150 € s/IVA — sem mínimo de zona.
+2.1. DESLOCAÇÃO — OBRIGATÓRIA NO PREÇO FINAL:
+   - A distância da base CLYON até à morada (secção "DADOS DE DESLOCAÇÃO") TEM SEMPRE de influenciar o preço final. NUNCA gerar preço ignorando a deslocação.
+   - Para cargas completas/esvaziamentos, as bandas de zona/distância acima já embebem a deslocação — aplica a banda correta consoante os km reais.
+   - Para itens soltos, entulho e mudança, adiciona a componente de deslocação ao custo antes da margem: custo_deslocação = distanceKm × 2 € (regra interna CLYON, cobre ida+volta).
+   - Preenche SEMPRE o objeto "travel" com distanceKm, durationText e distanceCost.
+   - Se a distância NÃO estiver calculada, assume acesso local, assinala "distancia_base" em missingFields e usa confidence no máximo "medium".
 3. estimatedPriceWithoutVat, estimateMinWithoutVat e estimateMaxWithoutVat NUNCA podem ser null ou 0.
 4. Se faltarem dados críticos, dá SEMPRE um intervalo razoável com confidence "low".
 5. NUNCA devolveres preços 0 ou null.
@@ -701,6 +736,25 @@ function parseGeminiResponse(response: string): EstimateResult {
       };
     }
 
+    // Deslocação — km deve ter sido considerado no preço. distanceCost = km × 2 (regra CLYON).
+    let travel: EstimateResult["travel"] = undefined;
+    const tk = parsed.travel?.distanceKm;
+    if (parsed.travel && (typeof tk === "number" || tk === null)) {
+      const km = typeof tk === "number" ? tk : null;
+      const cost =
+        typeof parsed.travel.distanceCost === "number"
+          ? parsed.travel.distanceCost
+          : km !== null
+            ? Math.round(km * 2 * 100) / 100
+            : null;
+      travel = {
+        distanceKm: km,
+        durationText: typeof parsed.travel.durationText === "string" ? parsed.travel.durationText : null,
+        distanceCost: cost,
+        source: "google",
+      };
+    }
+
     const confidence = (["high", "medium", "low"].includes(parsed.confidence)
       ? parsed.confidence
       : "medium") as "high" | "medium" | "low";
@@ -730,6 +784,7 @@ function parseGeminiResponse(response: string): EstimateResult {
       customerMessage: parsed.customerMessage || "Análise completada",
       internalNotes: Array.isArray(parsed.internalNotes) ? parsed.internalNotes : [],
       labor,
+      travel,
     };
   } catch (error) {
     console.error("[v0] parseGeminiResponse: Erro ao parse JSON", error);

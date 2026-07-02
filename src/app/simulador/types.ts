@@ -175,6 +175,17 @@ export interface EstimateResult {
   isFullLoad?: boolean | null;
   /** Detalhes de mão de obra (sempre presente quando status = "estimated") */
   labor?: LaborCost;
+  /**
+   * Componente de deslocação considerada no cálculo (base CLYON → morada).
+   * distanceCost é interno (regra CLYON: km × 2 €) e nunca é detalhado ao cliente.
+   */
+  travel?: {
+    distanceKm: number | null;
+    durationText?: string | null;
+    distanceCost?: number | null;
+    /** Origem do valor: "google" (Routes API), "manual" (admin) ou "estimate" (Haversine) */
+    source?: "google" | "manual" | "estimate" | null;
+  };
   /** Fonte da análise — preçário CLYON tem sempre prioridade */
   analysisSource?: AnalysisSource;
   /** Confiança geral da análise */

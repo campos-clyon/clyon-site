@@ -107,8 +107,16 @@ export async function POST(req: NextRequest) {
             savedAt: new Date().toISOString(),
           })
         : null,
+      // Distância guardada (km): mudança usa origem→destino; restantes usam base→morada.
       distanceKm: (order.movingDistance?.distanceKm ?? order.distanceFromBase?.distanceKm)?.toString() ?? null,
-      distanceText: order.movingDistance?.durationText ?? order.distanceFromBase?.durationText ?? null,
+      // distanceText passa a guardar um resumo legível "X km · Y min" (antes só o tempo).
+      distanceText: (() => {
+        const src = order.movingDistance?.distanceKm ? order.movingDistance : order.distanceFromBase;
+        const km = src?.distanceKm;
+        if (!km) return null;
+        const kmStr = `${String(km).replace(".", ",")} km`;
+        return src?.durationText ? `${kmStr} · ${src.durationText}` : kmStr;
+      })(),
       chatJson: chatHistory ? JSON.stringify(chatHistory) : null,
       priority,
       // Sempre sem assistente — fluxo de aceitação manual obrigatório

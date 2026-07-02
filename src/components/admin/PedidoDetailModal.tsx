@@ -97,6 +97,12 @@ type GeminiEstimate = {
     hourlyRatePerPerson?: number;
     laborCost?: number;
   };
+  travel?: {
+    distanceKm?: number | null;
+    durationText?: string | null;
+    distanceCost?: number | null;
+    source?: "google" | "manual" | "estimate" | null;
+  };
 };
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -302,6 +308,9 @@ export default function PedidoDetailModal({ id, token, isAdmin, colabId, colabFu
   const [editFloor, setEditFloor] = useState("");
   const [editHasElevator, setEditHasElevator] = useState("");
   const [editParkingDistance, setEditParkingDistance] = useState("");
+  const [editDistanceKm, setEditDistanceKm] = useState("");
+  const [distanceCalculating, setDistanceCalculating] = useState(false);
+  const [distanceMsg, setDistanceMsg] = useState("");
   const [editPrecoFinal, setEditPrecoFinal] = useState("");
   const [editPrecoFinalIva, setEditPrecoFinalIva] = useState("");
   const [editMensagemCliente, setEditMensagemCliente] = useState("");
@@ -374,6 +383,8 @@ export default function PedidoDetailModal({ id, token, isAdmin, colabId, colabFu
     setEditFloor(o.floor ?? "");
     setEditHasElevator(o.hasElevator ?? "");
     setEditParkingDistance(o.parkingDistance ?? "");
+    setEditDistanceKm(o.distanceKm ?? "");
+    setDistanceMsg("");
     setEditPrecoFinal(o.precoFinal ?? "");
     setEditPrecoFinalIva(o.precoFinalIva ?? "");
     setEditMensagemCliente(o.mensagemCliente ?? "");
@@ -430,6 +441,103 @@ export default function PedidoDetailModal({ id, token, isAdmin, colabId, colabFu
     return () => window.removeEventListener("keydown", onKey);
   }, [onClose, showDelete, lightbox]);
 
+  /**
+   * Calcula a distância da base CLYON até à morada do serviço via /api/maps/distance
+   * e persiste distanceKm + distanceText no pedido. Para mudança usa a morada de origem.
+   * Devolve { distanceKm, durationText } ou null se não foi possível calcular.
+   * @param opts.persist  quando true, guarda a distância na DB e actualiza o estado
+   * @param opts.silent   quando true, não escreve mensagens na UI (usado no fluxo de recálculo)
+   */
+  async function calcularDistancia(
+    opts: { persist?: boolean; silent?: boolean } = {}
+  ): Promise<{ distanceKm: number; durationText: string | null } | null> {
+    if (!order) return null;
+    const { persist = true, silent = false } = opts;
+    const raw = parseRawOrder(order.rawOrderJson);
+    const mov = isMudanca(order.serviceType);
+    // Destino do cálculo base→morada (para mudança, a morada de origem)
+    const addr = mov
+      ? (raw.originAddress?.formattedAddress ?? raw.originAddress?.address ?? order.address ?? "")
+      : (order.address ?? raw.address?.formattedAddress ?? "");
+    const geo = mov ? raw.originAddress : raw.address;
+    if (!addr && !geo?.lat) {
+      if (!silent) setDistanceMsg("Sem morada para calcular. Preencha a morada primeiro.");
+      return null;
+    }
+    if (!silent) { setDistanceCalculating(true); setDistanceMsg(""); }
+    try {
+      const res = await fetch("/api/maps/distance", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...authHeader },
+        body: JSON.stringify({
+          destination: { formattedAddress: addr || undefined, lat: geo?.lat, lng: geo?.lng, placeId: geo?.placeId },
+        }),
+      });
+      const data = await res.json();
+      if (!data?.ok || typeof data.distanceKm !== "number") {
+        if (!silent) setDistanceMsg(data?.customerMessage ?? "Não foi possível calcular a distância. Insira o valor manualmente.");
+        return null;
+      }
+      const distanceKm: number = data.distanceKm;
+      const durationText: string | null = data.durationText ?? null;
+      const distanceText = durationText
+        ? `${String(distanceKm).replace(".", ",")} km · ${durationText}`
+        : `${String(distanceKm).replace(".", ",")} km`;
+
+      if (persist) {
+        const saveRes = await fetch(`/api/admin/pedidos/${order.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json", ...authHeader },
+          body: JSON.stringify({ distanceKm: String(distanceKm), distanceText }),
+        });
+        if (saveRes.ok) {
+          const updated = await saveRes.json();
+          setOrder(updated.order ?? updated);
+        }
+        setEditDistanceKm(String(distanceKm));
+      }
+      if (!silent) setDistanceMsg(`Distância calculada: ${distanceText}`);
+      return { distanceKm, durationText };
+    } catch {
+      if (!silent) setDistanceMsg("Erro ao calcular distância. Insira o valor manualmente.");
+      return null;
+    } finally {
+      if (!silent) setDistanceCalculating(false);
+    }
+  }
+
+  /** Botão manual: calcula a distância e guarda-a no pedido. */
+  async function handleCalcularDistancia() {
+    setDistanceCalculating(true);
+    setDistanceMsg("");
+    await calcularDistancia({ persist: true, silent: false });
+  }
+
+  /** Guarda a distância inserida manualmente pelo admin (km → distanceKm + distanceText). */
+  async function handleGuardarDistanciaManual() {
+    if (!order) return;
+    const km = parseFloat(editDistanceKm.replace(",", "."));
+    if (isNaN(km) || km <= 0) { setDistanceMsg("Insira um valor de km válido."); return; }
+    setDistanceCalculating(true);
+    setDistanceMsg("");
+    try {
+      const distanceText = `${String(km).replace(".", ",")} km (manual)`;
+      const saveRes = await fetch(`/api/admin/pedidos/${order.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", ...authHeader },
+        body: JSON.stringify({ distanceKm: String(km), distanceText }),
+      });
+      if (!saveRes.ok) throw new Error();
+      const updated = await saveRes.json();
+      setOrder(updated.order ?? updated);
+      setDistanceMsg(`Distância manual guardada: ${km} km. Recalcule a estimativa para aplicar ao preço.`);
+    } catch {
+      setDistanceMsg("Erro ao guardar a distância manual.");
+    } finally {
+      setDistanceCalculating(false);
+    }
+  }
+
   async function handleRecalcularEstimativa() {
     if (!order) return;
     setRecalculating(true);
@@ -438,6 +546,28 @@ export default function PedidoDetailModal({ id, token, isAdmin, colabId, colabFu
     try {
       // Reconstituir rawOrderJson para enviar contexto completo ao Gemini
       const rawJson = order.rawOrderJson ? (() => { try { return JSON.parse(order.rawOrderJson!); } catch { return {}; } })() : {};
+
+      // ── Resolver distância ANTES de estimar ──────────────────────────────
+      // Prioridade: km manual (campo do admin) → distanceKm já guardado →
+      // distanceFromBase do rawOrderJson → cálculo automático via Google Maps.
+      // Sem distância o Gemini não consegue precificar a deslocação corretamente.
+      const manualKm = editDistanceKm ? parseFloat(editDistanceKm.replace(",", ".")) : NaN;
+      let resolvedKm: number | null =
+        !isNaN(manualKm) && manualKm > 0
+          ? manualKm
+          : order.distanceKm
+            ? Number(order.distanceKm)
+            : typeof rawJson.distanceFromBase?.distanceKm === "number"
+              ? rawJson.distanceFromBase.distanceKm
+              : null;
+      let resolvedDuration: string | null =
+        rawJson.distanceFromBase?.durationText ?? null;
+
+      if (resolvedKm === null) {
+        const calc = await calcularDistancia({ persist: true, silent: true });
+        if (calc) { resolvedKm = calc.distanceKm; resolvedDuration = calc.durationText; }
+      }
+
       const orderData = {
         serviceType: order.serviceType ?? rawJson.serviceType ?? undefined,
         description: order.description ?? rawJson.description ?? undefined,
@@ -448,9 +578,10 @@ export default function PedidoDetailModal({ id, token, isAdmin, colabId, colabFu
         floor: order.floor ?? rawJson.floor ?? undefined,
         hasElevator: order.hasElevator ?? rawJson.hasElevator ?? undefined,
         parkingDistance: order.parkingDistance ?? rawJson.parkingDistance ?? undefined,
-        distanceFromBase: order.distanceKm
-          ? { distanceKm: Number(order.distanceKm) }
-          : rawJson.distanceFromBase ?? undefined,
+        distanceFromBase:
+          resolvedKm !== null
+            ? { distanceKm: resolvedKm, durationText: resolvedDuration ?? undefined }
+            : rawJson.distanceFromBase ?? undefined,
         urgency: order.urgency ?? rawJson.urgency ?? undefined,
         // Mudança: passar origem/destino/acesso
         originAddress: rawJson.originAddress ?? undefined,
@@ -490,6 +621,15 @@ export default function PedidoDetailModal({ id, token, isAdmin, colabId, colabFu
         // Pré-preencher precoFinal/precoFinalIva como sugestão (admin pode editar)
         ...(recommended !== null ? { precoFinal: String(recommended) } : {}),
         ...(withVat !== null ? { precoFinalIva: String(withVat) } : {}),
+        // Persistir a distância considerada no cálculo
+        ...(resolvedKm !== null
+          ? {
+              distanceKm: String(resolvedKm),
+              distanceText: resolvedDuration
+                ? `${String(resolvedKm).replace(".", ",")} km · ${resolvedDuration}`
+                : `${String(resolvedKm).replace(".", ",")} km`,
+            }
+          : {}),
       };
 
       const saveRes = await fetch(`/api/admin/pedidos/${order.id}`, {
@@ -1218,7 +1358,7 @@ export default function PedidoDetailModal({ id, token, isAdmin, colabId, colabFu
                   );
                 })()}
 
-                {/* ── Aba 2: Cliente e Morada ──────────────────────────────── */}
+                {/* ── Aba 2: Cliente e Morada ────────���─────────────────────── */}
                 {activeTab === "cliente_morada" && (() => {
                   const raw = parseRawOrder(order.rawOrderJson);
                   const isMov = isMudanca(order.serviceType);
@@ -1511,6 +1651,42 @@ export default function PedidoDetailModal({ id, token, isAdmin, colabId, colabFu
                             )}
                           </div>
 
+                          {/* Deslocação considerada no cálculo (base CLYON → morada) */}
+                          {(() => {
+                            const tKm = est.travel?.distanceKm ?? (order.distanceKm ? Number(order.distanceKm) : null);
+                            const tDur = est.travel?.durationText ?? null;
+                            const tCost = est.travel?.distanceCost ?? (tKm != null ? Math.round(tKm * 2 * 100) / 100 : null);
+                            const tHours = est.labor?.estimatedHours ?? null;
+                            return (
+                              <div className="rounded-[14px] border border-cyan-400/15 bg-cyan-400/[0.04] p-3">
+                                <p className="text-[9px] font-semibold uppercase tracking-wider text-cyan-500 mb-2">Deslocação e horas consideradas</p>
+                                <div className="grid grid-cols-3 gap-2">
+                                  <div>
+                                    <p className="text-[9px] font-semibold uppercase tracking-wider text-slate-600">Distância da base</p>
+                                    <p className="mt-1 text-[12px] font-bold text-cyan-300">
+                                      {tKm != null ? `${String(tKm).replace(".", ",")} km${tDur ? ` · ${tDur}` : ""}` : "A confirmar"}
+                                    </p>
+                                  </div>
+                                  <div>
+                                    <p className="text-[9px] font-semibold uppercase tracking-wider text-slate-600">Custo deslocação</p>
+                                    <p className="mt-1 text-[12px] font-bold text-cyan-300">
+                                      {tCost != null ? `${tCost.toFixed(2)} €` : "—"}
+                                    </p>
+                                  </div>
+                                  <div>
+                                    <p className="text-[9px] font-semibold uppercase tracking-wider text-slate-600">Horas estimadas</p>
+                                    <p className="mt-1 text-[12px] font-bold text-cyan-300">
+                                      {tHours != null ? `${tHours}h` : (est.estimatedHoursText ?? "—")}
+                                    </p>
+                                  </div>
+                                </div>
+                                {tKm == null && (
+                                  <p className="mt-2 text-[10px] text-amber-400">Distância a confirmar manualmente — insira os km abaixo e recalcule.</p>
+                                )}
+                              </div>
+                            );
+                          })()}
+
                           {est.summary && (
                             <div>
                               <p className="text-[9px] font-semibold uppercase tracking-wider text-violet-400 mb-1">Resumo</p>
@@ -1560,6 +1736,32 @@ export default function PedidoDetailModal({ id, token, isAdmin, colabId, colabFu
                             </div>
                           )}
                         </div>
+                      )}
+
+                      {isAdmin && (
+                        <Field label="Distância da base CLYON (km)">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <input
+                              type="number" step="0.1" min="0" value={editDistanceKm}
+                              onChange={(e) => setEditDistanceKm(e.target.value)}
+                              className={`${inputCls} w-32`} placeholder="Ex: 26.8"
+                            />
+                            <button
+                              type="button" onClick={handleCalcularDistancia} disabled={distanceCalculating}
+                              className="rounded-2xl border border-cyan-400/30 bg-cyan-400/10 px-4 py-2.5 text-sm font-semibold text-cyan-300 hover:bg-cyan-400/20 disabled:opacity-60 transition"
+                            >
+                              {distanceCalculating ? "A calcular..." : "Calcular pela morada"}
+                            </button>
+                            <button
+                              type="button" onClick={handleGuardarDistanciaManual} disabled={distanceCalculating}
+                              className="rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-2.5 text-sm font-semibold text-slate-300 hover:bg-white/[0.08] disabled:opacity-60 transition"
+                            >
+                              Guardar km manual
+                            </button>
+                          </div>
+                          {distanceMsg && <p className="mt-1.5 text-[11px] text-cyan-400">{distanceMsg}</p>}
+                          <p className="mt-1 text-[10px] text-slate-500">Base: Av. Q.ta das Laranjeiras, Fernão Ferro. A distância entra no cálculo do preço ao recalcular a estimativa.</p>
+                        </Field>
                       )}
 
                       {isAdmin && (
