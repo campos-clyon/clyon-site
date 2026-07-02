@@ -29,12 +29,6 @@ export async function POST(req: NextRequest) {
     const sessionEmail = session?.user?.email?.trim().toLowerCase() ?? null;
     const formEmail = order.receiver?.email?.trim().toLowerCase() ?? null;
     const contactEmail = sessionEmail ?? formEmail;
-    
-    console.log("[v0] POST /api/simulador/pedido — DEBUG:");
-    console.log("  session.user.email:", session?.user?.email);
-    console.log("  sessionEmail (normalized):", sessionEmail);
-    console.log("  formEmail:", formEmail);
-    console.log("  decidedContactEmail:", contactEmail);
 
     const priority = calculateOrderPriority({
       urgency: order.urgency,
@@ -136,10 +130,6 @@ export async function POST(req: NextRequest) {
     };
 
     const id = await createSimulatorOrder(row);
-    
-    console.log("[v0] POST /api/simulador/pedido — CRIADO:");
-    console.log("  pedido id:", id);
-    console.log("  contactEmail guardado:", row.contactEmail);
 
     // Confirmação de escrita
     const created = await getSimulatorOrderById(id);
@@ -150,9 +140,6 @@ export async function POST(req: NextRequest) {
         { status: 500 }
       );
     }
-    
-    console.log("[v0] POST /api/simulador/pedido — VERIFICADO:");
-    console.log("  pedido recuperado, contactEmail:", created.contactEmail);
 
     // Histórico
     await appendOrderHistory(id, {
