@@ -146,7 +146,17 @@ export default function LocationModal({ onClose }: LocationModalProps) {
       (err) => {
         setGpsLoading(false);
         if (err.code === err.PERMISSION_DENIED) {
-          setError('Permissão de localização negada');
+          // A geolocalização pode estar bloqueada por política do browser
+          // (ex.: dentro de um iframe/pré-visualização) — nesse caso o browser
+          // nem chega a mostrar o pedido de permissão.
+          const blockedByPolicy =
+            typeof err.message === 'string' &&
+            err.message.toLowerCase().includes('permissions policy');
+          setError(
+            blockedByPolicy
+              ? 'A localização está bloqueada neste contexto. Abre o site diretamente em clyon.pt e tenta de novo, ou escreve a tua morada acima.'
+              : 'Permissão de localização negada. Ativa a localização nas definições do browser ou escreve a tua morada acima.',
+          );
         } else if (err.code === err.TIMEOUT) {
           setError('Tempo esgotado ao obter localização');
         } else {
