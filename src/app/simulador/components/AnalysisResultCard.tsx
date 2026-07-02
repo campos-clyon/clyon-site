@@ -1,7 +1,7 @@
 "use client";
 
 import type { EstimateResult } from "../types";
-import { AlertCircle, CheckCircle, TrendingUp } from "lucide-react";
+import { AlertCircle, CheckCircle } from "lucide-react";
 
 interface AnalysisResultCardProps {
   analysis: EstimateResult;
@@ -49,14 +49,6 @@ export default function AnalysisResultCard({
   const config = statusConfig[analysis.status];
   const StatusIcon = config.icon;
 
-  const difficultyLabel = {
-    1: "Muito Simples",
-    2: "Simples",
-    3: "Moderado",
-    4: "Complexo",
-    5: "Muito Complexo",
-  };
-
   return (
     <div className={`rounded-2xl border-2 ${config.borderColor} ${config.bgColor} p-6 space-y-6`}>
       {/* Header */}
@@ -81,18 +73,6 @@ export default function AnalysisResultCard({
 
           {/* Breakdown detalhado */}
           <div className="space-y-1.5 pt-2 border-t border-gray-100">
-            {/* Mão de obra */}
-            {analysis.labor && (
-              <div className="flex justify-between text-xs text-gray-500">
-                <span>
-                  Mão de obra&nbsp;
-                  <span className="text-gray-400">
-                    ({analysis.labor.estimatedHours}h &times; {analysis.labor.peopleCount}p &times; {analysis.labor.hourlyRatePerPerson}€/h)
-                  </span>
-                </span>
-                <span className="font-medium text-gray-700">€{analysis.labor.laborCost.toFixed(2)}</span>
-              </div>
-            )}
             {/* Sem IVA */}
             {analysis.estimatedPriceWithoutVat && (
               <div className="flex justify-between text-xs text-gray-500">
@@ -113,48 +93,6 @@ export default function AnalysisResultCard({
               <span className="text-green-700">€{analysis.estimatedPriceWithVat.toFixed(2)}</span>
             </div>
           </div>
-        </div>
-      )}
-
-      {/* Difficulty Level */}
-      <div className="bg-white rounded-xl p-4 space-y-2">
-        <p className="text-sm text-gray-600">Nível de Dificuldade</p>
-        <div className="flex items-center gap-3">
-          <TrendingUp className="w-5 h-5 text-cyan-600" />
-          <span className="font-semibold text-gray-900">
-            {difficultyLabel[analysis.difficultyLevel]} ({analysis.difficultyLevel}/5)
-          </span>
-        </div>
-        <div className="flex gap-1 mt-3">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <div
-              key={i}
-              className={`h-1.5 flex-1 rounded-full ${
-                i < analysis.difficultyLevel ? "bg-cyan-600" : "bg-gray-300"
-              }`}
-            />
-          ))}
-        </div>
-      </div>
-
-      {/* Summary */}
-      <div className="bg-white rounded-xl p-4 space-y-2">
-        <p className="text-sm text-gray-600">Resumo da Análise</p>
-        <p className="text-gray-900 text-sm leading-relaxed">{analysis.summary}</p>
-      </div>
-
-      {/* Assumptions */}
-      {analysis.assumptions && analysis.assumptions.length > 0 && (
-        <div className="bg-white rounded-xl p-4 space-y-2">
-          <p className="text-sm text-gray-600">Pressupostos Considerados</p>
-          <ul className="space-y-1.5">
-            {analysis.assumptions.map((assumption, idx) => (
-              <li key={idx} className="text-sm text-gray-700 flex gap-2">
-                <span className="text-cyan-600 font-bold">•</span>
-                <span>{assumption}</span>
-              </li>
-            ))}
-          </ul>
         </div>
       )}
 
