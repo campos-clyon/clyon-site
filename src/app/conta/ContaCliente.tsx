@@ -33,7 +33,7 @@ export default function ContaCliente({ nome, email, avatar }: Props) {
 
   // Carregar últimos pedidos para Visão Geral
   useEffect(() => {
-    fetch("/api/users/me/orders?page=1")
+    fetch("/api/users/me/orders?page=1", { credentials: "include" })
       .then((r) => r.json())
       .then((d: { orders?: Order[]; summary?: OrderSummary }) => {
         if (d.orders) setOrders(d.orders.slice(0, 10));

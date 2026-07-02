@@ -115,7 +115,7 @@ export default function MeusPedidos() {
   const fetchOrders = useCallback(async (f: string, p: number) => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/users/me/orders?status=${f}&page=${p}`);
+      const res = await fetch(`/api/users/me/orders?status=${f}&page=${p}`, { credentials: "include" });
       const data = await res.json() as { orders: Order[]; total: number; pages: number };
       setOrders(data.orders ?? []);
       setTotal(data.total ?? 0);
