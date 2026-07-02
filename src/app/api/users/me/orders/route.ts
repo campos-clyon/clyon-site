@@ -58,6 +58,37 @@ export async function GET(request: NextRequest) {
     // }
 
     const match = buildOwnershipMatch(emailNorm, phone);
+    
+    console.log("[v0] GET /api/users/me/orders — DEBUG:");
+    console.log("  emailNorm:", emailNorm);
+    console.log("  match.sql:", match.sql);
+    console.log("  match.params:", match.params);
+    
+    // Test: contar TODOS os pedidos na tabela (sem filtro)
+    const [totalRowsTest] = await pool.execute(
+      `SELECT COUNT(*) AS total FROM simulatorOrders`
+    ) as [Array<{ total: number }>, unknown];
+    console.log("  [TEST] total pedidos na tabela:", totalRowsTest[0]?.total);
+    
+    // Test: contar pedidos com email específico (sem LOWER/TRIM)
+    const [rawEmailTest] = await pool.execute(
+      `SELECT COUNT(*) AS total FROM simulatorOrders WHERE contactEmail = ?`,
+      [emailNorm]
+    ) as [Array<{ total: number }>, unknown];
+    console.log("  [TEST] pedidos com contactEmail =", emailNorm, ":", rawEmailTest[0]?.total);
+    
+    // Test: contar pedidos com LOWER(TRIM(contactEmail))
+    const [normalizedTest] = await pool.execute(
+      `SELECT COUNT(*) AS total FROM simulatorOrders WHERE LOWER(TRIM(contactEmail)) = ?`,
+      [emailNorm]
+    ) as [Array<{ total: number }>, unknown];
+    console.log("  [TEST] pedidos com LOWER(TRIM(contactEmail)) =", emailNorm, ":", normalizedTest[0]?.total);
+    
+    // Test: mostrar TODOS os contactEmails únicos
+    const [emailsTest] = await pool.execute(
+      `SELECT DISTINCT contactEmail FROM simulatorOrders LIMIT 10`
+    ) as [Array<{ contactEmail: string | null }>, unknown];
+    console.log("  [TEST] primeiros 10 contactEmails únicos:", emailsTest.map(r => r.contactEmail));
 
     // ── Resumo (Visão Geral) — sempre sobre TODOS os pedidos do cliente ──────────
     const [summaryRows] = await pool.execute(
@@ -69,6 +100,8 @@ export async function GET(request: NextRequest) {
        WHERE ${match.sql}`,
       match.params,
     ) as [Array<{ totalOrders: number; activeOrders: number | null; lastOrderDate: string | null }>, unknown];
+    
+    console.log("  summary:", summary);
 
     const summary = {
       totalOrders:   Number(summaryRows[0]?.totalOrders ?? 0),
