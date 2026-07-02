@@ -1,7 +1,28 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptionsCliente } from "@/auth-cliente";
-import { getPool } from "@/lib/db";
+import { getPool, ensureSimulatorOrdersTable } from "@/lib/db";
+
+/**
+ * Constrói a condição SQL que liga os pedidos ao cliente autenticado.
+ *
+ * Um pedido pertence ao cliente se:
+ *   1. o email do pedido (contactEmail) corresponde ao email da sessão
+ *      — comparação normalizada (TRIM + LOWER) para tolerar maiúsculas/espaços;
+ *   2. OU o telefone do pedido (contactPhone) corresponde ao telefone do perfil
+ *      — permite recuperar pedidos criados antes do login com o mesmo número.
+ *
+ * Devolve o fragmento SQL e os respectivos parâmetros.
+ */
+function buildOwnershipMatch(emailNorm: string, phone: string | null) {
+  const parts = ["LOWER(TRIM(contactEmail)) = ?"];
+  const params: unknown[] = [emailNorm];
+  if (phone && phone.trim()) {
+    parts.push("REPLACE(contactPhone, ' ', '') = ?");
+    params.push(phone.replace(/\s+/g, ""));
+  }
+  return { sql: `(${parts.join(" OR ")})`, params };
+}
 
 export async function GET(request: NextRequest) {
   const session = await getServerSession(authOptionsCliente);
@@ -10,30 +31,64 @@ export async function GET(request: NextRequest) {
   }
 
   const { searchParams } = new URL(request.url);
-  const page    = Math.max(1, Number(searchParams.get("page") ?? "1"));
-  const status  = searchParams.get("status") ?? "todos";
-  const limit   = 10;
-  const offset  = (page - 1) * limit;
+  const page   = Math.max(1, Number(searchParams.get("page") ?? "1"));
+  const status = searchParams.get("status") ?? "todos";
+  const limit  = 10;
+  const offset = (page - 1) * limit;
+
+  const emailNorm = session.user.email.trim().toLowerCase();
 
   try {
+    await ensureSimulatorOrdersTable();
     const pool = await getPool();
     if (!pool) throw new Error("Pool não disponível");
 
-    const conditions = ["contactEmail = ?"];
-    const params: unknown[] = [session.user.email];
+    // Telefone do perfil (para ligar pedidos criados com o mesmo número antes do login)
+    let phone: string | null = null;
+    try {
+      const [uRows] = await pool.execute(
+        "SELECT phone FROM users WHERE email = ? AND deletedAt IS NULL LIMIT 1",
+        [emailNorm],
+      ) as [Array<{ phone: string | null }>, unknown];
+      phone = uRows[0]?.phone ?? null;
+    } catch {
+      // Se a tabela users não tiver deletedAt/phone num schema antigo, ignoramos o fallback.
+      phone = null;
+    }
 
+    const match = buildOwnershipMatch(emailNorm, phone);
+
+    // ── Resumo (Visão Geral) — sempre sobre TODOS os pedidos do cliente ──────────
+    const [summaryRows] = await pool.execute(
+      `SELECT
+         COUNT(*) AS totalOrders,
+         SUM(CASE WHEN status NOT IN ('concluido','cancelado','rejeitado') THEN 1 ELSE 0 END) AS activeOrders,
+         MAX(createdAt) AS lastOrderDate
+       FROM simulatorOrders
+       WHERE ${match.sql}`,
+      match.params,
+    ) as [Array<{ totalOrders: number; activeOrders: number | null; lastOrderDate: string | null }>, unknown];
+
+    const summary = {
+      totalOrders:   Number(summaryRows[0]?.totalOrders ?? 0),
+      activeOrders:  Number(summaryRows[0]?.activeOrders ?? 0),
+      lastOrderDate: summaryRows[0]?.lastOrderDate ?? null,
+    };
+
+    // ── Lista paginada (respeita o filtro de estado) ─────────────────────────────
+    const conditions = [match.sql];
+    const params: unknown[] = [...match.params];
     if (status !== "todos") {
       conditions.push("status = ?");
       params.push(status);
     }
-
     const where = conditions.join(" AND ");
 
     const [countRows] = await pool.execute(
       `SELECT COUNT(*) AS total FROM simulatorOrders WHERE ${where}`,
       params,
     ) as [Array<{ total: number }>, unknown];
-    const total = countRows[0]?.total ?? 0;
+    const total = Number(countRows[0]?.total ?? 0);
 
     const [rows] = await pool.execute(
       `SELECT
@@ -56,6 +111,7 @@ export async function GET(request: NextRequest) {
       total,
       page,
       pages: Math.ceil(total / limit),
+      summary,
     });
   } catch (err) {
     console.error("[api/users/me/orders] GET:", err);

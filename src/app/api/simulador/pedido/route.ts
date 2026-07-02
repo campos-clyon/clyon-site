@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptionsCliente } from "@/auth-cliente";
 import {
   createSimulatorOrder,
   getSimulatorOrderById,
@@ -17,6 +19,16 @@ export async function POST(req: NextRequest) {
     if (!order) {
       return NextResponse.json({ error: "order required" }, { status: 400 });
     }
+
+    // ── Ligação à conta do cliente ────────────────────────────────────────────
+    // Se existir uma sessão de cliente autenticada, o pedido fica SEMPRE ligado
+    // ao email dessa conta (normalizado), garantindo que aparece em "Os meus
+    // pedidos". Caso contrário, usamos o email indicado no formulário.
+    // O email do formulário fica sempre preservado dentro de rawOrderJson.
+    const session = await getServerSession(authOptionsCliente);
+    const sessionEmail = session?.user?.email?.trim().toLowerCase() ?? null;
+    const formEmail = order.receiver?.email?.trim().toLowerCase() ?? null;
+    const contactEmail = sessionEmail ?? formEmail;
 
     const priority = calculateOrderPriority({
       urgency: order.urgency,
@@ -64,9 +76,10 @@ export async function POST(req: NextRequest) {
           : order.parkingDistance;
         return v || null;
       })(),
-      contactName: order.receiver?.name ?? null,
+      contactName: order.receiver?.name ?? session?.user?.name ?? null,
       contactPhone: order.receiver?.phone ?? null,
-      contactEmail: order.receiver?.email ?? null,
+      // Prioridade: email da conta autenticada → email do formulário
+      contactEmail,
       urgency: order.urgency || null,
       estimateMin: estimate?.estimatedPriceWithoutVat?.toString() ?? null,
       estimateMax: estimate?.estimatedPriceWithVat?.toString() ?? null,

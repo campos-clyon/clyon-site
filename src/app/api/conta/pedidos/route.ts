@@ -9,10 +9,33 @@ export async function GET() {
     return NextResponse.json({ error: "Não autenticado." }, { status: 401 });
   }
 
+  const emailNorm = session.user.email.trim().toLowerCase();
+
   try {
     await ensureSimulatorOrdersTable();
     const pool = await getPool();
     if (!pool) throw new Error("Pool não disponível");
+
+    // Telefone do perfil — permite ligar pedidos criados com o mesmo número antes do login
+    let phone: string | null = null;
+    try {
+      const [uRows] = await pool.execute(
+        "SELECT phone FROM users WHERE email = ? AND deletedAt IS NULL LIMIT 1",
+        [emailNorm],
+      ) as [Array<{ phone: string | null }>, unknown];
+      phone = uRows[0]?.phone ?? null;
+    } catch {
+      phone = null;
+    }
+
+    // Ligação por email (normalizado) OU telefone
+    const parts = ["LOWER(TRIM(contactEmail)) = ?"];
+    const params: unknown[] = [emailNorm];
+    if (phone && phone.trim()) {
+      parts.push("REPLACE(contactPhone, ' ', '') = ?");
+      params.push(phone.replace(/\s+/g, ""));
+    }
+    const where = `(${parts.join(" OR ")})`;
 
     const [rows] = await pool.execute(
       `SELECT
@@ -20,10 +43,10 @@ export async function GET() {
          precoFinalIva, mensagemCliente, createdAt, scheduledDate,
          scheduledStartTime, scheduledEndTime
        FROM simulatorOrders
-       WHERE contactEmail = ?
+       WHERE ${where}
        ORDER BY createdAt DESC
        LIMIT 50`,
-      [session.user.email],
+      params,
     ) as [Array<Record<string, unknown>>, unknown];
 
     return NextResponse.json({ pedidos: rows });

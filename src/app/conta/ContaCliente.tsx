@@ -9,7 +9,7 @@ import DadosPessoais  from "./components/DadosPessoais";
 import Faturacao      from "./components/Faturacao";
 import Notificacoes   from "./components/Notificacoes";
 import Seguranca      from "./components/Seguranca";
-import type { UserProfile, Order, Section } from "./components/types";
+import type { UserProfile, Order, OrderSummary, Section } from "./components/types";
 
 interface Props {
   nome:   string;
@@ -21,6 +21,7 @@ export default function ContaCliente({ nome, email, avatar }: Props) {
   const [section, setSection] = useState<Section>("visao-geral");
   const [user,    setUser]    = useState<UserProfile | null>(null);
   const [orders,  setOrders]  = useState<Order[]>([]);
+  const [summary, setSummary] = useState<OrderSummary | null>(null);
 
   // Carregar perfil do utilizador — cache: no-store garante dados frescos após reload
   useEffect(() => {
@@ -34,7 +35,10 @@ export default function ContaCliente({ nome, email, avatar }: Props) {
   useEffect(() => {
     fetch("/api/users/me/orders?page=1")
       .then((r) => r.json())
-      .then((d: { orders?: Order[] }) => { if (d.orders) setOrders(d.orders.slice(0, 10)); })
+      .then((d: { orders?: Order[]; summary?: OrderSummary }) => {
+        if (d.orders) setOrders(d.orders.slice(0, 10));
+        if (d.summary) setSummary(d.summary);
+      })
       .catch(() => { /* falha silenciosa */ });
   }, []);
 
@@ -70,6 +74,7 @@ export default function ContaCliente({ nome, email, avatar }: Props) {
               user={effectiveUser}
               googleAvatar={avatar}
               orders={orders}
+              summary={summary}
               onSection={setSection}
               onUpdate={handleUpdate}
             />
@@ -86,6 +91,7 @@ export default function ContaCliente({ nome, email, avatar }: Props) {
             user={effectiveUser}
             googleAvatar={avatar}
             orders={orders}
+            summary={summary}
             onSection={setSection}
             onUpdate={handleUpdate}
           />
@@ -96,12 +102,13 @@ export default function ContaCliente({ nome, email, avatar }: Props) {
 }
 
 function SectionContent({
-  section, user, googleAvatar, orders, onSection, onUpdate,
+  section, user, googleAvatar, orders, summary, onSection, onUpdate,
 }: {
   section: Section;
   user: UserProfile;
   googleAvatar: string | null;
   orders: Order[];
+  summary: OrderSummary | null;
   onSection: (s: Section) => void;
   onUpdate: (updated: Partial<UserProfile>) => void;
 }) {
@@ -110,7 +117,7 @@ function SectionContent({
 
   return (
     <div key={key} className="animate-fade-in">
-      {section === "visao-geral"    && <VisaoGeral user={user} googleAvatar={googleAvatar} orders={orders} onSection={onSection} />}
+      {section === "visao-geral"    && <VisaoGeral user={user} googleAvatar={googleAvatar} orders={orders} summary={summary} onSection={onSection} />}
       {section === "pedidos"        && <MeusPedidos />}
       {section === "dados-pessoais" && <DadosPessoais user={user} googleAvatar={googleAvatar} onUpdate={onUpdate} />}
       {section === "faturacao"      && <Faturacao user={user} onUpdate={onUpdate} />}

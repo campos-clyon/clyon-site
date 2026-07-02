@@ -4,12 +4,13 @@ import Link from "next/link";
 import UserAvatar from "@/components/UserAvatar";
 import { ArrowRight, CalendarDays, ClipboardList } from "lucide-react";
 import StatusBadge from "./StatusBadge";
-import { SERVICE_LABELS, type UserProfile, type Order, type Section } from "./types";
+import { SERVICE_LABELS, type UserProfile, type Order, type OrderSummary, type Section } from "./types";
 
 interface Props {
   user: UserProfile;
   googleAvatar: string | null;
   orders: Order[];
+  summary: OrderSummary | null;
   onSection: (s: Section) => void;
 }
 
@@ -28,16 +29,24 @@ function MetricCard({ label, value }: { label: string; value: string | number })
   );
 }
 
-export default function VisaoGeral({ user, googleAvatar, orders, onSection }: Props) {
+export default function VisaoGeral({ user, googleAvatar, orders, summary, onSection }: Props) {
   const nome = user.name ?? user.email.split("@")[0];
   const primeiroNome = nome.split(" ")[0];
   const avatar = user.avatarUrl ?? googleAvatar;
 
-  const pedidosAtivos = orders.filter((o) =>
-    !["concluido", "cancelado"].includes(o.status)
-  ).length;
+  // Prioriza o resumo calculado no servidor (conta TODOS os pedidos, não só a página).
+  // Fallback: calcula a partir dos pedidos carregados enquanto o resumo não chega.
+  const totalPedidos = summary?.totalOrders ?? orders.length;
 
-  const ultimoPedido = orders[0] ? formatDate(orders[0].createdAt) : "—";
+  const pedidosAtivos = summary
+    ? summary.activeOrders
+    : orders.filter((o) => !["concluido", "cancelado", "rejeitado"].includes(o.status)).length;
+
+  const ultimoPedido = summary?.lastOrderDate
+    ? formatDate(summary.lastOrderDate)
+    : orders[0]
+      ? formatDate(orders[0].createdAt)
+      : "—";
 
   return (
     <div className="space-y-8">
@@ -61,13 +70,13 @@ export default function VisaoGeral({ user, googleAvatar, orders, onSection }: Pr
 
       {/* Métricas */}
       <div className="flex gap-4">
-        <MetricCard label="Pedidos realizados" value={orders.length} />
+        <MetricCard label="Pedidos realizados" value={totalPedidos} />
         <MetricCard label="Pedidos activos"    value={pedidosAtivos} />
         <MetricCard label="Último pedido"      value={ultimoPedido} />
       </div>
 
       {/* Sem pedidos */}
-      {orders.length === 0 && (
+      {totalPedidos === 0 && orders.length === 0 && (
         <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-slate-50 py-16 text-center">
           <ClipboardList className="mb-3 h-10 w-10 text-slate-300" />
           <p className="mb-1 text-base font-semibold text-slate-700">

@@ -42,6 +42,12 @@ export interface Order {
   canceladoPeloCliente: number;
 }
 
+export interface OrderSummary {
+  totalOrders: number;
+  activeOrders: number;
+  lastOrderDate: string | null;
+}
+
 export type Section =
   | "visao-geral"
   | "pedidos"
