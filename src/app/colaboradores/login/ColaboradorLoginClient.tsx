@@ -75,8 +75,8 @@ export default function ColaboradorLoginClient() {
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100">
       <div className="mx-auto grid min-h-screen max-w-6xl items-center gap-10 px-4 py-10 sm:px-6 lg:grid-cols-[1fr_1fr] lg:px-8">
-        {/* Painel de marca / valor — 10% mais compacto */}
-        <div className="relative hidden overflow-hidden rounded-[26px] border border-slate-800 bg-gradient-to-br from-slate-900 via-slate-950 to-slate-900 p-8 lg:flex lg:flex-col lg:justify-between lg:self-stretch">
+        {/* Painel de marca / valor — mesma altura do cartão de login */}
+        <div className="relative hidden overflow-hidden rounded-[26px] border border-slate-800 bg-gradient-to-br from-slate-900 via-slate-950 to-slate-900 p-7 sm:p-8 lg:flex lg:flex-col lg:justify-between">
           {/* brilho de acento */}
           <div
             aria-hidden
