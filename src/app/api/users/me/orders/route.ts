@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptionsCliente } from "@/auth-cliente";
-import { getPool, ensureSimulatorOrdersTable } from "@/lib/db";
+import { withConnection } from "@/lib/db";
 
 /**
  * Constrói a condição SQL que liga os pedidos ao cliente autenticado.
@@ -32,72 +32,71 @@ export async function GET(request: NextRequest) {
   const emailNorm = session.user.email.trim().toLowerCase();
 
   try {
-    await ensureSimulatorOrdersTable();
-    const pool = await getPool();
-    if (!pool) throw new Error("Pool não disponível");
+    const result = await withConnection(async (conn) => {
+      const match = buildOwnershipMatch(emailNorm);
 
-    const match = buildOwnershipMatch(emailNorm);
+      // ── Resumo (Visão Geral) — sempre sobre TODOS os pedidos do cliente ──────────
+      const [summaryRows] = await conn.execute(
+        `SELECT
+           COUNT(*) AS totalOrders,
+           SUM(CASE WHEN status NOT IN ('concluido','cancelado','rejeitado') THEN 1 ELSE 0 END) AS activeOrders,
+           MAX(createdAt) AS lastOrderDate
+         FROM simulatorOrders
+         WHERE ${match.sql}`,
+        match.params,
+      ) as [Array<{ totalOrders: number; activeOrders: number | null; lastOrderDate: string | null }>, unknown];
 
-    // ── Resumo (Visão Geral) — sempre sobre TODOS os pedidos do cliente ──────────
-    const [summaryRows] = await pool.execute(
-      `SELECT
-         COUNT(*) AS totalOrders,
-         SUM(CASE WHEN status NOT IN ('concluido','cancelado','rejeitado') THEN 1 ELSE 0 END) AS activeOrders,
-         MAX(createdAt) AS lastOrderDate
-       FROM simulatorOrders
-       WHERE ${match.sql}`,
-      match.params,
-    ) as [Array<{ totalOrders: number; activeOrders: number | null; lastOrderDate: string | null }>, unknown];
+      const summary = {
+        totalOrders:   Number(summaryRows[0]?.totalOrders ?? 0),
+        activeOrders:  Number(summaryRows[0]?.activeOrders ?? 0),
+        lastOrderDate: summaryRows[0]?.lastOrderDate ?? null,
+      };
 
-    const summary = {
-      totalOrders:   Number(summaryRows[0]?.totalOrders ?? 0),
-      activeOrders:  Number(summaryRows[0]?.activeOrders ?? 0),
-      lastOrderDate: summaryRows[0]?.lastOrderDate ?? null,
-    };
+      // ── Lista paginada (respeita o filtro de estado) ─────────────────────────────
+      const conditions = [match.sql];
+      const params: unknown[] = [...match.params];
+      if (status !== "todos") {
+        conditions.push("status = ?");
+        params.push(status);
+      }
+      const where = conditions.join(" AND ");
 
-    // ── Lista paginada (respeita o filtro de estado) ─────────────────────────────
-    const conditions = [match.sql];
-    const params: unknown[] = [...match.params];
-    if (status !== "todos") {
-      conditions.push("status = ?");
-      params.push(status);
-    }
-    const where = conditions.join(" AND ");
+      const [countRows] = await conn.execute(
+        `SELECT COUNT(*) AS total FROM simulatorOrders WHERE ${where}`,
+        params,
+      ) as [Array<{ total: number }>, unknown];
+      const total = Number(countRows[0]?.total ?? 0);
 
-    const [countRows] = await pool.execute(
-      `SELECT COUNT(*) AS total FROM simulatorOrders WHERE ${where}`,
-      params,
-    ) as [Array<{ total: number }>, unknown];
-    const total = Number(countRows[0]?.total ?? 0);
+      const [rows] = await conn.execute(
+        `SELECT
+           id, serviceType, address, city, postalCode, status,
+           estimateMin, estimateMax, estimateTotal,
+           precoFinal, precoFinalIva,
+           mensagemCliente, description,
+           scheduledDate, scheduledStartTime,
+           confirmadoPeloCliente, canceladoPeloCliente,
+           createdAt
+         FROM simulatorOrders
+         WHERE ${where}
+         ORDER BY createdAt DESC
+         LIMIT ? OFFSET ?`,
+        [...params, limit, offset],
+      ) as [Array<Record<string, unknown>>, unknown];
 
-    const [rows] = await pool.execute(
-      `SELECT
-         id, serviceType, address, city, postalCode, status,
-         estimateMin, estimateMax, estimateTotal,
-         precoFinal, precoFinalIva,
-         mensagemCliente, description,
-         scheduledDate, scheduledStartTime,
-         confirmadoPeloCliente, canceladoPeloCliente,
-         createdAt
-       FROM simulatorOrders
-       WHERE ${where}
-       ORDER BY createdAt DESC
-       LIMIT ? OFFSET ?`,
-      [...params, limit, offset],
-    ) as [Array<Record<string, unknown>>, unknown];
-
-    return NextResponse.json({
-      orders: rows,
-      total,
-      page,
-      pages: Math.ceil(total / limit),
-      summary,
+      return {
+        orders: rows,
+        total,
+        page,
+        pages: Math.ceil(total / limit),
+        summary,
+      };
     });
+
+    return NextResponse.json(result);
   } catch (err: any) {
     const errorMsg = err?.message || String(err);
     console.error("[api/users/me/orders] GET ERROR:", {
       message: errorMsg,
-      stack: err?.stack,
       email: emailNorm,
     });
     return NextResponse.json(

@@ -1027,9 +1027,13 @@ let _migrationVersion = 0;
 export async function ensureSimulatorOrdersTable() {
   if (_simulatorOrdersEnsured && _migrationVersion >= MIGRATION_VERSION) return;
   const pool = await getPool();
-  if (!pool) return;
-  await pool.execute(`
-    CREATE TABLE IF NOT EXISTS simulatorOrders (
+  if (!pool) {
+    console.warn("[ensureSimulatorOrdersTable] Pool não disponível");
+    return;
+  }
+  try {
+    await pool.execute(`
+      CREATE TABLE IF NOT EXISTS simulatorOrders (
       id INT AUTO_INCREMENT PRIMARY KEY,
       serviceType VARCHAR(80),
       description TEXT,
@@ -1110,16 +1114,20 @@ export async function ensureSimulatorOrdersTable() {
     // v8 migrations — pagamento fixo por trabalho (snapshot do valor em vigor no momento da atribuição)
     `ALTER TABLE simulatorOrders ADD COLUMN valorPagoAssistente DECIMAL(8,2) NULL DEFAULT NULL`,
   ];
-  for (const sql of migrations) {
-    try { await pool.execute(sql); } catch (e: any) {
-      // Log only non-"duplicate column" errors so we can see real problems
-      if (!e?.message?.includes("Duplicate column")) {
-        console.error("[v0] migration skipped:", e?.message);
+    for (const sql of migrations) {
+      try { await pool.execute(sql); } catch (e: any) {
+        // Log only non-"duplicate column" errors so we can see real problems
+        if (!e?.message?.includes("Duplicate column")) {
+          console.error("[v0] migration skipped:", e?.message);
+        }
       }
     }
+    _simulatorOrdersEnsured = true;
+    _migrationVersion = MIGRATION_VERSION;
+  } catch (err: any) {
+    console.error("[ensureSimulatorOrdersTable] Error:", err?.message);
+    // Não relançar erro — deixar falhar silenciosamente para não quebrar outras operações
   }
-  _simulatorOrdersEnsured = true;
-  _migrationVersion = MIGRATION_VERSION;
 }
 
 export async function createSimulatorOrder(data: InsertSimulatorOrder): Promise<number> {
@@ -1322,7 +1330,7 @@ export async function countActiveOrdersByAssistant(): Promise<Record<number, num
   await ensureSimulatorOrdersTable();
   const pool = await getPool();
   if (!pool) {
-    console.error("[v0] countActiveOrdersByAssistant: ❌ Pool indisponível!");
+    console.error("[v0] countActiveOrdersByAssistant: ��� Pool indisponível!");
     return {};
   }
   const [rows] = await pool.execute(
@@ -1611,7 +1619,7 @@ export async function cancelarOrcamentoPeloCliente(token: string): Promise<{ ok:
   return { ok: true };
 }
 
-// ─── SimulatorOrders END ──────────────────────────────────────────────────────
+// ─── SimulatorOrders END ───────────────────────��──────────────────────────────
 
 // ─── Pagamentos de Assistentes ────────────────────────────────────────────────
 
