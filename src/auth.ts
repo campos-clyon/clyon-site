@@ -25,6 +25,26 @@ import GoogleProvider from "next-auth/providers/google";
 export const authOptions: NextAuthOptions = {
   secret: process.env.NEXTAUTH_SECRET,
 
+  cookies: {
+    sessionToken: {
+      name: `__Secure-next-auth.colaborador.session-token`,
+      options: {
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+        secure: true,
+      },
+    },
+    callbackUrl: {
+      name: `__Secure-next-auth.colaborador.callback-url`,
+      options: { sameSite: "lax", path: "/", secure: true },
+    },
+    csrfToken: {
+      name: `__Host-next-auth.colaborador.csrf-token`,
+      options: { sameSite: "lax", path: "/", secure: true },
+    },
+  },
+
   providers: [
     GoogleProvider({
       clientId:     process.env.GOOGLE_CLIENT_ID  ?? "",
