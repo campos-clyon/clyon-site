@@ -12,13 +12,14 @@ export async function GET(request: NextRequest) {
     }
 
     const emailNorm = session.user.email.trim().toLowerCase();
+    const userEmail = session.user.email; // Type narrowing for closure
 
     // 2. Executar query mínima com conexão isolada
     const result = await withConnection(async (conn) => {
       // Obter telefone do utilizador autenticado (da tabela users)
       const [userRows] = await conn.execute(
         `SELECT phone FROM users WHERE email = ?`,
-        [session.user.email]
+        [userEmail]
       ) as [Array<{ phone?: string | null }>, unknown];
 
       const userPhone = userRows[0]?.phone;
