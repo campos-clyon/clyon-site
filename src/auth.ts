@@ -24,34 +24,8 @@ import NextAuth, { type NextAuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 // getPool não é necessário aqui — verificação de colaborador movida para /api/colaboradores/verify-email
 
-const isProduction = process.env.NODE_ENV === "production";
-
 export const authOptions: NextAuthOptions = {
   secret: process.env.NEXTAUTH_SECRET,
-
-  cookies: {
-    sessionToken: {
-      name: isProduction
-        ? `__Secure-next-auth.colaborador.session-token`
-        : `next-auth.colaborador.session-token`,
-      options: {
-        httpOnly: true,
-        sameSite: "lax",
-        path: "/",
-        secure: isProduction,
-      },
-    },
-    callbackUrl: {
-      name: isProduction
-        ? `__Secure-next-auth.colaborador.callback-url`
-        : `next-auth.colaborador.callback-url`,
-      options: { sameSite: "lax", path: "/", secure: isProduction },
-    },
-    csrfToken: {
-      name: `next-auth.colaborador.csrf-token`,
-      options: { httpOnly: true, sameSite: "lax", path: "/", secure: isProduction },
-    },
-  },
 
   providers: [
     GoogleProvider({
