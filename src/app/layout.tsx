@@ -5,7 +5,7 @@ import { Analytics } from "@vercel/analytics/next";
 
 import SiteChrome from "@/components/SiteChrome";
 import { TrpcProvider } from "@/components/TrpcProvider";
-import { SessionProvider } from "next-auth/react";
+import AuthClientProvider from "@/components/AuthClientProvider";
 import { LocationProvider } from "@/contexts/LocationContext";
 import {
   BUSINESS_ADDRESS,
@@ -254,13 +254,13 @@ export default function RootLayout({
             gtag('config', '${GOOGLE_ADS_ID}');
           `}
         </Script>
-        <LocationProvider>
-          <SessionProvider>
+        <AuthClientProvider>
+          <LocationProvider>
             <TrpcProvider>
               <LocationProvider>{children}</LocationProvider>
             </TrpcProvider>
-          </SessionProvider>
-        </LocationProvider>
+          </LocationProvider>
+        </AuthClientProvider>
         <Analytics />
       </body>
     </html>
