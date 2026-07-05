@@ -909,7 +909,7 @@ export default function ColaboradorAdminClient() {
       description: group.description,
       settings: group.keys
         .map((key) => settingsMap.get(key))
-        .filter((setting): setting is SimulatorSetting => Boolean(setting) && activeKeys.has(setting.key)),
+        .filter((setting): setting is SimulatorSetting => setting != null && activeKeys.has(setting.key)),
     }));
 
     // Filtrar grupos vazios (se todas as definições de uma categoria foram marcadas como inativas)
