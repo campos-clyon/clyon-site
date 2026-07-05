@@ -56,6 +56,17 @@ function OrderModal({ order, onClose }: OrderModalProps) {
             <span className="text-slate-500">Estado:</span>
             <StatusBadge status={order.status} />
           </div>
+          {order.assignedToName ? (
+            <div>
+              <span className="font-medium text-slate-700">Responsável: </span>
+              <span className="text-slate-600">A tratar do seu pedido: {order.assignedToName}</span>
+            </div>
+          ) : (
+            <div>
+              <span className="font-medium text-slate-700">Responsável: </span>
+              <span className="text-slate-600">Ainda sem assistente atribuído — vamos contactá-lo em breve</span>
+            </div>
+          )}
           {order.address && (
             <div>
               <span className="font-medium text-slate-700">Morada: </span>
@@ -86,16 +97,27 @@ function OrderModal({ order, onClose }: OrderModalProps) {
               {order.scheduledStartTime ? ` às ${order.scheduledStartTime}` : ""}
             </div>
           )}
-          <div className="flex items-center justify-between border-t border-slate-100 pt-3">
-            <span className="text-xs text-slate-400">Criado a {formatDate(order.createdAt)}</span>
-            {preco != null && (
-              <span className="text-base font-bold text-slate-900">{Number(preco).toFixed(2)} € s/IVA</span>
-            )}
-            {preco == null && order.estimateMin != null && order.estimateMax != null && (
-              <span className="text-sm font-semibold text-slate-700">
-                {Number(order.estimateMin).toFixed(0)}–{Number(order.estimateMax).toFixed(0)} € estimativa
-              </span>
-            )}
+          <div className="flex flex-col border-t border-slate-100 pt-3">
+            <span className="text-xs text-slate-400 mb-2">Criado a {formatDate(order.createdAt)}</span>
+            <div className="flex items-center justify-between">
+              <span className="text-slate-600"></span>
+              {preco != null && (
+                <div className="text-right">
+                  {order.precoFinal != null && order.precoFinalIva != null ? (
+                    <span className="text-base font-bold text-slate-900">
+                      {Number(order.precoFinal).toFixed(2)} € s/IVA · {Number(order.precoFinalIva).toFixed(2)} € c/IVA
+                    </span>
+                  ) : (
+                    <span className="text-base font-bold text-slate-900">{Number(preco).toFixed(2)} €</span>
+                  )}
+                </div>
+              )}
+              {preco == null && order.estimateMin != null && order.estimateMax != null && (
+                <span className="text-sm font-semibold text-slate-700">
+                  {Number(order.estimateMin).toFixed(0)}–{Number(order.estimateMax).toFixed(0)} € estimativa
+                </span>
+              )}
+            </div>
           </div>
         </div>
       </div>

@@ -58,9 +58,24 @@ export async function GET(request: NextRequest) {
            contactPhone,
            serviceType,
            address,
+           city,
+           postalCode,
            status,
            estimateTotal,
-           createdAt
+           estimateMin,
+           estimateMax,
+           precoFinal,
+           precoFinalIva,
+           mensagemCliente,
+           description,
+           scheduledDate,
+           scheduledStartTime,
+           scheduledEndTime,
+           assignedToName,
+           createdAt,
+           updatedAt,
+           confirmadoPeloCliente,
+           canceladoPeloCliente
          FROM simulatorOrders
          WHERE ${whereClause}
          ORDER BY id DESC
@@ -68,7 +83,7 @@ export async function GET(request: NextRequest) {
         params
       ) as [Array<any>, unknown];
 
-      // 3. Serializar createdAt para ISO string (única conversão)
+      // 3. Serializar datas para ISO string
       const serializedOrders = orders.map((row) => ({
         id: row.id,
         contactName: row.contactName,
@@ -76,9 +91,24 @@ export async function GET(request: NextRequest) {
         contactPhone: row.contactPhone,
         serviceType: row.serviceType,
         address: row.address,
+        city: row.city,
+        postalCode: row.postalCode,
         status: row.status,
         estimateTotal: row.estimateTotal,
+        estimateMin: row.estimateMin,
+        estimateMax: row.estimateMax,
+        precoFinal: row.precoFinal,
+        precoFinalIva: row.precoFinalIva,
+        mensagemCliente: row.mensagemCliente,
+        description: row.description,
+        assignedToName: row.assignedToName,
+        scheduledDate: row.scheduledDate ? new Date(row.scheduledDate).toISOString() : null,
+        scheduledStartTime: row.scheduledStartTime,
+        scheduledEndTime: row.scheduledEndTime,
         createdAt: row.createdAt ? new Date(row.createdAt).toISOString() : null,
+        updatedAt: row.updatedAt ? new Date(row.updatedAt).toISOString() : null,
+        confirmadoPeloCliente: row.confirmadoPeloCliente,
+        canceladoPeloCliente: row.canceladoPeloCliente,
       }));
 
       // 4. Retornar resultado mínimo

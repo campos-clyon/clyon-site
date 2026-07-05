@@ -34,6 +34,7 @@ export interface Order {
   precoFinalIva: number | null;
   mensagemCliente: string | null;
   description: string | null;
+  assignedToName: string | null;
   scheduledDate: string | null;
   scheduledStartTime: string | null;
   createdAt: string;
@@ -57,6 +58,7 @@ export type Section =
   | "seguranca";
 
 export const STATUS_CONFIG: Record<string, { label: string; bg: string; text: string; dot: string }> = {
+  sem_assistente: { label: "A aguardar atribuição", bg: "bg-slate-100", text: "text-slate-600", dot: "bg-slate-400" },
   pendente:   { label: "Novo",         bg: "bg-blue-50",    text: "text-blue-700",   dot: "bg-blue-500" },
   em_analise: { label: "Em análise",   bg: "bg-amber-50",   text: "text-amber-700",  dot: "bg-amber-500" },
   aprovado:   { label: "Aprovado",     bg: "bg-cyan-50",    text: "text-cyan-700",   dot: "bg-cyan-500" },
