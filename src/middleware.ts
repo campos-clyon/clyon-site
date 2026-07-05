@@ -25,9 +25,13 @@ export async function middleware(request: NextRequest) {
 
   // Proteger /conta — requer sessão de cliente Google
   if (nextUrl.pathname.startsWith("/conta")) {
+    const isProd = process.env.NODE_ENV === "production";
     const token = await getToken({
       req: request,
       secret: process.env.NEXTAUTH_SECRET,
+      cookieName: isProd
+        ? "__Secure-next-auth.cliente.session-token"
+        : "next-auth.cliente.session-token",
     });
     if (!token) {
       const loginUrl = new URL("/entrar", request.url);
