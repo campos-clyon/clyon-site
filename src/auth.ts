@@ -40,8 +40,8 @@ export const authOptions: NextAuthOptions = {
       options: { sameSite: "lax", path: "/", secure: true },
     },
     csrfToken: {
-      name: `__Host-next-auth.colaborador.csrf-token`,
-      options: { sameSite: "lax", path: "/", secure: true },
+      name: `next-auth.colaborador.csrf-token`,
+      options: { httpOnly: true, sameSite: "lax", path: "/", secure: true },
     },
   },
 

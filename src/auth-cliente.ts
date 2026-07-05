@@ -32,8 +32,8 @@ export const authOptionsCliente: NextAuthOptions = {
       options: { sameSite: "lax", path: "/", secure: true },
     },
     csrfToken: {
-      name: `__Host-next-auth.cliente.csrf-token`,
-      options: { sameSite: "lax", path: "/", secure: true },
+      name: `next-auth.cliente.csrf-token`,
+      options: { httpOnly: true, sameSite: "lax", path: "/", secure: true },
     },
   },
 
