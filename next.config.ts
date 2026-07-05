@@ -380,7 +380,7 @@ const nextConfig: NextConfig = {
           "frame-src 'none'",
           "object-src 'none'",
           "base-uri 'self'",
-          "form-action 'self'",
+          "form-action 'self' https://accounts.google.com",
         ].join("; "),
       },
     ];
