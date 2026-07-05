@@ -257,7 +257,7 @@ export default function RootLayout({
         <AuthClientProvider>
           <LocationProvider>
             <TrpcProvider>
-              <LocationProvider>{children}</LocationProvider>
+              <SiteChrome>{children}</SiteChrome>
             </TrpcProvider>
           </LocationProvider>
         </AuthClientProvider>
