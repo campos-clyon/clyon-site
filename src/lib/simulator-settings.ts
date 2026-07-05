@@ -32,6 +32,7 @@ export type SimulatorSettingDefinition = {
   category: "moveis" | "entulho" | "mudancas" | "acessos" | "geral";
   unit: "eur" | "multiplier";
   value: number;
+  active?: boolean; // false = oculto no painel de admin (legacy)
 };
 
 export const defaultSimulatorSettings: SimulatorSettingDefinition[] = [
@@ -42,6 +43,7 @@ export const defaultSimulatorSettings: SimulatorSettingDefinition[] = [
     category: "moveis",
     unit: "eur",
     value: 5,
+    active: false,
   },
   {
     key: "moveis_item_medio",
@@ -50,6 +52,7 @@ export const defaultSimulatorSettings: SimulatorSettingDefinition[] = [
     category: "moveis",
     unit: "eur",
     value: 7,
+    active: false,
   },
   {
     key: "moveis_item_grande",
@@ -58,6 +61,7 @@ export const defaultSimulatorSettings: SimulatorSettingDefinition[] = [
     category: "moveis",
     unit: "eur",
     value: 13,
+    active: false,
   },
   {
     key: "moveis_distancia_km",
@@ -66,6 +70,7 @@ export const defaultSimulatorSettings: SimulatorSettingDefinition[] = [
     category: "moveis",
     unit: "eur",
     value: 2.5,
+    active: false,
   },
   {
     key: "moveis_carga_base",
@@ -74,6 +79,7 @@ export const defaultSimulatorSettings: SimulatorSettingDefinition[] = [
     category: "moveis",
     unit: "eur",
     value: 2,
+    active: false,
   },
   {
     key: "moveis_carga_multiplicador",
@@ -82,6 +88,7 @@ export const defaultSimulatorSettings: SimulatorSettingDefinition[] = [
     category: "moveis",
     unit: "multiplier",
     value: 0.35,
+    active: false,
   },
   {
     key: "entulho_saco_ensacado",
@@ -114,6 +121,7 @@ export const defaultSimulatorSettings: SimulatorSettingDefinition[] = [
     category: "mudancas",
     unit: "eur",
     value: 2.5,
+    active: false,
   },
   {
     key: "apartamento_com_elevador_por_andar",
@@ -146,6 +154,7 @@ export const defaultSimulatorSettings: SimulatorSettingDefinition[] = [
     category: "geral",
     unit: "eur",
     value: 9,
+    active: false,
   },
   {
     key: "entulho_multiplicador",
@@ -162,6 +171,7 @@ export const defaultSimulatorSettings: SimulatorSettingDefinition[] = [
     category: "mudancas",
     unit: "multiplier",
     value: 1.4,
+    active: false,
   },
   // ── Estrutura de custos reais (fórmula comercial com margem) ──────────────
   {
@@ -211,6 +221,7 @@ export const defaultSimulatorSettings: SimulatorSettingDefinition[] = [
     category: "geral",
     unit: "eur",
     value: 2.00,
+    active: false,
   },
   {
     key: "km_por_litro",
@@ -219,6 +230,7 @@ export const defaultSimulatorSettings: SimulatorSettingDefinition[] = [
     category: "geral",
     unit: "multiplier",
     value: 6,
+    active: false,
   },
   {
     key: "pagamento_assistente_por_trabalho",
@@ -227,6 +239,7 @@ export const defaultSimulatorSettings: SimulatorSettingDefinition[] = [
     category: "geral",
     unit: "eur",
     value: 7.00,
+    active: false,
   },
 ];
 

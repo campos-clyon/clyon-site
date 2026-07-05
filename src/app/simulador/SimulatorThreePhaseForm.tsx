@@ -17,7 +17,6 @@ import type {
 import AddressAutocomplete from "./components/AddressAutocomplete";
 import OrderSummaryCard from "./components/OrderSummaryCard";
 import ContactAccessForm from "./components/ContactAccessForm";
-import AnalysisResultCard from "./components/AnalysisResultCard";
 import ServiceTypeCards from "./components/ServiceTypeCards";
 import EntulhoDetails from "./components/EntulhoDetails";
 import CompactOrderDetails from "./components/CompactOrderDetails";
@@ -310,8 +309,10 @@ export default function SimulatorThreePhaseForm() {
             simulatorData: { orderId: saved.id, serviceType: formData.serviceType },
           });
         }
-      } catch {
-        // Auto-save failure não bloqueia o cliente
+      } catch (err) {
+        // Auto-save failure — informar cliente para não ficar preso
+        const message = err instanceof Error ? err.message : "Não foi possível enviar o pedido";
+        setError(`${message}. Tente novamente ou contacte-nos por WhatsApp.`);
       }
 
     } catch (err) {
@@ -524,15 +525,14 @@ export default function SimulatorThreePhaseForm() {
                 />
               )}
 
-              {/* Analysis Result */}
-              {phase === 3 && analysis && (
-                <AnalysisResultCard
-                  analysis={analysis}
-                  isLoading={isAnalyzing}
-                  onConfirm={handleSubmitOrder}
-                  isSubmitting={isSubmitting}
-                  alreadySaved={!!successOrderId}
-                />
+              {/* Processing Loading Screen */}
+              {phase === 3 && analysis && !successOrderId && (
+                <div className="flex flex-col items-center justify-center gap-4 py-16 text-center">
+                  <div className="h-10 w-10 animate-spin rounded-full border-4 border-cyan-600 border-t-transparent" />
+                  <p className="text-sm font-medium text-gray-600">
+                    A processar o seu pedido, aguarde um momento...
+                  </p>
+                </div>
               )}
 
               {/* Error Message */}
@@ -593,7 +593,7 @@ export default function SimulatorThreePhaseForm() {
                           <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                         </svg>
                       )}
-                      {ANALYZE_STEP_LABELS[analyzeStep] || "Analisar pedido"}
+                      Enviar Pedido
                     </button>
                   )}
                 </div>

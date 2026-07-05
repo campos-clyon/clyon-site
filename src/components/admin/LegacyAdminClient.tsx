@@ -4,6 +4,7 @@ import type { ComponentType, ReactNode } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { clearColaboradorStorage, getColaboradorItem } from "@/lib/colaborador-storage";
+import { defaultSimulatorSettings } from "@/lib/simulator-settings";
 import PedidoDetailModal from "@/components/admin/PedidoDetailModal";
 import PagamentosPanel from "@/components/admin/PagamentosPanel";
 import {
@@ -504,7 +505,7 @@ export default function ColaboradorAdminClient() {
   } | null>(null);
   const [loadingImageStats, setLoadingImageStats] = useState(false);
 
-  // ─���� Leads state ─────────────��────────────────────────────────────────────
+  // ─����� Leads state ─────────────��────────────────────────────────────────────
   const [leads, setLeads] = useState<Lead[]>([]);
   const [leadEvents, setLeadEvents] = useState<LeadEvent[]>([]);
   const [leadTotals, setLeadTotals] = useState<LeadTotals>({});
@@ -895,15 +896,24 @@ export default function ColaboradorAdminClient() {
 
   const simulatorGroups = useMemo(() => {
     const settingsMap = new Map(simulatorSettings.map((setting) => [setting.key, setting]));
+    // Mapa de chaves ativas (não marcadas como active: false nas definições)
+    const activeKeys = new Set(
+      defaultSimulatorSettings
+        .filter((def) => def.active !== false)
+        .map((def) => def.key)
+    );
 
-    return simulatorDisplayGroups.map((group) => ({
+    const groups = simulatorDisplayGroups.map((group) => ({
       id: group.id,
       label: group.label,
       description: group.description,
       settings: group.keys
         .map((key) => settingsMap.get(key))
-        .filter((setting): setting is SimulatorSetting => Boolean(setting)),
+        .filter((setting): setting is SimulatorSetting => Boolean(setting) && activeKeys.has(setting.key)),
     }));
+
+    // Filtrar grupos vazios (se todas as definições de uma categoria foram marcadas como inativas)
+    return groups.filter((group) => group.settings.length > 0);
   }, [simulatorSettings]);
 
   // ---- Núcleo operacional: semana selecionada (segunda -> domingo) ----
