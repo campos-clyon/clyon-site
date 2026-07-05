@@ -219,6 +219,10 @@ export interface SimulatorOrder {
   calendarTargetId?: string | null;
   /** Human-readable name of the target calendar (e.g. "CLYON — Agenda da Empresa"). From CLYON_GOOGLE_CALENDAR_NAME env var. */
   calendarTargetName?: string | null;
+  /** Origem do pedido: "simulador" ou "formulario_contacto" */
+  source?: string | null;
+  /** Caminho da página onde o pedido foi criado (ex: "/simulador", "/") */
+  pagePath?: string | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -268,4 +272,6 @@ export interface InsertSimulatorOrder {
   analysisJsonExtended?: string | null;
   calendarTargetId?: string | null;
   calendarTargetName?: string | null;
+  source?: string | null; // "simulador" | "formulario_contacto"
+  pagePath?: string | null; // path onde o pedido foi criado (ex: "/simulador", "/")
 }
