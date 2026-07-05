@@ -71,7 +71,7 @@ async function getOrCreateUser(email: string, name: string | null): Promise<User
 
 // GET /api/users/me
 export async function GET() {
-  const session = await getServerSession(authOptionsCliente);
+  const session = await getServerSession(authOptions);
   if (!session?.user?.email) {
     return NextResponse.json({ error: "Não autenticado." }, { status: 401 });
   }

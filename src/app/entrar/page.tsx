@@ -13,7 +13,7 @@ export const metadata: Metadata = {
 };
 
 export default async function EntrarPage() {
-  const session = await getServerSession(authOptionsCliente);
+  const session = await getServerSession(authOptions);
   if (session) redirect("/conta");
 
   return (

@@ -12,7 +12,7 @@ import { authOptions } from "@/auth";
  * Por enquanto, utilizadores veem a foto da conta Google.
  */
 export async function POST(request: NextRequest) {
-  const session = await getServerSession(authOptionsCliente);
+  const session = await getServerSession(authOptions);
   if (!session?.user?.email) {
     return NextResponse.json({ error: "Não autenticado." }, { status: 401 });
   }
