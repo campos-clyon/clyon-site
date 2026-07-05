@@ -41,12 +41,6 @@ export const authOptionsCliente: NextAuthOptions = {
     GoogleProvider({
       clientId:     process.env.GOOGLE_CLIENT_ID     ?? "",
       clientSecret: process.env.GOOGLE_CLIENT_SECRET ?? "",
-      authorization: {
-        params: {
-          // Forçar o redirect_uri para o basePath da instância cliente
-          redirect_uri: `${process.env.NEXTAUTH_URL ?? "https://clyon.pt"}/api/auth/cliente/callback/google`,
-        },
-      },
     }),
   ],
 
