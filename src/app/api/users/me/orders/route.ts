@@ -15,7 +15,40 @@ export async function GET(request: NextRequest) {
 
     // 2. Executar query mínima com conexão isolada
     const result = await withConnection(async (conn) => {
+      // Obter telefone do utilizador autenticado (da tabela users)
+      const [userRows] = await conn.execute(
+        `SELECT phone FROM users WHERE email = ?`,
+        [session.user.email]
+      ) as [Array<{ phone?: string | null }>, unknown];
+
+      const userPhone = userRows[0]?.phone;
+      
+      // Função para normalizar telefone: remover espaços/traços/+351, comparar últimos 9 dígitos
+      const normalizePhone = (phone: string | null | undefined): string | null => {
+        if (!phone) return null;
+        // Remover espaços, traços, +
+        const cleaned = phone.replace(/[\s\-+]/g, "");
+        // Remover prefixo 351 ou 00351 se existir
+        const normalized = cleaned.replace(/^(00)?351/, "");
+        // Pegar últimos 9 dígitos
+        return normalized.slice(-9);
+      };
+
+      const userPhoneNorm = normalizePhone(userPhone);
+
       // Query MÍNIMA: apenas colunas essenciais, sem joins, sem funções complexas
+      // Busca por email OU (se tiver phone) por telefone normalizado
+      let whereClause = "LOWER(TRIM(contactEmail)) = LOWER(TRIM(?))";
+      const params: any[] = [emailNorm];
+
+      if (userPhoneNorm) {
+        whereClause += ` OR SUBSTRING(
+          REPLACE(REPLACE(REPLACE(REPLACE(contactPhone, ' ', ''), '-', ''), '+', ''), '351', ''),
+          -9
+        ) = ?`;
+        params.push(userPhoneNorm);
+      }
+
       const [orders] = await conn.execute(
         `SELECT
            id,
@@ -28,10 +61,10 @@ export async function GET(request: NextRequest) {
            estimateTotal,
            createdAt
          FROM simulatorOrders
-         WHERE LOWER(TRIM(contactEmail)) = LOWER(TRIM(?))
+         WHERE ${whereClause}
          ORDER BY id DESC
          LIMIT 50`,
-        [emailNorm]
+        params
       ) as [Array<any>, unknown];
 
       // 3. Serializar createdAt para ISO string (única conversão)

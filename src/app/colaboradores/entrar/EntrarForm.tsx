@@ -53,7 +53,7 @@ export default function EntrarForm({ erro }: EntrarFormProps) {
   }, [status, session]);
 
   const handleGoogleSignIn = () => {
-    signIn("google", { callbackUrl: "/colaboradores/entrar" });
+    window.location.href = `/api/auth/signin/google?callbackUrl=${encodeURIComponent("/colaboradores/entrar")}`;
   };
 
   // Estado de carregamento enquanto verifica autorização

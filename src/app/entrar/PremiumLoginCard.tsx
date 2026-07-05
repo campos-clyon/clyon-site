@@ -3,7 +3,6 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { signIn } from "next-auth/react";
 
 interface Props {
   errorMsg?: string | null;
@@ -13,9 +12,9 @@ export function PremiumLoginCard({ errorMsg }: Props) {
   const [tab, setTab] = useState<"login" | "signup">("login");
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleGoogleSignIn = async () => {
+  const handleGoogleSignIn = () => {
     setIsLoading(true);
-    await signIn("google", { callbackUrl: "/conta" });
+    window.location.href = `/api/auth/cliente/signin/google?callbackUrl=${encodeURIComponent("/conta")}`;
   };
 
   return (

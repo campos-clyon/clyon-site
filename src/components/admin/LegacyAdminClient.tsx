@@ -504,7 +504,7 @@ export default function ColaboradorAdminClient() {
   } | null>(null);
   const [loadingImageStats, setLoadingImageStats] = useState(false);
 
-  // ─�� Leads state ─────────────��────────────────────────────────────────────
+  // ─��� Leads state ─────────────��────────────────────────────────────────────
   const [leads, setLeads] = useState<Lead[]>([]);
   const [leadEvents, setLeadEvents] = useState<LeadEvent[]>([]);
   const [leadTotals, setLeadTotals] = useState<LeadTotals>({});
@@ -2138,7 +2138,7 @@ export default function ColaboradorAdminClient() {
                   <table className="w-full min-w-[900px] border-separate border-spacing-y-1 text-sm">
                     <thead>
                       <tr>
-                        {["Nº", "Cliente", "Telefone", "Serviço", "Localidade", "Urgência", "Status", "Assistente", "Data", "Ação"].map((h) => (
+                        {["Nº", "Cliente", "Telefone", "Serviço", "Localidade", "Urgência", "Status", "Origem", "Assistente", "Data", "Ação"].map((h) => (
                           <th key={h} className="px-3 pb-2 text-left text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">{h}</th>
                         ))}
                       </tr>
@@ -2209,6 +2209,15 @@ export default function ColaboradorAdminClient() {
                                     </span>
                                   )}
                                 </div>
+                              </td>
+                              <td className="px-3 py-3">
+                                <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold border ${
+                                  (p as any).source === "formulario_contacto"
+                                    ? "bg-amber-400/10 border-amber-400/30 text-amber-300"
+                                    : "bg-slate-500/10 border-slate-500/30 text-slate-400"
+                                }`}>
+                                  {(p as any).source === "formulario_contacto" ? "Formulário" : "Simulador"}
+                                </span>
                               </td>
                               <td className="px-3 py-3 text-slate-400">{p.assignedToName ?? <span className="text-rose-400">Sem assistente</span>}</td>
                               <td className="px-3 py-3 text-xs text-slate-500">{p.createdAt ? new Intl.DateTimeFormat("pt-PT", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }).format(new Date(p.createdAt)) : "—"}</td>
