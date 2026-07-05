@@ -14,26 +14,32 @@
 import type { NextAuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 
+const isProduction = process.env.NODE_ENV === "production";
+
 export const authOptionsCliente: NextAuthOptions = {
   secret: process.env.NEXTAUTH_SECRET,
 
   cookies: {
     sessionToken: {
-      name: `__Secure-next-auth.cliente.session-token`,
+      name: isProduction
+        ? `__Secure-next-auth.cliente.session-token`
+        : `next-auth.cliente.session-token`,
       options: {
         httpOnly: true,
         sameSite: "lax",
         path: "/",
-        secure: true,
+        secure: isProduction,
       },
     },
     callbackUrl: {
-      name: `__Secure-next-auth.cliente.callback-url`,
-      options: { sameSite: "lax", path: "/", secure: true },
+      name: isProduction
+        ? `__Secure-next-auth.cliente.callback-url`
+        : `next-auth.cliente.callback-url`,
+      options: { sameSite: "lax", path: "/", secure: isProduction },
     },
     csrfToken: {
       name: `next-auth.cliente.csrf-token`,
-      options: { httpOnly: true, sameSite: "lax", path: "/", secure: true },
+      options: { httpOnly: true, sameSite: "lax", path: "/", secure: isProduction },
     },
   },
 
