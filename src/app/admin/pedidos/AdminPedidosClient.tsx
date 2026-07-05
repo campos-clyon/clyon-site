@@ -34,8 +34,9 @@ type Order = {
   assignedToId?: number | null;
   assignedToName?: string | null;
   dataAgendada?: string | null;
+  source?: string | null; // "simulador" | "formulario_contacto"
   createdAt: string;
-  updatedAt: string;
+  updatedAt?: string;
 };
 
 // ─── Config ───────────────────────────────────────────────────────────────────
@@ -295,6 +296,15 @@ export default function AdminPedidosClient() {
                     {order.contactName ?? "Cliente"}
                   </p>
                   <StatusBadge status={order.status} />
+                  {order.source && (
+                    <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                      order.source === "formulario_contacto"
+                        ? "bg-amber-400/10 border border-amber-400/30 text-amber-300"
+                        : "bg-slate-500/10 border border-slate-500/30 text-slate-400"
+                    }`}>
+                      {order.source === "formulario_contacto" ? "Formulário" : "Simulador"}
+                    </span>
+                  )}
                 </div>
                 <p className="mt-0.5 text-xs text-slate-500 truncate">
                   {order.serviceType ?? "Serviço não especificado"}

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { Resend } from "resend";
 import { BUSINESS_EMAIL } from "@/lib/seo-data";
-import { createLead } from "@/lib/db";
+import { createLead, createSimulatorOrder } from "@/lib/db";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 
 const ContactSchema = z.object({
@@ -221,24 +221,36 @@ Este email foi enviado automaticamente através do formulário de contacto em cl
       );
     }
 
-    // Gravar lead na DB em paralelo — independente do email, best-effort
-    createLead({
-      nome,
-      telefone: telemovel,
-      email: "",
-      localidade: endereco,
-      tipoServico: servico,
-      preferenciaContacto: "Email",
-      mensagem: mensagem ?? null,
-      pagePath: pagePath ?? null,
-      pageUrl: pageUrl ?? null,
-      utmSource: utmSource ?? null,
-      utmMedium: utmMedium ?? null,
-      utmCampaign: utmCampaign ?? null,
-      gclid: gclid ?? null,
-      origem: "formulario_contactos",
-      canal: "email",
-    }).catch((err) => console.error("[api/contact] Erro ao gravar lead:", err));
+    // Gravar lead + pedido na DB em paralelo — independente do email, best-effort
+    Promise.all([
+      createLead({
+        nome,
+        telefone: telemovel,
+        email: "",
+        localidade: endereco,
+        tipoServico: servico,
+        preferenciaContacto: "Email",
+        mensagem: mensagem ?? null,
+        pagePath: pagePath ?? null,
+        pageUrl: pageUrl ?? null,
+        utmSource: utmSource ?? null,
+        utmMedium: utmMedium ?? null,
+        utmCampaign: utmCampaign ?? null,
+        gclid: gclid ?? null,
+        origem: "formulario_contactos",
+        canal: "email",
+      }),
+      createSimulatorOrder({
+        contactName: nome,
+        contactPhone: telemovel,
+        address: endereco,
+        serviceType: servico,
+        description: mensagem ?? null,
+        status: "sem_assistente",
+        source: "formulario_contacto",
+        pagePath: pagePath ?? null,
+      }),
+    ]).catch((err) => console.error("[api/contact] Erro ao gravar dados:", err));
 
     return NextResponse.json({ success: true, id: data?.id });
   } catch (error) {

@@ -504,7 +504,7 @@ export default function ColaboradorAdminClient() {
   } | null>(null);
   const [loadingImageStats, setLoadingImageStats] = useState(false);
 
-  // ── Leads state ─────────────��────────────────────────────────────────────
+  // ─�� Leads state ─────────────��────────────────────────────────────────────
   const [leads, setLeads] = useState<Lead[]>([]);
   const [leadEvents, setLeadEvents] = useState<LeadEvent[]>([]);
   const [leadTotals, setLeadTotals] = useState<LeadTotals>({});
@@ -519,7 +519,9 @@ export default function ColaboradorAdminClient() {
   const [leadNotas, setLeadNotas] = useState("");
   const [savingLeadStatus, setSavingLeadStatus] = useState(false);
   const [leadsLastUpdate, setLeadsLastUpdate] = useState<Date | null>(null);
-  const [activeLeadsTab, setActiveLeadsTab] = useState<"leads" | "eventos">("leads");
+  const [activeLeadsTab, setActiveLeadsTab] = useState<"unificado" | "leads" | "eventos">("unificado");
+  const [leadsUnificados, setLeadsUnificados] = useState<any[]>([]);
+  const [leadCanalFilter, setLeadCanalFilter] = useState("");
   // ── Pedidos state ───────────�����───────────────────────���─────���───────────────
   type SimulatorOrder = {
     id: number;
@@ -794,6 +796,30 @@ export default function ColaboradorAdminClient() {
     }
   };
 
+  const carregarLeadsUnificados = async (authToken: string, canal = "") => {
+    if (!authToken) return;
+    try {
+      setLoadingLeads(true);
+      const url = `/api/admin/leads-unificado?${canal ? `canal=${encodeURIComponent(canal)}&` : ""}_=${Date.now()}`;
+      const res = await fetch(url, {
+        cache: "no-store",
+        headers: { Authorization: `Bearer ${authToken}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setLeadsUnificados(data.unificados || []);
+        setLeadsError(null);
+      } else {
+        setLeadsError("Não foi possível carregar leads unificados.");
+      }
+    } catch (err) {
+      console.error("[admin] carregarLeadsUnificados error:", err);
+      setLeadsError("Erro ao carregar leads unificados.");
+    } finally {
+      setLoadingLeads(false);
+    }
+  };
+
   const atualizarStatusLead = async (id: number, status: Lead["status"], notas?: string) => {
     if (!token) return;
     try {
@@ -813,11 +839,17 @@ export default function ColaboradorAdminClient() {
   // Polling a cada 15 segundos quando a aba Leads está ativa
   useEffect(() => {
     if (activeSection !== "leads" || !token) return;
-    carregarLeads(token, leadPeriodo, leadStatusFilter);
-    const interval = setInterval(() => carregarLeads(token, leadPeriodo, leadStatusFilter), 15000);
-    return () => clearInterval(interval);
+    if (activeLeadsTab === "unificado") {
+      carregarLeadsUnificados(token, leadCanalFilter);
+      const interval = setInterval(() => carregarLeadsUnificados(token, leadCanalFilter), 15000);
+      return () => clearInterval(interval);
+    } else {
+      carregarLeads(token, leadPeriodo, leadStatusFilter);
+      const interval = setInterval(() => carregarLeads(token, leadPeriodo, leadStatusFilter), 15000);
+      return () => clearInterval(interval);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeSection, token, leadPeriodo, leadStatusFilter, leadEventTypeFilter]);
+  }, [activeSection, token, leadPeriodo, leadStatusFilter, leadEventTypeFilter, activeLeadsTab, leadCanalFilter]);
 
   // Carregar pedidos quando a aba Pedidos fica activa
   useEffect(() => {
@@ -3081,9 +3113,9 @@ export default function ColaboradorAdminClient() {
                 })}
               </div>
 
-              {/* Tabs leads / eventos */}
+              {/* Tabs leads / eventos / unificado */}
               <div className="flex gap-1 rounded-2xl border border-white/10 bg-white/[0.03] p-1">
-                {(["leads", "eventos"] as const).map((tab) => (
+                {(["unificado", "leads", "eventos"] as const).map((tab) => (
                   <button
                     key={tab}
                     type="button"
@@ -3094,23 +3126,40 @@ export default function ColaboradorAdminClient() {
                         : "text-slate-400 hover:text-white"
                     }`}
                   >
-                    {tab === "leads" ? "Últimos leads" : "Eventos de contacto"}
+                    {tab === "unificado" ? "Unificado" : tab === "leads" ? "Últimos leads" : "Eventos de contacto"}
                   </button>
                 ))}
               </div>
 
               {/* Filtros */}
               <div className="flex flex-wrap gap-2">
-                <select
-                  value={leadPeriodo}
-                  onChange={(e) => setLeadPeriodo(e.target.value)}
-                  className="h-10 rounded-[14px] border border-cyan-300/20 bg-[#0d1f35] px-3 text-sm text-white outline-none focus:border-cyan-400 [color-scheme:dark]"
-                >
-                  <option value="hoje">Hoje</option>
-                  <option value="semana">Esta semana</option>
-                  <option value="7d">Últimos 7 dias</option>
-                  <option value="30d">Últimos 30 dias</option>
-                </select>
+                {activeLeadsTab !== "unificado" && (
+                  <select
+                    value={leadPeriodo}
+                    onChange={(e) => setLeadPeriodo(e.target.value)}
+                    className="h-10 rounded-[14px] border border-cyan-300/20 bg-[#0d1f35] px-3 text-sm text-white outline-none focus:border-cyan-400 [color-scheme:dark]"
+                  >
+                    <option value="hoje">Hoje</option>
+                    <option value="semana">Esta semana</option>
+                    <option value="7d">Últimos 7 dias</option>
+                    <option value="30d">Últimos 30 dias</option>
+                  </select>
+                )}
+                {activeLeadsTab === "unificado" && (
+                  <select
+                    value={leadCanalFilter}
+                    onChange={(e) => setLeadCanalFilter(e.target.value)}
+                    className="h-10 rounded-[14px] border border-cyan-300/20 bg-[#0d1f35] px-3 text-sm text-white outline-none focus:border-cyan-400 [color-scheme:dark]"
+                  >
+                    <option value="">Todos os canais</option>
+                    <option value="whatsapp">WhatsApp</option>
+                    <option value="ligar">Ligar</option>
+                    <option value="email">Email</option>
+                    <option value="cta">CTA</option>
+                    <option value="simulador">Simulador</option>
+                    <option value="formulario_contactos">Formulário de contactos</option>
+                  </select>
+                )}
                 {activeLeadsTab === "leads" && (
                   <select
                     value={leadStatusFilter}
@@ -3156,6 +3205,71 @@ export default function ColaboradorAdminClient() {
                   </div>
                 )}
               </div>
+
+              {/* Tabela unificada de leads + eventos */}
+              {activeLeadsTab === "unificado" && (
+                <div className="overflow-x-auto rounded-[16px] border border-white/10">
+                  {leadsUnificados.length === 0 && !loadingLeads ? (
+                    <div className="px-6 py-10 text-center text-sm text-slate-400">
+                      Nenhum contacto encontrado para o filtro selecionado.
+                    </div>
+                  ) : (
+                    <table className="w-full min-w-[1000px] border-collapse text-sm">
+                      <thead>
+                        <tr className="border-b border-white/10 bg-white/[0.03] text-left text-[11px] uppercase tracking-wide text-slate-400">
+                          <th className="px-4 py-3 font-semibold">Data</th>
+                          <th className="px-4 py-3 font-semibold">Nome</th>
+                          <th className="px-4 py-3 font-semibold">Contacto</th>
+                          <th className="px-4 py-3 font-semibold">Serviço</th>
+                          <th className="px-4 py-3 font-semibold">Canal</th>
+                          <th className="px-4 py-3 font-semibold">Estado</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {leadsUnificados.map((item) => (
+                          <tr key={`${item.tipo}-${item.id}`} className="border-b border-white/5 transition hover:bg-white/[0.03]">
+                            <td className="px-4 py-2.5 text-slate-400 text-xs">
+                              {new Date(item.createdAt).toLocaleDateString("pt-PT", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
+                            </td>
+                            <td className="px-4 py-2.5 text-white font-medium">{item.name ?? "—"}</td>
+                            <td className="px-4 py-2.5 text-slate-300">
+                              {item.phone ? <a href={`tel:${item.phone}`} className="text-cyan-400 hover:underline">{item.phone}</a> : "—"}
+                              {item.phone && item.email && " · "}
+                              {item.email ? <a href={`mailto:${item.email}`} className="text-cyan-400 hover:underline">{item.email}</a> : ""}
+                            </td>
+                            <td className="px-4 py-2.5 text-slate-400 text-xs">{item.serviceType ?? "—"}</td>
+                            <td className="px-4 py-2.5">
+                              <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                                item.channel === "whatsapp" ? "bg-green-500/10 border border-green-500/30 text-green-300" :
+                                item.channel === "ligar" ? "bg-blue-500/10 border border-blue-500/30 text-blue-300" :
+                                item.channel === "email" ? "bg-purple-500/10 border border-purple-500/30 text-purple-300" :
+                                item.channel === "cta" ? "bg-orange-500/10 border border-orange-500/30 text-orange-300" :
+                                item.channel === "simulador" ? "bg-violet-500/10 border border-violet-500/30 text-violet-300" :
+                                item.channel === "formulario_contactos" ? "bg-amber-500/10 border border-amber-500/30 text-amber-300" :
+                                "bg-slate-500/10 border border-slate-500/30 text-slate-400"
+                              }`}>
+                                {item.channel?.replace("_", " ") || "—"}
+                              </span>
+                            </td>
+                            <td className="px-4 py-2.5">
+                              <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                                item.status === "novo" ? "bg-cyan-500/10 border border-cyan-500/30 text-cyan-300" :
+                                item.status === "contactado" ? "bg-amber-500/10 border border-amber-500/30 text-amber-300" :
+                                item.status === "orcamento_enviado" ? "bg-blue-500/10 border border-blue-500/30 text-blue-300" :
+                                item.status === "fechado" ? "bg-emerald-500/10 border border-emerald-500/30 text-emerald-300" :
+                                item.status === "perdido" ? "bg-rose-500/10 border border-rose-500/30 text-rose-300" :
+                                "bg-slate-500/10 border border-slate-500/30 text-slate-400"
+                              }`}>
+                                {item.status}
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  )}
+                </div>
+              )}
 
               {/* Tabela de leads */}
               {activeLeadsTab === "leads" && (

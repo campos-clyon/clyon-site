@@ -1113,6 +1113,8 @@ export async function ensureSimulatorOrdersTable() {
     `ALTER TABLE simulatorOrders ADD COLUMN canceladoPeloClienteEm TIMESTAMP NULL DEFAULT NULL`,
     // v8 migrations — pagamento fixo por trabalho (snapshot do valor em vigor no momento da atribuição)
     `ALTER TABLE simulatorOrders ADD COLUMN valorPagoAssistente DECIMAL(8,2) NULL DEFAULT NULL`,
+    // v9 migrations — origem do pedido (simulador vs formulario_contacto) para filtrar e análise
+    `ALTER TABLE simulatorOrders ADD COLUMN source VARCHAR(30) NULL DEFAULT 'simulador'`,
   ];
     for (const sql of migrations) {
       try { await pool.execute(sql); } catch (e: any) {
@@ -1177,7 +1179,7 @@ export async function getAllSimulatorOrders(filters?: {
   // This dramatically reduces payload size and improves dashboard load time
   const [rows] = await pool.execute(
     `SELECT id, contactName, contactPhone, address, serviceType, status, precoFinal, estimateTotal, 
-            createdAt, dataAgendada, assignedToId, assignedToName, priority 
+            createdAt, dataAgendada, assignedToId, assignedToName, priority, source
      FROM simulatorOrders ${where} ORDER BY createdAt DESC LIMIT 100`,
     params,
   ) as any[];
