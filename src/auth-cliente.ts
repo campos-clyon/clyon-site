@@ -17,6 +17,7 @@ import GoogleProvider from "next-auth/providers/google";
 const isProduction = process.env.NODE_ENV === "production";
 
 export const authOptionsCliente: NextAuthOptions = {
+  basePath: "/api/auth/cliente",
   secret: process.env.NEXTAUTH_SECRET,
 
   cookies: {
