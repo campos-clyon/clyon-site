@@ -11,8 +11,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Não autenticado." }, { status: 401 });
     }
 
-    const emailNorm = session.user.email.trim().toLowerCase();
-    const userEmail = session.user.email; // Type narrowing for closure
+    const userEmail = session.user.email; // Explicit capture before async boundary
+    const emailNorm = userEmail.trim().toLowerCase();
 
     // 2. Executar query mínima com conexão isolada
     const result = await withConnection(async (conn) => {
