@@ -17,7 +17,6 @@ import {
 } from "lucide-react";
 
 import RotatingHeroCopy from "@/components/RotatingHeroCopy";
-import { InstagramFeed } from "@/components/InstagramFeed";
 import ImageCarousel from "@/components/ImageCarousel";
 import { getHeroCarouselImages } from "@/lib/work-gallery";
 import HeroCTAButton from "@/components/HeroCTAButton";
@@ -624,8 +623,7 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* Instagram Feed */}
-      <InstagramFeed />
+
 
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(homeFaqSchema) }} />
     </div>

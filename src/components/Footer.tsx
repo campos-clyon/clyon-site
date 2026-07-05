@@ -2,10 +2,10 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { Instagram, MessageCircle, ArrowRight, Lock, CreditCard, Smartphone, Building } from "lucide-react";
+import { MessageCircle, ArrowRight, Lock, CreditCard, Smartphone, Building } from "lucide-react";
 
 import { trackWhatsAppClick, trackPhoneCall } from "@/lib/analytics";
-import { BUSINESS_INSTAGRAM, BUSINESS_PHONE, BUSINESS_EMAIL } from "@/lib/seo-data";
+import { BUSINESS_PHONE, BUSINESS_EMAIL } from "@/lib/seo-data";
 
 // Estilos para links com hover azul água
 const linkStyle = "text-white hover:text-cyan-400 transition-colors";
@@ -84,12 +84,6 @@ export default function Footer() {
               <li><Link href="/faq" style={linkStyleInline}>FAQ</Link></li>
               <li><Link href="/blog" style={linkStyleInline}>Blog</Link></li>
               <li><Link href="/contactos" style={linkStyleInline}>Contactos</Link></li>
-              <li>
-                <a href={BUSINESS_INSTAGRAM} target="_blank" rel="noopener noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: "6px", color: "#ffffff", fontSize: "14px", textDecoration: "none" }}>
-                  <Instagram style={{ width: "14px", height: "14px" }} />
-                  Instagram
-                </a>
-              </li>
             </ul>
           </div>
 

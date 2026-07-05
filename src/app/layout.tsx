@@ -10,7 +10,6 @@ import { LocationProvider } from "@/contexts/LocationContext";
 import {
   BUSINESS_ADDRESS,
   BUSINESS_EMAIL,
-  BUSINESS_INSTAGRAM,
   BUSINESS_NAME,
   BUSINESS_PHONE,
   REGIONS,
@@ -130,7 +129,6 @@ const localBusinessSchema = {
     postalCode: "2845-513",
     addressCountry: "PT",
   },
-  sameAs: [BUSINESS_INSTAGRAM],
   areaServed: [
     { "@type": "City", name: "Lisboa" },
     { "@type": "City", name: "Almada" },
@@ -190,7 +188,6 @@ const organizationSchema = {
   name: BUSINESS_NAME,
   url: SITE_URL,
   logo: `${SITE_URL}/logo-clyon-icon.webp`,
-  sameAs: [BUSINESS_INSTAGRAM],
   contactPoint: {
     "@type": "ContactPoint",
     telephone: BUSINESS_PHONE,
