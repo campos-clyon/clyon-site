@@ -23,15 +23,11 @@ const WEAK_MUDANCAS_CITIES = [
 export async function middleware(request: NextRequest) {
   const { nextUrl, headers } = request;
 
-  // Proteger /conta — requer sessão de cliente Google
+  // Proteger /conta — requer sessão autenticada
   if (nextUrl.pathname.startsWith("/conta")) {
-    const isProd = process.env.NODE_ENV === "production";
     const token = await getToken({
       req: request,
       secret: process.env.NEXTAUTH_SECRET,
-      cookieName: isProd
-        ? "__Secure-next-auth.cliente.session-token"
-        : "next-auth.cliente.session-token",
     });
     if (!token) {
       const loginUrl = new URL("/entrar", request.url);

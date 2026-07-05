@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptionsCliente } from "@/auth-cliente";
+import { authOptions } from "@/auth";
 
 /**
  * POST /api/users/me/avatar

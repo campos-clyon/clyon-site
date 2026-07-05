@@ -15,14 +15,14 @@ export function PremiumLoginCard({ errorMsg }: Props) {
   const handleGoogleSignIn = async () => {
     setIsLoading(true);
     try {
-      // Fetch CSRF token from the cliente-specific endpoint
-      const csrfRes = await fetch("/api/auth/cliente/csrf");
+      // Fetch CSRF token from the default NextAuth endpoint
+      const csrfRes = await fetch("/api/auth/csrf");
       const { csrfToken } = await csrfRes.json();
 
       // Create and submit form with CSRF token (same as signIn() does internally)
       const form = document.createElement("form");
       form.method = "POST";
-      form.action = "/api/auth/cliente/signin/google";
+      form.action = "/api/auth/signin/google";
 
       const csrfInput = document.createElement("input");
       csrfInput.type = "hidden";

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
-import { authOptionsCliente } from "@/auth-cliente";
+import { authOptions } from "@/auth";
 import { AnimatedBackground } from "./AnimatedBackground";
 import { ErrorHandler } from "./ErrorHandler";
 

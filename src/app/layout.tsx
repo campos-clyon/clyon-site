@@ -5,7 +5,7 @@ import { Analytics } from "@vercel/analytics/next";
 
 import SiteChrome from "@/components/SiteChrome";
 import { TrpcProvider } from "@/components/TrpcProvider";
-import AuthClientProvider from "@/components/AuthClientProvider";
+import { SessionProvider } from "next-auth/react";
 import { LocationProvider } from "@/contexts/LocationContext";
 import {
   BUSINESS_ADDRESS,
@@ -255,11 +255,11 @@ export default function RootLayout({
           `}
         </Script>
         <LocationProvider>
-          <AuthClientProvider>
+          <SessionProvider>
             <TrpcProvider>
-              <SiteChrome>{children}</SiteChrome>
+              <LocationProvider>{children}</LocationProvider>
             </TrpcProvider>
-          </AuthClientProvider>
+          </SessionProvider>
         </LocationProvider>
         <Analytics />
       </body>
