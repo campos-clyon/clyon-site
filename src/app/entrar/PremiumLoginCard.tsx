@@ -12,9 +12,35 @@ export function PremiumLoginCard({ errorMsg }: Props) {
   const [tab, setTab] = useState<"login" | "signup">("login");
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleGoogleSignIn = () => {
+  const handleGoogleSignIn = async () => {
     setIsLoading(true);
-    window.location.href = `/api/auth/cliente/signin/google?callbackUrl=${encodeURIComponent("/conta")}`;
+    try {
+      // Fetch CSRF token from the cliente-specific endpoint
+      const csrfRes = await fetch("/api/auth/cliente/csrf");
+      const { csrfToken } = await csrfRes.json();
+
+      // Create and submit form with CSRF token (same as signIn() does internally)
+      const form = document.createElement("form");
+      form.method = "POST";
+      form.action = "/api/auth/cliente/signin/google";
+
+      const csrfInput = document.createElement("input");
+      csrfInput.type = "hidden";
+      csrfInput.name = "csrfToken";
+      csrfInput.value = csrfToken;
+      form.appendChild(csrfInput);
+
+      const callbackInput = document.createElement("input");
+      callbackInput.type = "hidden";
+      callbackInput.name = "callbackUrl";
+      callbackInput.value = "/conta";
+      form.appendChild(callbackInput);
+
+      document.body.appendChild(form);
+      form.submit();
+    } catch {
+      setIsLoading(false);
+    }
   };
 
   return (
