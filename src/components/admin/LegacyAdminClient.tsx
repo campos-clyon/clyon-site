@@ -504,7 +504,7 @@ export default function ColaboradorAdminClient() {
   } | null>(null);
   const [loadingImageStats, setLoadingImageStats] = useState(false);
 
-  // ─��� Leads state ─────────────��────────────────────────────────────────────
+  // ─���� Leads state ─────────────��────────────────────────────────────────────
   const [leads, setLeads] = useState<Lead[]>([]);
   const [leadEvents, setLeadEvents] = useState<LeadEvent[]>([]);
   const [leadTotals, setLeadTotals] = useState<LeadTotals>({});
@@ -840,8 +840,13 @@ export default function ColaboradorAdminClient() {
   useEffect(() => {
     if (activeSection !== "leads" || !token) return;
     if (activeLeadsTab === "unificado") {
+      // Carregar unificado para a tabela + leads/events para os cartões de resumo
       carregarLeadsUnificados(token, leadCanalFilter);
-      const interval = setInterval(() => carregarLeadsUnificados(token, leadCanalFilter), 15000);
+      carregarLeads(token, leadPeriodo, leadStatusFilter);
+      const interval = setInterval(() => {
+        carregarLeadsUnificados(token, leadCanalFilter);
+        carregarLeads(token, leadPeriodo, leadStatusFilter);
+      }, 15000);
       return () => clearInterval(interval);
     } else {
       carregarLeads(token, leadPeriodo, leadStatusFilter);
@@ -3298,7 +3303,7 @@ export default function ColaboradorAdminClient() {
                           <th className="px-4 py-3 font-semibold">Serviço</th>
                           <th className="px-4 py-3 font-semibold">Origem</th>
                           <th className="px-4 py-3 font-semibold">Estado</th>
-                          <th className="px-4 py-3 font-semibold">Ações</th>
+                          <th className="px-4 py-3 font-semibold">A��ões</th>
                         </tr>
                       </thead>
                       <tbody>
