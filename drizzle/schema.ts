@@ -144,7 +144,8 @@ export type OrderStatus =
   | "em_execucao"
   | "concluido"
   | "cancelado"
-  | "rejeitado";
+  | "rejeitado"
+  | "arquivado";
 
 export type OrderPriority = "baixa" | "normal" | "alta" | "urgente";
 
