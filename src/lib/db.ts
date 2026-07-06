@@ -1815,3 +1815,38 @@ export async function deleteTrabalho(id: number): Promise<void> {
 }
 
 // ─── Trabalhos END ────────────────────────────────────────────────────────────
+
+// ─── Company Settings (chave/valor) ───────────────────────────────────────────
+
+export async function ensureCompanySettingsTable() {
+  const pool = await getPool();
+  if (!pool) throw new Error("Database not available");
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS companySettings (
+      \`key\` varchar(60) NOT NULL PRIMARY KEY,
+      value varchar(255) NOT NULL,
+      updatedAt timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    )
+  `);
+}
+
+export async function getCompanySetting(key: string, fallback: string): Promise<string> {
+  await ensureCompanySettingsTable();
+  const pool = await getPool();
+  if (!pool) return fallback;
+  const [rows] = await pool.execute(
+    "SELECT value FROM companySettings WHERE `key` = ? LIMIT 1",
+    [key]
+  ) as [Array<{ value: string }>, unknown];
+  return rows[0]?.value ?? fallback;
+}
+
+export async function setCompanySetting(key: string, value: string): Promise<void> {
+  await ensureCompanySettingsTable();
+  const pool = await getPool();
+  if (!pool) throw new Error("Database not available");
+  await pool.execute(
+    "INSERT INTO companySettings (`key`, value) VALUES (?, ?) ON DUPLICATE KEY UPDATE value = ?",
+    [key, value, value]
+  );
+}

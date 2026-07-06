@@ -518,6 +518,10 @@ export default function ColaboradorAdminClient() {
   const [leadsUnificados, setLeadsUnificados] = useState<any[]>([]);
   const [leadCanalFilter, setLeadCanalFilter] = useState("");
   const [leadEstadoFilter, setLeadEstadoFilter] = useState<"enviados" | "registados">("enviados");
+  // ── Company settings state ──────────────────────────────────────
+  const [companyPhoneDraft, setCompanyPhoneDraft] = useState("");
+  const [loadingCompanyPhone, setLoadingCompanyPhone] = useState(false);
+  const [companyPhoneError, setCompanyPhoneError] = useState("");
   // ── Pedidos state ───────────�����───────────────────────���─────���───────────────
   type SimulatorOrder = {
     id: number;
@@ -617,6 +621,7 @@ export default function ColaboradorAdminClient() {
       void carregarDados(storedToken);
       void carregarSimulatorSettings(storedToken);
       void carregarImageStats(storedToken);
+      void carregarCompanyPhone(storedToken);
     } else {
       // Assistente: só tem acesso à aba pedidos (definir se ainda não foi definido via URL)
       if (!sectionParam) {
@@ -813,6 +818,48 @@ export default function ColaboradorAdminClient() {
       setLeadsError("Erro ao carregar leads unificados.");
     } finally {
       setLoadingLeads(false);
+    }
+  };
+
+  const carregarCompanyPhone = async (authToken: string) => {
+    if (!authToken) return;
+    try {
+      const res = await fetch("/api/admin/company-settings", {
+        cache: "no-store",
+        headers: { Authorization: `Bearer ${authToken}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setCompanyPhoneDraft(data.phone);
+        setCompanyPhoneError("");
+      }
+    } catch (err) {
+      console.error("[admin] carregarCompanyPhone error:", err);
+    }
+  };
+
+  const guardarCompanyPhone = async (authToken: string) => {
+    if (!authToken || !companyPhoneDraft.trim()) return;
+    try {
+      setLoadingCompanyPhone(true);
+      setCompanyPhoneError("");
+      const res = await fetch("/api/admin/company-settings", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${authToken}` },
+        body: JSON.stringify({ phone: companyPhoneDraft }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setCompanyPhoneDraft(data.phone);
+        setCompanyPhoneError("");
+      } else {
+        const errData = await res.json();
+        setCompanyPhoneError(errData.error || "Erro ao gravar telefone");
+      }
+    } catch (err: any) {
+      setCompanyPhoneError(err?.message || "Erro ao gravar telefone");
+    } finally {
+      setLoadingCompanyPhone(false);
     }
   };
 
@@ -1486,7 +1533,7 @@ export default function ColaboradorAdminClient() {
       setError("");
       await carregarDados(token);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Não foi possível atualizar o registo.");
+      setError(err instanceof Error ? err.message : "Não foi poss��vel atualizar o registo.");
     } finally {
       setSavingRegistro(false);
     }
@@ -2698,7 +2745,7 @@ export default function ColaboradorAdminClient() {
                         {(["assistente", "motorista", "ajudante", "admin"] as Array<Colaborador["funcao"]>).map((funcao) => {
                           const descricoes: Record<Colaborador["funcao"], string> = {
                             assistente: "Recebe pedidos do simulador, pagamento fixo por trabalho atribuído",
-                            motorista: "Operação, horários, valor por hora ou diária",
+                            motorista: "Operaç��o, horários, valor por hora ou diária",
                             ajudante: "Operação, horários, valor por hora ou diária",
                             admin: "Acesso total ao backoffice",
                           };
@@ -3885,25 +3932,26 @@ export default function ColaboradorAdminClient() {
                     <div className="rounded-[20px] border border-white/10 bg-white/[0.03] px-5 py-4">
                       <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
                         <Phone className="h-3.5 w-3.5" />
-                        Telefone
+                        Telefone / WhatsApp
                       </p>
-                      <a href="tel:+351965785395" className="mt-1.5 block text-base text-cyan-200 hover:text-cyan-100">
-                        +351 965 785 395
-                      </a>
-                    </div>
-                    <div className="rounded-[20px] border border-white/10 bg-white/[0.03] px-5 py-4">
-                      <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
-                        <MessageCircle className="h-3.5 w-3.5" />
-                        WhatsApp
-                      </p>
-                      <a
-                        href="https://wa.me/351965785395"
-                        target="_blank"
-                        rel="noreferrer"
-                        className="mt-1.5 block text-base text-cyan-200 hover:text-cyan-100"
-                      >
-                        +351 965 785 395
-                      </a>
+                      <div className="mt-3 flex gap-2">
+                        <input
+                          type="text"
+                          value={companyPhoneDraft}
+                          onChange={(e) => setCompanyPhoneDraft(e.target.value)}
+                          placeholder="+351965785395"
+                          className="flex-1 rounded-[12px] border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white placeholder-slate-500 outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400/30 transition-colors"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => guardarCompanyPhone(token)}
+                          disabled={loadingCompanyPhone}
+                          className="rounded-[12px] bg-cyan-500 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-cyan-400 disabled:opacity-50 transition-colors"
+                        >
+                          {loadingCompanyPhone ? "..." : "Guardar"}
+                        </button>
+                      </div>
+                      {companyPhoneError && <p className="mt-2 text-xs text-red-400">{companyPhoneError}</p>}
                     </div>
                     <div className="rounded-[20px] border border-white/10 bg-white/[0.03] px-5 py-4">
                       <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Portal</p>
