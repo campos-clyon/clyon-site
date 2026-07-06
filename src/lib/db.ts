@@ -1638,10 +1638,10 @@ export interface PagamentoAssistente {
   assistenteNome: string;
   totalTrabalhos: number;
   totalEuros: number;
-  /** Detalhe por trabalho atribuído no período */
+  /** Detalhe por trabalho agendado no período (só conta pedidos com evento de calendário) */
   trabalhos: Array<{
     pedidoId: number;
-    assignedAt: string;
+    scheduledDate: string;
     valorPago: number;
     serviceType: string | null;
     city: string | null;
@@ -1657,22 +1657,24 @@ export async function getPagamentosAssistente(opts: {
   const pool = await getPool();
   if (!pool) return [];
 
-  // Query única: todos os pedidos atribuídos no período com assistente e valor snapshot
+  // Query única: só pedidos com evento de calendário agendado (calendarEventId NOT NULL)
+  // Filtra pelo período baseado na data do serviço agendado (scheduledDate), não assignedAt
   const [rows] = await pool.execute(
     `SELECT
        assignedToId,
        assignedToName,
        id            AS pedidoId,
-       assignedAt,
+       scheduledDate,
        COALESCE(valorPagoAssistente, 7.00) AS valorPago,
        serviceType,
        city
      FROM simulatorOrders
      WHERE assignedToId IS NOT NULL
-       AND assignedAt >= ?
-       AND assignedAt <= ?
+       AND calendarEventId IS NOT NULL
+       AND scheduledDate >= ?
+       AND scheduledDate <= ?
        ${opts.assistenteId ? "AND assignedToId = ?" : ""}
-     ORDER BY assignedToId, assignedAt DESC`,
+     ORDER BY assignedToId, scheduledDate DESC`,
     opts.assistenteId
       ? [opts.from, opts.to, opts.assistenteId]
       : [opts.from, opts.to]
@@ -1698,11 +1700,11 @@ export async function getPagamentosAssistente(opts: {
     entry.totalTrabalhos += 1;
     entry.totalEuros     += valor;
     entry.trabalhos.push({
-      pedidoId:    Number(r.pedidoId),
-      assignedAt:  r.assignedAt instanceof Date ? r.assignedAt.toISOString() : String(r.assignedAt),
-      valorPago:   valor,
-      serviceType: r.serviceType ?? null,
-      city:        r.city ?? null,
+      pedidoId:      Number(r.pedidoId),
+      scheduledDate: r.scheduledDate instanceof Date ? r.scheduledDate.toISOString() : String(r.scheduledDate),
+      valorPago:     valor,
+      serviceType:   r.serviceType ?? null,
+      city:          r.city ?? null,
     });
   }
 

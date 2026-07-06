@@ -6,7 +6,7 @@ import { useCallback, useEffect, useState } from "react";
 
 interface TrabalhoDetalhe {
   pedidoId: number;
-  assignedAt: string;
+  scheduledDate: string;
   valorPago: number;
   serviceType: string | null;
   city: string | null;
@@ -293,7 +293,7 @@ export default function PagamentosPanel({ authHeader }: PagamentosPanelProps) {
                           )}
                         </div>
                         <p className="text-[10px] text-slate-500 flex-shrink-0 text-right">
-                          {fmtData(t.assignedAt)}
+                          {fmtData(t.scheduledDate)}
                         </p>
                         <span className="text-sm font-bold text-[#06D6A0] flex-shrink-0 w-14 text-right">
                           {fmtEur(t.valorPago)}
