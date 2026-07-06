@@ -97,6 +97,7 @@ ENTULHO — PREÇO POR SACO (adiciona ao preço calculado pela fórmula de tempo
   - Sacos já ensacados (padrão): 3,00 € por saco s/IVA
   - Sacos sem elevador ou acesso difícil: 3,20 € por saco s/IVA
   - Entulho no chão: usar apenas fórmula de tempo com × 1.3
+  - Big Bag: equivale a 40 sacos standard de entulho (ex: "3 big bags" = 120 sacos)
   Mínimo de entulho: 90 € s/IVA (sem mínimo de zona)
 
 ENTULHO — tabela de TEMPO (para a fórmula de custo pessoal):
@@ -563,7 +564,7 @@ export function estimateLaborHours(input: FastEstimateInput): number {
     if (input.parkingDistance === "difficult" || input.needsDismantling) hours += 0.5;
 
   } else {
-    // Recolha m��veis / monos / esvaziamento / outro
+    // Recolha m����veis / monos / esvaziamento / outro
     const floor = floorNumber(input.floor);
     const noElev = input.hasElevator === "no";
     const smallElev = input.hasElevator === "small";

@@ -660,6 +660,7 @@ function Phase1Service({
           quantity={formData.entulhoQuantidade}
           quantidadeEnsacados={formData.entulhoQuantidadeEnsacados}
           quantidadePorEnsacar={formData.entulhoQuantidadePorEnsacar}
+          quantidadeBigBags={formData.entulhoQuantidadeBigBags}
           onStateChange={(state) => updateField("entulhoState", state)}
           onQuantityChange={(quantity) => updateField("entulhoQuantidade", quantity)}
           onQuantidadeEnsacadosChange={(q) => {
@@ -672,6 +673,11 @@ function Phase1Service({
             updateField("entulhoQuantidadePorEnsacar", q);
             const total = (parseInt(formData.entulhoQuantidadeEnsacados ?? "0") || 0) + (parseInt(q) || 0);
             if (total > 0) updateField("entulhoQuantidade", String(total));
+          }}
+          onQuantidadeBigBagsChange={(q) => {
+            updateField("entulhoQuantidadeBigBags", q);
+            const bigBags = parseInt(q, 10) || 0;
+            updateField("entulhoQuantidade", String(bigBags * 40));
           }}
         />
       )}
