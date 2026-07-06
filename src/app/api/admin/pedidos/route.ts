@@ -8,6 +8,7 @@ import {
   getSimulatorOrderById,
   getEffectiveRole,
   maskName,
+  getPedidosRecusadosIds,
 } from "@/lib/db";
 import { verifyColaboradorAuthHeader } from "@/lib/colaborador-auth";
 
@@ -57,19 +58,27 @@ export async function GET(req: NextRequest) {
   } else {
     // Assistente vê pedidos atribuídos a si + pedidos da fila geral (assignedToId IS NULL)
     const orders = await getSimulatorOrdersByAssistant(colab!.id);
+    const recusadosIds = await getPedidosRecusadosIds(colab!.id);
 
     // Filtrar por status e pesquisa.
     // "sem_assistente" não é um status real — é uma vista sobre assignedToId IS NULL.
+    // "aceites" = pedidos que esta conta aceitou (assignedToId = colab!.id)
+    // "recusados" = pedidos que esta conta pessoalmente recusou
     const filtered = orders.filter((o) => {
       if (status && status !== "todos") {
         if (status === "sem_assistente") {
+          // Pedidos disponíveis: sem assistente E não recusados por esta conta
           if (o.assignedToId !== null && o.assignedToId !== undefined) return false;
-        } else if (status === "em_negociacao") {
-          if (!["em_analise","precisa_info","estimativa_pronta"].includes(o.status)) return false;
-        } else if (status === "contratados") {
-          if (!["aprovado","agendado","confirmado","em_curso","concluido"].includes(o.status)) return false;
+          if (recusadosIds.includes(o.id)) return false;
+        } else if (status === "aceites") {
+          // Pedidos aceites por esta conta
+          if (o.assignedToId !== colab!.id) return false;
         } else if (status === "recusados") {
-          if (o.status !== "cancelado") return false;
+          // Pedidos recusados pessoalmente por esta conta
+          if (!recusadosIds.includes(o.id)) return false;
+        } else if (status === "arquivados") {
+          // Pedidos arquivados (globalmente)
+          if (o.status !== "arquivado") return false;
         } else {
           if (o.status !== status) return false;
         }
@@ -87,18 +96,14 @@ export async function GET(req: NextRequest) {
     });
 
     // Contagens correctas: baseadas em TODOS os pedidos visíveis (sem filtro de status)
-    const allVisible = orders; // lista completa (apenas filtro de pesquisa pode ter sido aplicado)
+    const allVisible = orders; // lista completa
     const counts: Record<string, number> = {};
-    for (const o of allVisible) counts[o.status] = (counts[o.status] ?? 0) + 1;
     counts["total"] = allVisible.length;
-    // "pendente" = novos não visualizados
-    counts["pendente"] = allVisible.filter((o) => !o.viewedAt).length;
-    // "sem_assistente" = na fila geral
-    counts["sem_assistente"] = allVisible.filter((o) => !o.assignedToId).length;
-    // Novos agrupamentos
-    counts["em_analise"] = allVisible.filter((o) => ["em_analise","precisa_info","estimativa_pronta"].includes(o.status)).length;
-    counts["aprovado"] = allVisible.filter((o) => ["aprovado","agendado","confirmado","em_curso","concluido"].includes(o.status)).length;
-    counts["cancelado"] = allVisible.filter((o) => o.status === "cancelado").length;
+    // Abas da fico pessoal
+    counts["sem_assistente"] = allVisible.filter((o) => !o.assignedToId && !recusadosIds.includes(o.id)).length;
+    counts["aceites"] = allVisible.filter((o) => o.assignedToId === colab!.id).length;
+    counts["recusados"] = recusadosIds.length;
+    counts["arquivados"] = allVisible.filter((o) => o.status === "arquivado").length;
 
     // Mascarar dados de pedidos na fila geral (não atribuídos a este assistente)
     const maskedFiltered = filtered.map((o) => {

@@ -841,6 +841,33 @@ export default function PedidoDetailModal({ id, token, isAdmin, colabId, colabFu
     }
   }
 
+  async function handleDecline() {
+    if (!order) return;
+    setAccepting(true);
+    setAcceptMsg("");
+    setError("");
+    try {
+      const res = await fetch(`/api/admin/pedidos/${order.id}/recusar`, {
+        method: "POST",
+        headers: authHeader,
+      });
+      const data = await safeJson(res);
+      if (!res.ok || data?.ok === false) {
+        throw new Error(data?.message || "Não foi possível recusar o pedido.");
+      }
+      setAcceptMsg("Pedido recusado. Permanece disponível para outros.");
+      setTimeout(() => {
+        setAcceptMsg("");
+        onClose?.();
+      }, 2000);
+      onUpdated?.(order);
+    } catch (e: any) {
+      setError(e.message || "Erro ao recusar o pedido.");
+    } finally {
+      setAccepting(false);
+    }
+  }
+
   async function handleSchedule() {
     if (!order) return;
     if (!schedDate || !schedStart || !schedEnd) {
@@ -1092,25 +1119,44 @@ export default function PedidoDetailModal({ id, token, isAdmin, colabId, colabFu
                         {saveMsg}
                       </span>
                     )}
-                    {/* Aceitar pedido — visível apenas para assistentes quando pedido está na fila geral */}
+                    {/* Aceitar/Recusar pedido — visível apenas para assistentes quando pedido está na fila geral */}
                     {!isAdmin && colabFuncao === "assistente" && !order.assignedToId && (
-                      <button
-                        onClick={handleAccept}
-                        disabled={accepting}
-                        className="flex items-center gap-1.5 rounded-2xl bg-cyan-400 px-4 py-2 text-sm font-bold text-slate-950 hover:bg-cyan-300 disabled:opacity-60 transition"
-                      >
-                        {accepting ? (
-                          <svg className="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                          </svg>
-                        ) : (
-                          <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                          </svg>
-                        )}
-                        {accepting ? "A aceitar..." : "Aceitar pedido"}
-                      </button>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={handleAccept}
+                          disabled={accepting}
+                          className="flex items-center gap-1.5 rounded-2xl bg-cyan-400 px-4 py-2 text-sm font-bold text-slate-950 hover:bg-cyan-300 disabled:opacity-60 transition"
+                        >
+                          {accepting ? (
+                            <svg className="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                            </svg>
+                          ) : (
+                            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                          )}
+                          {accepting ? "A processar..." : "Aceitar"}
+                        </button>
+                        <button
+                          onClick={handleDecline}
+                          disabled={accepting}
+                          className="flex items-center gap-1.5 rounded-2xl border border-red-400/30 bg-red-400/10 px-4 py-2 text-sm font-bold text-red-300 hover:bg-red-400/20 disabled:opacity-60 transition"
+                        >
+                          {accepting ? (
+                            <svg className="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                            </svg>
+                          ) : (
+                            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                          )}
+                          {accepting ? "A processar..." : "Recusar"}
+                        </button>
+                      </div>
                     )}
                     {/* Pedido já atribuído a outra assistente */}
                     {!isAdmin && colabFuncao === "assistente" && order.assignedToId && order.assignedToId !== colabId && (

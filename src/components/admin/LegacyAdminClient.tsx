@@ -2112,16 +2112,12 @@ export default function ColaboradorAdminClient() {
               <div className="flex gap-1 rounded-2xl border border-white/10 bg-white/[0.03] p-1 overflow-x-auto">
                 {[
                   { id: "sem_assistente", label: "Disponíveis" },
-                  { id: "em_negociacao", label: "Em negociação" },
-                  { id: "contratados", label: "Contratados" },
+                  { id: "aceites", label: "Aceites" },
                   { id: "recusados", label: "Recusados" },
                   { id: "arquivados", label: "Arquivados", statusValue: "arquivado" },
                 ].map((tab) => {
                   const filterValue = tab.statusValue ?? tab.id;
-                  const count = tab.id === "recusados" ? (pedidosCounts["cancelado"] ?? 0)
-                    : tab.id === "em_negociacao" ? (pedidosCounts["em_analise"] ?? 0)
-                    : tab.id === "contratados" ? (pedidosCounts["aprovado"] ?? 0)
-                    : (pedidosCounts[tab.id] ?? 0);
+                  const count = pedidosCounts[tab.id] ?? 0;
                   return (
                     <button
                       key={tab.id}

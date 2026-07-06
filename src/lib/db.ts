@@ -1656,7 +1656,44 @@ export async function cancelarOrcamentoPeloCliente(token: string): Promise<{ ok:
   return { ok: true };
 }
 
-// ─── SimulatorOrders END ───────────────────────��──────────────────────────────
+// ─── SimulatorOrders END ───────────────────────────────────────────────────────
+
+// ─── Recusas Pessoais de Pedidos ──────────────────────────────────────────────
+
+export async function ensurePedidoRecusasTable() {
+  const pool = await getPool();
+  if (!pool) throw new Error("Database not available");
+  await pool.execute(`
+    CREATE TABLE IF NOT EXISTS pedidoRecusas (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      pedidoId INT NOT NULL,
+      colaboradorId INT NOT NULL,
+      recusadoAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE KEY unique_recusa (pedidoId, colaboradorId)
+    )
+  `);
+}
+
+export async function recusarPedido(pedidoId: number, colaboradorId: number): Promise<void> {
+  await ensurePedidoRecusasTable();
+  const pool = await getPool();
+  if (!pool) throw new Error("Database not available");
+  await pool.execute(
+    "INSERT IGNORE INTO pedidoRecusas (pedidoId, colaboradorId) VALUES (?, ?)",
+    [pedidoId, colaboradorId],
+  );
+}
+
+export async function getPedidosRecusadosIds(colaboradorId: number): Promise<number[]> {
+  await ensurePedidoRecusasTable();
+  const pool = await getPool();
+  if (!pool) return [];
+  const [rows] = await pool.execute(
+    "SELECT pedidoId FROM pedidoRecusas WHERE colaboradorId = ?",
+    [colaboradorId],
+  ) as [Array<{ pedidoId: number }>, unknown];
+  return rows.map((r) => r.pedidoId);
+}
 
 // ─── Pagamentos de Assistentes ────────────────────────────────────────────────
 
