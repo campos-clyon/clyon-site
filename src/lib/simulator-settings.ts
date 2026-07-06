@@ -21,6 +21,8 @@ export type SimulatorSettingKey =
   | "num_pessoas_equipa"
   | "overhead_por_servico"
   | "margem_lucro"
+  | "urgencia_hoje_extra"
+  | "urgencia_amanha_extra"
   | "diesel_preco"
   | "km_por_litro"
   | "pagamento_assistente_por_trabalho";
