@@ -51,17 +51,17 @@ export async function GET(request: NextRequest) {
           serviceType,
           'registado' AS status,
           CASE
-            WHEN eventType = 'click_whatsapp' THEN 'whatsapp'
-            WHEN eventType = 'click_call' THEN 'ligar'
-            WHEN eventType = 'click_email' THEN 'email'
-            WHEN eventType = 'click_cta' THEN 'cta'
-            WHEN action = 'simulador_started' THEN 'simulador'
+            WHEN eventType = 'form_submit_contacto' THEN 'contacto'
+            WHEN eventType = 'form_submit_quero_contratar' THEN 'quero_contratar'
+            WHEN eventType = 'simulator_order_confirmed' THEN 'simulador'
+            WHEN eventType = 'simulator_order_saved' THEN 'simulador'
             ELSE eventType
           END AS channel,
           createdAt
         FROM leadEvents
         WHERE createdAt >= ?
-        ${canal ? "AND CASE WHEN eventType = 'click_whatsapp' THEN 'whatsapp' WHEN eventType = 'click_call' THEN 'ligar' WHEN eventType = 'click_email' THEN 'email' WHEN eventType = 'click_cta' THEN 'cta' WHEN action = 'simulador_started' THEN 'simulador' ELSE eventType END = ?" : ""}
+          AND eventType IN ('form_submit_contacto', 'form_submit_quero_contratar', 'simulator_order_confirmed', 'simulator_order_saved')
+        ${canal ? "AND CASE WHEN eventType = 'form_submit_contacto' THEN 'contacto' WHEN eventType = 'form_submit_quero_contratar' THEN 'quero_contratar' WHEN eventType = 'simulator_order_confirmed' THEN 'simulador' WHEN eventType = 'simulator_order_saved' THEN 'simulador' ELSE eventType END = ?" : ""}
         
         ORDER BY createdAt DESC
         LIMIT 300
