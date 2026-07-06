@@ -108,7 +108,7 @@ export default function Header({ phone = BUSINESS_PHONE }: HeaderProps) {
   const buttonRef = useRef<HTMLButtonElement>(null);
   const contaRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
-  const session = useSession();
+  const { data: session } = useSession();
 
   const whatsappNumber = phone.replace(/[^\d]/g, "");
   const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent("Olá! Gostava de pedir um orçamento à CLYON.")}`;
@@ -224,8 +224,8 @@ export default function Header({ phone = BUSINESS_PHONE }: HeaderProps) {
                 aria-label="Menu da conta"
               >
                 <UserAvatar
-                  src={session.data?.user?.image}
-                  name={session.user.name ?? session.user.email}
+                  src={session?.user?.image}
+                  name={session?.user?.name ?? session?.user?.email}
                   size={36}
                 />
               </button>
