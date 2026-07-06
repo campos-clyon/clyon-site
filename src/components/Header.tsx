@@ -102,6 +102,8 @@ const navLinks = [
 export default function Header({ phone = BUSINESS_PHONE }: HeaderProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isServicosOpen, setIsServicosOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
   const pathname = usePathname();
   const session = useSession();
 
