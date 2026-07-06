@@ -11,13 +11,13 @@ const ContactSchema = z.object({
   telemovel:           z.string().min(9).max(20),
   endereco:            z.string().min(3).max(200),
   servico:             z.string().min(2).max(80),
-  mensagem:            z.string().max(2000).optional(),
-  pagePath:            z.string().max(255).optional(),
-  pageUrl:             z.string().max(512).optional(),
-  utmSource:           z.string().max(120).optional(),
-  utmMedium:           z.string().max(120).optional(),
-  utmCampaign:         z.string().max(120).optional(),
-  gclid:               z.string().max(200).optional(),
+  mensagem:            z.string().max(2000).nullish(),
+  pagePath:            z.string().max(255).nullish(),
+  pageUrl:             z.string().max(512).nullish(),
+  utmSource:           z.string().max(120).nullish(),
+  utmMedium:           z.string().max(120).nullish(),
+  utmCampaign:         z.string().max(120).nullish(),
+  gclid:               z.string().max(200).nullish(),
 });
 
 export async function POST(request: NextRequest) {

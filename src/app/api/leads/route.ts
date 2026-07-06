@@ -10,13 +10,13 @@ const LeadSchema = z.object({
   localidade:          z.string().min(2).max(120),
   tipoServico:         z.string().min(2).max(80),
   preferenciaContacto: z.string().min(1).max(30),
-  mensagem:            z.string().max(2000).optional(),
-  pagePath:            z.string().max(255).optional(),
-  pageUrl:             z.string().max(512).optional(),
-  utmSource:           z.string().max(120).optional(),
-  utmMedium:           z.string().max(120).optional(),
-  utmCampaign:         z.string().max(120).optional(),
-  gclid:               z.string().max(255).optional(),
+  mensagem:            z.string().max(2000).nullish(),
+  pagePath:            z.string().max(255).nullish(),
+  pageUrl:             z.string().max(512).nullish(),
+  utmSource:           z.string().max(120).nullish(),
+  utmMedium:           z.string().max(120).nullish(),
+  utmCampaign:         z.string().max(120).nullish(),
+  gclid:               z.string().max(255).nullish(),
 });
 
 // POST /api/leads — criar novo lead
