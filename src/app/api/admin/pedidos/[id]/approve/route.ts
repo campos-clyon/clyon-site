@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { approveSimulatorOrder, getSimulatorOrderById, updateSimulatorOrder, setOrcamentoToken } from "@/lib/db";
 import { verifyColaboradorAuthHeader } from "@/lib/colaborador-auth";
 import { sendOrcamentoEmail } from "@/lib/email-orcamento";
+import { notifyClientStatusChange } from "@/lib/notify-client";
 
 export const runtime = "nodejs";
 
@@ -52,6 +53,15 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       token,
       orderId:       Number(id),
     }).catch(() => {});
+
+    // Notificar cliente que o pedido foi aprovado
+    void notifyClientStatusChange({
+      orderId: Number(id),
+      contactEmail: order.contactEmail,
+      contactName: order.contactName,
+      contactPhone: order.contactPhone,
+      newStatus: "aprovado",
+    });
   }
 
   return NextResponse.json({ ok: true, order });

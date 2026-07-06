@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSimulatorOrderById, updateSimulatorOrder, markOrderAsViewed, deleteSimulatorOrder } from "@/lib/db";
 import { verifyColaboradorAuthHeader } from "@/lib/colaborador-auth";
+import { notifyClientStatusChange } from "@/lib/notify-client";
 
 export const runtime = "nodejs";
 
@@ -91,6 +92,18 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   }
 
   const updated = await getSimulatorOrderById(Number(id));
+
+  // Notificar cliente se o estado mudou
+  if (body.status && body.status !== order.status) {
+    void notifyClientStatusChange({
+      orderId: Number(id),
+      contactEmail: order.contactEmail,
+      contactName: order.contactName,
+      contactPhone: order.contactPhone,
+      newStatus: body.status as string,
+    });
+  }
+
   return NextResponse.json({ ok: true, order: updated, message: "Pedido atualizado com sucesso." });
 }
 

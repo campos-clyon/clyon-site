@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { Resend } from "resend";
-import { BUSINESS_EMAIL } from "@/lib/seo-data";
+import { BUSINESS_EMAIL, SITE_URL } from "@/lib/seo-data";
 import { createLead, createSimulatorOrder } from "@/lib/db";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
+import { notifyNewOrder } from "@/lib/whatsapp";
 
 const ContactSchema = z.object({
   nome:                z.string().min(2).max(120),
@@ -221,26 +222,28 @@ Este email foi enviado automaticamente através do formulário de contacto em cl
       );
     }
 
-    // Gravar lead + pedido na DB em paralelo — independente do email, best-effort
-    Promise.all([
-      createLead({
-        nome,
-        telefone: telemovel,
-        email: "",
-        localidade: endereco,
-        tipoServico: servico,
-        preferenciaContacto: "Email",
-        mensagem: mensagem ?? null,
-        pagePath: pagePath ?? null,
-        pageUrl: pageUrl ?? null,
-        utmSource: utmSource ?? null,
-        utmMedium: utmMedium ?? null,
-        utmCampaign: utmCampaign ?? null,
-        gclid: gclid ?? null,
-        origem: "formulario_contactos",
-        canal: "email",
-      }),
-      createSimulatorOrder({
+    // Gravar lead na DB (best-effort)
+    createLead({
+      nome,
+      telefone: telemovel,
+      email: "",
+      localidade: endereco,
+      tipoServico: servico,
+      preferenciaContacto: "Email",
+      mensagem: mensagem ?? null,
+      pagePath: pagePath ?? null,
+      pageUrl: pageUrl ?? null,
+      utmSource: utmSource ?? null,
+      utmMedium: utmMedium ?? null,
+      utmCampaign: utmCampaign ?? null,
+      gclid: gclid ?? null,
+      origem: "formulario_contactos",
+      canal: "email",
+    }).catch((err) => console.error("[api/contact] Erro ao gravar lead:", err));
+
+    // Gravar pedido na DB e notificar a equipa
+    try {
+      const orderId = await createSimulatorOrder({
         contactName: nome,
         contactPhone: telemovel,
         address: endereco,
@@ -249,8 +252,21 @@ Este email foi enviado automaticamente através do formulário de contacto em cl
         status: "sem_assistente",
         source: "formulario_contacto",
         pagePath: pagePath ?? null,
-      }),
-    ]).catch((err) => console.error("[api/contact] Erro ao gravar dados:", err));
+      });
+
+      // Notificar equipa de novo pedido (assíncrono, não bloqueia resposta)
+      notifyNewOrder({
+        id: orderId,
+        contactName: nome,
+        serviceType: servico,
+        city: endereco.split(",")[0] ?? null,
+        address: endereco,
+        estimateWithVat: null,
+        backofficeUrl: `${SITE_URL}/admin/pedidos/${orderId}`,
+      });
+    } catch (err) {
+      console.error("[api/contact] Erro ao gravar pedido:", err);
+    }
 
     return NextResponse.json({ success: true, id: data?.id });
   } catch (error) {
