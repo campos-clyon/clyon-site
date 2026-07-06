@@ -217,14 +217,14 @@ export default function Header({ phone = BUSINESS_PHONE }: HeaderProps) {
                 type="button"
                 onClick={() => setContaOpen(!contaOpen)}
                 className={`rounded-full border-2 transition ${
-                  isContaActive
+                  contaOpen
                     ? "border-cyan-500 ring-2 ring-cyan-500 ring-offset-2"
                     : "border-cyan-200 hover:border-cyan-400"
                 }`}
                 aria-label="Menu da conta"
               >
                 <UserAvatar
-                  src={session.user.image}
+                  src={session.data?.user?.image}
                   name={session.user.name ?? session.user.email}
                   size={36}
                 />
@@ -277,7 +277,7 @@ export default function Header({ phone = BUSINESS_PHONE }: HeaderProps) {
               href="/conta"
               aria-label="A minha conta"
               className={`rounded-full border-2 transition ${
-                isContaActive
+                contaOpen
                   ? "border-cyan-500 ring-2 ring-cyan-500 ring-offset-2"
                   : "border-cyan-200 hover:border-cyan-400"
               }`}
