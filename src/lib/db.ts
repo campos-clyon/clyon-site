@@ -112,29 +112,21 @@ export async function ensureSimulatorSettingsTable() {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
-  // Upsert de defaults: corre SEMPRE para que alterações de código (ex: custo_km,
-  // overhead_por_servico) se propaguem à DB sem necessidade de intervenção manual.
-  // O admin pode sempre sobrescrever via UI — upsertSimulatorSetting usa a mesma lógica.
-  for (const setting of defaultSimulatorSettings) {
-    await db
-      .insert(simulatorSettings)
-      .values({
-        key: setting.key,
-        label: setting.label,
-        category: setting.category,
-        unit: setting.unit,
-        value: setting.value.toFixed(2),
-        description: setting.description,
-      })
-      .onDuplicateKeyUpdate({
-        set: {
-          label: setting.label,
-          category: setting.category,
-          unit: setting.unit,
-          description: setting.description,
-          value: setting.value.toFixed(2),
-        },
-      });
+  // Só inserir definições que ainda não existem na BD — nunca sobrescrever valores já
+  // guardados (isso apagaria alterações manuais feitas pelo admin no painel).
+  const existing = await db.select({ key: simulatorSettings.key }).from(simulatorSettings);
+  const existingKeys = new Set(existing.map((row) => row.key));
+  const missing = defaultSimulatorSettings.filter((setting) => !existingKeys.has(setting.key));
+
+  for (const setting of missing) {
+    await db.insert(simulatorSettings).values({
+      key: setting.key,
+      label: setting.label,
+      category: setting.category,
+      unit: setting.unit,
+      value: setting.value.toFixed(2),
+      description: setting.description,
+    });
   }
 }
 

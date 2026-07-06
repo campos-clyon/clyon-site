@@ -966,10 +966,7 @@ export default function PedidoDetailModal({ id, token, isAdmin, colabId, colabFu
   // ─── Render ───────────────────────────────────────────────────────────────���
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4"
-      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
-    >
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4">
       <div
         className="relative flex w-full flex-col overflow-hidden rounded-[28px] border border-white/[0.08] bg-[#070e17] shadow-[0_40px_120px_rgba(0,0,0,0.8)]"
         style={{ maxWidth: "min(1600px, 96vw)", maxHeight: "94vh", height: "94vh" }}
@@ -2107,7 +2104,7 @@ export default function PedidoDetailModal({ id, token, isAdmin, colabId, colabFu
 
       {/* ── Lightbox ── */}
       {lightbox && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/90 p-4" onClick={() => setLightbox(null)}>
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/90 p-4">
           <img src={lightbox} alt="Preview" className="max-h-[90vh] max-w-[90vw] rounded-2xl object-contain" />
           <button className="absolute top-4 right-4 flex h-9 w-9 items-center justify-center rounded-2xl bg-white/10 text-white hover:bg-white/20 transition" onClick={() => setLightbox(null)}>
             <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -2123,10 +2120,7 @@ export default function PedidoDetailModal({ id, token, isAdmin, colabId, colabFu
         const calCls = "w-full rounded-xl border border-white/10 bg-white/[0.04] px-3.5 py-2.5 text-sm text-white placeholder:text-slate-500 focus:border-violet-400/40 focus:outline-none focus:ring-1 focus:ring-violet-400/20 transition";
         const lbCls = "block text-[10px] font-semibold uppercase tracking-[0.15em] text-slate-500 mb-1.5";
         return (
-          <div
-            className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
-            onClick={(e) => { if (e.target === e.currentTarget) setCalendarModalOpen(false); }}
-          >
+          <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
             <div
               className="relative flex w-full max-w-2xl flex-col overflow-hidden rounded-[24px] border border-violet-400/20 bg-[#070e17] shadow-[0_40px_100px_rgba(0,0,0,0.9)]"
               style={{ maxHeight: "92vh" }}

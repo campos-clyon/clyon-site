@@ -1533,7 +1533,13 @@ export default function ColaboradorAdminClient() {
       }
 
       setError("");
-      await carregarSimulatorSettings(token);
+      setSimulatorSettings((prev) =>
+        prev.map((item) =>
+          item.key === setting.key
+            ? { ...item, value: Number(simulatorDrafts[setting.key]) }
+            : item
+        )
+      );
     } catch (err) {
       setError(err instanceof Error ? err.message : "Não foi possível guardar este valor.");
     } finally {
