@@ -517,6 +517,7 @@ export default function ColaboradorAdminClient() {
   const [activeLeadsTab, setActiveLeadsTab] = useState<"unificado" | "leads" | "eventos">("unificado");
   const [leadsUnificados, setLeadsUnificados] = useState<any[]>([]);
   const [leadCanalFilter, setLeadCanalFilter] = useState("");
+  const [leadEstadoFilter, setLeadEstadoFilter] = useState<"enviados" | "registados">("enviados");
   // ── Pedidos state ───────────�����───────────────────────���─────���───────────────
   type SimulatorOrder = {
     id: number;
@@ -791,11 +792,11 @@ export default function ColaboradorAdminClient() {
     }
   };
 
-  const carregarLeadsUnificados = async (authToken: string, canal = "") => {
+  const carregarLeadsUnificados = async (authToken: string, canal = "", estado: "enviados" | "registados" = "enviados") => {
     if (!authToken) return;
     try {
       setLoadingLeads(true);
-      const url = `/api/admin/leads-unificado?${canal ? `canal=${encodeURIComponent(canal)}&` : ""}_=${Date.now()}`;
+      const url = `/api/admin/leads-unificado?${canal ? `canal=${encodeURIComponent(canal)}&` : ""}estado=${estado}&_=${Date.now()}`;
       const res = await fetch(url, {
         cache: "no-store",
         headers: { Authorization: `Bearer ${authToken}` },
@@ -836,10 +837,10 @@ export default function ColaboradorAdminClient() {
     if (activeSection !== "leads" || !token) return;
     if (activeLeadsTab === "unificado") {
       // Carregar unificado para a tabela + leads/events para os cartões de resumo
-      carregarLeadsUnificados(token, leadCanalFilter);
+      carregarLeadsUnificados(token, leadCanalFilter, leadEstadoFilter);
       carregarLeads(token, leadPeriodo, leadStatusFilter);
       const interval = setInterval(() => {
-        carregarLeadsUnificados(token, leadCanalFilter);
+        carregarLeadsUnificados(token, leadCanalFilter, leadEstadoFilter);
         carregarLeads(token, leadPeriodo, leadStatusFilter);
       }, 15000);
       return () => clearInterval(interval);
@@ -849,7 +850,7 @@ export default function ColaboradorAdminClient() {
       return () => clearInterval(interval);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeSection, token, leadPeriodo, leadStatusFilter, leadEventTypeFilter, activeLeadsTab, leadCanalFilter]);
+  }, [activeSection, token, leadPeriodo, leadStatusFilter, leadEventTypeFilter, activeLeadsTab, leadCanalFilter, leadEstadoFilter]);
 
   // Carregar pedidos quando a aba Pedidos fica activa
   useEffect(() => {
@@ -3170,19 +3171,36 @@ export default function ColaboradorAdminClient() {
                   </select>
                 )}
                 {activeLeadsTab === "unificado" && (
-                  <select
-                    value={leadCanalFilter}
-                    onChange={(e) => setLeadCanalFilter(e.target.value)}
-                    className="h-10 rounded-[14px] border border-cyan-300/20 bg-[#0d1f35] px-3 text-sm text-white outline-none focus:border-cyan-400 [color-scheme:dark]"
-                  >
-                    <option value="">Todos os canais</option>
-                    <option value="whatsapp">WhatsApp</option>
-                    <option value="ligar">Ligar</option>
-                    <option value="email">Email</option>
-                    <option value="cta">CTA</option>
-                    <option value="simulador">Simulador</option>
-                    <option value="formulario_contactos">Formulário de contactos</option>
-                  </select>
+                  <div className="flex gap-3 items-center">
+                    <div className="flex gap-1 rounded-2xl border border-white/10 bg-white/[0.03] p-1">
+                      {(["enviados", "registados"] as const).map((estado) => (
+                        <button
+                          key={estado}
+                          type="button"
+                          onClick={() => setLeadEstadoFilter(estado)}
+                          className={`px-3 py-1.5 rounded-[12px] text-sm font-semibold transition ${
+                            leadEstadoFilter === estado ? "bg-cyan-400 text-slate-950" : "text-slate-400 hover:text-white"
+                          }`}
+                        >
+                          {estado === "enviados" ? "Enviados" : "Registados"}
+                        </button>
+                      ))}
+                    </div>
+                    <select
+                      value={leadCanalFilter}
+                      onChange={(e) => setLeadCanalFilter(e.target.value)}
+                      className="h-10 rounded-[14px] border border-cyan-300/20 bg-[#0d1f35] px-3 text-sm text-white outline-none focus:border-cyan-400 [color-scheme:dark]"
+                    >
+                      <option value="">Todos os canais</option>
+                      <option value="whatsapp">WhatsApp</option>
+                      <option value="ligar">Ligar</option>
+                      <option value="email">Email</option>
+                      <option value="cta">CTA</option>
+                      <option value="simulador">Simulador</option>
+                      <option value="contacto">Contacto</option>
+                      <option value="quero_contratar">Quero Contratar</option>
+                    </select>
+                  </div>
                 )}
                 {activeLeadsTab === "leads" && (
                   <select
