@@ -57,9 +57,9 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     // Notificar cliente que o pedido foi aprovado
     void notifyClientStatusChange({
       orderId: Number(id),
-      contactEmail: order.contactEmail,
-      contactName: order.contactName,
-      contactPhone: order.contactPhone,
+      contactEmail: order.contactEmail ?? null,
+      contactName: order.contactName ?? null,
+      contactPhone: order.contactPhone ?? null,
       newStatus: "aprovado",
     });
   }

@@ -97,9 +97,9 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   if (body.status && body.status !== order.status) {
     void notifyClientStatusChange({
       orderId: Number(id),
-      contactEmail: order.contactEmail,
-      contactName: order.contactName,
-      contactPhone: order.contactPhone,
+      contactEmail: order.contactEmail ?? null,
+      contactName: order.contactName ?? null,
+      contactPhone: order.contactPhone ?? null,
       newStatus: body.status as string,
     });
   }
