@@ -220,22 +220,16 @@ const siteModules = [
 
 const simulatorDisplayGroups = [
   {
+    id: "geral",
+    label: "Fórmula geral de custo",
+    description: "Valores base usados em todos os cálculos: combustível, mão de obra, overhead e margem de lucro.",
+    keys: ["custo_km", "custo_hora_pessoa", "num_pessoas_equipa", "overhead_por_servico", "margem_lucro", "urgencia_hoje_extra", "urgencia_amanha_extra"],
+  },
+  {
     id: "entulho",
-    label: "Entulho",
-    description: "Valores específicos para recolha de entulho.",
+    label: "Entulho, Monos e Pós-obra",
+    description: "Valores partilhados para recolha de entulho, monos e resíduos de pós-obra.",
     keys: ["entulho_saco_chao_extra", "entulho_distancia_km", "entulho_multiplicador"],
-  },
-  {
-    id: "monos",
-    label: "Monos",
-    description: "Valores partilhados para recolha de monos e volumes semelhantes.",
-    keys: ["entulho_distancia_km", "entulho_multiplicador"],
-  },
-  {
-    id: "pos_obra",
-    label: "Pós-obra",
-    description: "Valores partilhados para limpeza pós-obra e resíduos de obra.",
-    keys: ["entulho_distancia_km", "entulho_multiplicador"],
   },
   {
     id: "moveis",

@@ -563,7 +563,7 @@ export function estimateLaborHours(input: FastEstimateInput): number {
     if (input.parkingDistance === "difficult" || input.needsDismantling) hours += 0.5;
 
   } else {
-    // Recolha móveis / monos / esvaziamento / outro
+    // Recolha m��veis / monos / esvaziamento / outro
     const floor = floorNumber(input.floor);
     const noElev = input.hasElevator === "no";
     const smallElev = input.hasElevator === "small";
@@ -841,11 +841,13 @@ export async function calculateFastEstimate(input: FastEstimateInput): Promise<F
     `Custo total: combustível ${custoCombustivel}€ + pessoal ${custoPessoal}€ + overhead ${overhead}€ = ${custoTotal.toFixed(2)}€ → ×${(1 + margem).toFixed(2)} (margem ${(margem * 100).toFixed(0)}%) = ${precoSemIva}€ s/IVA`
   );
 
-  // ── 6. Agravamentos adicionais (taxas fixas do documento) ────────────────────
+  // ── 6. Agravamentos adicionais (taxas editáveis da BD) ────────────────────
   let extras = 0;
   const urgency = (input as any).urgency ?? "";
-  if (urgency === "today")    { extras += 40; assumptions.push("Urgência hoje: +40 €"); }
-  if (urgency === "tomorrow") { extras += 20; assumptions.push("Urgência amanhã: +20 €"); }
+  const urgenciaHoje = pricing.urgencia_hoje_extra ?? 40;
+  const urgenciaAmanha = pricing.urgencia_amanha_extra ?? 20;
+  if (urgency === "today")    { extras += urgenciaHoje; assumptions.push(`Urgência hoje: +${urgenciaHoje.toFixed(2)} €`); }
+  if (urgency === "tomorrow") { extras += urgenciaAmanha; assumptions.push(`Urgência amanhã: +${urgenciaAmanha.toFixed(2)} €`); }
   if (input.parkingDistance === "difficult") { extras += 15; assumptions.push("Estacionamento difícil (taxa fixa): +15 €"); }
 
   // ── 7. Fallback se dados insuficientes ───────────────────────────────────────

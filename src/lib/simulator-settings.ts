@@ -215,6 +215,22 @@ export const defaultSimulatorSettings: SimulatorSettingDefinition[] = [
     value: 0.40,
   },
   {
+    key: "urgencia_hoje_extra",
+    label: "Extra por urgência hoje",
+    description: "Acréscimo quando o cliente pede o serviço para hoje.",
+    category: "geral",
+    unit: "eur",
+    value: 40,
+  },
+  {
+    key: "urgencia_amanha_extra",
+    label: "Extra por urgência amanhã",
+    description: "Acréscimo quando o cliente pede o serviço para amanhã.",
+    category: "geral",
+    unit: "eur",
+    value: 20,
+  },
+  {
     key: "diesel_preco",
     label: "Preço do diesel (€/litro)",
     description: "Preço fixo do diesel usado para calcular custo de combustível.",
