@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { MessageCircle } from "lucide-react";
 import { BUSINESS_PHONE } from "@/lib/seo-data";
 import { tElevator, tParking, tUrgency, tService, tEntulho } from "@/lib/translations";
 
@@ -157,7 +158,7 @@ const DIFFICULTY_COLOR: Record<number, string> = {
   1: "text-emerald-400", 2: "text-green-400", 3: "text-amber-400", 4: "text-orange-400", 5: "text-red-400",
 };
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+// ─── Helpers ────────────────────────��─────────────────────────────────────────
 
 async function safeJson(res: Response): Promise<any> {
   const text = await res.text();
@@ -369,6 +370,44 @@ export default function PedidoDetailModal({ id, token, isAdmin, colabId, colabFu
   // Lightbox
   const [lightbox, setLightbox] = useState<string | null>(null);
 
+  // Detalhe: tempo desde criação e cliente habitual
+  const [timeSinceCreation, setTimeSinceCreation] = useState<string>("");
+  const [isRegularCustomer, setIsRegularCustomer] = useState<boolean>(false);
+
+  function formatTimeSinceCreation(createdAt: string): string {
+    const now = new Date();
+    const created = new Date(createdAt);
+    const diffMs = now.getTime() - created.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMins / 60);
+    const diffDays = Math.floor(diffHours / 24);
+
+    if (diffMins < 60) return `há ${diffMins} minuto${diffMins !== 1 ? "s" : ""}`;
+    if (diffHours < 24) return `há ${diffHours} hora${diffHours !== 1 ? "s" : ""}`;
+    if (diffDays < 30) return `há ${diffDays} dia${diffDays !== 1 ? "s" : ""}`;
+    return `há ${Math.floor(diffDays / 30)} mês${Math.floor(diffDays / 30) !== 1 ? "es" : ""}`;
+  }
+
+  async function loadOrderDetails(o: PedidoOrder) {
+    // Calcular tempo desde criação
+    if (o.createdAt) {
+      setTimeSinceCreation(formatTimeSinceCreation(o.createdAt));
+    }
+
+    // Verificar se é cliente habitual (tem +1 pedido com mesmo email)
+    if (o.contactEmail) {
+      try {
+        const res = await fetch(`/api/admin/order-count?email=${encodeURIComponent(o.contactEmail)}`);
+        if (res.ok) {
+          const data = await res.json();
+          setIsRegularCustomer((data.count ?? 0) > 1);
+        }
+      } catch (err) {
+        console.error("[v0] Failed to load order count:", err);
+      }
+    }
+  }
+
   function populateEdit(o: PedidoOrder) {
     setEditContactName(o.contactName ?? "");
     setEditContactPhone(o.contactPhone ?? "");
@@ -397,6 +436,9 @@ export default function PedidoDetailModal({ id, token, isAdmin, colabId, colabFu
     setSchedStart(o.scheduledStartTime ?? "");
     setSchedEnd(o.scheduledEndTime ?? "");
     setSchedNotes(o.calendarNotes ?? "");
+
+    // Carregar detalhes adicionais
+    void loadOrderDetails(o);
   }
 
   const fetchOrder = useCallback(async () => {
@@ -1370,13 +1412,33 @@ export default function PedidoDetailModal({ id, token, isAdmin, colabId, colabFu
                   <div className="space-y-8">
                     {/* Dados do cliente */}
                     <div className="space-y-4">
-                      <h3 className="text-base font-bold text-white">Dados do cliente</h3>
+                      <div className="flex items-center justify-between">
+                        <h3 className="text-base font-bold text-white">Dados do cliente</h3>
+                        <div className="flex items-center gap-3 text-xs">
+                          {timeSinceCreation && (
+                            <span className="text-slate-400">Criado: <span className="text-cyan-300">{timeSinceCreation}</span></span>
+                          )}
+                          {isRegularCustomer && (
+                            <span className="rounded-full bg-cyan-400/20 px-2.5 py-1 font-semibold text-cyan-300 border border-cyan-400/40">
+                              Cliente habitual
+                            </span>
+                          )}
+                        </div>
+                      </div>
                       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                         <Field label="Nome completo">
                           <input type="text" value={editContactName} onChange={(e) => setEditContactName(e.target.value)} className={inputCls} placeholder="Nome do cliente" />
                         </Field>
                         <Field label="Telefone">
-                          <input type="tel" value={editContactPhone} onChange={(e) => setEditContactPhone(e.target.value)} className={inputCls} placeholder="+351 9XX XXX XXX" />
+                          <div className="flex gap-2 items-center">
+                            <input type="tel" value={editContactPhone} onChange={(e) => setEditContactPhone(e.target.value)} className={`${inputCls} flex-1`} placeholder="+351 9XX XXX XXX" />
+                            {editContactPhone && (
+                              <a href={`https://wa.me/${editContactPhone.replace(/[^\d]/g, "")}?text=${encodeURIComponent("Olá, gostava de falar sobre o seu pedido CLYON.")}`} target="_blank" rel="noreferrer" className="inline-flex items-center justify-center p-2 rounded-lg bg-cyan-500/10 hover:bg-cyan-500/20 transition text-cyan-400 hover:text-cyan-300" title="Enviar WhatsApp">
+                                <MessageCircle className="h-4 w-4" />
+                              </a>
+                            )}
+                          </div>
+                          {!editContactPhone && <p className="text-xs text-slate-500 mt-1">Disponível após aceitar o pedido</p>}
                         </Field>
                         <Field label="E-mail">
                           <input type="email" value={editContactEmail} onChange={(e) => setEditContactEmail(e.target.value)} className={inputCls} placeholder="email@exemplo.com" />

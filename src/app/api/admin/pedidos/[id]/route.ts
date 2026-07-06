@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSimulatorOrderById, updateSimulatorOrder, markOrderAsViewed, deleteSimulatorOrder } from "@/lib/db";
+import { getSimulatorOrderById, updateSimulatorOrder, markOrderAsViewed, deleteSimulatorOrder, maskName } from "@/lib/db";
 import { verifyColaboradorAuthHeader } from "@/lib/colaborador-auth";
 import { notifyClientStatusChange } from "@/lib/notify-client";
 
@@ -41,7 +41,25 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     await markOrderAsViewed(Number(id)).catch(() => {});
   }
 
-  return NextResponse.json({ order });
+  // Mascarar dados se assistente acessa pedido não atribuído a si
+  let responseOrder = order;
+  if (!colab!.isAdmin && order.assignedToId !== colab!.id && !isUnassigned) {
+    // Não deveria chegar aqui por causa da verificação acima, mas por segurança:
+    responseOrder = {
+      ...order,
+      contactName: maskName(order.contactName),
+      contactPhone: null,
+    };
+  } else if (!colab!.isAdmin && isUnassigned) {
+    // Assistente acedendo pedido da fila geral — mascarar dados
+    responseOrder = {
+      ...order,
+      contactName: maskName(order.contactName),
+      contactPhone: null,
+    };
+  }
+
+  return NextResponse.json({ order: responseOrder });
 }
 
 // PATCH /api/admin/pedidos/[id]

@@ -1475,6 +1475,27 @@ export async function approveSimulatorOrder(
   });
 }
 
+// ─── Privacy utilities ────────────────────────────────────────────────────────
+export function maskName(name: string | null): string {
+  if (!name) return "Cliente";
+  const parts = name.trim().split(/\s+/);
+  const first = parts[0];
+  const lastInitial = parts.length > 1 ? parts[parts.length - 1][0] + "." : "";
+  return lastInitial ? `${first} ${lastInitial}` : first;
+}
+
+export async function countSimulatorOrdersByContactEmail(contactEmail: string | null): Promise<number> {
+  if (!contactEmail) return 0;
+  await ensureSimulatorOrdersTable();
+  const pool = await getPool();
+  if (!pool) return 0;
+  const [rows] = await pool.execute(
+    "SELECT COUNT(*) as count FROM simulatorOrders WHERE contactEmail = ?",
+    [contactEmail.toLowerCase().trim()]
+  ) as any[];
+  return (rows[0]?.count ?? 0) as number;
+}
+
 export async function getSimulatorOrdersByAssistant(assignedToId: number): Promise<SimulatorOrder[]> {
   await ensureSimulatorOrdersTable();
   const pool = await getPool();
@@ -1487,7 +1508,7 @@ export async function getSimulatorOrdersByAssistant(assignedToId: number): Promi
   //  2. pedidos na fila geral: assignedToId IS NULL — inclui status 'pendente' e 'sem_assistente'
   // Nunca vê pedidos atribuídos a outro assistente.
   const [rows] = await pool.execute(
-    `SELECT id, contactName, contactPhone, address, serviceType, status, precoFinal, estimateTotal,
+    `SELECT id, contactName, contactPhone, contactEmail, address, serviceType, status, precoFinal, estimateTotal,
             createdAt, updatedAt, dataAgendada, assignedToId, assignedToName, priority, viewedAt,
             description, urgency, distanceKm
      FROM simulatorOrders

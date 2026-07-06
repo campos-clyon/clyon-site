@@ -7,6 +7,7 @@ import {
   countSimulatorOrdersByStatus,
   getSimulatorOrderById,
   getEffectiveRole,
+  maskName,
 } from "@/lib/db";
 import { verifyColaboradorAuthHeader } from "@/lib/colaborador-auth";
 
@@ -89,7 +90,19 @@ export async function GET(req: NextRequest) {
     // "sem_assistente" = na fila geral
     counts["sem_assistente"] = allVisible.filter((o) => !o.assignedToId).length;
 
-    return NextResponse.json({ orders: filtered, counts, role: "assistente" });
+    // Mascarar dados de pedidos na fila geral (não atribuídos a este assistente)
+    const maskedFiltered = filtered.map((o) => {
+      // Se o pedido está atribuído a este assistente, mostrar tudo
+      if (o.assignedToId === colab!.id) return o;
+      // Caso contrário, mascarar nome e omitir telefone
+      return {
+        ...o,
+        contactName: maskName(o.contactName),
+        contactPhone: null,
+      };
+    });
+
+    return NextResponse.json({ orders: maskedFiltered, counts, role: "assistente" });
   }
 }
 
