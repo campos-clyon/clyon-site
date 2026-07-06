@@ -2108,33 +2108,47 @@ export default function ColaboradorAdminClient() {
                 </button>
               </div>
 
-              {/* Métricas de pedidos */}
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-5">
-                {/* Total — mostra sempre todos os pedidos */}
+              {/* Abas de filtros de pedidos */}
+              <div className="flex gap-1 rounded-2xl border border-white/10 bg-white/[0.03] p-1 overflow-x-auto">
+                {[
+                  { id: "sem_assistente", label: "Disponíveis" },
+                  { id: "em_negociacao", label: "Em negociação" },
+                  { id: "contratados", label: "Contratados" },
+                  { id: "recusados", label: "Recusados" },
+                  { id: "arquivados", label: "Arquivados", statusValue: "arquivado" },
+                ].map((tab) => {
+                  const filterValue = tab.statusValue ?? tab.id;
+                  const count = tab.id === "recusados" ? (pedidosCounts["cancelado"] ?? 0)
+                    : tab.id === "em_negociacao" ? (pedidosCounts["em_analise"] ?? 0)
+                    : tab.id === "contratados" ? (pedidosCounts["aprovado"] ?? 0)
+                    : (pedidosCounts[tab.id] ?? 0);
+                  return (
+                    <button
+                      key={tab.id}
+                      type="button"
+                      onClick={() => setPedidoStatusFilter(filterValue)}
+                      className={`flex items-center gap-2 whitespace-nowrap rounded-[14px] px-4 py-2 text-sm font-semibold transition ${
+                        pedidoStatusFilter === filterValue ? "bg-cyan-400 text-slate-950" : "text-slate-400 hover:text-white"
+                      }`}
+                    >
+                      {tab.label}
+                      {count > 0 && (
+                        <span className="rounded-full bg-rose-500 px-1.5 py-0.5 text-[10px] font-bold text-white">
+                          {count}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
                 <button
                   type="button"
                   onClick={() => setPedidoStatusFilter("todos")}
-                  className={`flex flex-col items-center justify-center rounded-[16px] border px-2 py-3 transition hover:scale-105 border-white/10 bg-white/[0.04] ${pedidoStatusFilter === "todos" ? "ring-2 ring-cyan-400" : ""}`}
+                  className={`ml-auto rounded-[14px] px-4 py-2 text-sm font-semibold transition ${
+                    pedidoStatusFilter === "todos" ? "bg-cyan-400 text-slate-950" : "text-slate-400 hover:text-white"
+                  }`}
                 >
-                  <span className="text-2xl font-bold text-slate-300">{pedidosCounts["total"] ?? 0}</span>
-                  <span className="mt-0.5 text-center text-xs text-slate-400">Total</span>
+                  Todos ({pedidosCounts["total"] ?? 0})
                 </button>
-                {[
-                  { label: "Novos", key: "pendente", color: "text-blue-400", bg: "border-blue-400/20 bg-blue-400/10" },
-                  { label: "Sem assistente", key: "sem_assistente", color: "text-rose-400", bg: "border-rose-400/20 bg-rose-400/10" },
-                  { label: "Aprovados", key: "aprovado", color: "text-cyan-300 font-semibold", bg: "border-cyan-400/30 bg-cyan-400/15" },
-                  { label: "Confirmados", key: "confirmado", color: "text-green-400", bg: "border-green-400/20 bg-green-400/10" },
-                ].map((m) => (
-                  <button
-                    key={m.key}
-                    type="button"
-                    onClick={() => setPedidoStatusFilter(m.key === pedidoStatusFilter ? "todos" : m.key)}
-                    className={`flex flex-col items-center justify-center rounded-[16px] border px-2 py-3 transition hover:scale-105 ${m.bg} ${pedidoStatusFilter === m.key ? "ring-2 ring-cyan-400" : ""}`}
-                  >
-                    <span className={`text-2xl font-bold ${m.color}`}>{pedidosCounts[m.key] ?? 0}</span>
-                    <span className="mt-0.5 text-center text-xs text-slate-400">{m.label}</span>
-                  </button>
-                ))}
               </div>
 
               {/* Filtros e pesquisa */}

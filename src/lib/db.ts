@@ -1172,6 +1172,12 @@ export async function getAllSimulatorOrders(filters?: {
   } else if (filters?.status === "pendente") {
     // "Novos" = any status but NOT viewed yet (viewedAt IS NULL)
     conditions.push("viewedAt IS NULL");
+  } else if (filters?.status === "em_negociacao") {
+    conditions.push("status IN ('em_analise','precisa_info','estimativa_pronta')");
+  } else if (filters?.status === "contratados") {
+    conditions.push("status IN ('aprovado','agendado','confirmado','em_curso','concluido')");
+  } else if (filters?.status === "recusados") {
+    conditions.push("status = 'cancelado'");
   } else if (filters?.status) {
     conditions.push("status = ?");
     params.push(filters.status);

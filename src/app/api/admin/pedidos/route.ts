@@ -64,6 +64,12 @@ export async function GET(req: NextRequest) {
       if (status && status !== "todos") {
         if (status === "sem_assistente") {
           if (o.assignedToId !== null && o.assignedToId !== undefined) return false;
+        } else if (status === "em_negociacao") {
+          if (!["em_analise","precisa_info","estimativa_pronta"].includes(o.status)) return false;
+        } else if (status === "contratados") {
+          if (!["aprovado","agendado","confirmado","em_curso","concluido"].includes(o.status)) return false;
+        } else if (status === "recusados") {
+          if (o.status !== "cancelado") return false;
         } else {
           if (o.status !== status) return false;
         }
@@ -89,6 +95,10 @@ export async function GET(req: NextRequest) {
     counts["pendente"] = allVisible.filter((o) => !o.viewedAt).length;
     // "sem_assistente" = na fila geral
     counts["sem_assistente"] = allVisible.filter((o) => !o.assignedToId).length;
+    // Novos agrupamentos
+    counts["em_analise"] = allVisible.filter((o) => ["em_analise","precisa_info","estimativa_pronta"].includes(o.status)).length;
+    counts["aprovado"] = allVisible.filter((o) => ["aprovado","agendado","confirmado","em_curso","concluido"].includes(o.status)).length;
+    counts["cancelado"] = allVisible.filter((o) => o.status === "cancelado").length;
 
     // Mascarar dados de pedidos na fila geral (não atribuídos a este assistente)
     const maskedFiltered = filtered.map((o) => {
