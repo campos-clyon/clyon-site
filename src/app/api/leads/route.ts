@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { createLead, createLeadEvent, getAllLeads, updateLeadStatus } from "@/lib/db";
+import { getServerSession } from "next-auth";
+import { createLead, createLeadEvent, createSimulatorOrder, getAllLeads, updateLeadStatus } from "@/lib/db";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
+import { notifyNewOrder } from "@/lib/whatsapp";
+import { authOptions } from "@/auth";
+import { SITE_URL } from "@/lib/seo-data";
 
 const LeadSchema = z.object({
   nome:                z.string().min(2).max(160),
@@ -43,7 +47,13 @@ export async function POST(request: NextRequest) {
     const { nome, telefone, email, localidade, tipoServico, preferenciaContacto,
             mensagem, pagePath, pageUrl, utmSource, utmMedium, utmCampaign, gclid } = parsed.data;
 
-    await createLead({
+    // Ligação à sessão do cliente se existir
+    const session = await getServerSession(authOptions);
+    const sessionEmail = session?.user?.email?.trim().toLowerCase() ?? null;
+    const contactEmail = sessionEmail ?? email;
+
+    // Gravar lead (best-effort)
+    createLead({
       nome,
       telefone,
       email,
@@ -57,7 +67,36 @@ export async function POST(request: NextRequest) {
       utmMedium: utmMedium ?? null,
       utmCampaign: utmCampaign ?? null,
       gclid: gclid ?? null,
-    });
+    }).catch((err) => console.error("[api/leads] Erro ao gravar lead:", err));
+
+    // Criar pedido na DB e notificar a equipa
+    try {
+      const orderId = await createSimulatorOrder({
+        contactName: nome,
+        contactEmail,
+        contactPhone: telefone,
+        address: localidade,
+        city: localidade,
+        serviceType: tipoServico,
+        description: mensagem ?? null,
+        status: "sem_assistente",
+        source: "quero_contratar",
+        pagePath: pagePath ?? null,
+      });
+
+      // Notificar equipa de novo pedido (assíncrono, não bloqueia resposta)
+      notifyNewOrder({
+        id: orderId,
+        contactName: nome,
+        serviceType: tipoServico,
+        city: localidade,
+        address: localidade,
+        estimateWithVat: null,
+        backofficeUrl: `${SITE_URL}/admin/pedidos/${orderId}`,
+      });
+    } catch (err) {
+      console.error("[api/leads] Erro ao gravar pedido:", err);
+    }
 
     // Gravar evento de formulário submetido (garante contagem no dashboard mesmo que o cliente falhe)
     void createLeadEvent({
