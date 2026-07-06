@@ -3,16 +3,18 @@ import Image from "next/image";
 import { MessageCircle, ArrowRight, Lock, CreditCard, Smartphone, Building } from "lucide-react";
 
 import { trackWhatsAppClick, trackPhoneCall } from "@/lib/analytics";
-import { getCompanySetting } from "@/lib/db";
 import { BUSINESS_PHONE, BUSINESS_EMAIL } from "@/lib/seo-data";
 
 // Estilos para links com hover azul água
 const linkStyle = "text-white hover:text-cyan-400 transition-colors";
 const linkStyleInline = { color: "#ffffff", fontSize: "14px", textDecoration: "none" };
 
-export default async function Footer() {
+interface FooterProps {
+  phone?: string;
+}
+
+export default function Footer({ phone = BUSINESS_PHONE }: FooterProps) {
   const anoAtual = new Date().getFullYear();
-  const phone = await getCompanySetting("business_phone", BUSINESS_PHONE);
   const telHref = `tel:${phone.replace(/\s+/g, "")}`;
   const numeroWhatsapp = phone.replace(/[^\d]/g, "");
   const urlWhatsapp = `https://wa.me/${numeroWhatsapp}?text=${encodeURIComponent("Olá! Gostava de pedir um orçamento à CLYON.")}`;

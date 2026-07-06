@@ -50,7 +50,7 @@ export default function SiteChromeClient({
     <>
       <Header phone={phone} />
       <main className="site-page-shell pt-[76px]">{children}</main>
-      <Footer />
+      <Footer phone={phone} />
       <StickyCTA phone={phone} />
       <DeferredCookieConsent />
       <CoverageNotice />
