@@ -102,7 +102,7 @@ const navLinks = [
 export default function Header({ phone = BUSINESS_PHONE }: HeaderProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isServicosOpen, setIsServicosOpen] = useState(false);
-  const { pathname } = usePathname();
+  const pathname = usePathname();
   const session = useSession();
 
   const whatsappNumber = phone.replace(/[^\d]/g, "");
