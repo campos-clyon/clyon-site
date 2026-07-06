@@ -16,6 +16,7 @@ interface CTABlockProps {
   variant?: "default" | "compact" | "centered";
   className?: string;
   whatsappMessage?: string;
+  phone?: string;
 }
 
 export default function CTABlock({
@@ -28,10 +29,11 @@ export default function CTABlock({
   variant = "default",
   className = "",
   whatsappMessage = "Olá! Gostava de pedir um orçamento à CLYON.",
+  phone = BUSINESS_PHONE,
 }: CTABlockProps) {
-  const whatsappNumber = BUSINESS_PHONE.replace(/[^\d]/g, "");
+  const whatsappNumber = phone.replace(/[^\d]/g, "");
   const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(whatsappMessage)}`;
-  const phoneHref = `tel:${BUSINESS_PHONE.replace(/\s+/g, "")}`;
+  const phoneHref = `tel:${phone.replace(/\s+/g, "")}`;
 
   if (variant === "compact") {
     return (

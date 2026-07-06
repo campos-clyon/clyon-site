@@ -5,6 +5,10 @@ import { AlertCircle, Mail, MessageCircle, CheckCircle2 } from "lucide-react";
 import { trackLeadFormStart, trackLeadFormSubmit, trackWhatsAppClick } from "@/lib/analytics";
 import { BUSINESS_PHONE } from "@/lib/seo-data";
 
+interface ContactFormProps {
+  phone?: string;
+}
+
 const SERVICES = [
   "Recolha de móveis",
   "Recolha de monos",
@@ -38,12 +42,13 @@ function validatePhonePT(phone: string): boolean {
 
 function formatPhone(phone: string): string {
   const cleaned = phone.replace(/\D/g, "");
+}
   if (cleaned.length <= 3) return cleaned;
   if (cleaned.length <= 6) return `${cleaned.slice(0, 3)} ${cleaned.slice(3)}`;
   return `${cleaned.slice(0, 3)} ${cleaned.slice(3, 6)} ${cleaned.slice(6, 9)}`;
 }
 
-export default function ContactForm() {
+export default function ContactForm({ phone = BUSINESS_PHONE }: ContactFormProps) {
   const [formData, setFormData] = useState<FormData>({
     nome: "",
     telemovel: "",
@@ -117,7 +122,7 @@ export default function ContactForm() {
     trackLeadFormSubmit("contactos_page", formData.servico);
     trackWhatsAppClick("contact_form", formData.servico);
 
-    const whatsappNumber = BUSINESS_PHONE.replace(/[^\d]/g, "");
+    const whatsappNumber = phone.replace(/[^\d]/g, "");
     const message = `Olá! Gostava de pedir um orçamento à CLYON.
 
 *Dados do pedido:*

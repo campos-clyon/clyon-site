@@ -13,9 +13,10 @@ const HIDDEN_ROUTES = ["/colaboradores", "/simulador"];
 
 interface StickyCTAProps {
   showAfterScroll?: number;
+  phone?: string;
 }
 
-export default function StickyCTA({ showAfterScroll = 300 }: StickyCTAProps) {
+export default function StickyCTA({ showAfterScroll = 300, phone = BUSINESS_PHONE }: StickyCTAProps) {
   const pathname = usePathname();
   const [isVisible, setIsVisible] = useState(false);
 
@@ -37,7 +38,7 @@ export default function StickyCTA({ showAfterScroll = 300 }: StickyCTAProps) {
 
   if (isHidden || !isVisible) return null;
 
-  const whatsappNumber = BUSINESS_PHONE.replace(/[^\d]/g, "");
+  const whatsappNumber = phone.replace(/[^\d]/g, "");
   const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent("Olá! Gostava de pedir um orçamento à CLYON.")}`;
 
   return (

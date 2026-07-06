@@ -32,6 +32,10 @@ import { trackContactEvent } from "@/lib/track-contact";
 import { BUSINESS_PHONE } from "@/lib/seo-data";
 import HeaderLocationSelector from "@/components/HeaderLocationSelector";
 
+interface HeaderProps {
+  phone?: string;
+}
+
 const solucoes = [
   {
     label: "Recolha de Móveis",
@@ -95,20 +99,13 @@ const navLinks = [
   { label: "Contactos", href: "/contactos" },
 ];
 
-export default function Header() {
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [solucoesOpen, setSolucoesOpen] = useState(false);
-  const [mobileAccordionOpen, setMobileAccordionOpen] = useState(false);
-  const [contaOpen, setContaOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-  const buttonRef = useRef<HTMLButtonElement>(null);
-  const contaRef = useRef<HTMLDivElement>(null);
+export default function Header({ phone = BUSINESS_PHONE }: HeaderProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [isServicosOpen, setIsServicosOpen] = useState(false);
+  const { pathname } = usePathname();
+  const session = useSession();
 
-  const { data: session } = useSession();
-  const pathname = usePathname();
-  const isContaActive = pathname?.startsWith("/conta") ?? false;
-
-  const whatsappNumber = BUSINESS_PHONE.replace(/[^\d]/g, "");
+  const whatsappNumber = phone.replace(/[^\d]/g, "");
   const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent("Olá! Gostava de pedir um orçamento à CLYON.")}`;
 
   // Close dropdown when clicking outside
