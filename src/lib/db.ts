@@ -1476,7 +1476,7 @@ export async function approveSimulatorOrder(
 }
 
 // ─── Privacy utilities ────────────────────────────────────────────────────────
-export function maskName(name: string | null): string {
+export function maskName(name: string | null | undefined): string {
   if (!name) return "Cliente";
   const parts = name.trim().split(/\s+/);
   const first = parts[0];
