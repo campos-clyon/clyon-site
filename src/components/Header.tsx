@@ -101,7 +101,6 @@ const navLinks = [
 
 export default function Header({ phone = BUSINESS_PHONE }: HeaderProps) {
   const [menuOpen, setMenuOpen] = useState(false);
-  const [isServicosOpen, setIsServicosOpen] = useState(false);
   const [solucoesOpen, setSolucoesOpen] = useState(false);
   const [contaOpen, setContaOpen] = useState(false);
   const [mobileAccordionOpen, setMobileAccordionOpen] = useState(false);
