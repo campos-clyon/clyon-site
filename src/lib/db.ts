@@ -66,6 +66,22 @@ export async function withConnection<T>(
 
 let simulatorTableEnsured = false;
 let galleryMediaTableEnsured = false;
+let schemaInitAttempted = false;
+
+/**
+ * Lazy initialization — called on first request to avoid build timeouts.
+ * If Railway DB is unavailable during build, this waits for first HTTP request.
+ */
+export async function initSchemaOnce(): Promise<void> {
+  if (schemaInitAttempted) return;
+  schemaInitAttempted = true;
+  try {
+    await ensureUsersSchema();
+  } catch (err) {
+    // Log but don't throw — schema will be ensured on next request
+    console.error("[db] initSchemaOnce failed:", err);
+  }
+}
 
 /** Permite ao setup forçar um re-seed dos defaults mesmo que a tabela já tenha sido inicializada. */
 export function resetSimulatorTableEnsuredFlag() {
