@@ -897,7 +897,7 @@ export default function ColaboradorAdminClient() {
   const simulatorGroups = useMemo(() => {
     const settingsMap = new Map(simulatorSettings.map((setting) => [setting.key, setting]));
     // Mapa de chaves ativas (não marcadas como active: false nas definições)
-    const activeKeys = new Set(
+    const activeKeys = new Set<string>(
       defaultSimulatorSettings
         .filter((def) => def.active !== false)
         .map((def) => def.key)
