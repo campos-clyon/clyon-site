@@ -1519,7 +1519,7 @@ export async function getSimulatorOrdersByAssistant(assignedToId: number): Promi
             description, urgency, distanceKm
      FROM simulatorOrders
      WHERE assignedToId = ?
-        OR (assignedToId IS NULL AND status IN ('pendente', 'sem_assistente', 'novo'))
+        OR (assignedToId IS NULL AND status NOT IN ('cancelado','confirmado','concluido','arquivado','rejeitado'))
      ORDER BY createdAt DESC
      LIMIT 200`,
     [assignedToId]
@@ -1656,7 +1656,7 @@ export async function cancelarOrcamentoPeloCliente(token: string): Promise<{ ok:
   return { ok: true };
 }
 
-// ─── SimulatorOrders END ───────────────────────────────────────────────────────
+// ─── SimulatorOrders END ────���──────────────────────────────────────────────────
 
 // ─── Recusas Pessoais de Pedidos ──────────────────────────────────────────────
 
