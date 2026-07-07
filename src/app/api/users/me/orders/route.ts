@@ -5,7 +5,7 @@ import { withConnection } from "@/lib/db";
 
 export async function GET(request: NextRequest) {
   try {
-    // 1. Validar autenticação
+    // 1. Validar autenticação e ler parâmetros
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
       return NextResponse.json({ error: "Não autenticado." }, { status: 401 });
@@ -13,6 +13,13 @@ export async function GET(request: NextRequest) {
 
     const userEmail = session.user.email; // Explicit capture before async boundary
     const emailNorm = userEmail.trim().toLowerCase();
+
+    // Ler status e paginação da URL
+    const { searchParams } = new URL(request.url);
+    const status = searchParams.get("status") ?? "todos";
+    const page = Math.max(1, Number(searchParams.get("page") ?? "1"));
+    const limit = 10;
+    const offset = (page - 1) * limit;
 
     // 2. Executar query mínima com conexão isolada
     const result = await withConnection(async (conn) => {
@@ -50,6 +57,20 @@ export async function GET(request: NextRequest) {
         params.push(userPhoneNorm);
       }
 
+      // Adicionar filtro de status se não for "todos"
+      if (status !== "todos") {
+        whereClause = `(${whereClause}) AND status = ?`;
+        params.push(status);
+      }
+
+      // Contar total ANTES de paginar
+      const countParams = [...params];
+      const [countRows] = await conn.execute(
+        `SELECT COUNT(*) as total FROM simulatorOrders WHERE ${whereClause}`,
+        countParams
+      ) as [Array<{ total: number }>, unknown];
+      const total = Number(countRows[0]?.total ?? 0);
+
       const [orders] = await conn.execute(
         `SELECT
            id,
@@ -79,8 +100,8 @@ export async function GET(request: NextRequest) {
          FROM simulatorOrders
          WHERE ${whereClause}
          ORDER BY id DESC
-         LIMIT 50`,
-        params
+         LIMIT ? OFFSET ?`,
+        [...params, limit, offset]
       ) as [Array<any>, unknown];
 
       // 3. Serializar datas para ISO string
@@ -111,11 +132,14 @@ export async function GET(request: NextRequest) {
         canceladoPeloCliente: row.canceladoPeloCliente,
       }));
 
-      // 4. Retornar resultado mínimo
+      // 4. Retornar resultado com total, pages e dados de paginação
       return {
         ok: true,
+        total,
+        pages: Math.ceil(total / limit),
+        currentPage: page,
         summary: {
-          totalOrders: orders.length,
+          totalOrders: total,
           activeOrders: orders.length,
           lastOrderDate: orders[0]?.createdAt ? new Date(orders[0].createdAt).toISOString() : null,
         },
