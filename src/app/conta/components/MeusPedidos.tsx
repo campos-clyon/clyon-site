@@ -131,6 +131,7 @@ export default function MeusPedidos() {
   const [orders, setOrders]   = useState<Order[]>([]);
   const [total, setTotal]     = useState(0);
   const [pages, setPages]     = useState(1);
+  const [grandTotal, setGrandTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<Order | null>(null);
 
@@ -138,22 +139,25 @@ export default function MeusPedidos() {
     setLoading(true);
     try {
       const res = await fetch(`/api/users/me/orders?status=${f}&page=${p}`, { credentials: "include" });
-      const data = await res.json() as { orders?: Order[]; total?: number; pages?: number; error?: string };
+      const data = await res.json() as { orders?: Order[]; total?: number; grandTotal?: number; pages?: number; error?: string };
       if (data.error) {
         console.error("[MeusPedidos] API error:", data.error);
         setOrders([]);
         setTotal(0);
         setPages(1);
+        setGrandTotal(0);
         return;
       }
       setOrders(data.orders ?? []);
       setTotal(data.total ?? 0);
       setPages(data.pages ?? 1);
+      setGrandTotal(data.grandTotal ?? 0);
     } catch (err) {
       console.error("[MeusPedidos] Fetch failed:", err);
       setOrders([]);
       setTotal(0);
       setPages(1);
+      setGrandTotal(0);
     } finally {
       setLoading(false);
     }
@@ -167,7 +171,7 @@ export default function MeusPedidos() {
     <div className="space-y-5">
       <div>
         <h2 className="text-xl font-bold text-slate-900">Os meus pedidos</h2>
-        <p className="mt-0.5 text-sm text-slate-500">{total} {total === 1 ? "pedido" : "pedidos"} no total</p>
+        <p className="mt-0.5 text-sm text-slate-500">{grandTotal} {grandTotal === 1 ? "pedido" : "pedidos"} no total</p>
       </div>
 
       {/* Filtros */}

@@ -71,6 +71,18 @@ export async function GET(request: NextRequest) {
       ) as [Array<{ total: number }>, unknown];
       const total = Number(countRows[0]?.total ?? 0);
 
+      // Contagem geral, sem filtro de estado — para o cabeçalho "X pedidos no total"
+      const baseWhereClause = userPhoneNorm
+        ? `LOWER(TRIM(contactEmail)) = LOWER(TRIM(?)) OR SUBSTRING(REPLACE(REPLACE(REPLACE(REPLACE(contactPhone, ' ', ''), '-', ''), '+', ''), '351', ''), -9) = ?`
+        : "LOWER(TRIM(contactEmail)) = LOWER(TRIM(?))";
+      const baseParams = userPhoneNorm ? [emailNorm, userPhoneNorm] : [emailNorm];
+
+      const [grandTotalRows] = await conn.execute(
+        `SELECT COUNT(*) as total FROM simulatorOrders WHERE ${baseWhereClause}`,
+        baseParams,
+      ) as [Array<{ total: number }>, unknown];
+      const grandTotal = Number(grandTotalRows[0]?.total ?? 0);
+
       // Validar LIMIT e OFFSET com Number.isFinite antes de interpolar
       const safeLimit = Number.isFinite(limit) ? Math.floor(limit) : 10;
       const safeOffset = Number.isFinite(offset) ? Math.floor(offset) : 0;
@@ -139,7 +151,8 @@ export async function GET(request: NextRequest) {
       // 4. Retornar resultado com total, pages e dados de paginação
       return {
         ok: true,
-        total,
+        total,        // reflete o filtro atual (usado para paginação)
+        grandTotal,   // sempre o total geral, sem filtro (para o cabeçalho)
         pages: Math.ceil(total / limit),
         currentPage: page,
         summary: {
