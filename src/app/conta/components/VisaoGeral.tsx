@@ -19,11 +19,23 @@ function formatDate(iso: string) {
   });
 }
 
-function MetricCard({ label, value }: { label: string; value: string | number }) {
+function MetricCard({
+  label,
+  value,
+  wide = false,
+}: {
+  label: string;
+  value: string | number;
+  wide?: boolean;
+}) {
   return (
-    <div className="flex-1 rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
-      <p className="text-xs font-medium text-slate-400 uppercase tracking-wide">{label}</p>
-      <p className="mt-1 text-2xl font-bold text-slate-900">{value}</p>
+    <div
+      className={`rounded-2xl border border-slate-100 bg-white p-4 shadow-sm ${wide ? "col-span-2" : ""}`}
+    >
+      <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+        {label}
+      </p>
+      <p className="mt-1 text-xl font-bold text-slate-900 tabular-nums">{value}</p>
     </div>
   );
 }
@@ -59,11 +71,11 @@ export default function VisaoGeral({ user, googleAvatar, orders, onSection }: Pr
         </div>
       </div>
 
-      {/* Métricas */}
-      <div className="flex gap-4">
+      {/* Métricas — 2 colunas em mobile, 3 em desktop */}
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
         <MetricCard label="Pedidos realizados" value={orders.length} />
         <MetricCard label="Pedidos activos"    value={pedidosAtivos} />
-        <MetricCard label="Último pedido"      value={ultimoPedido} />
+        <MetricCard label="Último pedido"      value={ultimoPedido} wide />
       </div>
 
       {/* Sem pedidos */}
