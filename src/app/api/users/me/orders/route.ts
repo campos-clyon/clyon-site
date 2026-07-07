@@ -71,6 +71,10 @@ export async function GET(request: NextRequest) {
       ) as [Array<{ total: number }>, unknown];
       const total = Number(countRows[0]?.total ?? 0);
 
+      // Validar LIMIT e OFFSET com Number.isFinite antes de interpolar
+      const safeLimit = Number.isFinite(limit) ? Math.floor(limit) : 10;
+      const safeOffset = Number.isFinite(offset) ? Math.floor(offset) : 0;
+
       const [orders] = await conn.execute(
         `SELECT
            id,
@@ -100,8 +104,8 @@ export async function GET(request: NextRequest) {
          FROM simulatorOrders
          WHERE ${whereClause}
          ORDER BY id DESC
-         LIMIT ? OFFSET ?`,
-        [...params, limit, offset]
+         LIMIT ${safeLimit} OFFSET ${safeOffset}`,
+        params
       ) as [Array<any>, unknown];
 
       // 3. Serializar datas para ISO string
