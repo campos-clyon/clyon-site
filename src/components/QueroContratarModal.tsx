@@ -210,7 +210,7 @@ export default function QueroContratarModal({ open, onClose }: Props) {
           `Olá! Enviei um pedido através do site CLYON.\nNome: ${form.nome}\nServiço: ${form.tipoServico}\nLocalidade: ${form.localidade}`,
         );
         setTimeout(() => {
-          window.open(`https://wa.me/351965785395?text=${msg}`, "_blank", "noopener,noreferrer");
+          window.open(`https://wa.me/351931632622?text=${msg}`, "_blank", "noopener,noreferrer");
         }, 1500);
       }
     } catch {

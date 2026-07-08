@@ -3983,7 +3983,7 @@ export default function ColaboradorAdminClient() {
                           type="text"
                           value={companyPhoneDraft}
                           onChange={(e) => setCompanyPhoneDraft(e.target.value)}
-                          placeholder="+351965785395"
+                          placeholder="+351931632622"
                           className="flex-1 rounded-[12px] border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white placeholder-slate-500 outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400/30 transition-colors"
                         />
                         <button
