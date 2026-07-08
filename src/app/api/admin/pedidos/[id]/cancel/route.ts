@@ -79,7 +79,6 @@ export async function POST(
   try {
     await updateSimulatorOrder(orderId, {
       status: "cancelado",
-      cancelladoPeloCliente: 0,
     });
   } catch (updateErr) {
     return NextResponse.json(
