@@ -2329,6 +2329,40 @@ export default function ColaboradorAdminClient() {
                                       Aceitar
                                     </button>
                                   )}
+                                  {/* Cancelar: visível para admins em pedidos não-terminais */}
+                                  {isAdminGeral && !["cancelado", "concluido", "arquivado", "rejeitado"].includes(p.status) && (
+                                    <button
+                                      type="button"
+                                      className="rounded-[10px] border border-red-400/30 bg-red-400/10 px-3 py-1.5 text-xs font-semibold text-red-300 hover:bg-red-400/20 transition"
+                                      onClick={async (e) => {
+                                        e.stopPropagation();
+                                        if (!confirm("Tem a certeza que deseja cancelar este pedido?")) return;
+                                        if (!token) {
+                                          alert("Sessão expirada. Por favor, faça login novamente.");
+                                          return;
+                                        }
+                                        try {
+                                          const r = await fetch(`/api/admin/pedidos/${p.id}/cancel`, {
+                                            method: "POST",
+                                            headers: { Authorization: `Bearer ${token}` },
+                                          });
+                                          let data: { ok?: boolean; message?: string; order?: SimulatorOrder } = {};
+                                          try { data = await r.json(); } catch { /* body vazio */ }
+                                          if (r.ok && data?.ok) {
+                                            const updated = data.order ?? { ...p, status: "cancelado" };
+                                            setPedidos((prev) => prev.map((x) => x.id === p.id ? { ...x, ...updated } : x));
+                                            await carregarPedidos(token, pedidoStatusFilter, pedidoSearchDebounced);
+                                          } else {
+                                            alert(`Erro ${r.status}: ${data?.message ?? "Não foi possível cancelar o pedido."}`);
+                                          }
+                                        } catch (err) {
+                                          alert(`Erro de rede: ${err instanceof Error ? err.message : String(err)}`);
+                                        }
+                                      }}
+                                    >
+                                      Cancelar
+                                    </button>
+                                  )}
                                   <button
                                     type="button"
                                     className="rounded-[10px] border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs font-medium text-cyan-100 transition group-hover:border-cyan-400/30 group-hover:bg-cyan-400/10"

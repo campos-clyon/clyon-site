@@ -1238,6 +1238,42 @@ export default function PedidoDetailModal({ id, token, isAdmin, colabId, colabFu
                         </button>
                       )
                     }
+                    {/* Cancelar — apenas admin, pedidos em estado não-terminal */}
+                    {isAdmin && !["cancelado", "concluido", "arquivado", "rejeitado"].includes(order.status) && (
+                      <button
+                        onClick={async () => {
+                          if (!confirm("Tem a certeza que deseja cancelar este pedido?")) return;
+                          setError("");
+                          setSaving(true);
+                          try {
+                            const r = await fetch(`/api/admin/pedidos/${order.id}/cancel`, {
+                              method: "POST",
+                              headers: authHeader,
+                            });
+                            const data = await safeJson(r);
+                            if (!r.ok || data?.ok === false) {
+                              throw new Error(data?.message || "Não foi possível cancelar o pedido.");
+                            }
+                            const updated = data?.order ?? { ...order, status: "cancelado" };
+                            setOrder(updated);
+                            populateEdit(updated);
+                            onUpdated?.(updated);
+                            setTimeout(() => onClose?.(), 1500);
+                          } catch (e: any) {
+                            setError(e.message || "Erro ao cancelar o pedido.");
+                          } finally {
+                            setSaving(false);
+                          }
+                        }}
+                        disabled={saving}
+                        className="flex items-center gap-1.5 rounded-2xl border border-orange-400/30 bg-orange-400/10 px-4 py-2 text-sm font-semibold text-orange-300 hover:bg-orange-400/20 disabled:opacity-60 transition"
+                      >
+                        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                        {saving ? "A cancelar..." : "Cancelar"}
+                      </button>
+                    )}
                     {/* Excluir — apenas admin geral */}
                     {isAdmin && <button
                       onClick={() => setShowDelete(true)}
