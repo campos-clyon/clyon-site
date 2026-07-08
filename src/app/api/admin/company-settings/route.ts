@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { verifyColaboradorAuthHeader } from "@/lib/colaborador-auth";
 import { getCompanySetting, setCompanySetting } from "@/lib/db";
-import { BUSINESS_PHONE } from "@/lib/seo-data";
+import { BUSINESS_PHONE, BUSINESS_EMAIL, BUSINESS_NAME } from "@/lib/seo-data";
 
 export const runtime = "nodejs";
 
@@ -19,8 +19,14 @@ export async function GET(request: NextRequest) {
   if (auth.error) return auth.error;
 
   try {
-    const phone = await getCompanySetting("business_phone", BUSINESS_PHONE);
-    return NextResponse.json({ phone });
+    const [phone, email, name, sector, portal] = await Promise.all([
+      getCompanySetting("business_phone", BUSINESS_PHONE),
+      getCompanySetting("business_email", BUSINESS_EMAIL),
+      getCompanySetting("business_name", BUSINESS_NAME),
+      getCompanySetting("business_sector", "Recolha de móveis e serviços de transporte"),
+      getCompanySetting("business_portal", "clyon.pt"),
+    ]);
+    return NextResponse.json({ phone, email, name, sector, portal });
   } catch (err) {
     console.error("[api/admin/company-settings] GET error:", err);
     return NextResponse.json({ error: "Erro ao carregar configurações" }, { status: 500 });
@@ -31,6 +37,10 @@ export async function GET(request: NextRequest) {
 const CompanySettingsSchema = z.object({
   phone: z.string()
     .refine((val) => /^\+\d+$/.test(val.replace(/[\s\-()]/g, "")), "Telefone inválido (deve começar com + e conter apenas dígitos)"),
+  email: z.string().email("Email inválido"),
+  name: z.string().min(1, "Nome obrigatório"),
+  sector: z.string().min(1, "Setor obrigatório"),
+  portal: z.string().min(1, "Portal obrigatório"),
 });
 
 export async function PUT(request: NextRequest) {
@@ -48,8 +58,15 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    await setCompanySetting("business_phone", parsed.data.phone);
-    return NextResponse.json({ success: true, phone: parsed.data.phone });
+    await Promise.all([
+      setCompanySetting("business_phone", parsed.data.phone),
+      setCompanySetting("business_email", parsed.data.email),
+      setCompanySetting("business_name", parsed.data.name),
+      setCompanySetting("business_sector", parsed.data.sector),
+      setCompanySetting("business_portal", parsed.data.portal),
+    ]);
+
+    return NextResponse.json({ success: true, ...parsed.data });
   } catch (err: any) {
     console.error("[api/admin/company-settings] PUT error:", err?.message);
     return NextResponse.json(
