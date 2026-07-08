@@ -55,12 +55,12 @@ export default function StickyCTA({ showAfterScroll = 300, phone = BUSINESS_PHON
           <span className="text-white">WhatsApp</span>
         </a>
         <Link
-          href="/contactos"
-          onClick={() => trackCTAClick("orcamento", "sticky_cta")}
+          href="/simulador"
+          onClick={() => trackCTAClick("simulador", "sticky_cta")}
           className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-cyan-600 px-4 py-3 text-sm font-semibold text-white shadow-[0_12px_28px_-12px_rgba(6,182,212,0.6)] transition hover:bg-cyan-700"
         >
           <Phone className="h-5 w-5 text-white" />
-          <span className="text-white">Orçamento</span>
+          <span className="text-white">Simulador</span>
         </Link>
       </div>
     </div>

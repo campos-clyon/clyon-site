@@ -21,9 +21,9 @@ interface CTABlockProps {
 
 export default function CTABlock({
   title = "Pronto para começar?",
-  description = "Peça um orçamento grátis e receba resposta em 24 horas.",
-  primaryText = "Pedir Orçamento Grátis",
-  primaryHref = "/contactos",
+  description = "Use o simulador para obter um orçamento instantâneo.",
+  primaryText = "Abrir Simulador",
+  primaryHref = "/simulador",
   showWhatsApp = true,
   showPhone = false,
   variant = "default",
