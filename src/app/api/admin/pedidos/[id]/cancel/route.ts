@@ -4,7 +4,6 @@ import {
   updateSimulatorOrder,
   appendOrderHistory,
   getColaboradorById,
-  toMySQLDateTime,
 } from "@/lib/db";
 import { verifyColaboradorAuthHeader } from "@/lib/colaborador-auth";
 
@@ -77,13 +76,9 @@ export async function POST(
     );
   }
 
-  // Formato MySQL DATETIME: 'YYYY-MM-DD HH:mm:ss'
-  const nowMySQL = toMySQLDateTime();
-
   try {
     await updateSimulatorOrder(orderId, {
       status: "cancelado",
-      cancelledAt: nowMySQL,
       cancelladoPeloCliente: 0,
     });
   } catch (updateErr) {
