@@ -73,10 +73,10 @@ export default function ColaboradorLoginClient() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100">
-      <div className="mx-auto grid min-h-screen max-w-6xl items-center gap-10 px-4 py-10 sm:px-6 lg:grid-cols-[1fr_1fr] lg:px-8">
-        {/* Painel de marca / valor — mesma altura do cartão de login */}
-        <div className="relative hidden overflow-hidden rounded-[26px] border border-slate-800 bg-gradient-to-br from-slate-900 via-slate-950 to-slate-900 p-7 sm:p-8 lg:flex lg:flex-col lg:justify-between">
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 to-slate-900 text-slate-100 flex flex-col items-center justify-center px-4 py-6">
+      <div className="w-full max-w-sm">
+        {/* Painel de marca / valor — mobile hidden */}
+        <div className="relative hidden overflow-hidden rounded-2xl border border-slate-800 bg-gradient-to-br from-slate-900 via-slate-950 to-slate-900 p-8 lg:flex lg:flex-col lg:justify-between lg:absolute lg:left-0 lg:top-1/2 lg:-translate-y-1/2 lg:max-w-sm lg:max-h-[600px]">
           {/* brilho de acento */}
           <div
             aria-hidden
@@ -123,112 +123,94 @@ export default function ColaboradorLoginClient() {
           </ul>
         </div>
 
-        {/* Cartão de login */}
-        <div className="mx-auto w-full max-w-sm">
-          {/* badge interno só para mobile */}
-          <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-cyan-400/30 bg-cyan-400/10 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.28em] text-cyan-300 lg:hidden">
-            <ShieldCheck className="h-3.5 w-3.5" />
-            Portal interno
+      {/* Cartão de login — focado e compacto */}
+      <div className="relative w-full flex flex-col space-y-5 sm:space-y-6 rounded-2xl border border-slate-800 bg-gradient-to-b from-slate-900 to-slate-950 p-6 sm:p-8">
+        {/* Logo e título */}
+        <div className="text-center">
+          <h2 className="text-2xl sm:text-3xl font-bold text-white leading-tight">Bem-vindo de volta</h2>
+          <p className="mt-2 text-sm text-slate-400">
+            Acede à tua conta CLYON
+          </p>
+        </div>
+
+        {/* Form container */}
+        <form className="space-y-4 sm:space-y-5" onSubmit={handleSubmit}>
+          <div>
+            <label htmlFor="nome" className="mb-2 block text-xs font-semibold text-slate-300">
+              Nome
+            </label>
+            <input
+              id="nome"
+              type="text"
+              value={nome}
+              onChange={(event) => setNome(event.target.value)}
+              className="h-12 sm:h-11 w-full rounded-lg border border-slate-700 bg-slate-950/80 px-4 text-sm text-white outline-none transition placeholder:text-slate-500 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20"
+              placeholder="Nome de utilizador"
+              autoComplete="username"
+            />
           </div>
 
-          <div className="rounded-[26px] border border-slate-800 bg-slate-900/60 p-7 shadow-[0_40px_120px_-40px_rgba(8,145,178,0.45)] backdrop-blur sm:p-8">
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-cyan-500/15 text-cyan-300">
-              <LockKeyhole className="h-5 w-5" />
-            </div>
-
-            <h2 className="mt-5 text-2xl font-bold text-white">Portal do colaborador</h2>
-            <p className="mt-2 text-sm leading-relaxed text-slate-400">
-              Entre com as suas credenciais para aceder ao sistema interno.
-            </p>
-
-            <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
-              <div>
-                <label htmlFor="nome" className="mb-1.5 block text-xs font-semibold text-slate-200">
-                  Nome
-                </label>
-                <input
-                  id="nome"
-                  type="text"
-                  value={nome}
-                  onChange={(event) => setNome(event.target.value)}
-                  className="h-11 w-full rounded-xl border border-slate-700 bg-slate-950/60 px-3.5 text-sm text-white outline-none transition placeholder:text-slate-500 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20"
-                  placeholder="Digite o seu nome"
-                  autoComplete="username"
-                />
-              </div>
-
-              <div>
-                <label htmlFor="senha" className="mb-1.5 block text-xs font-semibold text-slate-200">
-                  Palavra-passe
-                </label>
-                <div className="relative">
-                  <input
-                    id="senha"
-                    type={mostrarSenha ? "text" : "password"}
-                    value={senha}
-                    onChange={(event) => setSenha(event.target.value)}
-                    className="h-11 w-full rounded-xl border border-slate-700 bg-slate-950/60 px-3.5 pr-11 text-sm text-white outline-none transition placeholder:text-slate-500 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20"
-                    placeholder="Digite a sua palavra-passe"
-                    autoComplete="current-password"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setMostrarSenha((value) => !value)}
-                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-500 transition hover:text-cyan-300"
-                    aria-label={mostrarSenha ? "Ocultar palavra-passe" : "Mostrar palavra-passe"}
-                  >
-                    {mostrarSenha ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </button>
-                </div>
-              </div>
-
-              {/* Manter sessão */}
+          <div>
+            <label htmlFor="senha" className="mb-2 block text-xs font-semibold text-slate-300">
+              Palavra-passe
+            </label>
+            <div className="relative">
+              <input
+                id="senha"
+                type={mostrarSenha ? "text" : "password"}
+                value={senha}
+                onChange={(event) => setSenha(event.target.value)}
+                className="h-12 sm:h-11 w-full rounded-lg border border-slate-700 bg-slate-950/80 px-4 pr-12 text-sm text-white outline-none transition placeholder:text-slate-500 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20"
+                placeholder="Palavra-passe"
+                autoComplete="current-password"
+              />
               <button
                 type="button"
-                onClick={() => setRememberMe((v) => !v)}
-                className="flex w-full items-center gap-2.5 text-left"
-                aria-pressed={rememberMe}
+                onClick={() => setMostrarSenha((value) => !value)}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 transition hover:text-cyan-300"
+                aria-label={mostrarSenha ? "Ocultar palavra-passe" : "Mostrar palavra-passe"}
               >
-                <span
-                  className={`flex h-4 w-4 flex-shrink-0 items-center justify-center rounded border transition ${
-                    rememberMe
-                      ? "border-cyan-400 bg-cyan-500"
-                      : "border-slate-600 bg-slate-800"
-                  }`}
-                >
-                  {rememberMe && <Check className="h-2.5 w-2.5 text-slate-950" strokeWidth={3} />}
-                </span>
-                <span className="text-xs text-slate-300">
-                  Manter sessão activa{" "}
-                  <span className="text-slate-500">(30 dias)</span>
-                </span>
+                {mostrarSenha ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>
-
-              {error && (
-                <div
-                  role="alert"
-                  className="rounded-xl border border-red-500/30 bg-red-500/10 px-3.5 py-2.5 text-xs font-medium text-red-300"
-                >
-                  {error}
-                </div>
-              )}
-
-              <button
-                type="submit"
-                disabled={loading}
-                className="inline-flex h-11 w-full items-center justify-center rounded-xl bg-cyan-500 px-5 text-sm font-semibold text-slate-950 shadow-[0_14px_32px_-14px_rgba(6,182,212,0.8)] transition hover:-translate-y-0.5 hover:bg-cyan-400 disabled:cursor-not-allowed disabled:opacity-70"
-              >
-                {loading ? "A entrar..." : "Entrar"}
-                {!loading && <ArrowRight className="ml-2 h-4 w-4" />}
-              </button>
-            </form>
-
-            <p className="mt-5 flex items-center justify-center gap-2 text-center text-xs text-slate-500">
-              <LockKeyhole className="h-3 w-3" />
-              Ligação segura e encriptada
-            </p>
+            </div>
           </div>
-        </div>
+
+          {/* Remember me */}
+          <button
+            type="button"
+            onClick={() => setRememberMe((v) => !v)}
+            className="flex w-full items-center gap-2 text-left"
+            aria-pressed={rememberMe}
+          >
+            <span
+              className={`flex h-4 w-4 flex-shrink-0 items-center justify-center rounded border transition ${
+                rememberMe
+                  ? "border-cyan-400 bg-cyan-500"
+                  : "border-slate-600 bg-slate-800"
+              }`}
+            >
+              {rememberMe && <Check className="h-2.5 w-2.5 text-slate-950" strokeWidth={3} />}
+            </span>
+            <span className="text-xs text-slate-300">
+              Manter sessão
+            </span>
+          </button>
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="h-12 sm:h-11 w-full rounded-lg bg-cyan-500 font-semibold text-slate-950 shadow-lg shadow-cyan-500/30 transition hover:bg-cyan-400 hover:-translate-y-0.5 disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          >
+            {loading ? "A entrar..." : "Entrar"}
+            {!loading && <ArrowRight className="h-4 w-4" />}
+          </button>
+        </form>
+
+        {/* Security note */}
+        <p className="text-center text-xs text-slate-400 flex items-center justify-center gap-1">
+          <LockKeyhole className="h-3 w-3" />
+          Ligação encriptada
+        </p>
       </div>
     </div>
   );
