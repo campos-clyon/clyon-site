@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { NextRequest, NextResponse } from "next/server";
 import { upsertWandersonAdmin, ensureColaboradoresSchema, ensureSimulatorSettingsTable, resetSimulatorTableEnsuredFlag, ensureGalleryMediaTable, ensureSimulatorOrdersTable, getEffectiveRole, getPool } from "@/lib/db";
 

@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { generateText } from "ai";
 import type { ModelMessage } from "ai";
 import { NextRequest, NextResponse } from "next/server";

@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { NextRequest, NextResponse } from "next/server";
 import { getSimulatorOrderById, updateSimulatorOrder, markOrderAsViewed, deleteSimulatorOrder, maskName } from "@/lib/db";
 import { verifyColaboradorAuthHeader } from "@/lib/colaborador-auth";

@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { NextRequest, NextResponse } from "next/server";
 import { verifyColaboradorAuthHeader } from "@/lib/colaborador-auth";
 import { resetSimulatorTableEnsuredFlag, ensureSimulatorSettingsTable, getSimulatorSettings } from "@/lib/db";

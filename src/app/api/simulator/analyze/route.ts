@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import type { NextRequest } from "next/server";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";

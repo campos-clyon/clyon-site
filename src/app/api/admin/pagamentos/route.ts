@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { NextRequest, NextResponse } from "next/server";
 import { getPagamentosAssistente } from "@/lib/db";
 import { verifyColaboradorAuthHeader } from "@/lib/colaborador-auth";

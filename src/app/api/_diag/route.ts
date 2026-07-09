@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 /**
  * Rota de diagnóstico TEMPORÁRIA — remover após confirmar persistência.
  * Protegida com token simples para não expor dados em produção.

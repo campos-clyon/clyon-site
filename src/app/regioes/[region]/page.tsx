@@ -14,6 +14,9 @@ import {
   getRegionCities,
 } from "@/lib/seo-data";
 
+// Skip static prerendering since this page needs database access
+export const dynamic = "force-dynamic";
+
 type Props = {
   params: Promise<{ region: string }>;
 };

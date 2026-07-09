@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { NextRequest, NextResponse } from "next/server";
 import { getOrderByToken, confirmarOrcamento, cancelarOrcamentoPeloCliente } from "@/lib/db";
 import { notifyNewOrder } from "@/lib/whatsapp";
