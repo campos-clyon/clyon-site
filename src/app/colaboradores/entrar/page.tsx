@@ -3,6 +3,9 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/auth";
 import EntrarForm from "./EntrarForm";
 
+// Skip static prerendering since this page needs database access
+export const dynamic = "force-dynamic";
+
 export const metadata = {
   title: "Entrar | Backoffice CLYON",
   robots: "noindex, nofollow",
