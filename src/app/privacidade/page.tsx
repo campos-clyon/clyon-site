@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import type { Metadata } from "next";
 
 import { SITE_URL } from "@/lib/seo-data";
