@@ -14,6 +14,9 @@ import {
 } from "lucide-react";
 import { notFound } from "next/navigation";
 
+// Skip static prerendering since these pages need database access
+export const dynamic = "force-dynamic";
+
 import Breadcrumb from "@/components/Breadcrumb";
 import FurnitureSeoLinks from "@/components/FurnitureSeoLinks";
 import {
@@ -574,7 +577,7 @@ export default async function ServiceCityPage({ params }: Props) {
               <p className="mt-4 text-base leading-8 text-slate-600">
                 {priorityContent?.accessNotes ?? cityBaseContent?.accessNotes ?? `Trabalhamos em ${city.name} e zonas próximas com resposta rápida, orçamento claro e recolha cuidada. Retiramos os volumes validados, protegemos os acessos e deixamos o espaço pronto para a etapa seguinte.`}
               </p>
-              {/* Highlight local se for página prioritária */}
+              {/* Highlight local se for p��gina prioritária */}
               {priorityContent?.neighborhoodHighlight && (
                 <p className="mt-3 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm leading-6 text-amber-800">
                   <strong>Destaque:</strong> {priorityContent.neighborhoodHighlight}

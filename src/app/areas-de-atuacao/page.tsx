@@ -12,6 +12,9 @@ import {
   SITE_URL,
 } from "@/lib/seo-data";
 
+// Skip static prerendering since this page needs database access
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Áreas de Atuação | Lisboa, Margem Sul e Setúbal",
   description:
