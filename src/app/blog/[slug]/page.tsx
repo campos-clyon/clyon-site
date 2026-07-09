@@ -6,6 +6,9 @@ import { notFound } from "next/navigation";
 import { getAllBlogPosts, getBlogPost } from "@/lib/blog-data";
 import { BUSINESS_NAME, CONTACT_PATH, SITE_URL } from "@/lib/seo-data";
 
+// Skip static prerendering since this page needs database access
+export const dynamic = "force-dynamic";
+
 type Props = {
   params: Promise<{ slug: string }>;
 };
