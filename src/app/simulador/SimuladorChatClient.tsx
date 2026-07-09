@@ -7,6 +7,8 @@ import { ArrowRight, Loader2, Image as ImageIcon, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { OrderData } from "./types";
 import { mergeOrderPatch, getMissingFields, isOrderComplete } from "./orderUtils";
+import QuantitySelector from "./components/QuantitySelector";
+import EntulhoDetails from "./components/EntulhoDetails";
 
 type Message = {
   id: string;
@@ -348,20 +350,20 @@ export default function SimuladorChatClient() {
   return (
     <div className="flex h-[calc(100vh-120px)] flex-col bg-gradient-to-b from-slate-900 to-slate-950">
       {/* Header */}
-      <div className="border-b border-white/10 bg-white/[0.02] px-6 py-4 backdrop-blur">
+      <div className="border-b border-white/10 bg-white/[0.02] px-3 sm:px-6 py-3 sm:py-4 backdrop-blur">
         <div className="max-w-4xl mx-auto">
-          <h1 className="text-2xl font-bold text-white">
+          <h1 className="text-lg sm:text-2xl font-bold text-white leading-tight">
             Simulador de Preços
           </h1>
-          <p className="mt-1 text-sm text-slate-400">
+          <p className="hidden sm:block mt-1 text-sm text-slate-400">
             Chat com o orçamentista da Clyon
           </p>
         </div>
       </div>
 
       {/* Mensagens */}
-      <div className="flex-1 overflow-y-auto px-6 py-6">
-        <div className="max-w-4xl mx-auto space-y-4">
+      <div className="flex-1 overflow-y-auto px-3 sm:px-6 py-4 sm:py-6">
+        <div className="max-w-4xl mx-auto space-y-3 sm:space-y-4">
           {messages
             .filter((msg) => !msg.isHidden)
             .map((message) => (
@@ -430,7 +432,7 @@ export default function SimuladorChatClient() {
 
       {/* Input ou Formulário */}
       {!showContactForm ? (
-        <div className="border-t border-white/10 bg-white/[0.02] px-6 py-6 backdrop-blur">
+        <div className="border-t border-white/10 bg-white/[0.02] px-3 sm:px-6 py-4 sm:py-6 backdrop-blur">
           <div className="max-w-4xl mx-auto">
             {error && (
               <div className="mb-3 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2">
@@ -508,9 +510,9 @@ export default function SimuladorChatClient() {
         </div>
       ) : (
         /* Formulário de Contacto */
-        <div className="border-t border-white/10 bg-white/[0.02] px-6 py-6 backdrop-blur">
+        <div className="border-t border-white/10 bg-white/[0.02] px-3 sm:px-6 py-4 sm:py-6 backdrop-blur">
           <div className="max-w-4xl mx-auto">
-            <h3 className="text-lg font-semibold text-white mb-4">Dados de Contacto</h3>
+            <h3 className="text-base sm:text-lg font-semibold text-white mb-3 sm:mb-4">Dados de Contacto</h3>
 
             {error && (
               <div className="mb-3 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2">

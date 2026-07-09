@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter, Poppins } from "next/font/google";
+import { Poppins } from "next/font/google";
 import Script from "next/script";
 import { Analytics } from "@vercel/analytics/next";
 
@@ -18,16 +18,10 @@ import {
 
 import "./globals.css";
 
-const inter = Inter({
-  subsets: ["latin"],
-  display: "swap",
-  variable: "--font-inter",
-});
-
 const poppins = Poppins({
   subsets: ["latin"],
   display: "swap",
-  weight: ["600", "700", "800"],
+  weight: ["400", "500", "600", "700", "800"],
   variable: "--font-poppins",
 });
 
@@ -215,7 +209,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="pt-PT" className={`${inter.variable} ${poppins.variable}`}>
+    <html lang="pt-PT" className={`${poppins.variable}`}>
       <head>
         <meta name="color-scheme" content="light" />
         <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
