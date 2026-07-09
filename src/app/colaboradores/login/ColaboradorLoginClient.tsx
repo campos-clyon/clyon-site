@@ -123,8 +123,8 @@ export default function ColaboradorLoginClient() {
           </ul>
         </div>
 
-      {/* Cartão de login — focado e compacto */}
-      <div className="relative w-full flex flex-col space-y-5 sm:space-y-6 rounded-2xl border border-slate-800 bg-gradient-to-b from-slate-900 to-slate-950 p-6 sm:p-8">
+        {/* Cartão de login — focado e compacto */}
+        <div className="relative w-full flex flex-col space-y-5 sm:space-y-6 rounded-2xl border border-slate-800 bg-gradient-to-b from-slate-900 to-slate-950 p-6 sm:p-8">
         {/* Logo e título */}
         <div className="text-center">
           <h2 className="text-2xl sm:text-3xl font-bold text-white leading-tight">Bem-vindo de volta</h2>
@@ -211,6 +211,7 @@ export default function ColaboradorLoginClient() {
           <LockKeyhole className="h-3 w-3" />
           Ligação encriptada
         </p>
+        </div>
       </div>
     </div>
   );
