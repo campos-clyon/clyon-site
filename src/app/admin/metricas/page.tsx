@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import MetricasClient from "./MetricasClient";
 
 export const metadata = {

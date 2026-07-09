@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import ConfigsClient from "./ConfigsClient";
 
 export const metadata = {
