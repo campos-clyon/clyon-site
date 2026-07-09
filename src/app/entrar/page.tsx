@@ -19,13 +19,16 @@ export default async function EntrarPage() {
   if (session) redirect("/conta");
 
   return (
-    <>
+    <div className="fixed inset-0 flex items-center justify-center overflow-hidden">
+      {/* Fixed animated background - covers entire viewport */}
       <AnimatedBackground />
-      <div className="relative flex min-h-screen items-center justify-center px-4 py-16">
+      
+      {/* Centered login card container - fixed positioning for clarity */}
+      <div className="relative z-10 w-full max-w-md flex items-center justify-center px-4 py-6 sm:px-6">
         <Suspense fallback={null}>
           <ErrorHandler />
         </Suspense>
       </div>
-    </>
+    </div>
   );
 }

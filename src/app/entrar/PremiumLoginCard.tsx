@@ -44,31 +44,31 @@ export function PremiumLoginCard({ errorMsg }: Props) {
   };
 
   return (
-    <div className="relative w-full max-w-md">
-      {/* Card Container — Premium glassmorphism */}
-      <div className="relative rounded-[32px] border border-cyan-500/20 bg-slate-900/40 backdrop-blur-xl p-8 shadow-2xl shadow-cyan-500/10">
+    <div className="relative w-full max-w-md px-4 py-8 sm:p-0">
+      {/* Card Container — Premium glassmorphism, mobile optimized */}
+      <div className="relative rounded-2xl sm:rounded-[32px] border border-cyan-500/20 bg-slate-900/40 backdrop-blur-xl p-6 sm:p-8 shadow-2xl shadow-cyan-500/10">
         {/* Glow effect */}
         <div className="absolute inset-0 -z-10 rounded-[32px] bg-gradient-to-br from-cyan-500/10 to-transparent opacity-0 blur-xl" />
 
         {/* Logo Section */}
-        <div className="mb-8 flex justify-center">
+        <div className="mb-6 sm:mb-8 flex justify-center">
           <Link href="/" aria-label="Voltar à página inicial">
             <Image
               src="/logo-clyon.png"
               alt="CLYON"
-              width={140}
-              height={56}
+              width={120}
+              height={48}
               priority
-              className="drop-shadow-lg"
+              className="drop-shadow-lg h-auto w-28 sm:w-[140px]"
             />
           </Link>
         </div>
 
         {/* Tabs */}
-        <div className="mb-8 flex gap-2 rounded-2xl border border-slate-700/50 bg-slate-800/30 p-1">
+        <div className="mb-6 sm:mb-8 flex gap-2 rounded-2xl border border-slate-700/50 bg-slate-800/30 p-1">
           <button
             onClick={() => setTab("login")}
-            className={`flex-1 rounded-xl px-4 py-3 text-sm font-semibold transition-all duration-300 ${
+            className={`flex-1 rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm font-semibold transition-all duration-300 ${
               tab === "login"
                 ? "bg-gradient-to-r from-cyan-500 to-cyan-400 text-slate-900 shadow-lg shadow-cyan-500/30"
                 : "text-slate-400 hover:text-slate-200"
@@ -78,7 +78,7 @@ export function PremiumLoginCard({ errorMsg }: Props) {
           </button>
           <button
             onClick={() => setTab("signup")}
-            className={`flex-1 rounded-xl px-4 py-3 text-sm font-semibold transition-all duration-300 ${
+            className={`flex-1 rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm font-semibold transition-all duration-300 ${
               tab === "signup"
                 ? "bg-gradient-to-r from-cyan-500 to-cyan-400 text-slate-900 shadow-lg shadow-cyan-500/30"
                 : "text-slate-400 hover:text-slate-200"
@@ -94,16 +94,16 @@ export function PremiumLoginCard({ errorMsg }: Props) {
           <div className="text-center">
             {tab === "login" ? (
               <>
-                <h1 className="text-2xl font-bold text-white">Bem-vindo de volta</h1>
-                <p className="mt-2 text-sm leading-relaxed text-slate-400">
-                  Acede à tua conta CLYON para acompanhar os teus pedidos
+                <h1 className="text-xl sm:text-2xl font-bold text-white leading-tight">Bem-vindo de volta</h1>
+                <p className="mt-2 text-xs sm:text-sm leading-relaxed text-slate-400">
+                  Acede à tua conta CLYON
                 </p>
               </>
             ) : (
               <>
-                <h1 className="text-2xl font-bold text-white">Cria a tua conta</h1>
-                <p className="mt-2 text-sm leading-relaxed text-slate-400">
-                  Regista-te para guardar o histórico dos teus pedidos
+                <h1 className="text-xl sm:text-2xl font-bold text-white leading-tight">Cria a tua conta</h1>
+                <p className="mt-2 text-xs sm:text-sm leading-relaxed text-slate-400">
+                  Regista-te e guarda o histórico
                 </p>
               </>
             )}
@@ -120,7 +120,7 @@ export function PremiumLoginCard({ errorMsg }: Props) {
           <button
             onClick={handleGoogleSignIn}
             disabled={isLoading}
-            className="group relative w-full overflow-hidden rounded-2xl bg-gradient-to-r from-cyan-500 to-cyan-400 px-6 py-4 font-semibold text-slate-900 shadow-lg shadow-cyan-500/30 transition-all duration-300 hover:shadow-xl hover:shadow-cyan-500/50 hover:-translate-y-0.5 disabled:opacity-60 disabled:cursor-not-allowed"
+            className="group relative w-full overflow-hidden rounded-2xl bg-gradient-to-r from-cyan-500 to-cyan-400 px-5 sm:px-6 py-3 sm:py-4 font-semibold text-slate-900 shadow-lg shadow-cyan-500/30 transition-all duration-300 hover:shadow-xl hover:shadow-cyan-500/50 hover:-translate-y-0.5 disabled:opacity-60 disabled:cursor-not-allowed text-sm sm:text-base"
           >
             {/* Shine effect */}
             <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 bg-white/10" />
@@ -142,8 +142,8 @@ export function PremiumLoginCard({ errorMsg }: Props) {
           </button>
 
           {/* Info Text */}
-          <p className="text-center text-xs leading-relaxed text-slate-500">
-            Ao {tab === "login" ? "entrares" : "registares"} com Google, a tua conta é criada automaticamente se ainda não existir. Apenas utilizamos a tua informação para guardar os teus pedidos.
+          <p className="text-center text-[11px] sm:text-xs leading-relaxed text-slate-500">
+            Ao {tab === "login" ? "entrar" : "registar"} com Google, guardamos apenas os teus pedidos.
           </p>
 
           {/* Divider */}
@@ -157,30 +157,31 @@ export function PremiumLoginCard({ errorMsg }: Props) {
           </div>
 
           {/* Features */}
-          <div className="grid grid-cols-3 gap-3 text-center text-xs">
-            <div className="rounded-lg border border-cyan-500/20 bg-cyan-500/5 px-2 py-3 backdrop-blur-sm">
-              <div className="text-cyan-400 font-semibold">🔒</div>
-              <p className="mt-1 text-slate-400 text-[10px]">Encriptado</p>
+          <div className="grid grid-cols-3 gap-2 sm:gap-3 text-center text-xs">
+            <div className="rounded-lg border border-cyan-500/20 bg-cyan-500/5 px-1.5 sm:px-2 py-2 sm:py-3 backdrop-blur-sm">
+              <div className="text-lg sm:text-xl text-cyan-400 font-semibold">🔒</div>
+              <p className="mt-0.5 sm:mt-1 text-slate-400 text-[9px] sm:text-[10px]">Seguro</p>
             </div>
-            <div className="rounded-lg border border-cyan-500/20 bg-cyan-500/5 px-2 py-3 backdrop-blur-sm">
-              <div className="text-cyan-400 font-semibold">⚡</div>
-              <p className="mt-1 text-slate-400 text-[10px]">Instantâneo</p>
+            <div className="rounded-lg border border-cyan-500/20 bg-cyan-500/5 px-1.5 sm:px-2 py-2 sm:py-3 backdrop-blur-sm">
+              <div className="text-lg sm:text-xl text-cyan-400 font-semibold">⚡</div>
+              <p className="mt-0.5 sm:mt-1 text-slate-400 text-[9px] sm:text-[10px]">Rápido</p>
             </div>
-            <div className="rounded-lg border border-cyan-500/20 bg-cyan-500/5 px-2 py-3 backdrop-blur-sm">
-              <div className="text-cyan-400 font-semibold">✓</div>
-              <p className="mt-1 text-slate-400 text-[10px]">Verificado</p>
+            <div className="rounded-lg border border-cyan-500/20 bg-cyan-500/5 px-1.5 sm:px-2 py-2 sm:py-3 backdrop-blur-sm">
+              <div className="text-lg sm:text-xl text-cyan-400 font-semibold">✓</div>
+              <p className="mt-0.5 sm:mt-1 text-slate-400 text-[9px] sm:text-[10px]">Simples</p>
             </div>
           </div>
         </div>
 
         {/* Footer */}
-        <div className="mt-8 flex items-center justify-center gap-2 border-t border-slate-700/50 pt-6 text-sm">
-          <span className="text-slate-500">Voltar à página inicial</span>
+        <div className="mt-6 sm:mt-8 flex items-center justify-center gap-2 border-t border-slate-700/50 pt-4 sm:pt-6 text-xs sm:text-sm">
+          <span className="text-slate-500 hidden sm:inline">Voltar à página inicial</span>
           <Link
             href="/"
             className="font-semibold text-cyan-400 hover:text-cyan-300 transition-colors underline-offset-2 hover:underline"
           >
-            aqui
+            <span className="hidden sm:inline">aqui</span>
+            <span className="inline sm:hidden">← Voltar</span>
           </Link>
         </div>
       </div>
