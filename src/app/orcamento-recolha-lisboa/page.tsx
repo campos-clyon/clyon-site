@@ -2,6 +2,9 @@ import type { Metadata } from "next";
 
 import LandingClient from "./LandingClient";
 
+// Skip static prerendering since this page needs database access
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Recolha de Entulho, Móveis e Monos em Lisboa | CLYON",
   description:
